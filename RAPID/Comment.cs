@@ -13,7 +13,7 @@ namespace Axis.RAPID
         {
             get
             {
-                return Properties.Resources.iconRapid;
+                return Properties.Resources.RAPID;
             }
         }
         public override Guid ComponentGuid
@@ -21,18 +21,18 @@ namespace Axis.RAPID
             get { return new Guid("{ef081106-87c1-4521-8b0b-d1e296270867}"); }
         }
 
-        public Comment() : base("Comment", "Comment", "Generates a RAPID comment.", "Axis", "RAPID")
+        public Comment() : base("Comment", "C", "Generates a RAPID comment.", "Axis", "7. RAPID")
         {
         }
 
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddTextParameter("String", "String", "Comment as string.", GH_ParamAccess.item);
+            pManager.AddTextParameter("Text", "Text", "Comment as string.", GH_ParamAccess.item);
         }
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddTextParameter("Comment", "Comment", "Comment in RAPID format.", GH_ParamAccess.item);
+            pManager.AddTextParameter("Code", "Code", "Comment in RAPID format.", GH_ParamAccess.item);
         }
 
         protected override void SolveInstance(IGH_DataAccess DA)

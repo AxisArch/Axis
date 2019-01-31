@@ -13,7 +13,7 @@ namespace Axis.RAPID
         {
             get
             {
-                return Properties.Resources.iconRapid;
+                return Properties.Resources.RAPID;
             }
         }
         public override Guid ComponentGuid
@@ -21,20 +21,20 @@ namespace Axis.RAPID
             get { return new Guid("{9f7e521f-ea12-4699-b73e-a6201c32eff6}"); }
         }
 
-        public CallProcedure() : base("Call Procedure", "Call Procedure", "Call a custom RAPID procedure.", "Axis", "RAPID")
+        public CallProcedure() : base("Call Procedure", "Call", "Call a custom RAPID procedure.", "Axis", "7. RAPID")
         {
         }
 
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddTextParameter("Name", "Name", "Name of procedure to call.", GH_ParamAccess.item);
-            pManager.AddTextParameter("Arguments", "Arguments", "Optional procedure arguments.", GH_ParamAccess.list);
+            pManager.AddTextParameter("Name", "Name", "Name of procedure to call.", GH_ParamAccess.item, "Hello");
+            pManager.AddTextParameter("Arguments", "Args", "Optional procedure arguments.", GH_ParamAccess.list, @"string 'Robo'");
             pManager[1].Optional = true;
         }
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddTextParameter("Call", "Call", "Resultant procedure call.", GH_ParamAccess.list);
+            pManager.AddTextParameter("Code", "Code", "Resultant procedure call.", GH_ParamAccess.list);
         }
 
         
@@ -43,11 +43,12 @@ namespace Axis.RAPID
             string strName = null;
             List<string> arg = new List<string>();
             List<string> strProc = new List<string>();
+            bool args = true;
             
             if (!DA.GetData(0, ref strName)) return;
-            if (!DA.GetDataList(1, arg)) return;
+            if (!DA.GetDataList(1, arg)) args = false;
 
-            if (arg.Count > 0)
+            if (args)
             {
                 for (int i = 0; i < arg.Count; i++)
                 {

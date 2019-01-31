@@ -12,13 +12,13 @@ using System.Threading.Tasks;
 
 using Axis.Tools;
 
-namespace RoboOp
+namespace StreamTools
 {
     public class Robot
     {
-        public Socket sender;          //  The client socket
-        public String hostAddress;     // This is your robot controller's address
-        public int port = 1025;        // This is your robot controller's port
+        public Socket sender; // Client socket address.
+        public String hostAddress; // Robot controller network address.
+        public int port = 1025; // Robot controller port number for TCP/IP connection.
         public bool isSetup = false;
 
         public static String z0 = "[FALSE,0.3,0.3,0.3,0.03,0.3,0.03]";
@@ -29,19 +29,21 @@ namespace RoboOp
         public static String z200 = "[FALSE,200,300,300,30,300,30]";
 
 
-	    // Sets up Robot object to communicate between Grasshopper and an industrial robot.
+	    // Sets up robot object to communicate between Grasshopper and an industrial robot.
         public Robot(String ip, int port)
         {
             this.hostAddress = ip;
             this.port = port;
 
-            //Test code for quaternion conversion
+            // Test code for quaternion conversion
             Matrix<double> T = DenseMatrix.Create(4, 4, 0);
             T[0, 0] = -1; T[0, 1] = 0; T[0, 2] = 0; T[0, 3] = 0;
             T[1, 0] = 0; T[1, 1] = 1; T[1, 2] = 0; T[1, 3] = 0;
             T[2, 0] = 0; T[2, 1] = 0; T[2, 2] = -1; T[2, 3] = 0;
             T[3, 0] = 0; T[3, 1] = 0; T[3, 2] = 0; T[3, 3] = 1;
             T[0, 0] = -1;
+
+            // Convert matrix to quaternion
             Matrix Q = MathUtil.T2Quaternion(T);
             Console.WriteLine("Q " + Q);
             Matrix Tnew = MathUtil.Quaternion2T(Q, new DenseVector(new double[] { 0, 0, 0 }));
@@ -75,7 +77,7 @@ namespace RoboOp
                 
                 string message = ("Socket connected to {0}" + sender.RemoteEndPoint.ToString());
 
-                //  msg = messageReceived();
+                // msg = messageReceived();
                 // Console.WriteLine("Connect message from robot " + msg);
             }
             catch (ArgumentNullException ane)
@@ -133,8 +135,8 @@ namespace RoboOp
         {
             Rhino.Geometry.Point3d pos = getPosition();
             Rhino.Geometry.Quaternion orient = getOrientation();
-            float[] config = getConfiguration();
-            float[] extax = getExternalAxes();
+            double[] config = getConfiguration();
+            double[] extax = getExternalAxes();
 
             String targ = "[[" + pos[0] + "," + pos[1] + "," + pos[2] + "]," +
                      "[" + orient.A + "," + orient.B + "," + orient.C + "," + orient.D + "]," +
@@ -154,18 +156,18 @@ namespace RoboOp
         */
         public Rhino.Geometry.Point3d getPosition()
         {
-            float[] coords = new float[3];
+            double[] coords = new double[3];
 
-            String key = "query";
-            String val = "pos";
+            string key = "query";
+            string val = "pos";
             sendMessage((key + "/" + val + ";"), true);
             string msg = messageReceived();
 
-            String[] temp = msg.Substring(1, msg.Length - 4).Split(',');
+            string[] temp = msg.Substring(1, msg.Length - 4).Split(',');
 
             for (int i = 0; i < temp.Length; i++)
             {
-                coords[i] = float.Parse(temp[i]);
+                coords[i] = double.Parse(temp[i]);
             }
 
             // Create the 3D point representing the location of the robot TCP.
@@ -197,7 +199,7 @@ namespace RoboOp
         */
         public Rhino.Geometry.Quaternion getOrientation()
         {
-            float[] vals = new float[4];
+            double[] vals = new double[4];
 
             String key = "query";
             String val = "orient";
@@ -208,7 +210,7 @@ namespace RoboOp
             String[] temp = msg.Substring(1, msg.Length - 4).Split(',');
             for (int i = 0; i < temp.Length; i++)
             {
-                vals[i] = float.Parse(temp[i]);
+                vals[i] = double.Parse(temp[i]);
             }
 
             Rhino.Geometry.Quaternion quat = new Rhino.Geometry.Quaternion(vals[0], vals[1], vals[2], vals[3]);
@@ -224,10 +226,19 @@ namespace RoboOp
 	    * @param ry - yRot in Euler Angles
 	    * @param rz - zRot in Euler Angles
 	    */
-        public void setOrientation(double rx, double ry, double rz)
+        public void setQuaternion(Rhino.Geometry.Quaternion quat)
         {
+            List<double> eulers = Axis.Tools.Util.QuaternionToEuler(quat);
+
+            double roundedE1 = Math.Round(eulers[0], 4);
+            string r1 = roundedE1.ToString();
+            double roundedE2 = Math.Round(eulers[1], 4);
+            string r2 = roundedE2.ToString();
+            double roundedE3 = Math.Round(eulers[2], 4);
+            string r3 = roundedE3.ToString();
+
             String key = "orient";
-            String val = "[" + rx + "," + ry + "," + rz + "]";
+            String val = "[" + r1 + "," + r2 + "," + r3 + "]";
             sendMessage((key + "/" + val + ";"), true);
         }
 
@@ -238,24 +249,24 @@ namespace RoboOp
 	    * 
 	    * @return array of config values
 	    */
-        public float[] getConfiguration()
+        public double[] getConfiguration()
         {
-            float[] vals = new float[4];
+            double[] vals = new double[4];
 
             String key = "query";
             String val = "config";
             sendMessage((key + "/" + val + ";"), true);
             string msg = messageReceived();
 
-            // block until the new data from the robot is received
-            //  String msg = messageReceived();
+            // Block until the new data from the robot is received
+            // String msg = messageReceived();
             Console.WriteLine("robot's config: " + msg);
 
             String[] temp = msg.Substring(1, msg.Length - 1).Split(',');
             // PApplet.split(msg.substring(1, msg.length() - 1), ",");//orignial java code for splitting string
             for (int i = 0; i < temp.Length; i++)
             {
-                vals[i] = float.Parse(temp[i]);
+                vals[i] = double.Parse(temp[i]);
             }
 
             return vals;
@@ -283,20 +294,21 @@ namespace RoboOp
         * Waits until the robot has reached a position 
         * before executing the next line of code.
         */
-        public void waitUntilPos()
+        public string waitUntilPos()
         {
-            String key = "wait";
-            String val = "InPos";
-            sendMessage((key + "/" + val + ";"), true);
+            string key = "wait";
+            string val = "InPos";
+            string inPos = sendMessage((key + "/" + val + ";"), true);
+            return inPos;
         }
 
         /**
 	    * External Axis
 	    * @return array of external axis values
 	    */
-        public float[] getExternalAxes()
+        public double[] getExternalAxes()
         {
-            float[] vals = new float[6];
+            double[] vals = new double[6];
 
             String key = "query";
             String val = "extax";
@@ -311,7 +323,7 @@ namespace RoboOp
             // String[] temp = PApplet.split(msg.substring(1, msg.length() - 1), ",");
             for (int i = 0; i < temp.Length; i++)
             {
-                vals[i] = float.Parse(temp[i]);
+                vals[i] = double.Parse(temp[i]);
             }
 
             return vals;
@@ -336,9 +348,9 @@ namespace RoboOp
         * Requests the speed data from the robot.
         * @return speed data as array 
         */
-        public float[] getSpeed()
+        public double[] getSpeed()
         {
-            float[] vals = new float[4];
+            double[] vals = new double[4];
 
             String key = "query";
             String val = "speed";
@@ -348,7 +360,7 @@ namespace RoboOp
             String[] temp = msg.Substring(1, msg.Length - 1).Split(',');
             for (int i = 0; i < temp.Length; i++)
             {
-                vals[i] = float.Parse(temp[i]);
+                vals[i] = double.Parse(temp[i]);
             }
 
             return vals;
@@ -364,10 +376,10 @@ namespace RoboOp
          * @param extLinear - velocity of linear external axes in mm/s
          * @param extRot 	- velocity of rotating external axes in degrees/s
          */
-        public void setSpeed(int tool, int orient, int extLinear, int extRot)
+        public void setSpeed(int tcp, int reorient, int extLinear, int extRot)
         {
             String key = "speed";
-            String val = "[" + tool + "," + orient + "," + extLinear + "," + extRot + "]";
+            String val = "[" + tcp + "," + reorient + "," + extLinear + "," + extRot + "]";
             sendMessage((key + "/" + val + ";"), true);
         }
 
@@ -436,7 +448,7 @@ namespace RoboOp
 	    * @return message from robot (either empty string or message)
 	    * @throws InterruptedException 
 	    */
-        private String sendMessage(String msg, bool wait)
+        private string sendMessage(string msg, bool wait)
         {
             byte[] msgBytes = Encoding.ASCII.GetBytes(msg);
             this.sender.Send(msgBytes);
@@ -452,13 +464,13 @@ namespace RoboOp
         * Waits until the robot sends back a message
         * @return - message sent by robot
         */
-        private String messageReceived()
+        private string messageReceived()
         {
-            String temp = "";
+            string temp = "";
             try
             {
                 byte[] bytes = new byte[1024];
-                String robotInput = "";
+                string robotInput = "";
                 int bytesRec = this.sender.Receive(bytes);
                 robotInput = Encoding.ASCII.GetString(bytes, 0, bytesRec);
                 temp = robotInput;
@@ -472,7 +484,7 @@ namespace RoboOp
 
         /**
          * Close client
-          **/
+        **/
         public void closeClient()
         {
             isSetup = false;
@@ -508,7 +520,7 @@ namespace RoboOp
 	     */
         /* @SuppressWarnings("unused")
 
-         private void setRobTarget(float[] pos, float[] orient, float[] config, float[] extax)
+         private void setRobTarget(double[] pos, double[] orient, double[] config, double[] extax)
              {
                  String key = "robTarg";
                  String val = "[[" + pos[0] + "," + pos[1] + "," + pos[2] + "], " +
@@ -531,21 +543,24 @@ namespace RoboOp
          * @param ry	- y orientation
          * @param rz	- z orientation
          */
-        public void moveTo(double x, double y, double z, double q1, double q2, double q3, double q4)
+        public string moveTo(Rhino.Geometry.Point3d position, Rhino.Geometry.Quaternion quat)
         {
             // Round the coordinates and orientations to keep the message as short as possible.
-            x = Math.Round(x, 2);
-            y = Math.Round(y, 2);
-            z = Math.Round(z, 2);
+            double x = Math.Round(position.X, 2);
+            double y = Math.Round(position.Y, 2);
+            double z = Math.Round(position.Z, 2);
             
-            q1 = Math.Round(q1, 3);
-            q2 = Math.Round(q2, 3);
-            q3 = Math.Round(q3, 3);
-            q4 = Math.Round(q4, 3);
+            double q1 = Math.Round(quat.A, 3);
+            double q2 = Math.Round(quat.B, 3);
+            double q3 = Math.Round(quat.C, 3);
+            double q4 = Math.Round(quat.D, 3);
 
             String key = "joint";
             String val = "[" + x + "," + y + "," + z + "," + q1 + "," + q2 + "," + q3 + "," + q4 + "]";
-            sendMessage((key + "/" + val + ";"), true);
+            // sendMessage((key + "/" + val + ";"), true);
+            // Inserted echo declaration and return, changed function type from void to string.
+            string echo = sendMessage((key + "/" + val + ";"), true);
+            return echo;
         }
 
         /**

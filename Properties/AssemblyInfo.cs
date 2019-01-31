@@ -8,18 +8,18 @@ using Rhino.PlugIns;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("Axis")]
-[assembly: AssemblyDescription("A toolkit for architectural robotic experimentation.")]
+[assembly: AssemblyDescription("A toolkit for industrial robot programming and simulation.")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("The Office for Advanced Architecture")]
+[assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("Axis")]
-[assembly: AssemblyCopyright("Copyright ©  2016")]
+[assembly: AssemblyCopyright("Copyright ©  2019")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
 // Setting ComVisible to false makes the types in this assembly not visible 
 // to COM components.  If you need to access a type in this assembly from 
 // COM, set the ComVisible attribute to true on that type.
-[assembly: ComVisible(false)]
+[assembly: ComVisible(true)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("64497ab0-4c22-4403-807a-a5a2aa8e0616")] // This will also be the Guid of the Rhino plug-in
@@ -34,5 +34,5 @@ using Rhino.PlugIns;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("0.1.*")]
-[assembly: AssemblyFileVersion("0.1.0.0")]
+[assembly: AssemblyVersion("0.1.3")]
+[assembly: AssemblyFileVersion("0.1.3.0")]

@@ -8,11 +8,12 @@ namespace Axis.Targets
 {
     public class FlipPlane : GH_Component
     {
+        public override GH_Exposure Exposure => GH_Exposure.tertiary;
         protected override System.Drawing.Bitmap Icon
         {
             get
             {
-                return Properties.Resources.iconHome;
+                return Properties.Resources.Flip;
             }
         }
         public override Guid ComponentGuid
@@ -20,13 +21,13 @@ namespace Axis.Targets
             get { return new Guid("{d290273f-dad9-44af-9bc9-d2e7154abc90}"); }
         }
 
-        public FlipPlane() : base("Flip Plane", "Flip Plane", "Flip a plane around it's Y axis.", "Axis", "Targets")
+        public FlipPlane() : base("Flip Plane", "Flip", "Flip a plane around it's Y axis.", "Axis", "3. Targets")
         {
         }
         
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddPlaneParameter("Plane", "Plane", "Input plane to flip.", GH_ParamAccess.list);
+            pManager.AddPlaneParameter("Plane", "Plane", "Input plane to flip around the Y axis.", GH_ParamAccess.list);
         }
         
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
@@ -49,6 +50,7 @@ namespace Axis.Targets
 
             DA.SetDataList(0, targOut);         
         }
+
         private Plane FlipTarg(Plane targ)
         {
             targ.Flip();

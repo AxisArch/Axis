@@ -18,7 +18,7 @@ namespace Axis
             get
             {
                 //Return a 24x24 pixel bitmap to represent this GHA library.
-                return null;
+                return Axis.Properties.Resources.Robot;
             }
         }
         public override string Description
@@ -26,7 +26,7 @@ namespace Axis
             get
             {
                 //Return a short string describing the purpose of this GHA library.
-                return "A toolkit for architectural robotic experimentation.";
+                return "A toolkit for industrial robot programming and simulation.";
             }
         }
         public override Guid Id
@@ -50,7 +50,7 @@ namespace Axis
             get
             {
                 //Return a string representing your preferred contact details.
-                return "ryan.hughes.arch@gmail.com";
+                return "rhu@axisarch.tech";
             }
         }
     }

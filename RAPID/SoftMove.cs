@@ -8,11 +8,12 @@ namespace Axis.RAPID
 {
     public class SoftMove : GH_Component
     {
+        public override GH_Exposure Exposure => GH_Exposure.primary;
         protected override System.Drawing.Bitmap Icon
         {
             get
             {
-                return Properties.Resources.iconRapid;
+                return Properties.Resources.RAPID;
             }
         }
         public override Guid ComponentGuid
@@ -20,7 +21,7 @@ namespace Axis.RAPID
             get { return new Guid("{56593858-817a-42a0-aa34-3277a5f75c24}"); }
         }
 
-        public SoftMove() : base("SoftMove", "SoftMove", "Control the ABB SoftMove option.", "Axis", "RAPID")
+        public SoftMove() : base("SoftMove", "Soft", "Control the ABB SoftMove option.", "Axis", "7. RAPID")
         {
         }
 
@@ -34,7 +35,7 @@ namespace Axis.RAPID
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddTextParameter("Command", "Command", "Cartesian Soft Servo command code.", GH_ParamAccess.item);
+            pManager.AddTextParameter("Code", "Code", "Cartesian Soft Servo command code.", GH_ParamAccess.item);
         }
 
         protected override void SolveInstance(IGH_DataAccess DA)

@@ -13,7 +13,7 @@ namespace Axis.RAPID
         {
             get
             {
-                return Properties.Resources.iconRapid;
+                return Properties.Resources.RAPID;
             }
         }
         public override Guid ComponentGuid
@@ -21,21 +21,21 @@ namespace Axis.RAPID
             get { return new Guid("{06575491-6164-4b5d-82a8-a31d2a5ed75f}"); }
         }
 
-        public Acceleration() : base("Acceleration", "Acceleration", "Override the robot acceleration and deceleration settings.", "Axis", "RAPID")
+        public Acceleration() : base("Acceleration", "Acc", "Override the robot acceleration and deceleration settings.", "Axis", "7. RAPID")
         {
         }
 
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddNumberParameter("Acceleration", "Acceleration", "Desired robot acceleration value. [As % of default values]", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Deceleration", "Deceleration", "Desired robot deceleration value. [As % of default values]", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Acceleration", "Acc", "Desired robot acceleration value. [As % of default values]", GH_ParamAccess.item, 35);
+            pManager.AddNumberParameter("Deceleration", "Dec", "Desired robot deceleration value. [As % of default values]", GH_ParamAccess.item, 60);
             pManager[0].Optional = true;
             pManager[1].Optional = true;
         }
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddTextParameter("Acceleration Settings", "Settings", "RAPID-formatted robot acceleration override settings.", GH_ParamAccess.item);
+            pManager.AddTextParameter("Code", "Code", "RAPID-formatted robot acceleration override settings.", GH_ParamAccess.item);
         }
 
         protected override void SolveInstance(IGH_DataAccess DA)
