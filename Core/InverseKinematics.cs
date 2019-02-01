@@ -48,6 +48,7 @@ namespace Axis.Core
             pManager.AddNumberParameter("Angles", "Angles", "Axis angles for forward kinematics.", GH_ParamAccess.list);
             pManager.AddColourParameter("Colour", "Colour", "Preview indication colours.", GH_ParamAccess.list);
             pManager.AddTextParameter("Log", "Log", "Message log.", GH_ParamAccess.list);
+            pManager.AddMeshParameter("Tool", "Tool", "Tool mesh as list.", GH_ParamAccess.list);
         }
 
         public double[] currPos = { 0, -90, 90, 0, 0, 0 };
@@ -529,6 +530,16 @@ namespace Axis.Core
             anglesOut = selectedAngles;
             planesOut = aPlns;
 
+            // Transform tool per target to robot flange.
+            List<Mesh> toolMeshes = new List<Mesh>();
+            Transform orientFlange = Transform.PlaneToPlane(Plane.WorldXY, flangeOut);
+            foreach (Mesh m in robTarg.Tool.Geometry)
+            {
+                Mesh tool = m.DuplicateMesh();
+                tool.Transform(orientFlange);
+                toolMeshes.Add(tool);
+            }
+                        
             colorsOut = colors;
             logOut = log;
 
@@ -538,6 +549,7 @@ namespace Axis.Core
             DA.SetDataList(2, anglesOut);
             DA.SetDataList(3, colorsOut);
             DA.SetDataList(4, logOut);
+            DA.SetDataList(5, toolMeshes);
         }
     }
 }

@@ -91,7 +91,7 @@ namespace Axis
             Tool tool = Tool.Default;
             CSystem wobj = CSystem.Default;
             int method = 0;
-
+            
             // External axis placeholders
             double extRot = Util.ExAxisTol;
             double extLin = Util.ExAxisTol;
@@ -164,7 +164,7 @@ namespace Axis
                 else
                 {
                     code.Add(robTarg.StrKUKA); // Output the KUKA string.
-                }                
+                }
             }
 
             DA.SetDataList(0, code);

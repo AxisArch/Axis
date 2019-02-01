@@ -18,8 +18,8 @@ namespace Axis.Targets
         public Speed Speed { get; }
         public Zone Zone { get; }
         public Tool Tool { get; }
-        public CSystem CSystem { get; set;
-        }
+        public CSystem CSystem { get; set; }
+
         public double ExtRot { get; set; }
         public double ExtLin { get; set; }
 
