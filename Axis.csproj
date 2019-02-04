@@ -199,8 +199,9 @@
       <HintPath>packages\Microsoft.Office.Interop.Excel.15.0.4795.1000\lib\net20\Microsoft.Office.Interop.Excel.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
-    <Reference Include="NatNetML, Version=2.8.5602.27741, Culture=neutral, processorArchitecture=x86">
-      <HintPath>packages\OptiTrack.NatNet.2.8.0\lib\NatNetML.dll</HintPath>
+    <Reference Include="NatNetML, Version=3.1.6828.21264, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\AppData\Roaming\Grasshopper\Libraries\Axis\NatNetML.dll</HintPath>
     </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
@@ -265,6 +266,7 @@
     <Compile Include="RAPID\Comment.cs" />
     <Compile Include="RAPID\DefineProcedure.cs" />
     <Compile Include="RAPID\SoftMove.cs" />
+    <Compile Include="Vision\OptiTrackStream.cs" />
     <Compile Include="Workflow\CreateLayer.cs" />
     <Compile Include="Workflow\ExcelCreate.cs" />
     <Compile Include="Workflow\ExcelRead.cs" />
@@ -352,7 +354,9 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Online\" />
-    <Folder Include="Vision\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Vision.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

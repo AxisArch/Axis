@@ -18,7 +18,7 @@ namespace Axis.Vision
         {
             get
             {
-                return Axis.Properties.Resources.iconCore;
+                return Axis.Properties.Resources.Vision;
             }
         }
         public override Guid ComponentGuid
@@ -27,20 +27,20 @@ namespace Axis.Vision
         }
 
         /*  [NatNet] Network connection configuration    */
-        private static NatNetML.NatNetClientML mNatNet;    // The client instance
+        private static NatNetClientML mNatNet;    // The client instance
         private static string mStrLocalIP = "127.0.0.1";   // Local IP address (string)
         private static string mStrServerIP = "127.0.0.1";  // Server IP address (string)
-        private static NatNetML.ConnectionType mConnectionType = ConnectionType.Multicast; // Multicast or Unicast mode
+        private static ConnectionType mConnectionType = ConnectionType.Multicast; // Multicast or Unicast mode
 
         /*  List for saving each of datadescriptors */
-        private static List<NatNetML.DataDescriptor> mDataDescriptor = new List<NatNetML.DataDescriptor>();
+        private static List<DataDescriptor> mDataDescriptor = new List<DataDescriptor>();
 
         /*  Lists and Hashtables for saving data descriptions   */
-        private static Hashtable mHtSkelRBs = new Hashtable();
-        private static List<MarkerSet> mMarkerSet = new List<MarkerSet>();
-        private static List<RigidBody> mRigidBodies = new List<RigidBody>();
-        private static List<Skeleton> mSkeletons = new List<Skeleton>();
-        private static List<ForcePlate> mForcePlates = new List<ForcePlate>();
+        public static Hashtable mHtSkelRBs = new Hashtable();
+        public static List<MarkerSet> mMarkerSet = new List<MarkerSet>();
+        public static List<RigidBody> mRigidBodies = new List<RigidBody>();
+        public static List<Skeleton> mSkeletons = new List<Skeleton>();
+        public static List<ForcePlate> mForcePlates = new List<ForcePlate>();
 
         /*  boolean value for detecting change in asset */
         private static bool mAssetChanged = false;
@@ -113,19 +113,21 @@ namespace Axis.Vision
 
             if (activate && counter == 0) // Activate the streaming module and attempt to find a Motive broadcast.
             {
-                log.Add("NatNetML managed client application starting.");
+                log.Add("NatNet managed client application starting.");
+
                 // If not default, set the IP address
                 mStrLocalIP = localIP;
                 log.Add("Local IP set.");
                 mStrServerIP = serverIP;
                 log.Add("Server IP set.");
+
                 // Attempt connection to the server.
                 log.Add("Attempting connection to server...");
                 connectToServer();
-                log.Add("Now Fetching the Server Descriptor.");
+                log.Add("Fetching the Server Descriptor.");
                 connectionConfirmed = fetchServerDescriptor(); //Fetch and parse data descriptor
 
-                log.Add("Now Fetching the Frame Data.");
+                log.Add("Fetching the Frame Data.");
                 /*  [NatNet] Assigning a event handler function for fetching frame data each time a frame is received   */
                 mNatNet.OnFrameReady += new NatNetML.FrameReadyEventHandler(fetchFrameData);
                 log.Add("Success: Data Port Connected.");
@@ -215,7 +217,7 @@ namespace Axis.Vision
 
             /*  Processing and ouputting frame data every 200th frame.
                 This conditional statement is included in order to simplify the program output */
-            if (data.iFrame % 3 == 0) // 120 FPS Flex 13 cameras (every 4th frame will give a solid 30 FPS in GH)
+            if (data.iFrame % 4 == 0) // 120 FPS Flex 13 cameras (every 4th frame will give a solid 30 FPS in GH)
             {
                 if (data.bRecording == false)
                 {
