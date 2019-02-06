@@ -392,10 +392,10 @@ namespace Axis.Online
                     ioMonitoringOn = 0;
                 }
 
-                /*
+                
                 if (stream)
                 {
-                    if (targ != null)
+                   if (targ != null)
                     {
                         IpcMessage message = new IpcMessage();
 
@@ -414,19 +414,24 @@ namespace Axis.Online
 
                         //string content = "SD;" + targ.Method.ToString() + "," + pose.ToString();
                         string content = @"SD;" + "Test";
-
+                        
                         byte[] msgdata = new UTF8Encoding().GetBytes(content);
-
+                        
                         for (int i = 0; i < msgdata.Length; i++)
                         {
                             data[i] = (ABB.Robotics.Controllers.RapidDomain.Byte[])msgdata[i];
                         }
 
+                        /*Example
+                        ABB.Robotics.Controllers.RapidDomain.Byte[] data = new UTF8Encoding().GetBytes("string;\"test\"");
+                        */
+                        
+                   /*
                         message.SetData(data);
-                        RobotQueue.Send(message);
+                        RobotQueue.Send(message);*/
                     }
                 }
-                */
+                
 
                 // Output the status of the connection.
                 Status = log;

@@ -267,7 +267,6 @@
     <Compile Include="RAPID\Comment.cs" />
     <Compile Include="RAPID\DefineProcedure.cs" />
     <Compile Include="RAPID\SoftMove.cs" />
-    <Compile Include="Vision\OptiTrackStream.cs" />
     <Compile Include="Workflow\CreateLayer.cs" />
     <Compile Include="Workflow\ExcelCreate.cs" />
     <Compile Include="Workflow\ExcelRead.cs" />
@@ -353,7 +352,9 @@
   <ItemGroup>
     <None Include="Resources\SurfaceFrame.png" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Vision\" />
+  </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Vision.png" />
   </ItemGroup>
