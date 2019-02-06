@@ -428,14 +428,15 @@ namespace Axis.Online
                 }
                 */
 
-            // Output the status of the connection.
-            Status = log;
+                // Output the status of the connection.
+                Status = log;
 
-            DA.SetDataList(0, log);
-            DA.SetDataList(1, IOstatus);
-            DA.SetData(2, new GH_Plane(tcp));
+                DA.SetDataList(0, log);
+                DA.SetDataList(1, IOstatus);
+                DA.SetData(2, new GH_Plane(tcp));
 
-            ExpireSolution(true);
+                ExpireSolution(true);
+            }
         }
     }
 }
