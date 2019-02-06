@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 
 using Grasshopper.Kernel;
+using Grasshopper.Kernel.Types;
+
 using Rhino.Geometry;
 
 using ABB.Robotics.Controllers;
@@ -139,46 +141,54 @@ namespace Axis.Online
             if (!DA.GetData(12, ref stream)) ;
             if (!DA.GetData(13, ref targ)) ;
 
-            this.connect = connect;
             this.controllerIndex = index;
             this.start = begin;
+
+            double cRobX = 0;
+            double cRobY = 0;
+            double cRobZ = 0;
+
+            double cRobQ1 = 0;
+            double cRobQ2 = 0;
+            double cRobQ3 = 0;
+            double cRobQ4 = 0;
+
+            Quaternion cRobQuat = new Quaternion();
 
             if (activate)
             {
                 if (scan)
                 {
+                    // Scan the network for controllers and add them to our controller array
                     scanner.Scan();
                     controllers = scanner.GetControllers();
 
                     if (controllers.Length > 0)
                     {
-                        this.log.Add("Controllers found:");
+                        log.Add("Controllers found:");
 
                         // List the controller names that were found on the network.
                         for (int i = 0; i < controllers.Length; i++)
                         {
-                            this.log.Add(controllers[i].ControllerName);
+                            log.Add(controllers[i].ControllerName);
                         }
                     }
-                    else
-                    {
-                        this.log.Add("Scan timed out. No controllers were found.");
-                    }
+                    else { log.Add("Scan timed out. No controllers were found."); }
                 }
 
                 if (kill && controller != null)
                 {
-                    this.controller.Logoff();
-                    this.controller.Dispose();
-                    this.controller = null;
+                    controller.Logoff();
+                    controller.Dispose();
+                    controller = null;
 
-                    this.log.Add("Process killed! Abandon ship!");
+                    log.Add("Process killed! Abandon ship!");
                 }
 
                 if (clear)
                 {
-                    this.log.Clear();
-                    this.log.Add("Log cleared.");
+                    log.Clear();
+                    log.Add("Log cleared.");
                 }
 
                 if (connect)
@@ -186,22 +196,22 @@ namespace Axis.Online
                     if (controller == null && controllers.Length > 0)
                     {
                         string controllerID = controllers[index].ControllerName;
-                        this.log.Add("Selected robot controller: " + controllers[index].ControllerName + ".");
+                        log.Add("Selected robot controller: " + controllers[index].ControllerName + ".");
 
                         if (controllers[index].Availability == Availability.Available)
                         {
-                            this.log.Add("Robot controller " + controllers[index].ControllerName + " is available.");
+                            log.Add("Robot controller " + controllers[index].ControllerName + " is available.");
 
-                            if (this.controller != null)
+                            if (controller != null)
                             {
-                                this.controller.Logoff();
-                                this.controller.Dispose();
-                                this.controller = null;
+                                controller.Logoff();
+                                controller.Dispose();
+                                controller = null;
                             }
 
-                            this.controller = ControllerFactory.CreateFrom(controllers[index]);
-                            this.controller.Logon(UserInfo.DefaultUser);
-                            this.log.Add("Connection to robot controller " + this.controller.SystemName + " established.");
+                            controller = ControllerFactory.CreateFrom(controllers[index]);
+                            controller.Logon(UserInfo.DefaultUser);
+                            log.Add("Connection to robot controller " + controller.SystemName + " established.");
 
                             // Get T_ROB1 queue to send messages to the RAPID task.
                             if (!controller.Ipc.Exists("RMQ_T_ROB1"))
@@ -209,21 +219,22 @@ namespace Axis.Online
                                 controller.Ipc.CreateQueue("RMQ_T_ROB1", 10, Ipc.MaxMessageSize);
                             }
 
+                            tasks = controller.Rapid.GetTasks();
                             IpcQueue robotQueue = controller.Ipc.GetQueue("RMQ_T_ROB1");
                             int queueID = robotQueue.QueueId;
                             string queueName = robotQueue.QueueName;
 
-                            this.log.Add("Established RMQ for T_ROB1 on network controller.");
-                            this.log.Add("Rapid Message Queue ID:" + queueID.ToString() + ".");
-                            this.log.Add("Rapid Message Queue Name:" + queueName + ".");
-                            this.RobotQueue = robotQueue;
+                            log.Add("Established RMQ for T_ROB1 on network controller.");
+                            log.Add("Rapid Message Queue ID:" + queueID.ToString() + ".");
+                            log.Add("Rapid Message Queue Name:" + queueName + ".");
+                            RobotQueue = robotQueue;
                         }
                         else
                         {
-                            this.log.Add("Selected controller not available.");
+                            log.Add("Selected controller not available.");
                         }
 
-                        this.ControllerID = controllerID;
+                        ControllerID = controllerID;
                     }
                     else
                     {
@@ -234,20 +245,19 @@ namespace Axis.Online
                         else
                         {
                             string exceptionMessage = "No robot controllers found on network.";
-                            this.ControllerID = "No Controller";
-                            this.log.Add(exceptionMessage);
+                            ControllerID = "No Controller";
+                            log.Add(exceptionMessage);
                         }
                     }
                 }
 
                 if (resetPP && controller != null)
                 {
-                    tasks = controller.Rapid.GetTasks();
                     using (Mastership m = Mastership.Request(controller.Rapid))
                     {
                         // Reset program pointer to main.
                         tasks[0].ResetProgramPointer();
-                        this.log.Add("Program pointer set to main on the active task.");
+                        log.Add("Program pointer set to main on the active task.");
                     }
                 }
 
@@ -258,26 +268,25 @@ namespace Axis.Online
                     {
                         if (controller.OperatingMode == ControllerOperatingMode.Auto)
                         {
-                            tasks = controller.Rapid.GetTasks();
                             using (Mastership m = Mastership.Request(controller.Rapid))
                             {
                                 // Perform operation.
                                 tasks[0].Start();
-                                this.log.Add("Robot program started on robot " + this.controller.SystemName + ".");
+                                log.Add("Robot program started on robot " + controller.SystemName + ".");
                             }
                         }
                         else
                         {
-                            this.log.Add("Automatic mode is required to start execution from a remote client.");
+                            log.Add("Automatic mode is required to start execution from a remote client.");
                         }
                     }
                     catch (System.InvalidOperationException ex)
                     {
-                        this.log.Add("Mastership is held by another client." + ex.Message);
+                        log.Add("Mastership is held by another client." + ex.Message);
                     }
                     catch (System.Exception ex)
                     {
-                        this.log.Add("Unexpected error occurred: " + ex.Message);
+                        log.Add("Unexpected error occurred: " + ex.Message);
                     }
                 }
 
@@ -287,84 +296,65 @@ namespace Axis.Online
                     {
                         if (controller.OperatingMode == ControllerOperatingMode.Auto)
                         {
-                            tasks = controller.Rapid.GetTasks();
                             using (Mastership m = Mastership.Request(controller.Rapid))
                             {
                                 // Stop operation.
-                                tasks[0].Stop();
-                                this.log.Add("Robot program stopped on robot " + this.controller.SystemName + ".");
+                                tasks[0].Stop(StopMode.Immediate);
+                                log.Add("Robot program stopped on robot " + controller.SystemName + ".");
                             }
                         }
                         else
                         {
-                            this.log.Add("Automatic mode is required to stop execution from a remote client.");
+                            log.Add("Automatic mode is required to stop execution from a remote client.");
                         }
                     }
                     catch (System.InvalidOperationException ex)
                     {
-                        this.log.Add("Mastership is held by another client." + ex.Message);
+                        log.Add("Mastership is held by another client." + ex.Message);
                     }
                     catch (System.Exception ex)
                     {
-                        this.log.Add("Unexpected error occurred: " + ex.Message);
+                        log.Add("Unexpected error occurred: " + ex.Message);
                     }
                 }
 
+                // If active, update the status of the TCP.
                 if (monitorTCP)
                 {
                     if (tcpMonitoringOn == 0)
                     {
-                        this.log.Add("TCP monitoring started.");
+                        log.Add("TCP monitoring started.");
                     }
 
                     cRobTarg = tasks[0].GetRobTarget();
 
-                    double cRobX = Math.Round(cRobTarg.Trans.X, 3);
-                    double cRobY = Math.Round(cRobTarg.Trans.Y, 3);
-                    double cRobZ = Math.Round(cRobTarg.Trans.Z, 3);
+                    cRobX = Math.Round(cRobTarg.Trans.X, 3);
+                    cRobY = Math.Round(cRobTarg.Trans.Y, 3);
+                    cRobZ = Math.Round(cRobTarg.Trans.Z, 3);
 
                     Point3d cRobPos = new Point3d(cRobX, cRobY, cRobZ);
 
-                    double cRobQ1 = Math.Round(cRobTarg.Rot.Q1, 5);
-                    double cRobQ2 = Math.Round(cRobTarg.Rot.Q2, 5);
-                    double cRobQ3 = Math.Round(cRobTarg.Rot.Q3, 5);
-                    double cRobQ4 = Math.Round(cRobTarg.Rot.Q4, 5);
+                    cRobQ1 = Math.Round(cRobTarg.Rot.Q1, 5);
+                    cRobQ2 = Math.Round(cRobTarg.Rot.Q2, 5);
+                    cRobQ3 = Math.Round(cRobTarg.Rot.Q3, 5);
+                    cRobQ4 = Math.Round(cRobTarg.Rot.Q4, 5);
 
-                    Quaternion cRobQuat = new Quaternion(cRobQ1, cRobQ2, cRobQ3, cRobQ4);
+                    cRobQuat = new Quaternion(cRobQ1, cRobQ2, cRobQ3, cRobQ4);
 
                     tcp = Util.QuaternionToPlane(cRobPos, cRobQuat);
 
-                    /*
-                    if (controller.OperatingMode == ControllerOperatingMode.Auto)
-                    {
-                        tasks = controller.Rapid.GetTasks();
-                        using (Mastership m = Mastership.Request(controller.Rapid))
-                        {
-                            // Stop operation.
-                            JointTarget target = tasks[0].GetJointTarget();
-                            RobJoint joints = target.RobAx;
-                            string cJoints = joints.ToString();
-                            this.log.Add(cJoints);
-                        }
-                    }
-                    else
-                    {
-                        this.log.Add("Automatic mode is required to check TCP.");
-                    }
-                    */
-
                     tcpMonitoringOn += 1;
-                    this.tcpMonitoringOff = 0;
+                    tcpMonitoringOff = 0;
                 }
                 else if (tcpMonitoringOn > 0)
                 {
                     if (tcpMonitoringOff == 0)
                     {
-                        this.log.Add("TCP monitoring stopped.");
+                        log.Add("TCP monitoring stopped.");
                     }
 
                     tcpMonitoringOff += 1;
-                    this.tcpMonitoringOn = 0;
+                    tcpMonitoringOn = 0;
                 }
 
 
@@ -373,7 +363,7 @@ namespace Axis.Online
                 {
                     if (ioMonitoringOn == 0)
                     {
-                        this.log.Add("Signal monitoring started.");
+                        log.Add("Signal monitoring started.");
                     }
 
                     // Filter only the digital IO system signals.
@@ -389,19 +379,17 @@ namespace Axis.Online
                     }
 
                     ioMonitoringOn += 1;
-                    this.ioMonitoringOff = 0;
-
-                    ExpireSolution(true);
+                    ioMonitoringOff = 0;
                 }
                 else if (ioMonitoringOn > 0)
                 {
                     if (ioMonitoringOff == 0)
                     {
-                        this.log.Add("Signal monitoring stopped.");
+                        log.Add("Signal monitoring stopped.");
                     }
 
                     ioMonitoringOff += 1;
-                    this.ioMonitoringOn = 0;
+                    ioMonitoringOn = 0;
                 }
 
                 /*
@@ -431,22 +419,23 @@ namespace Axis.Online
 
                         for (int i = 0; i < msgdata.Length; i++)
                         {
-                            data[i] = (ABB.Robotics.Controllers.RapidDomain.Byte) msgdata[i];
+                            data[i] = (ABB.Robotics.Controllers.RapidDomain.Byte[])msgdata[i];
                         }
 
                         message.SetData(data);
                         RobotQueue.Send(message);
                     }
-                    */
-                    ExpireSolution(true);
-            }
+                }
+                */
 
-                // Output the status of the connection.
-                this.Status = this.log;
+            // Output the status of the connection.
+            Status = log;
 
-            DA.SetDataList(0, this.log);
-            DA.SetDataList(1, this.IOstatus);
-            DA.SetData(2, this.tcp);
+            DA.SetDataList(0, log);
+            DA.SetDataList(1, IOstatus);
+            DA.SetData(2, new GH_Plane(tcp));
+
+            ExpireSolution(true);
         }
     }
 }

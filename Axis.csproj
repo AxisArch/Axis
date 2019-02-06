@@ -230,6 +230,7 @@
     <Compile Include="Geometry\SurfaceFrame.cs" />
     <Compile Include="IO\GetDI.cs" />
     <Compile Include="IO\SetDO.cs" />
+    <Compile Include="Online\ABBComunication.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -352,9 +353,7 @@
   <ItemGroup>
     <None Include="Resources\SurfaceFrame.png" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Online\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <None Include="Resources\Vision.png" />
   </ItemGroup>
