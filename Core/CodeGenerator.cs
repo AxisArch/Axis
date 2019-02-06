@@ -288,7 +288,7 @@ namespace Axis.Core
                         foreach (List<string> proc in procs)
                         {
                             string procName = "SubMain" + procCount.ToString();
-                            proc.Insert(0, "PROC" + procName + "()");
+                            proc.Insert(0, "PROC " + procName + "()");
                             proc.Insert(proc.Count, "ENDPROC");
                             procCount++;
 
