@@ -291,7 +291,7 @@ namespace Axis.Online
                             using (Mastership m = Mastership.Request(controller.Rapid))
                             {
                                 // Stop operation.
-                                tasks[0].Stop();
+                                tasks[0].Stop(mode);
                                 this.log.Add("Robot program stopped on robot " + this.controller.SystemName + ".");
                             }
                         }
