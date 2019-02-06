@@ -64,7 +64,7 @@ namespace Axis.Vision
         private static List<double> rigidBodyPos = new List<double>();
         private static List<double> rigidBodyQuat = new List<double>();
 
-        public OptiTrackStream() : base("OptiTrack Stream", "OptiTrack Stream", "Receive streaming data from a running Motive broadcast.", "Axis", "Vision")
+        public OptiTrackStream() : base("OptiTrack Stream", "OptiTrack Stream", "Receive streaming data from a running Motive broadcast.", "Axis", "10. Vision")
         {
         }
 

@@ -64,7 +64,7 @@ namespace Axis.Online
             get { return new Guid("6e6ff838-aad7-4224-986d-6cba047e8a41"); }
         }
 
-        public IRC5Online() : base("Online", "Online", "Online control and communcation for ABB IRC5 controllers.", "Axis", "Core")
+        public IRC5Online() : base("Online", "Online", "Online control and communcation for ABB IRC5 controllers.", "Axis", "9. Online")
         {
         }
 
