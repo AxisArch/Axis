@@ -43,7 +43,7 @@ namespace Axis.Online
         ControllerInfo[] controllers = null;
 
         ABB.Robotics.Controllers.RapidDomain.RobTarget cRobTarg;
-        ABB.Robotics.Controllers.RapidDomain.Byte[] data;
+        System.Byte[] data;
 
         // Create a list of string to store a log of the connection status.
         private List<string> log = new List<string>();
@@ -413,22 +413,22 @@ namespace Axis.Online
                         pose.Rot = ori;
 
                         //string content = "SD;" + targ.Method.ToString() + "," + pose.ToString();
-                        string content = @"SD;" + "Test";
-                        
+                        string content = "SD; MoveL [[452.449, 317.017, 170.838],[0, 0, 1, 0]"; // , cData, eAxis], v50, z150, tool0 \Wobj:=wobj0;  "SD; Linear,[[452.4485,317.0168,170.8382],[0,0,1,0]]"
+
+
                         byte[] msgdata = new UTF8Encoding().GetBytes(content);
-                        
+                        data = msgdata;
+
+
+                        /*
                         for (int i = 0; i < msgdata.Length; i++)
                         {
-                            data[i] = (ABB.Robotics.Controllers.RapidDomain.Byte[])msgdata[i];
-                        }
-
-                        /*Example
-                        ABB.Robotics.Controllers.RapidDomain.Byte[] data = new UTF8Encoding().GetBytes("string;\"test\"");
-                        */
+                           data[i] = (ABB.Robotics.Controllers.RapidDomain.Byte[])msgdata[i];
+                        }*/
                         
-                   /*
+
                         message.SetData(data);
-                        RobotQueue.Send(message);*/
+                        RobotQueue.Send(message);
                     }
                 }
                 
