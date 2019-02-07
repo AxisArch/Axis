@@ -214,7 +214,8 @@ namespace Axis.Online
                     DA.SetDataList(1, log);
                 }
 
-                //DA.SetDataList(0, controller);
+                
+                DA.SetData(0, controller);
 
                 ExpireSolution(true);
             }
