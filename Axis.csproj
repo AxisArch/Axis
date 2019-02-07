@@ -231,6 +231,9 @@
     <Compile Include="IO\GetDI.cs" />
     <Compile Include="IO\SetDO.cs" />
     <Compile Include="Online\ABBComunication.cs" />
+    <Compile Include="Online\AxisContoller.cs" />
+    <Compile Include="Online\Connect.cs" />
+    <Compile Include="Online\SetModule.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -357,6 +360,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Vision.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Online\module file.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
