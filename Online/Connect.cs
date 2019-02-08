@@ -37,6 +37,7 @@ namespace Axis.Online
         private bool stream;
         private string command;
         private bool logOption;
+        private bool logOptionOut;
 
 
         NetworkScanner scanner = new NetworkScanner();
@@ -208,14 +209,15 @@ namespace Axis.Online
                     }
                 }
 
-                if (logOption)
+                if (logOptionOut)
                 {
                     Status = log;
-                    DA.SetDataList(1, log);
+                    DA.SetDataList("Log", log);
                 }
 
-                
-                DA.SetData(0, controller);
+                //Wrapping the ABB Controller class in a Custom class for for controlling the representation in GH
+                AxisController myAxisController = new AxisController("ABB", controller);
+                DA.SetData(0, myAxisController);
 
                 ExpireSolution(true);
             }
@@ -255,11 +257,13 @@ namespace Axis.Online
             {
                 AddInput(0);
                 AddOutput(0);
+                logOptionOut = true;
             }
             else
             {
                 Params.UnregisterInputParameter(Params.Input.FirstOrDefault(x => x.Name == "Clear"), true);
                 Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Log"), true);
+                logOptionOut = false;
             }
 
             ExpireSolution(true);

@@ -23,28 +23,12 @@ namespace Axis.Online
 {
     public class SetModule : GH_Component
     {
-        public string ControllerID { get; set; }
         public List<string> Status { get; set; }
-        public Controller controller = null;
-        private Task[] tasks = null;
-        public IpcQueue RobotQueue { get; set; }
+        //public Controller controller = null;
 
-        //Copied
-        private bool scan;
-        private bool kill;
-        private bool connect;
-        private int controllerIndex;
-        private bool start;
-        private bool stream;
-        private string command;
-
-        //New 
+        public bool send = false;
         private bool logOption;
-
-
-        NetworkScanner scanner = new NetworkScanner();
-        ControllerInfo[] controllers = null;
-
+        private bool logOptionOut;
 
         // Create a list of string to store a log of the connection status.
         private List<string> log = new List<string>();
@@ -69,7 +53,7 @@ namespace Axis.Online
             pManager.AddBooleanParameter("Send", "Send", "Send to module", GH_ParamAccess.item, false);
             pManager.AddTextParameter("Moduel", "Module", "Module to be wtritten to the controller.", GH_ParamAccess.list);
 
-            for (int i = 0; i < 2; i++)
+            for (int i = 0; i < 1; i++)
             {
                 pManager[i].Optional = true;
             }
@@ -88,24 +72,56 @@ namespace Axis.Online
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            bool activate = false;
+            GH_ObjectWrapper controller = new GH_ObjectWrapper();
+            List<string> modFile = new List<string>();
+            bool clear = false;
+            Controller myController = null;
 
-            if (!DA.GetData("Controller", ref activate)) ;
-            if (!DA.GetData("Send", ref activate)) ;
-            if (!DA.GetData("Moduel", ref activate)) ;
-
-
-            if (activate)
+            if (!DA.GetData("Controller", ref controller)) ;
+            if (!DA.GetData("Send", ref send)) ;
+            if (!DA.GetDataList("Moduel", modFile)){ return; }
+            if (logOption)
             {
-                if (logOption)
-                {
-                    Status = log;
-                    DA.SetDataList("Log", log);
-                }
-
-                ExpireSolution(true);
+                if (!DA.GetData("Clear", ref clear)) ;
             }
+
             
+            AxisController myAxisController = controller.Value as AxisController;
+            if ((myAxisController != null) && (myAxisController.myAxisControllerType == "ABB"))
+            {
+                myController = myAxisController;
+            }
+            else { log.Add("No active controller connected"); }
+
+            if ((myController != null) && send)
+            {
+                log.Add("Sending moduel to controller");
+                log.Add("");
+
+                /*for (int i = 0; i < modFile.Count; ++i)
+                {
+                    log.Add(modFile[i]);
+                 }*/
+
+                //if () { log.Add("Moduel recieved"); }
+
+
+            }
+
+
+            if (clear)
+            {
+                log.Clear();
+                log.Add("Log cleared.");
+            }
+
+            if (logOptionOut)
+            {
+                Status = log;
+                DA.SetDataList("Log", log);
+            }
+
+            ExpireSolution(true);
         }
         
 
@@ -114,9 +130,9 @@ namespace Axis.Online
         /// Additional Input and Output parameters for the component
         /// </summary>
         // Build a list of optional input parameters
-        IGH_Param[] inputParams = new IGH_Param[0]
+        IGH_Param[] inputParams = new IGH_Param[1]
         {
-            //new Param_Integer() { Name = "Method", NickName = "Method", Description = "A list of target interpolation types [0 = Linear, 1 = Joint]. If one value is supplied it will be applied to all targets.", Access = GH_ParamAccess.list },
+            new Param_Boolean() { Name = "Clear", NickName = "Clear", Description = "Clear the communication log.", Access = GH_ParamAccess.item, Optional = true},
         };
         // Build a list of optional output parameters
         IGH_Param[] outputParams = new IGH_Param[1]
@@ -139,11 +155,15 @@ namespace Axis.Online
 
             if (logOption)
             {
+                AddInput(0);
                 AddOutput(0);
+                logOptionOut = true;
             }
             else
             {
+                Params.UnregisterInputParameter(Params.Input.FirstOrDefault(x => x.Name == "Clear"), true);
                 Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Log"), true);
+                logOptionOut = false;
             }
 
             ExpireSolution(true);

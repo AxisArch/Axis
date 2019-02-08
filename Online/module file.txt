@@ -1,47 +1,88 @@
-﻿MODULE RAB_COMMUNICATION
+﻿MODULE Messaging
 
-VAR bool flag := FALSE;
-VAR intnum connectnum;
+    RECORD SD
+        string MoveMethod;
+        pose ToolFrame;
+    ENDRECORD
 
-PROC main()
-CONNECT connectnum WITH RABMsgs;
-IRMQMessage flag, connectnum;
+!    RECORD SD
+!        string MoveMethod;
+!        robjoint JointTarg;
+!        pos RobTarg;
+!        orient Orientation;
+!        num TCPSpeed;
+!        num ReorSpeed;
+!        pose ToolFrame;
+!    ENDRECORD
 
-WHILE flag = FALSE DO
-!do something, eg. normal processing...
-WaitTime 3;
-ENDWHILE
+    PERS tooldata StreamingTool:=[TRUE,[[0,0,0],[1,0,0,0]],[1,[0,0,0.0001],[1,0,0,0],0,0,0]];
+    VAR speeddata testTCPSpeed := [ 100, 20, 200, 15 ]; ! Custom speed object for online testing.
+    VAR bool flag:=FALSE;
+    VAR intnum connectionNumber;
+    VAR SD MyData;
 
-!PC SDK message received - do something...
-TPWrite "Message from PC SDK, will now...";
-IDelete connectnum;
-EXIT;
+    PROC Main()
+        CONNECT connectionNumber WITH Process;
+        IRMQMessage MyData,connectionNumber;
 
-ENDPROC
+        WHILE flag=FALSE DO
+            ! Idle wait for connection.
+            WaitTime 0.01;
+        ENDWHILE
 
-TRAP RABMsgs
+        TPWrite "RMQ message received from server. Acknowledgement sent.";
+        IDelete connectionNumber;
 
-VAR rmqmessage msg;
-VAR rmqheader header;
-VAR rmqslot rabclient;
-VAR num userdef;
-VAR string ack := "Acknowledged";
+        EXIT;
+    ENDPROC
 
-RMQGetMessage msg;
-RMQGetMsgHeader msg \Header:=
-header\SenderId:=rabclient\UserDef:=userdef;
+    TRAP Process
+        VAR rmqmessage msg;
+        VAR rmqheader header;
+        VAR rmqslot rabclient;
+        VAR num userdef;
+        VAR string ack:="Message received from GH.";
 
+        RMQGetMessage msg;
+        RMQGetMsgHeader msg\Header:=header\SenderId:=rabclient\UserDef:=userdef;
+        RMQSendMessage rabclient,ack;
 
-!check data type and assign value to flag variable
+        IF header.datatype="SD" THEN
 
-IF header.datatype = "bool" THEN
-RMQGetMsgData msg, flag;
-!return receipt to sender
-RMQSendMessage rabclient, ack;
+            RMQGetMsgData msg,MyData;
+            StreamingTool.tframe:=MyData.ToolFrame;
 
-ELSE
-TPWrite "Unknown data received in RABMsgs...";
-ENDIF
+            If MyData.MoveMethod="0" THEN
+                
+                StorePath;
+                MoveL [MyData.ToolFrame.trans,MyData.ToolFrame.rot,[0,0,0,0],[9E9,9E9,9E9,9E9,9E9,9E9]],testTCPSpeed,z1,StreamingTool;
+                RestoPath;               
 
-ENDTRAP
+            ENDIF
+        ELSE
+            TPWrite "Unknown message data received...";
+        ENDIF
+        
+!        IF header.datatype="SD" THEN
+
+!            RMQGetMsgData msg,MyData;
+!            StreamingTool.tframe:=MyData.ToolFrame;
+
+!            If MyData.MoveMethod="MJ" THEN
+!                StorePath;
+!                MoveAbsJ [MyData.JointTarg,[0,9E9,9E9,9E9,9E9,9E9]],testTCPSpeed,z1,StreamingTool\Wobj:=Wobj0;
+!                RestoPath;
+
+!            ELSEIF MyData.MoveMethod="ML" THEN
+!                StorePath;
+!                MoveL [MyData.RobTarg,MyData.Orientation,[0,0,0,0],[0,9E9,9E9,9E9,9E9,9E9]],testTCPSpeed,z1,StreamingTool\WObj:=Wobj0;
+!                RestoPath;
+
+!            ENDIF
+!        ELSE
+!            TPWrite "Unknown message data received...";
+!        ENDIF
+
+    ENDTRAP
+
 ENDMODULE

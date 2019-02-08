@@ -231,6 +231,7 @@
     <Compile Include="IO\GetDI.cs" />
     <Compile Include="IO\SetDO.cs" />
     <Compile Include="Online\ABBComunication.cs" />
+    <Compile Include="Online\AxisControllers.cs" />
     <Compile Include="Online\Connect.cs" />
     <Compile Include="Online\SetModule.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
