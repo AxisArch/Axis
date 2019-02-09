@@ -1,8 +1,10 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+
 
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
@@ -11,6 +13,7 @@ using Grasshopper.Kernel.Parameters;
 
 using Rhino.Geometry;
 
+using ABB.Robotics;
 using ABB.Robotics.Controllers;
 using ABB.Robotics.Controllers.RapidDomain;
 using ABB.Robotics.Controllers.Discovery;
@@ -25,6 +28,7 @@ namespace Axis.Online
     {
         public List<string> Status { get; set; }
         //public Controller controller = null;
+        private Task[] tasks = null;
 
         public bool send = false;
         private bool logOption;
@@ -95,8 +99,42 @@ namespace Axis.Online
 
             if ((myController != null) && send)
             {
+                 /* 
+                string localDirectory = myController.FileSystem.LocalDirectory;
+                bool localDirectoryExists = myController.FileSystem.BeginDirectoryExists(path, callback, state);
+
+                if (localDirectoryExists = false) { myController.FileSystem.BeginCreateDirectory(localDirectory, callback, state); }
+                myController.FileSystem.BeginPutFile(modFile, remoteFile, true, callback, state);
+                */
+
+                
+                
+                var filename = "RobotProgram";
+                var tempFile = Path.GetTempPath() + @"\" + filename + ".mod";
+                    
+                
+                using (StreamWriter writer = new StreamWriter(tempFile, false))
+                {
+                    for (int i = 0; i < modFile.Count; i++)
+                    {
+                        writer.WriteLine(modFile[i]);
+                    }
+                }
+
                 log.Add("Sending moduel to controller");
-                log.Add("");
+
+                using (Mastership m = Mastership.Request(myController.Rapid))
+                {
+                    // Load program to the controller
+                    tasks = myController.Rapid.GetTasks();
+                    tasks[0].LoadModuleFromFile(tempFile, RapidLoadMode.Replace);
+                }
+                if (File.Exists(tempFile))
+                {
+                    File.Delete(tempFile);
+                }
+                log.Add("Program has been loaded");
+
 
                 /*for (int i = 0; i < modFile.Count; ++i)
                 {
