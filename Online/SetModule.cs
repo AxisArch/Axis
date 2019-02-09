@@ -24,15 +24,16 @@ using Axis.Targets;
 
 namespace Axis.Online
 {
-    public class SetModule : GH_Component
+    public class SetModule : GH_Component, IGH_VariableParameterComponent
     {
         public List<string> Status { get; set; }
         //public Controller controller = null;
         private Task[] tasks = null;
 
-        public bool send = false;
-        private bool logOption;
-        private bool logOptionOut;
+        private bool send = false;
+        private bool logOption = false;
+        private bool logOptionOut = false;
+        private bool sending = false;
 
         // Create a list of string to store a log of the connection status.
         private List<string> log = new List<string>();
@@ -56,11 +57,7 @@ namespace Axis.Online
             pManager.AddGenericParameter("Controller", "Controller", "Recives the output from a controller module", GH_ParamAccess.item);
             pManager.AddBooleanParameter("Send", "Send", "Send to module", GH_ParamAccess.item, false);
             pManager.AddTextParameter("Moduel", "Module", "Module to be wtritten to the controller.", GH_ParamAccess.list);
-
-            for (int i = 0; i < 1; i++)
-            {
-                pManager[i].Optional = true;
-            }
+            pManager[1].Optional = true;
         }
 
         /// <summary>
@@ -78,8 +75,9 @@ namespace Axis.Online
         {
             GH_ObjectWrapper controller = new GH_ObjectWrapper();
             List<string> modFile = new List<string>();
+            Controller abbController = null;
             bool clear = false;
-            Controller myController = null;
+
 
             if (!DA.GetData("Controller", ref controller)) ;
             if (!DA.GetData("Send", ref send)) ;
@@ -89,29 +87,19 @@ namespace Axis.Online
                 if (!DA.GetData("Clear", ref clear)) ;
             }
 
-            
+            //Check for valid input, else top execuion
             AxisController myAxisController = controller.Value as AxisController;
-            if ((myAxisController != null) && (myAxisController.myAxisControllerType == "ABB"))
+            if ((myAxisController != null) && (myAxisController.axisControllerState == true))
             {
-                myController = myAxisController;
+                abbController = myAxisController;
             }
-            else { log.Add("No active controller connected"); }
+            else { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No active controller connected"); return;}
 
-            if ((myController != null) && send)
+            if ((abbController != null) && send)
             {
-                 /* 
-                string localDirectory = myController.FileSystem.LocalDirectory;
-                bool localDirectoryExists = myController.FileSystem.BeginDirectoryExists(path, callback, state);
-
-                if (localDirectoryExists = false) { myController.FileSystem.BeginCreateDirectory(localDirectory, callback, state); }
-                myController.FileSystem.BeginPutFile(modFile, remoteFile, true, callback, state);
-                */
-
-                
                 
                 var filename = "RobotProgram";
                 var tempFile = Path.GetTempPath() + @"\" + filename + ".mod";
-                    
                 
                 using (StreamWriter writer = new StreamWriter(tempFile, false))
                 {
@@ -121,48 +109,47 @@ namespace Axis.Online
                     }
                 }
 
-                log.Add("Sending moduel to controller");
-
-                using (Mastership m = Mastership.Request(myController.Rapid))
+                //Not working perfectly yet
+                if (sending == false)
                 {
-                    // Load program to the controller
-                    tasks = myController.Rapid.GetTasks();
-                    tasks[0].LoadModuleFromFile(tempFile, RapidLoadMode.Replace);
-                }
-                if (File.Exists(tempFile))
+                    sending = true;
+                    log.Add("Sending moduel to controller");
+                    try
+                    // Try not working propperly yet
+                    {
+                        using (Mastership m = Mastership.Request(abbController.Rapid))
+                        {
+                        // Load program to the controller
+                        tasks = abbController.Rapid.GetTasks();
+                        tasks[0].LoadModuleFromFile(tempFile, RapidLoadMode.Replace);
+                        }
+                    }
+                    catch (InvalidCastException e){ log.Add("Can't write to controller"); }
+
+                    if (File.Exists(tempFile))
                 {
                     File.Delete(tempFile);
                 }
-                log.Add("Program has been loaded");
+                    log.Add("Program has been loaded");
+                    sending = false;
 
-
-                /*for (int i = 0; i < modFile.Count; ++i)
-                {
-                    log.Add(modFile[i]);
-                 }*/
-
-                //if () { log.Add("Moduel recieved"); }
-
-
+                }
             }
-
-
+            
             if (clear)
             {
                 log.Clear();
                 log.Add("Log cleared.");
             }
 
-            if (logOptionOut)
-            {
-                Status = log;
-                DA.SetDataList("Log", log);
-            }
+            
+            Status = log;
+            DA.SetDataList("Log", log);
+            
 
             ExpireSolution(true);
         }
-        
-
+    
 
         /// <summary>
         /// Additional Input and Output parameters for the component
@@ -259,6 +246,31 @@ namespace Axis.Online
 
             ExpireSolution(true);
         }
+
+        // Serialize this instance to a Grasshopper writer object.
+        public override bool Write(GH_IO.Serialization.GH_IWriter writer)
+        {
+            writer.SetBoolean("LogOptionSetModule", this.logOption);
+            writer.SetBoolean("LogOptionSetOutModule", this.logOptionOut);
+            return base.Write(writer);
+        }
+
+        // Deserialize this instance from a Grasshopper reader object.
+        public override bool Read(GH_IO.Serialization.GH_IReader reader)
+        {
+            this.logOption = reader.GetBoolean("LogOptionSetModule");
+            this.logOptionOut = reader.GetBoolean("LogOptionSetOutModule");
+            return base.Read(reader);
+        }
+       
+        /// <summary>
+        /// Implement this interface in your component if you want to enable variable parameter UI.
+        /// </summary>
+        bool IGH_VariableParameterComponent.CanInsertParameter(GH_ParameterSide side, int index) => false;
+        bool IGH_VariableParameterComponent.CanRemoveParameter(GH_ParameterSide side, int index) => false;
+        IGH_Param IGH_VariableParameterComponent.CreateParameter(GH_ParameterSide side, int index) => null;
+        bool IGH_VariableParameterComponent.DestroyParameter(GH_ParameterSide side, int index) => false;
+        void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
 
         /// <summary>
         /// Provides an Icon for the component.

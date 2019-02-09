@@ -21,7 +21,7 @@ using Axis.Targets;
 
 namespace Axis.Online
 {
-    public class Connect : GH_Component
+    public class Connect : GH_Component, IGH_VariableParameterComponent
     {
         public string ControllerID { get; set; }
         public List<string> Status { get; set; }
@@ -160,6 +160,7 @@ namespace Axis.Online
                         {
                             log.Add("Robot controller " + controllers[index].ControllerName + " is available.");
 
+                            // Shound never be the case see base if statment
                             if (controller != null)
                             {
                                 controller.Logoff();
@@ -171,7 +172,9 @@ namespace Axis.Online
                             controller.Logon(UserInfo.DefaultUser);
                             log.Add("Connection to robot controller " + controller.SystemName + " established.");
 
+                            /*
                             // Get T_ROB1 queue to send messages to the RAPID task.
+                            // Needs to be moved later
                             if (!controller.Ipc.Exists("RMQ_T_ROB1"))
                             {
                                 controller.Ipc.CreateQueue("RMQ_T_ROB1", 10, Ipc.MaxMessageSize);
@@ -186,6 +189,7 @@ namespace Axis.Online
                             log.Add("Rapid Message Queue ID:" + queueID.ToString() + ".");
                             log.Add("Rapid Message Queue Name:" + queueName + ".");
                             RobotQueue = robotQueue;
+                            */
                         }
                         else
                         {
@@ -209,15 +213,18 @@ namespace Axis.Online
                     }
                 }
 
-                if (logOptionOut)
-                {
-                    Status = log;
-                    DA.SetDataList("Log", log);
-                }
 
-                //Wrapping the ABB Controller class in a Custom class for for controlling the representation in GH
-                AxisController myAxisController = new AxisController("ABB", controller);
-                DA.SetData(0, myAxisController);
+                Status = log;
+                DA.SetDataList("Log", log);
+                
+
+                if (controller != null)
+                {
+                    AxisController myAxisController = new AxisController(controller);
+                    DA.SetData(0, myAxisController);
+
+                }
+                else { DA.SetData(0, "No active connection"); }
 
                 ExpireSolution(true);
             }
@@ -321,6 +328,31 @@ namespace Axis.Online
 
             ExpireSolution(true);
         }
+
+        // Serialize this instance to a Grasshopper writer object.
+        public override bool Write(GH_IO.Serialization.GH_IWriter writer)
+        {
+            writer.SetBoolean("LogOptionConnect", this.logOption);
+            writer.SetBoolean("LogOptionOutConnect", this.logOptionOut);
+            return base.Write(writer);
+        }
+
+        // Deserialize this instance from a Grasshopper reader object.
+        public override bool Read(GH_IO.Serialization.GH_IReader reader)
+        {
+            this.logOption = reader.GetBoolean("LogOptionConnect");
+            this.logOptionOut = reader.GetBoolean("LogOptionOutConnect");
+            return base.Read(reader);
+        }
+
+        /// <summary>
+        /// Implement this interface in your component if you want to enable variable parameter UI.
+        /// </summary>
+        bool IGH_VariableParameterComponent.CanInsertParameter(GH_ParameterSide side, int index) => false;
+        bool IGH_VariableParameterComponent.CanRemoveParameter(GH_ParameterSide side, int index) => false;
+        IGH_Param IGH_VariableParameterComponent.CreateParameter(GH_ParameterSide side, int index) => null;
+        bool IGH_VariableParameterComponent.DestroyParameter(GH_ParameterSide side, int index) => false;
+        void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
 
 
         /// <summary>

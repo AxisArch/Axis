@@ -15,22 +15,42 @@ namespace Axis.Online
 {
     public class AxisController
     {
-        public Controller myAxisController { get; set; }
-        public string myAxisControllerType { get; }
+        // Methods
+        public Controller axisController { get; set; }
+        public string axisControllerModel { get;}
+        public bool axisControllerState { get;  }
 
+        // To be depricatdd
+        //public string axisControllerType { get; }
 
-        public AxisController() { }
-        public AxisController(string ControllerType, Controller controller)
+        // Constructors
+        public AxisController(Controller controller)
         {
-           this.myAxisController = controller;
-           this.myAxisControllerType = ControllerType;   
-        } 
+            this.axisController = controller;
+            this.axisControllerModel = controller.SystemName;
+            this.axisControllerState = true;
 
-        public static implicit operator Controller(AxisController controller) {
-            Controller myController = controller.myAxisController;
-            return myController;
         }
-        //public static implicit operator AxisController(Controller controller) { return controller; }
+        public AxisController(Controller controller, string model, bool conected)
+        {
+            this.axisController = controller;
+            this.axisControllerModel = model;
+            this.axisControllerState = conected;
+        }
+
+       
+        // Custom casting
+        public static implicit operator Controller(AxisController controller) {
+            
+            Type type = controller.axisController.GetType(); 
+            if (type.Equals(typeof(Controller)))
+            {
+                Controller abbController = controller.axisController;
+                return abbController;
+            }
+            else { Controller abbController = null;  return abbController; }
+        }
+        // Overrides
         public override string ToString(){ return "Axis.Controller";} 
     }
 
