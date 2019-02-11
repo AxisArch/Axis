@@ -230,7 +230,6 @@
     <Compile Include="Geometry\SurfaceFrame.cs" />
     <Compile Include="IO\GetDI.cs" />
     <Compile Include="IO\SetDO.cs" />
-    <Compile Include="Online\ABBComunication.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
