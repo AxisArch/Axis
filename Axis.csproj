@@ -362,7 +362,7 @@
     <None Include="Resources\Vision.png" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Online\module file.txt" />
+    <None Include="Online\module file.mod" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

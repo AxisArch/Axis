@@ -3,17 +3,13 @@
     RECORD SD
         string MoveMethod;
         pose ToolFrame;
-    ENDRECORD
-
-!    RECORD SD
-!        string MoveMethod;
 !        robjoint JointTarg;
 !        pos RobTarg;
 !        orient Orientation;
 !        num TCPSpeed;
 !        num ReorSpeed;
 !        pose ToolFrame;
-!    ENDRECORD
+    ENDRECORD
 
     PERS tooldata StreamingTool:=[TRUE,[[0,0,0],[1,0,0,0]],[1,[0,0,0.0001],[1,0,0,0],0,0,0]];
     VAR speeddata testTCPSpeed := [ 100, 20, 200, 15 ]; ! Custom speed object for online testing.
@@ -22,19 +18,25 @@
     VAR SD MyData;
 
     PROC Main()
-        CONNECT connectionNumber WITH Process;
-        IRMQMessage MyData,connectionNumber;
-
+		DeleteTrap;
+		AddTrap;
         WHILE flag=FALSE DO
             ! Idle wait for connection.
             WaitTime 0.01;
         ENDWHILE
 
         TPWrite "RMQ message received from server. Acknowledgement sent.";
-        IDelete connectionNumber;
-
         EXIT;
     ENDPROC
+
+	PROC DeleteTrap()
+		IDelete connectionNumber; 
+	ENDPROC
+
+	PROC AddTrap()
+		CONNECT connectionNumber WITH Process;
+        IRMQMessage MyData,connectionNumber;
+	ENDPROC
 
     TRAP Process
         VAR rmqmessage msg;
