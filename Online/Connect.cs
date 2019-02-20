@@ -46,7 +46,10 @@ namespace Axis.Online
 
         // Create a list of string to store a log of the connection status.
         private List<string> log = new List<string>();
-        
+
+        GH_Document GrasshopperDocument;
+        IGH_Component Component;
+
 
         /// <summary>
         /// Initializes a new instance of the Controller class.
@@ -112,13 +115,19 @@ namespace Axis.Online
             }
             
             this.controllerIndex = index;
-            
+
             if (activate)
             {
                 if (scan)
                 {
-                    // Scan the network for controllers and add them to our controller array
+                    // Scan the network for controllers and add them to our controller array       
                     scanner.Scan();
+
+                    if (ip != System.String.Empty)
+                    {
+                        NetworkScanner.AddRemoteController(ip);
+                    }
+
                     controllers = scanner.GetControllers();
 
                     if (controllers.Length > 0)
@@ -132,6 +141,28 @@ namespace Axis.Online
                         }
                     }
                     else { log.Add("Scan timed out. No controllers were found."); }
+                }
+
+                // Populate value list
+                if (clear && controllers.Length > 0 && controllers!= null)
+                {
+                    //instantiate  new value list and clear it
+                    var vallist = new Grasshopper.Kernel.Special.GH_ValueList();
+                    vallist.ListItems.Clear();
+
+                    //Create values for list and populate it
+                    for (int i = 0; i < controllers.Length; ++i)
+                    {
+                        var item = new Grasshopper.Kernel.Special.GH_ValueListItem(controllers[i].Name, i.ToString());
+                        vallist.ListItems.Add(item);
+                    }
+
+                    //Until now, the slider is a hypothetical object.
+                    // This command makes it 'real' and adds it to the canvas.
+                    //GrasshopperDocument.AddObject(vallist, false);
+
+                    //Connect the new slider to this component
+                    //this.Component.Params.Input[3].AddSource(vallist);
                 }
 
                 if (kill && controller != null)
