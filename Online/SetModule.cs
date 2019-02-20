@@ -142,9 +142,12 @@ namespace Axis.Online
                 log.Add("Log cleared.");
             }
 
-            
-            Status = log;
-            DA.SetDataList("Log", log);
+            if (logOptionOut)
+            {
+                Status = log;
+                DA.SetDataList("Log", log);
+            }
+
             
 
             ExpireSolution(true);
