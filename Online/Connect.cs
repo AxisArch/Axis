@@ -68,7 +68,7 @@ namespace Axis.Online
         {
             pManager.AddBooleanParameter("Activate", "Activate", "Activate the online communication module.", GH_ParamAccess.item, false);
             pManager.AddBooleanParameter("Scan", "Scan", "Scan the network for available controllers.", GH_ParamAccess.item, false);
-            pManager.AddTextParameter("IP", "IP", "IP adress of the controller to connect to.", GH_ParamAccess.item);
+            pManager.AddTextParameter("IP", "IP", "IP adress of the controller to connect to.", GH_ParamAccess.list);
             pManager.AddIntegerParameter("Index", "Index", "Index of the controller to connect to (if multiple connections are possible).", GH_ParamAccess.item, 0);
             pManager.AddBooleanParameter("Connect", "Connect", "Connect to the network controller.", GH_ParamAccess.item, false);
             pManager.AddBooleanParameter("Kill", "Kill", "Kill the process; logoff and dispose of network controllers.", GH_ParamAccess.item, false);
@@ -97,14 +97,14 @@ namespace Axis.Online
             bool scan = false;
             bool kill = false;
             bool clear = false;
-            string ip = System.String.Empty;
+            List<string> ipAddresses = new List<string>();
             int index = 0;
             bool connect = false;
          
           
             if (!DA.GetData("Activate", ref activate)) ;
-            if (!DA.GetData("Scan", ref scan)) ;         
-            if (!DA.GetData("IP", ref ip)) ;
+            if (!DA.GetData("Scan", ref scan)) ;
+            if (!DA.GetDataList("IP",  ipAddresses)){return;}
             if (!DA.GetData("Index", ref index)) ;
             if (!DA.GetData("Connect", ref connect)) ;
             if (!DA.GetData("Kill", ref kill)) ;
@@ -123,9 +123,9 @@ namespace Axis.Online
                     // Scan the network for controllers and add them to our controller array       
                     scanner.Scan();
 
-                    if (ip != System.String.Empty)
+                    if (ipAddresses != null)
                     {
-                        NetworkScanner.AddRemoteController(ip);
+                        foreach (string ip in ipAddresses) { NetworkScanner.AddRemoteController(ip); }
                     }
 
                     controllers = scanner.GetControllers();
@@ -244,9 +244,12 @@ namespace Axis.Online
                     }
                 }
 
+                if (logOptionOut)
+                {
+                    Status = log;
+                    DA.SetDataList("Log", log);
+                }
 
-                Status = log;
-                DA.SetDataList("Log", log);
                 
 
                 if (controller != null)
