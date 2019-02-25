@@ -355,12 +355,17 @@ namespace Axis.Core
                         isValid = false;
                     }
 
-                    // Check for singularity and replace the preview color.
-                    if (selectedAngles[4] > -singularityTol && selectedAngles[4] < singularityTol)
+                    // If no tool is present this would else fail
+                    try
                     {
-                        colors[5] = ("59, 162, 117");
-                        log.Add("Close to singularity.");
+                        // Check for singularity and replace the preview color.
+                        if (selectedAngles[4] > -singularityTol && selectedAngles[4] < singularityTol)
+                        {
+                            colors[5] = ("59, 162, 117");
+                            log.Add("Close to singularity.");
+                        }
                     }
+                    catch { }
                 }
             }
 
@@ -533,11 +538,22 @@ namespace Axis.Core
             // Transform tool per target to robot flange.
             List<Mesh> toolMeshes = new List<Mesh>();
             Transform orientFlange = Transform.PlaneToPlane(Plane.WorldXY, flangeOut);
-            foreach (Mesh m in robTarg.Tool.Geometry)
+
+            // Add Warning if no mesh is present
+            try
             {
-                Mesh tool = m.DuplicateMesh();
-                tool.Transform(orientFlange);
-                toolMeshes.Add(tool);
+                foreach (Mesh m in robTarg.Tool.Geometry)
+                {
+                    Mesh tool = m.DuplicateMesh();
+                    tool.Transform(orientFlange);
+                    toolMeshes.Add(tool);
+                }
+            }
+            catch
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No tool mesh present");
+
+                //return;
             }
                         
             colorsOut = colors;
