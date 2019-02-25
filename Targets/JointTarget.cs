@@ -5,6 +5,8 @@ using System.Windows.Forms;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
 using Rhino.Geometry;
+using Axis.Core;
+using Axis.Tools;
 
 namespace Axis.Targets
 {
@@ -39,6 +41,7 @@ namespace Axis.Targets
             pManager.AddNumberParameter("A4", "A4", "Axis value for axis four.", GH_ParamAccess.item, 0);
             pManager.AddNumberParameter("A5", "A5", "Axis value for axis five.", GH_ParamAccess.item, 0);
             pManager.AddNumberParameter("A6", "A6", "Axis value for axis six.", GH_ParamAccess.item, 0);
+            pManager.AddGenericParameter("Tool", "Tool", "Tool to use for operation.", GH_ParamAccess.item);
             pManager.AddGenericParameter("Speed", "Speed", "Speed to use for the movement.", GH_ParamAccess.item);
             pManager.AddGenericParameter("Zone", "Zone", "Zone to use for the movement.", GH_ParamAccess.item);
             pManager[0].Optional = true;
@@ -49,6 +52,7 @@ namespace Axis.Targets
             pManager[5].Optional = true;
             pManager[6].Optional = true;
             pManager[7].Optional = true;
+            pManager[8].Optional = true;
         }
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
@@ -66,8 +70,10 @@ namespace Axis.Targets
             double a6 = 0;
             double rot = 0;
             double lin = 0;
+            Tool tool = Tool.Default;
             Speed speed = Speed.Default;
             Zone zone = Zone.Default;
+            
 
             if (!DA.GetData(0, ref a1)) a1 = 0;
             if (!DA.GetData(1, ref a2)) a2 = 0;
@@ -75,8 +81,10 @@ namespace Axis.Targets
             if (!DA.GetData(3, ref a4)) a4 = 0;
             if (!DA.GetData(4, ref a5)) a5 = 0;
             if (!DA.GetData(5, ref a6)) a6 = 0;
-            if (!DA.GetData(6, ref speed)) ;
-            if (!DA.GetData(7, ref zone)) ;
+            if (!DA.GetData(6, ref tool)) ;
+            if (!DA.GetData(7, ref speed)) ;
+            if (!DA.GetData(8, ref zone)) ;
+
 
             if (useRotary) { if (!DA.GetData("Rotary", ref rot)) return; }
             if (useLinear) { if (!DA.GetData("Linear", ref lin)) return; }
@@ -89,7 +97,7 @@ namespace Axis.Targets
             axisVals.Add(Math.Round(a5, 4));
             axisVals.Add(Math.Round(a6, 4));
 
-            Target jointTarget = new Target(axisVals, speed, zone, rot, lin, manufacturer);
+            Target jointTarget = new Target(axisVals, speed, zone, tool, rot, lin, manufacturer);
 
             DA.SetData(0, jointTarget);
         }
