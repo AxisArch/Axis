@@ -138,7 +138,7 @@ namespace Axis.Workflow
                         }
 
                         //ws.Cells["A1"].LoadFromDataTable(dt, !hideHeaders);
-                        ws.Cells["A1"].LoadFromDataTable(dt, !hideHeaders);
+                        ws.Cells[startCell].LoadFromDataTable(dt, !hideHeaders);
 
                         int startPos = 2; if (hideHeaders) { startPos = 1; }
 
