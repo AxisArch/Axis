@@ -46,6 +46,7 @@ namespace Axis.Workflow
             pManager.AddGenericParameter("Headers", "Headers", "Headers for column data.", GH_ParamAccess.tree);
             pManager.AddGenericParameter("Values", "Values", "Values to store in each row. Data structure must match header branches.", GH_ParamAccess.tree);
             pManager.AddBooleanParameter("Run", "Run", "Create or overwrite the Excel file at the specified location.", GH_ParamAccess.item, false);
+            pManager.AddBooleanParameter("Append", "Append", "Append the input to the file.", GH_ParamAccess.item, false);
         }
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
@@ -64,12 +65,14 @@ namespace Axis.Workflow
             GH_Structure<IGH_Goo> values = new GH_Structure<IGH_Goo>();
 
             bool run = false;
+            bool append = false;
 
             if (!DA.GetData(0, ref path)) return;
             if (!DA.GetData(1, ref sheet)) return;
             if (!DA.GetDataTree(2, out headers)) return;
             if (!DA.GetDataTree(3, out values)) return;
             if (!DA.GetData(4, ref run)) return;
+            if (!DA.GetData("Append", ref append)) return;
 
             DataTable dt = new DataTable();
 
@@ -121,6 +124,17 @@ namespace Axis.Workflow
                         {
                             pck.Workbook.Worksheets.Delete(sheet);
                             ws = pck.Workbook.Worksheets.Add(sheet);
+                        }
+
+                        string startCell = "A1";
+
+                        if (append)
+                        {
+                            int newPosition = 1;
+                            newPosition = ws.Dimension.End.Row;
+                            newPosition += 1;
+                            startCell = "A" + newPosition;
+                            hideHeaders = true;
                         }
 
                         //ws.Cells["A1"].LoadFromDataTable(dt, !hideHeaders);
