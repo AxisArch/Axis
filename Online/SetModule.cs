@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using System.Diagnostics;
 
 
 using Grasshopper.Kernel;
@@ -98,9 +99,15 @@ namespace Axis.Online
             if ((abbController != null) && send)
             {
                 
-                var filename = "RobotProgram";
+                var filename = "MyModule";
+                string localDir = abbController.FileSystem.LocalDirectory;
+
+                //var tempFile = localDir +@"\" + filename + ".mod";
                 var tempFile = Path.GetTempPath() + @"\" + filename + ".mod";
                 
+
+                Debug.WriteLine("TEST");
+
                 using (StreamWriter writer = new StreamWriter(tempFile, false))
                 {
                     for (int i = 0; i < modFile.Count; i++)
@@ -115,24 +122,50 @@ namespace Axis.Online
                     sending = true;
                     log.Add("Sending moduel to controller");
                     try
-                    // Try not working propperly yet
                     {
                         using (Mastership m = Mastership.Request(abbController.Rapid))
                         {
-                        // Load program to the controller
-                        tasks = abbController.Rapid.GetTasks();
-                        tasks[0].LoadModuleFromFile(tempFile, RapidLoadMode.Replace);
+                            if (abbController.IsVirtual)
+                            {
+                                // Load program to virtual controller
+                                tasks = abbController.Rapid.GetTasks();
+                                tasks[0].LoadModuleFromFile(tempFile, RapidLoadMode.Replace);
+
+                                if (File.Exists(tempFile)) { File.Delete(tempFile); }
+                                log.Add("Program has been loaded to virtual controler");
+                                sending = false;
+                            }
+                            else
+                            {
+                                // Load program to physical controller
+                                tasks = abbController.Rapid.GetTasks();
+                                
+                                //HOME:/myfilename.txt
+                                string remoteDir = abbController.FileSystem.RemoteDirectory;
+                                //string localDir = abbController.FileSystem.LocalDirectory;
+                                //string remoteFilePath = abbController.GetEnvironmentVariable("HOME") + @"/Axis/" + "mrp.mod";
+
+                                // Missing
+                                //if (file exists on controller)
+                                //{
+                                //    delete file
+                                //}
+                                abbController.FileSystem.PutFile(tempFile, @"Axis/AxisModule2.mod");
+                                tasks[0].LoadModuleFromFile(@"Axis/AxisModule2.mod", RapidLoadMode.Replace);
+
+                                //Works
+                                //string testfile = @"/hd0a/120-100237/HOME/HALTasks/T_ROB1/MainModule.mod";
+                                //tasks[0].LoadModuleFromFile(testfile, RapidLoadMode.Replace);
+
+                                if (File.Exists(tempFile)) { File.Delete(tempFile); }
+                                log.Add("Program has been loaded to controler");
+                                sending = false;
+                            }
+
                         }
                     }
-                    catch (InvalidCastException e){ log.Add("Can't write to controller"); }
-
-                    if (File.Exists(tempFile))
-                {
-                    File.Delete(tempFile);
-                }
+                    catch (Exception e) { log.Add("Can't write to controller"); log.Add(e.ToString()); Debug.WriteLine(e.Message); sending = false; if (File.Exists(tempFile)) { File.Delete(tempFile); }; return; }
                     log.Add("Program has been loaded");
-                    sending = false;
-
                 }
             }
             
