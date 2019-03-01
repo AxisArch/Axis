@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
-using System.Diagnostics;
 
 
 using Grasshopper.Kernel;
@@ -96,17 +95,12 @@ namespace Axis.Online
             }
             else { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No active controller connected"); return;}
 
+
             if ((abbController != null) && send)
             {
                 
                 var filename = "MyModule";
-                string localDir = abbController.FileSystem.LocalDirectory;
-
-                //var tempFile = localDir +@"\" + filename + ".mod";
                 var tempFile = Path.GetTempPath() + @"\" + filename + ".mod";
-                
-
-                Debug.WriteLine("TEST");
 
                 using (StreamWriter writer = new StreamWriter(tempFile, false))
                 {
@@ -171,11 +165,12 @@ namespace Axis.Online
 
                         }
                     }
-                    catch (Exception e) { log.Add("Can't write to controller"); log.Add(e.ToString()); Debug.WriteLine(e.Message); sending = false; if (File.Exists(tempFile)) { File.Delete(tempFile); }; return; }
+                    catch (Exception e) { log.Add("Can't write to controller"); log.Add(e.ToString()); sending = false; if (File.Exists(tempFile)) { File.Delete(tempFile); }; return; }
                     //log.Add("Program has been loaded");
                 }
             }
             
+
             if (clear)
             {
                 log.Clear();
