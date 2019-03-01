@@ -153,11 +153,16 @@ namespace Axis.Online
                                     abbController.FileSystem.CreateDirectory(@"Axis");
                                 }
 
+                                //Delete all previouse tasks
+                                for (int i=0; i < tasks.Length; ++i) { tasks[i].DeleteProgram(); }
+
                                 //Code 
                                 abbController.FileSystem.PutFile(tempFile, @"Axis/AxisModule.mod");
                                 tasks[0].LoadModuleFromFile(@"Axis/AxisModule.mod", RapidLoadMode.Replace);
 
                                 //Add retun message if module could not be loaded
+                                // CheckProgram()?
+
 
                                 if (File.Exists(tempFile)) { File.Delete(tempFile); }
                                 log.Add("Program has been loaded to controler");
