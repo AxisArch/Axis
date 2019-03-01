@@ -233,6 +233,8 @@
     <Compile Include="Online\ABBComunication.cs" />
     <Compile Include="Online\AxisControllers.cs" />
     <Compile Include="Online\Connect.cs" />
+    <Compile Include="Online\Streaming.cs" />
+    <Compile Include="Online\StartStop.cs" />
     <Compile Include="Online\SetModule.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
