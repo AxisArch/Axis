@@ -139,23 +139,25 @@ namespace Axis.Online
                             {
                                 // Load program to physical controller
                                 tasks = abbController.Rapid.GetTasks();
-                                
-                                //HOME:/myfilename.txt
-                                string remoteDir = abbController.FileSystem.RemoteDirectory;
-                                //string localDir = abbController.FileSystem.LocalDirectory;
-                                //string remoteFilePath = abbController.GetEnvironmentVariable("HOME") + @"/Axis/" + "mrp.mod";
 
-                                // Missing
-                                //if (file exists on controller)
-                                //{
-                                //    delete file
-                                //}
-                                abbController.FileSystem.PutFile(tempFile, @"Axis/AxisModule2.mod");
-                                tasks[0].LoadModuleFromFile(@"Axis/AxisModule2.mod", RapidLoadMode.Replace);
+                                // Missing Check if file and directory exist
+                                if (abbController.FileSystem.DirectoryExists(@"Axis"))
+                                {
+                                    if (abbController.FileSystem.FileExists(@"Axis/AxisModule.mod"))
+                                    {
+                                        abbController.FileSystem.RemoveFile(@"Axis/AxisModule.mod");
+                                    }
+                                }
+                                else
+                                {
+                                    abbController.FileSystem.CreateDirectory(@"Axis");
+                                }
 
-                                //Works
-                                //string testfile = @"/hd0a/120-100237/HOME/HALTasks/T_ROB1/MainModule.mod";
-                                //tasks[0].LoadModuleFromFile(testfile, RapidLoadMode.Replace);
+                                //Code 
+                                abbController.FileSystem.PutFile(tempFile, @"Axis/AxisModule.mod");
+                                tasks[0].LoadModuleFromFile(@"Axis/AxisModule.mod", RapidLoadMode.Replace);
+
+                                //Add retun message if module could not be loaded
 
                                 if (File.Exists(tempFile)) { File.Delete(tempFile); }
                                 log.Add("Program has been loaded to controler");
@@ -165,7 +167,7 @@ namespace Axis.Online
                         }
                     }
                     catch (Exception e) { log.Add("Can't write to controller"); log.Add(e.ToString()); Debug.WriteLine(e.Message); sending = false; if (File.Exists(tempFile)) { File.Delete(tempFile); }; return; }
-                    log.Add("Program has been loaded");
+                    //log.Add("Program has been loaded");
                 }
             }
             
