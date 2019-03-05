@@ -128,21 +128,53 @@ namespace Axis.Targets
                     }                
                 }
 
+                
                 // External axis values
                 string lin = "9E9"; string rot = "9E9";
-                if (extRot != Util.ExAxisTol || extLin != Util.ExAxisTol) // If the external axis value is present... (otherwise 0.00001 is passed as a default value).
+
+                //RelTool Offset
+                if (tool.relTool != Vector3d.Zero)
                 {
-                    if (extLin != Util.ExAxisTol)
+                    // External axis values
+                    if (extRot != Util.ExAxisTol || extLin != Util.ExAxisTol) // If the external axis value is present... (otherwise 0.00001 is passed as a default value).
                     {
-                        lin = Math.Round(extLin, 4).ToString();
+                        if (extLin != Util.ExAxisTol)
+                        {
+                            lin = Math.Round(extLin, 4).ToString();
+                        }
+                        if (extRot != Util.ExAxisTol)
+                        {
+                            rot = Math.Round(extRot, 2).ToString(); // Get the external axis value per target and round it to two decimal places.
+                        }
+                        if (movement != "MoveL") { return; }
+                        strABB = movement + " RelTool" + @" ([[" + ABBposition + "],[" + strQuat + "]], " + tool.relTool.X.ToString() + ", " + tool.relTool.Y.ToString() + "," + tool.relTool.Z.ToString() + ") cData, eAxis], " + strSpeed + ", " + strZone + ", " + tool.Name + " " + workObject + ";";
                     }
-                    if (extRot != Util.ExAxisTol)
+                    else
                     {
-                        rot = Math.Round(extRot, 2).ToString(); // Get the external axis value per target and round it to two decimal places.
+                        if (movement != "MoveL") { return; }
+                        strABB = movement + " RelTool" + @" ([[" + ABBposition + "],[" + strQuat + "]], " + tool.relTool.X.ToString() + ", " + tool.relTool.Y.ToString() +"," + tool.relTool.Z.ToString() +") cData, eAxis], " + strSpeed + ", " + strZone + ", " + tool.Name + " " + workObject + ";";
                     }
-                    strABB = movement + @" [[" + ABBposition + "],[" + strQuat + "]," + " cData, " + "[" + rot + ", " + lin + ", 9E9, 9E9, 9E9, 9E9]" + "], " + strSpeed + ", " + strZone + ", " + tool.Name + " " + workObject + ";";
                 }
-                else { strABB = movement + @" [[" + ABBposition + "],[" + strQuat + "]," + " cData, eAxis], " + strSpeed + ", " + strZone + ", " + tool.Name + " " + workObject + ";"; }
+                else
+                {
+                    // External axis values
+                    if (extRot != Util.ExAxisTol || extLin != Util.ExAxisTol) // If the external axis value is present... (otherwise 0.00001 is passed as a default value).
+                    {
+                        if (extLin != Util.ExAxisTol)
+                        {
+                            lin = Math.Round(extLin, 4).ToString();
+                        }
+                        if (extRot != Util.ExAxisTol)
+                        {
+                            rot = Math.Round(extRot, 2).ToString(); // Get the external axis value per target and round it to two decimal places.
+                        }
+                        strABB = movement + @" [[" + ABBposition + "],[" + strQuat + "]," + " cData, " + "[" + rot + ", " + lin + ", 9E9, 9E9, 9E9, 9E9]" + "], " + strSpeed + ", " + strZone + ", " + tool.Name + " " + workObject + ";";
+                    }
+                    else { strABB = movement + @" [[" + ABBposition + "],[" + strQuat + "]," + " cData, eAxis], " + strSpeed + ", " + strZone + ", " + tool.Name + " " + workObject + ";"; }
+
+                }
+
+                
 
             }
 

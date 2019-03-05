@@ -35,6 +35,7 @@ namespace Axis.Robot
         bool manufacturer = false;
         bool toolWeight = false;
         bool declaration = false;
+        bool relTool = false;
 
         public CreateTool() : base("Tool", "Tool", "Define a custom robot tool object.", "Axis", "2. Robot")
         {
@@ -58,6 +59,7 @@ namespace Axis.Robot
             Plane TCP = Plane.WorldXY;
             double weight = 2.5;
             List<Mesh> mesh = new List<Mesh>();
+            Vector3d reltoolOffset = new Vector3d(0,0,0);
 
             if (!DA.GetData(0, ref name)) return;
             if (!DA.GetData(1, ref TCP)) return;
@@ -76,8 +78,12 @@ namespace Axis.Robot
             {
                 if (!DA.GetData("Weight", ref weight)) return;
             }
+            if (relTool)
+            {
+                if (!DA.GetData("RelTool", ref reltoolOffset)) return;
+            }
 
-            Tool tool = new Tool(name, TCP, weight, mesh, manufacturer);
+            Tool tool = new Tool(name, TCP, weight, mesh, manufacturer, reltoolOffset);
 
             DA.SetData(0, tool);
 
@@ -88,9 +94,10 @@ namespace Axis.Robot
         }
 
         // Build a list of optional input and output parameters
-        IGH_Param[] inputParams = new IGH_Param[1]
+        IGH_Param[] inputParams = new IGH_Param[2]
         {
-        new Param_Number() { Name = "Weight", NickName = "Weight", Description = "The weight of the tool in kilograms. Necessary for accurate motion planning." },
+            new Param_Number() { Name = "Weight", NickName = "Weight", Description = "The weight of the tool in kilograms. Necessary for accurate motion planning." },
+            new Param_Vector() { Name = "RelTool", NickName = "RelTool", Description = "Relative tool offset." },
         };
 
         IGH_Param[] outputParams = new IGH_Param[1]
@@ -107,6 +114,8 @@ namespace Axis.Robot
             weightOption.ToolTipText = "Add an parameter to define the weight of the tool.";
             ToolStripMenuItem declOption = Menu_AppendItem(menu, "Create Declaration", Declaration_Click, true, declaration);
             declOption.ToolTipText = "If checked, the component will also output the manufacturer-specific tool declaration.";
+            ToolStripMenuItem reltoolOption = Menu_AppendItem(menu, "Relative Tool Offset", RelTool_Click, true, relTool);
+            reltoolOption.ToolTipText = "If checked, the component will also output the manufacturer-specific tool declaration.";
         }
 
         private void KUKA_Click(object sender, EventArgs e)
@@ -144,6 +153,22 @@ namespace Axis.Robot
             else
             {
                 Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Declaration"), true);
+            }
+            ExpireSolution(true);
+        }
+        private void RelTool_Click(object sender, EventArgs e)
+        {
+            RecordUndoEvent("Relative Tool Offset");
+            relTool = !relTool;
+
+            // If the option to define the weight of the tool is enabled, add the input.
+            if (relTool)
+            {
+                AddInput(1);
+            }
+            else
+            {
+                Params.UnregisterInputParameter(Params.Input.FirstOrDefault(x => x.Name == "Relative Tool Offset"), true);
             }
             ExpireSolution(true);
         }
@@ -205,6 +230,7 @@ namespace Axis.Robot
             writer.SetBoolean("KukaTool", this.manufacturer);
             writer.SetBoolean("Weight", this.toolWeight);
             writer.SetBoolean("Declaration", this.declaration);
+            writer.SetBoolean("Relative Tool Offset", this.relTool);
             return base.Write(writer);
         }
 
@@ -214,6 +240,7 @@ namespace Axis.Robot
             this.manufacturer = reader.GetBoolean("KukaTool");
             this.toolWeight = reader.GetBoolean("Weight");
             this.declaration = reader.GetBoolean("Declaration");
+            this.relTool = reader.GetBoolean("Relative Tool Offset");
             return base.Read(reader);
         }
 
