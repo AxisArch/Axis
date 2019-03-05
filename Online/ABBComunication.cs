@@ -43,8 +43,7 @@ namespace Axis.Online
         ControllerInfo[] controllers = null;
 
         ABB.Robotics.Controllers.RapidDomain.RobTarget cRobTarg;
-        ABB.Robotics.Controllers.RapidDomain.Byte[] data;
-        //System.Byte[] data;
+        System.Byte[] data;
 
         // Create a list of string to store a log of the connection status.
         private List<string> log = new List<string>();
@@ -420,7 +419,7 @@ namespace Axis.Online
                             pose.ToString() +
                             "]";
 
-                        System.Byte[] data = new UTF8Encoding().GetBytes(content);
+                        byte[] data = new UTF8Encoding().GetBytes(content);
 
                         message.SetData(data);
                         RobotQueue.Send(message);
