@@ -352,6 +352,7 @@
     <None Include="Resources\SurfaceFrame.png" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="bin\" />
     <Folder Include="Vision\" />
   </ItemGroup>
   <ItemGroup>
