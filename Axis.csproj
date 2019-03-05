@@ -363,7 +363,9 @@
     <None Include="Resources\Vision.png" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Online\module file.mod" />
+    <None Include="Online\moduleFile.mod">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

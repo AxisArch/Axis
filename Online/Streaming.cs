@@ -31,6 +31,8 @@ namespace Axis.Online
         private bool logOptionOut = false;
         public List<string> Status { get; set; }
 
+        private bool modOption = false;
+
         public Controller controller = null;
         private Task[] tasks = null;
         public IpcQueue RobotQueue { get; set; }
@@ -278,6 +280,23 @@ namespace Axis.Online
             DA.SetDataList("IO", IOstatus);
             DA.SetData("TCP", new GH_Plane(tcp));
 
+            //Output module file to prime controller for straming
+            if (modOption)
+            {
+                List<string> ModFile = new List<string>();
+
+                using (TextReader reader = File.OpenText(@"Online\moduleFile.mod"))
+                {
+                    string line;
+                    while ((line = reader.ReadLine()) != null)
+                    {
+                        ModFile.Add(line);
+                    }
+                }
+                DA.SetDataList("Steaming Module", ModFile);
+
+            }
+
             ExpireSolution(true);
 
         }
@@ -291,16 +310,20 @@ namespace Axis.Online
             new Param_Boolean() { Name = "Clear", NickName = "Clear", Description = "Clear the communication log.", Access = GH_ParamAccess.item, Optional = true},
         };
         // Build a list of optional output parameters
-        IGH_Param[] outputParams = new IGH_Param[1]
+        IGH_Param[] outputParams = new IGH_Param[2]
         {
-        new Param_String() { Name = "Log", NickName = "Log", Description = "Log checking the connection status"},
+            new Param_String() { Name = "Steaming Module", NickName = "SMod", Description = "Module that needsa to be running on the controller for streaming live targets"},
+            new Param_String() { Name = "Log", NickName = "Log", Description = "Log checking the connection status"},
         };
 
         // The following functions append menu items and then handle the item clicked event.
         protected override void AppendAdditionalComponentMenuItems(System.Windows.Forms.ToolStripDropDown menu)
         {
+            ToolStripMenuItem modFile = Menu_AppendItem(menu, "Steaming Module", mod_Click, true, modOption);
+            modFile.ToolTipText = "Activate the module file output";
             ToolStripMenuItem log = Menu_AppendItem(menu, "Log", log_Click, true, logOption);
             log.ToolTipText = "Activate the log output";
+
 
             //ToolStripSeparator seperator = Menu_AppendSeparator(menu);
         }
@@ -312,7 +335,7 @@ namespace Axis.Online
             if (logOption)
             {
                 AddInput(0);
-                AddOutput(0);
+                AddOutput(1);
                 logOptionOut = true;
             }
             else
@@ -320,6 +343,22 @@ namespace Axis.Online
                 Params.UnregisterInputParameter(Params.Input.FirstOrDefault(x => x.Name == "Clear"), true);
                 Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Log"), true);
                 logOptionOut = false;
+            }
+
+            //ExpireSolution(true);
+        }
+        private void mod_Click(object sender, EventArgs e)
+        {
+            RecordUndoEvent("Steaming Module");
+            modOption = !modOption;
+
+            if (modOption)
+            {
+                AddOutput(0);
+            }
+            else
+            {
+                Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Steaming Module"), true);
             }
 
             //ExpireSolution(true);
@@ -383,6 +422,7 @@ namespace Axis.Online
         {
             writer.SetBoolean("LogOptionSetModule", this.logOption);
             writer.SetBoolean("LogOptionSetOutModule", this.logOptionOut);
+            writer.SetBoolean("ModFileOption", this.modOption); 
             return base.Write(writer);
         }
 
@@ -391,6 +431,7 @@ namespace Axis.Online
         {
             this.logOption = reader.GetBoolean("LogOptionSetModule");
             this.logOptionOut = reader.GetBoolean("LogOptionSetOutModule");
+            this.modOption = reader.GetBoolean("ModFileOption");
             return base.Read(reader);
         }
 
