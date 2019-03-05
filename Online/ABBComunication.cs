@@ -413,29 +413,14 @@ namespace Axis.Online
                         pose.Trans = pos;
                         pose.Rot = ori;
 
-                        //string content = "SD;" + targ.Method.ToString() + "," + pose.ToString();
-                        //string content = @"SD; MoveL [[452.449, 317.017, 170.838],[0, 0, 1, 0], cData, eAxis], v50, z150, tool0 \Wobj:=wobj0;";
-                        //string content = @"SD; MoveL [[242.500, -253.300, 73.9],[0.00249, -0.25881, 0.96592, -0.00403], cData, eAxis], v100, z150, tool0 \Wobj:=wobj0;";
-                        //string content = @"SD; MoveL [[341.000, -253.300, 73.9],[0.00249, -0.25881, 0.96592, -0.00403], cData, eAxis], v100, z150, tool0 \Wobj:=wobj0;";
-                        string content = "SD;[\"Linear\",[[452.4485,317.0168,170.8382],[0,0,1,0]]]";
-                        
-
-                        //byte[] msgdata = new UTF8Encoding().GetBytes(content);
-                        //ABB.Robotics.Controllers.RapidDomain.Byte data = msgdata;
-
-                        // keep message the same legth or create new ipc objects
-
-
-                        //for (int i = 0; i < msgdata.Length ; i++)
-                        //{
-                        //   data[i] = (ABB.Robotics.Controllers.RapidDomain.Byte[])msgdata[i];
-                        //}
+                        string content = "SD;[" +
+                            "\"Linear\"," +
+                            pos.ToString() + "," +
+                            ori.ToString() +"," +
+                            pose.ToString() +
+                            "]";
 
                         System.Byte[] data = new UTF8Encoding().GetBytes(content);
-
-                        // TEST -> seems to be working
-                        //byte[] n = new byte[] { 10, 20, 30, 40 };
-                        //message.SetData(n);
 
                         message.SetData(data);
                         RobotQueue.Send(message);
