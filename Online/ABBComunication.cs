@@ -43,7 +43,8 @@ namespace Axis.Online
         ControllerInfo[] controllers = null;
 
         ABB.Robotics.Controllers.RapidDomain.RobTarget cRobTarg;
-        System.Byte[] data;
+        ABB.Robotics.Controllers.RapidDomain.Byte[] data;
+        //System.Byte[] data;
 
         // Create a list of string to store a log of the connection status.
         private List<string> log = new List<string>();
@@ -416,20 +417,25 @@ namespace Axis.Online
                         //string content = @"SD; MoveL [[452.449, 317.017, 170.838],[0, 0, 1, 0], cData, eAxis], v50, z150, tool0 \Wobj:=wobj0;";
                         //string content = @"SD; MoveL [[242.500, -253.300, 73.9],[0.00249, -0.25881, 0.96592, -0.00403], cData, eAxis], v100, z150, tool0 \Wobj:=wobj0;";
                         //string content = @"SD; MoveL [[341.000, -253.300, 73.9],[0.00249, -0.25881, 0.96592, -0.00403], cData, eAxis], v100, z150, tool0 \Wobj:=wobj0;";
-                        string content = @"SD; Linear,[[452.4485,317.0168,170.8382],[0,0,1,0]]";
-                        //string content = @"bool;TRUE";
-
+                        string content = "SD;[\"Linear\",[[452.4485,317.0168,170.8382],[0,0,1,0]]]";
                         
-                        byte[] msgdata = new UTF8Encoding().GetBytes(content);
-                        data = msgdata;
+
+                        //byte[] msgdata = new UTF8Encoding().GetBytes(content);
+                        //ABB.Robotics.Controllers.RapidDomain.Byte data = msgdata;
+
+                        // keep message the same legth or create new ipc objects
 
 
-                        /*
-                        for (int i = 0; i < msgdata.Length; i++)
-                        {
-                           data[i] = (ABB.Robotics.Controllers.RapidDomain.Byte[])msgdata[i];
-                        }*/
-                        
+                        //for (int i = 0; i < msgdata.Length ; i++)
+                        //{
+                        //   data[i] = (ABB.Robotics.Controllers.RapidDomain.Byte[])msgdata[i];
+                        //}
+
+                        System.Byte[] data = new UTF8Encoding().GetBytes(content);
+
+                        // TEST -> seems to be working
+                        //byte[] n = new byte[] { 10, 20, 30, 40 };
+                        //message.SetData(n);
 
                         message.SetData(data);
                         RobotQueue.Send(message);
