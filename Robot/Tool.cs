@@ -168,7 +168,7 @@ namespace Axis.Robot
             }
             else
             {
-                Params.UnregisterInputParameter(Params.Input.FirstOrDefault(x => x.Name == "Relative Tool Offset"), true);
+                Params.UnregisterInputParameter(Params.Input.FirstOrDefault(x => x.Name == "RelTool"), true);
             }
             ExpireSolution(true);
         }
