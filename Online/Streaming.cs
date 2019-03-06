@@ -258,7 +258,17 @@ namespace Axis.Online
                     byte[] data = new UTF8Encoding().GetBytes(content);
 
                     message.SetData(data);
-                    RobotQueue.Send(message);
+                    try
+                    {
+                        RobotQueue.Send(message);
+                        //Reset PP and restart if if error on controller(?)
+                    }
+                    catch (Exception e)
+                    {
+                        // Clear que if full
+                        return;
+                        //throw;
+                    }
                 }
             }
 

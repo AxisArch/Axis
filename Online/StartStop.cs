@@ -83,8 +83,10 @@ namespace Axis.Online
             {
                 if (!DA.GetData("Clear", ref clear)) ;
             }
+            // Check for input
+            if (controllers.Count == 0) { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No active contoller conected"); }
 
-
+            // Body of the code  
             for (int i = 0; i < controllers.Count; i++)
             {
                 //Check for valid input, else top execuion
