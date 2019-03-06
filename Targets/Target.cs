@@ -133,45 +133,36 @@ namespace Axis.Targets
                 string lin = "9E9"; string rot = "9E9";
 
                 //RelTool Offset
+                //Working Example below
+                //MoveL RelTool ([[416.249, -110.455, 0],[0, 0, 1, 0], cData, eAxis], 0, 0,-120), v50, z1, tool0 \Wobj:=wobj0;
+
+
+
+                //Creating Point
+                string point = "";
+                if (extRot != Util.ExAxisTol || extLin != Util.ExAxisTol) // If the external axis value is present... (otherwise 0.00001 is passed as a default value).
+                {
+                    if (extLin != Util.ExAxisTol)
+                    {
+                        lin = Math.Round(extLin, 4).ToString();
+                    }
+                    if (extRot != Util.ExAxisTol)
+                    {
+                        rot = Math.Round(extRot, 2).ToString(); // Get the external axis value per target and round it to two decimal places.
+                    }
+                    point = @" [[" + ABBposition + "],[" + strQuat + "]," + " cData, " + "[" + rot + ", " + lin + ", 9E9, 9E9, 9E9, 9E9]" + "]";
+                }
+                else{point = @" [[" + ABBposition + "],[" + strQuat + "]," + " cData, eAxis]";}
+
                 if (tool.relTool != Vector3d.Zero)
                 {
-                    // External axis values
-                    if (extRot != Util.ExAxisTol || extLin != Util.ExAxisTol) // If the external axis value is present... (otherwise 0.00001 is passed as a default value).
-                    {
-                        if (extLin != Util.ExAxisTol)
-                        {
-                            lin = Math.Round(extLin, 4).ToString();
-                        }
-                        if (extRot != Util.ExAxisTol)
-                        {
-                            rot = Math.Round(extRot, 2).ToString(); // Get the external axis value per target and round it to two decimal places.
-                        }
-                        if (movement != "MoveL") { return; }
-                        strABB = movement + " RelTool" + @" ([[" + ABBposition + "],[" + strQuat + "]], " + tool.relTool.X.ToString() + ", " + tool.relTool.Y.ToString() + "," + tool.relTool.Z.ToString() + ") cData, eAxis], " + strSpeed + ", " + strZone + ", " + tool.Name + " " + workObject + ";";
-                    }
-                    else
-                    {
-                        if (movement != "MoveL") { return; }
-                        strABB = movement + " RelTool" + @" ([[" + ABBposition + "],[" + strQuat + "]], " + tool.relTool.X.ToString() + ", " + tool.relTool.Y.ToString() +"," + tool.relTool.Z.ToString() +") cData, eAxis], " + strSpeed + ", " + strZone + ", " + tool.Name + " " + workObject + ";";
-                    }
+                    //MoveL RelTool ([[416.249, -110.455, 0],[0, 0, 1, 0], cData, eAxis], 0, 0,-120), v50, z1, tool0 \Wobj:=wobj0;
+                    string offset = tool.relTool.X.ToString() + ", " + tool.relTool.Y.ToString() + "," + tool.relTool.Z.ToString();
+                    strABB = movement + @" RelTool (" + point + ", " + offset + "), " + strSpeed + ", " + strZone + ", " + tool.Name + " " + workObject + ";";
                 }
                 else
                 {
-                    // External axis values
-                    if (extRot != Util.ExAxisTol || extLin != Util.ExAxisTol) // If the external axis value is present... (otherwise 0.00001 is passed as a default value).
-                    {
-                        if (extLin != Util.ExAxisTol)
-                        {
-                            lin = Math.Round(extLin, 4).ToString();
-                        }
-                        if (extRot != Util.ExAxisTol)
-                        {
-                            rot = Math.Round(extRot, 2).ToString(); // Get the external axis value per target and round it to two decimal places.
-                        }
-                        strABB = movement + @" [[" + ABBposition + "],[" + strQuat + "]," + " cData, " + "[" + rot + ", " + lin + ", 9E9, 9E9, 9E9, 9E9]" + "], " + strSpeed + ", " + strZone + ", " + tool.Name + " " + workObject + ";";
-                    }
-                    else { strABB = movement + @" [[" + ABBposition + "],[" + strQuat + "]," + " cData, eAxis], " + strSpeed + ", " + strZone + ", " + tool.Name + " " + workObject + ";"; }
-
+                    strABB = movement + point + ", " + strSpeed + ", " + strZone + ", " + tool.Name + " " + workObject + ";";
                 }
 
                 
