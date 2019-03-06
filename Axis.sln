@@ -5,7 +5,7 @@ VisualStudioVersion = 15.0.27130.2024
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Axis", "Axis.csproj", "{64497AB0-4C22-4403-807A-A5A2AA8E0616}"
 EndProject
-Project("{930C7802-8A8C-48F9-8165-68863BCCD9DD}") = "AxisInstaller", "..\AxisInstaller\AxisInstaller.wixproj", "{B066382A-FB9C-40C9-9653-23F6BDF70F1F}"
+Project("{930C7802-8A8C-48F9-8165-68863BCCD9DD}") = "AxisInstaller", "AxisInstaller\AxisInstaller.wixproj", "{B066382A-FB9C-40C9-9653-23F6BDF70F1F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
