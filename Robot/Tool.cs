@@ -46,6 +46,8 @@ namespace Axis.Robot
             pManager.AddTextParameter("Name", "Name", "Tool name.", GH_ParamAccess.item, "AxisTool");
             pManager.AddPlaneParameter("TCP", "TCP", "Tool Centre Point plane, at end of tool.", GH_ParamAccess.item, Plane.WorldXY);
             pManager.AddMeshParameter("Mesh", "Mesh", "Tool mesh geometry for kinematic preview.", GH_ParamAccess.list);
+            //for (int i = 1; i < 2; ++i) { pManager[i].Optional = true; }
+            pManager[2].Optional = true;
         }
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
@@ -63,7 +65,10 @@ namespace Axis.Robot
 
             if (!DA.GetData(0, ref name)) return;
             if (!DA.GetData(1, ref TCP)) return;
-            if (!DA.GetDataList(2, mesh)) return;
+
+            if (!DA.GetDataList(2, mesh) && mesh == null) return;
+
+
 
             if (manufacturer)
             {
