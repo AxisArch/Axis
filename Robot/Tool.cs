@@ -119,7 +119,7 @@ namespace Axis.Robot
             ToolStripMenuItem declOption = Menu_AppendItem(menu, "Create Declaration", Declaration_Click, true, declaration);
             declOption.ToolTipText = "If checked, the component will also output the manufacturer-specific tool declaration.";
             ToolStripMenuItem reltoolOption = Menu_AppendItem(menu, "Relative Tool Offset", RelTool_Click, true, relTool);
-            reltoolOption.ToolTipText = "If checked, the component will also output the manufacturer-specific tool declaration.";
+            reltoolOption.ToolTipText = "If checked, the component will allow a tool offset value.";
         }
 
         private void KUKA_Click(object sender, EventArgs e)
