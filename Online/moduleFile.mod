@@ -24,6 +24,8 @@
     VAR SD MyData;
 
     PROC main()
+		ConfL \Off;
+		ConfJ \Off;
         CONNECT connectionNumber WITH Process;
         IRMQMessage MyData,connectionNumber;
 
