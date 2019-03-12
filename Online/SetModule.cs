@@ -152,14 +152,19 @@ namespace Axis.Online
 
                                 //Code 
                                 abbController.FileSystem.PutFile(tempFile, @"Axis/AxisModule.mod");
-                                tasks[0].LoadModuleFromFile(@"Axis/AxisModule.mod", RapidLoadMode.Replace);
+                                var sucsess = tasks[0].LoadModuleFromFile(@"Axis/AxisModule.mod", RapidLoadMode.Replace);
 
-                                //Add retun message if module could not be loaded
-                                // CheckProgram()?
-
+                                if (sucsess)
+                                {
+                                    log.Add("Program has been loaded to controler");
+                                }
+                                else
+                                {
+                                    log.Add("The program contains at least one error and cannot be loaded");
+                                }
 
                                 if (File.Exists(tempFile)) { File.Delete(tempFile); }
-                                log.Add("Program has been loaded to controler");
+
                                 sending = false;
                             }
 
