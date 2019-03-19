@@ -75,7 +75,7 @@ namespace Axis.Core
             List<double> anglesOut = new List<double>();
             Plane flangeOut = new Plane();
             List<Mesh> meshesOut = new List<Mesh>();
-            List<string> colorsOut = new List<string>();
+            List<System.Drawing.Color> colorsOut = new List<System.Drawing.Color>();
             List<string> logOut = new List<string>();
             List<object> debugOut = new List<object>();
             List<Plane> planesOut = new List<Plane>();
@@ -86,7 +86,7 @@ namespace Axis.Core
                 indices = new List<int>() { 2, 2, 2, 2, 2, 2 };
             }
 
-            List<string> colors = new List<string>();
+            List<System.Drawing.Color> colors = new List<System.Drawing.Color>();
             List<string> log = new List<string>();
             List<Plane> aPlns = new List<Plane>();
 
@@ -104,11 +104,11 @@ namespace Axis.Core
                     // Check if the solution value is inside the manufacturer permitted range
                     if (angles[i] < robot.MaxAngles[i] && angles[i] > robot.MinAngles[i])
                     {
-                        colors.Add("210, 210, 210");
+                        colors.Add(Styles.DarkGrey);
                     }
                     else
                     {
-                        colors.Add("202, 47, 24");
+                        colors.Add(Styles.Pink);
                         log.Add("Axis " + i.ToString() + " is out of rotation domain.");
                         isValid = false;
                     }
@@ -339,18 +339,18 @@ namespace Axis.Core
                 radAngles[5] = A6.ToRadians();
 
                 // Add the base colour as standard.
-                colors.Add("210, 210, 210");
+                colors.Add(Styles.DarkGrey);
 
                 for (int i = 0; i < 6; i++)
                 {
                     // Check if the solution value is inside the manufacturer permitted range.
                     if (selectedAngles[i] < robot.MaxAngles[i] && selectedAngles[i] > robot.MinAngles[i])
                     {
-                        colors.Add("210, 210, 210"); // Near white.
+                        colors.Add(Styles.DarkGrey);
                     }
                     else
                     {
-                        colors.Add("202, 47, 24"); // Red.
+                        colors.Add(Styles.Pink);
                         log.Add("Axis " + i + " is out of rotation domain.");
                         isValid = false;
                     }
@@ -358,7 +358,7 @@ namespace Axis.Core
                     // Check for singularity and replace the preview color.
                     if (selectedAngles[4] > -singularityTol && selectedAngles[4] < singularityTol)
                     {
-                        colors[5] = ("59, 162, 117");
+                        colors[5] = (Styles.Blue);
                         log.Add("Close to singularity.");
                     }
                 }
@@ -543,6 +543,14 @@ namespace Axis.Core
             colorsOut = colors;
             logOut = log;
 
+            // Colour mesh
+            /*
+            for (int i = 0; i < meshesOut.Count; i++)
+            {
+                meshesOut[i].VertexColors.CreateMonotoneMesh(colorsOut[i]);
+            }
+            */
+
             // Output data
             DA.SetDataList(0, meshesOut);
             DA.SetData(1, flangeOut);
@@ -553,4 +561,3 @@ namespace Axis.Core
         }
     }
 }
- 

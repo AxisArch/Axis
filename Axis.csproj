@@ -245,6 +245,7 @@
     <Compile Include="Robot\Tool.cs" />
     <Compile Include="Robot\Robot.cs" />
     <Compile Include="Core\CodeGenerator.cs" />
+    <Compile Include="Styles.cs" />
     <Compile Include="Targets\HomePose.cs" />
     <Compile Include="Properties\AxisInfo.cs" />
     <Compile Include="Targets\FlipPlane.cs" />
