@@ -142,7 +142,7 @@ namespace Axis.Targets
                     }
                     strABB = movement + @" [[" + ABBposition + "],[" + strQuat + "]," + " cData, " + "[" + rot + ", " + lin + ", 9E9, 9E9, 9E9, 9E9]" + "], " + strSpeed + ", " + strZone + ", " + tool.Name + " " + workObject + ";";
                 }
-                else { strABB = movement + @" [[" + ABBposition + "],[" + strQuat + "]," + " cData, eAxis], " + strSpeed + ", " + strZone + ", " + tool.Name + " " + workObject + ";"; }
+                else { strABB = movement + @" [[" + ABBposition + "],[" + strQuat + "]," + " cData, eAxis], " + strSpeed + ", " + strZone + ", " + tool.Name + ", " + workObject + ";"; }
 
             }
 
