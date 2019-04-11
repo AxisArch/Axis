@@ -260,7 +260,7 @@ namespace Axis.Online
                 }
                 else { DA.SetData(0, "No active connection"); }
 
-                ExpireSolution(true);
+                //ExpireSolution(true);
             }
             
         }
