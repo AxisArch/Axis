@@ -9,6 +9,7 @@ using Axis.Core;
 using Axis.Targets;
 using Grasshopper.Kernel.Parameters;
 using System.Linq;
+using Grasshopper.Kernel.Types;
 
 namespace Axis
 {
@@ -61,8 +62,8 @@ namespace Axis
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             List<Plane> planes = new List<Plane>();
-            List<Speed> speeds = new List<Speed>();
-            List<Zone> zones = new List<Zone>();
+            List<GH_ObjectWrapper> speedsIn = new List<GH_ObjectWrapper>();
+            List<GH_ObjectWrapper> zonesIn = new List<GH_ObjectWrapper>();
             List<Tool> tools = new List<Tool>();
             List<CSystem> wobjs = new List<CSystem>();
             List<int> methods = new List<int>();
@@ -71,9 +72,12 @@ namespace Axis
             List<double> eRotVals = new List<double>();
             List<double> eLinVals = new List<double>();
 
+            bool hasSpeed = true;
+            bool hasZone = true;
+
             if (!DA.GetDataList(0, planes)) return;
-            if (!DA.GetDataList(1, speeds)) speeds.Add(Speed.Default);
-            if (!DA.GetDataList(2, zones)) zones.Add(Zone.Default);
+            if (!DA.GetDataList(1, speedsIn)) hasSpeed = false;
+            if (!DA.GetDataList(2, zonesIn)) hasZone = false;
             if (!DA.GetDataList(3, tools)) tools.Add(Tool.Default);
             if (!DA.GetDataList(4, wobjs)) wobjs.Add(CSystem.Default);
 
@@ -83,6 +87,52 @@ namespace Axis
             // If the inputs are present, get the external axis values.
             if (extRotary) { if (!DA.GetDataList("Rotary", eRotVals)) return; }
             if (extLinear) { if (!DA.GetDataList("Linear", eLinVals)) return; }
+
+            List<Speed> speeds = new List<Speed>();
+            List<Zone> zones = new List<Zone>();
+
+            // Check to see if we have speeds, and if they are custom speed objects, otherwise use values.
+            if (hasSpeed)
+            {
+                foreach (GH_ObjectWrapper speedIn in speedsIn)
+                {
+                    GH_ObjectWrapper speedObj = speedIn;
+
+                    Type cType = speedObj.Value.GetType();
+                    double speedVal = 0;
+                    GH_Convert.ToDouble_Primary(speedObj.Value, ref speedVal);
+
+                    if (cType.Name == "Speed")
+                        speeds.Add(speedObj.Value as Speed);
+                    else
+                        speeds.Add(new Speed(speedVal));
+                }
+            }
+            // If we don't have any speed values, use the default speed.
+            else
+                speeds.Add(Speed.Default);
+
+            // Check to see if we have zones, and if they are custom zones objects, otherwise use values.
+            if (hasZone)
+            {
+                foreach (GH_ObjectWrapper zoneIn in zonesIn)
+                {
+                    GH_ObjectWrapper zoneObj = zoneIn;
+
+                    Type cType = zoneObj.Value.GetType();
+
+                    double zoneVal = 0;
+                    GH_Convert.ToDouble_Primary(zoneObj.Value, ref zoneVal);
+
+                    if (cType.Name == "Zone")
+                        zones.Add(zoneObj.Value as Zone);
+                    else
+                        zones.Add(new Zone(false, zoneVal));
+                }
+            }
+            // If we don't have any zone values, use the default zone.
+            else
+                zones.Add(Zone.Default);
 
             List<Target> targets = new List<Target>();
             List<string> code = new List<string>();

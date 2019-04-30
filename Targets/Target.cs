@@ -300,7 +300,7 @@ namespace Axis.Targets
             Default = new Zone(false, 5, 25, 25, 15, 35, 5, "DefaultZone");
         }
 
-        public Zone(bool stop, double pathRadius, double pathOrient, double pathExternal, double orientation, double linExternal, double rotExternal, string name)
+        public Zone(bool stop = false, double pathRadius = 5, double pathOrient = 8, double pathExternal = 8, double orientation = 0.8, double linExternal = 8, double rotExternal = 0.8, string name = null)
         {
             this.Name = name;
             this.PathRadius = pathRadius;

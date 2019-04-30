@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 using Grasshopper.Kernel;
+using Grasshopper.Kernel.Types;
 using Grasshopper.Kernel.Parameters;
 using Rhino.Geometry;
 using Axis.Core;
@@ -10,7 +11,7 @@ using Axis.Tools;
 
 namespace Axis.Targets
 {
-    public class JointTarget : GH_Component, IGH_VariableParameterComponent
+    public class CreateJointTarget : GH_Component, IGH_VariableParameterComponent
     {
         bool manufacturer = false;
         bool useRotary = false;
@@ -29,7 +30,7 @@ namespace Axis.Targets
             get { return new Guid("8854333d-79f7-47e0-9b80-03966486b42b"); }
         }
 
-        public JointTarget() : base("Absolute Joint Target", "Joint Target", "Compose a joint target from a list of axis values.", "Axis", "3. Targets")
+        public CreateJointTarget() : base("Joint Target", "Joint Target", "Compose an absolute joint target from a list of axis values.", "Axis", "3. Targets")
         {
         }
 
@@ -71,9 +72,8 @@ namespace Axis.Targets
             double rot = 0;
             double lin = 0;
             Tool tool = Tool.Default;
-            Speed speed = Speed.Default;
-            Zone zone = Zone.Default;
-            
+            GH_ObjectWrapper speedIn = null;
+            GH_ObjectWrapper zoneIn = null;
 
             if (!DA.GetData(0, ref a1)) a1 = 0;
             if (!DA.GetData(1, ref a2)) a2 = 0;
@@ -82,9 +82,43 @@ namespace Axis.Targets
             if (!DA.GetData(4, ref a5)) a5 = 0;
             if (!DA.GetData(5, ref a6)) a6 = 0;
             if (!DA.GetData(6, ref tool)) ;
-            if (!DA.GetData(7, ref speed)) ;
-            if (!DA.GetData(8, ref zone)) ;
+            if (!DA.GetData(7, ref speedIn)) ;
+            if (!DA.GetData(8, ref zoneIn)) ;
 
+            Speed speed = Speed.Default;
+            Zone zone = Zone.Default;
+
+            // Check to see if we have a speed, and if it's a custom speed object, otherwise cast the value provided.
+            if (speedIn != null)
+            {
+                GH_ObjectWrapper speedObj = speedIn;
+
+                Type cType = speedObj.Value.GetType();
+
+                if (cType.Name == "Speed")
+                    speed = speedObj.Value as Speed;
+                else
+                    speed = new Speed(Convert.ToDouble(speedObj.Value));
+            }
+            // If we don't have a speed value, use the default speed.
+            else
+                speed = Speed.Default;
+
+            // Check to see if we a zone, and if it's a custom zones object, otherwise cast the value provided.
+            if (zoneIn != null)
+            {
+                GH_ObjectWrapper zoneObj = zoneIn;
+
+                Type cType = zoneObj.Value.GetType();
+
+                if (cType.Name == "Zone")
+                    zone = zoneObj.Value as Zone;
+                else
+                    zone = new Zone(false, Convert.ToDouble(zoneObj.Value));
+            }
+            // If we don't have any zone values, use the default zone.
+            else
+                zone = Zone.Default;
 
             if (useRotary) { if (!DA.GetData("Rotary", ref rot)) return; }
             if (useLinear) { if (!DA.GetData("Linear", ref lin)) return; }
