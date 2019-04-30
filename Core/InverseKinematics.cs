@@ -540,7 +540,7 @@ namespace Axis.Core
             List<Mesh> toolMeshes = new List<Mesh>();
             Transform orientFlange = Transform.PlaneToPlane(Plane.WorldXY, flangeOut);
 
-            // Add Warning if no mesh is present
+            // Add warning if no mesh is present
             try
             {
                 foreach (Mesh m in robTarg.Tool.Geometry)
@@ -552,9 +552,7 @@ namespace Axis.Core
             }
             catch
             {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No tool mesh present");
-
-                //return;
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No tool mesh present.");
             }
                         
             colorsOut = colors;
