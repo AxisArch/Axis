@@ -34,7 +34,7 @@ namespace Axis.Workflow
         List<string> log = new List<string>();
 
 
-        public ExcelCreate() : base("Excel Create", "Create", "Create a new isntance of an Excel file.", "Axis", "7. Workflow")
+        public ExcelCreate() : base("Excel Create", "Create", "Create a new isntance of an Excel file.", "Axis", "8. Workflow")
         {
         }
 
