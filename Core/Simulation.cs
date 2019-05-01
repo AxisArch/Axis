@@ -289,9 +289,9 @@ namespace Axis.Core
         IGH_Param[] outputParams = new IGH_Param[4]
         {
         new Param_Number() { Name = "Speed", NickName = "Speed", Description = "The current speed of the robot in mm/s." },
-        new Param_String() { Name = "Angles", NickName = "Angles", Description = "The current angle values of the robot." },
-        new Param_String() { Name = "Motion", NickName = "Motion", Description = "The current motion type of the robot." },
-        new Param_String() { Name = "External", NickName = "External", Description = "The current external axis values as a list." },
+        new Param_Number() { Name = "Angles", NickName = "Angles", Description = "The current angle values of the robot." },
+        new Param_Number() { Name = "Motion", NickName = "Motion", Description = "The current motion type of the robot." },
+        new Param_Number() { Name = "External", NickName = "External", Description = "The current external axis values as a list." },
         };
 
         // The following functions append menu items and then handle the item clicked event.
