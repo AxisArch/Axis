@@ -369,6 +369,7 @@ namespace Axis
             writer.SetBoolean("KukaTargets", this.manufacturer);
             writer.SetBoolean("RotAxis", this.extRotary);
             writer.SetBoolean("LinAxis", this.extLinear);
+            writer.SetBoolean("Method", this.interpolationTypes);
             return base.Write(writer);
         }
 
@@ -378,6 +379,7 @@ namespace Axis
             this.manufacturer = reader.GetBoolean("KukaTargets");
             this.extRotary = reader.GetBoolean("RotAxis");
             this.extLinear = reader.GetBoolean("LinAxis");
+            this.interpolationTypes = reader.GetBoolean("Method");
             return base.Read(reader);
         }
 
