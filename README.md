@@ -18,3 +18,4 @@ Online control functionality for ABB robots requires the latest version of the A
 ## Controlling Speed
 The target components can be supplied with default speed values (double) corresponding to the TCP speed from the following table:
 
+![alt text](https://raw.githubusercontent.com/username/projectname/branch/path/to/img.png)
