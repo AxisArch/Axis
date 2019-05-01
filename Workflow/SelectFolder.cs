@@ -23,7 +23,7 @@ namespace Axis.Workflow
         // Create a global variable to contain the path when the trigger is released.
         string directoryPath = "";
 
-        public SelectFolder() : base("Select Folder", "Select", "Select a folder using the Windows Folder Browser Dialog.", "Axis", "7. Workflow")
+        public SelectFolder() : base("Select Folder", "Select", "Select a folder using the Windows Folder Browser Dialog.", "Axis", "8. Workflow")
         {
         }
 

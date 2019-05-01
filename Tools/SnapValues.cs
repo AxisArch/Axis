@@ -21,7 +21,7 @@ namespace Axis.Tools
         }
         public override GH_Exposure Exposure => GH_Exposure.tertiary;
 
-        public SnapValues() : base("Snap Values To List", "Snap", "Snap values to the closest value from a given list.", "Axis", "7. Workflow")
+        public SnapValues() : base("Snap Values To List", "Snap", "Snap values to the closest value from a given list.", "Axis", "8. Workflow")
         {
         }
 

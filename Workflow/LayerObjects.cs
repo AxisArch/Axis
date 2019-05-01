@@ -25,7 +25,7 @@ namespace Axis.Workflow
         // Sticky context menu flags
         bool[] flags = { false, false, false, false, false, false, false };
 
-        public LayerObjects() : base("Layer Objects", "Layer", "Get all objects on a given Rhino layer. A geometry filter can additionally be applied.", "Axis", "7. Workflow")
+        public LayerObjects() : base("Layer Objects", "Layer", "Get all objects on a given Rhino layer. A geometry filter can additionally be applied.", "Axis", "8. Workflow")
         {
         }
 

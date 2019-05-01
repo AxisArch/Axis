@@ -25,7 +25,7 @@ namespace Axis.Workflow
             get { return new Guid("07f7b24f-a777-49ad-836e-f35879beb8d5"); }
         }
 
-        public CreateLayers() : base("Create Layers", "Layers", "Create a series of layers in the current Rhino document.", "Axis", "7. Workflow")
+        public CreateLayers() : base("Create Layers", "Layers", "Create a series of layers in the current Rhino document.", "Axis", "8. Workflow")
         {
         }
 
