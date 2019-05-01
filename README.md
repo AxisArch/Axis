@@ -19,3 +19,5 @@ Online control functionality for ABB robots requires the latest version of the A
 The target components can be supplied with default speed values (double) corresponding to the TCP speed from the following table:
 
 <img src="https://github.com/rhughes42/Axis/blob/master/Images/StandardSpeeds.PNG" width="400">
+
+Alternatively, custom speeds can be created using the Speed component from the Toolpath tab. The component accepts a non-standard TCP path speed and creates a custom speed object. Additional functionality can be accessed by right-clicking the component, such as specifying the specific speed components or outputting a declaration for the custom speed, which can be passed to the code generation component when creating the program files.
