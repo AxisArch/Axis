@@ -14,3 +14,7 @@ Secondary components are dependent on:
 * EPPlus.dll
 
 Online control functionality for ABB robots requires the latest version of the ABB Communication Runtime to be installed, which can be found here:
+
+## Controlling Speed
+The target components can be supplied with default speed values (double) corresponding to the TCP speed from the following table:
+
