@@ -84,7 +84,7 @@ namespace Axis.Robot
             }
             if (relTool)
             {
-                if (!DA.GetData("RelTool", ref reltoolOffset)) return;
+                if (!DA.GetData("Offset", ref reltoolOffset)) return;
             }
 
             Tool tool = new Tool(name, TCP, weight, mesh, manufacturer, reltoolOffset);
@@ -101,7 +101,7 @@ namespace Axis.Robot
         IGH_Param[] inputParams = new IGH_Param[2]
         {
             new Param_Number() { Name = "Weight", NickName = "Weight", Description = "The weight of the tool in kilograms. Necessary for accurate motion planning." },
-            new Param_Vector() { Name = "RelTool", NickName = "RelTool", Description = "Relative tool offset." },
+            new Param_Vector() { Name = "Offset", NickName = "Offset", Description = "Relative tool offset in mm." },
         };
 
         IGH_Param[] outputParams = new IGH_Param[1]
@@ -172,7 +172,7 @@ namespace Axis.Robot
             }
             else
             {
-                Params.UnregisterInputParameter(Params.Input.FirstOrDefault(x => x.Name == "RelTool"), true);
+                Params.UnregisterInputParameter(Params.Input.FirstOrDefault(x => x.Name == "Offset"), true);
             }
             ExpireSolution(true);
         }

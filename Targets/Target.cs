@@ -163,10 +163,7 @@ namespace Axis.Targets
                 else
                 {
                     strABB = movement + robtarget + ", " + strSpeed + ", " + strZone + ", " + tool.Name + " " + workObject + ";";
-                }
-
-                
-
+                }              
             }
 
             else // KUKA Targets
