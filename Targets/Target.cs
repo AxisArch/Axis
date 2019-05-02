@@ -128,8 +128,18 @@ namespace Axis.Targets
                     }                
                 }
 
+                
                 // External axis values
                 string lin = "9E9"; string rot = "9E9";
+
+                //RelTool Offset
+                //Working Example below
+                //MoveL RelTool ([[416.249, -110.455, 0],[0, 0, 1, 0], cData, eAxis], 0, 0,-120), v50, z1, tool0 \Wobj:=wobj0;
+
+
+                
+                //Creating Point
+                string robtarget = "";
                 if (extRot != Util.ExAxisTol || extLin != Util.ExAxisTol) // If the external axis value is present... (otherwise 0.00001 is passed as a default value).
                 {
                     if (extLin != Util.ExAxisTol)
@@ -140,10 +150,20 @@ namespace Axis.Targets
                     {
                         rot = Math.Round(extRot, 2).ToString(); // Get the external axis value per target and round it to two decimal places.
                     }
-                    strABB = movement + @" [[" + ABBposition + "],[" + strQuat + "]," + " cData, " + "[" + rot + ", " + lin + ", 9E9, 9E9, 9E9, 9E9]" + "], " + strSpeed + ", " + strZone + ", " + tool.Name + " " + workObject + ";";
+                    robtarget = @" [[" + ABBposition + "],[" + strQuat + "]," + " cData, " + "[" + rot + ", " + lin + ", 9E9, 9E9, 9E9, 9E9]" + "]";
                 }
-                else { strABB = movement + @" [[" + ABBposition + "],[" + strQuat + "]," + " cData, eAxis], " + strSpeed + ", " + strZone + ", " + tool.Name + ", " + workObject + ";"; }
+                else{ robtarget = @" [[" + ABBposition + "],[" + strQuat + "]," + " cData, eAxis]";}
 
+                if (tool.relTool != Vector3d.Zero)
+                {
+                    //MoveL RelTool ([[416.249, -110.455, 0],[0, 0, 1, 0], cData, eAxis], 0, 0,-120), v50, z1, tool0 \Wobj:=wobj0;
+                    string offset = tool.relTool.X.ToString() + ", " + tool.relTool.Y.ToString() + "," + tool.relTool.Z.ToString();
+                    strABB = movement + @" RelTool (" + robtarget + ", " + offset + "), " + strSpeed + ", " + strZone + ", " + tool.Name + " " + workObject + ";";
+                }
+                else
+                {
+                    strABB = movement + robtarget + ", " + strSpeed + ", " + strZone + ", " + tool.Name + " " + workObject + ";";
+                }              
             }
 
             else // KUKA Targets

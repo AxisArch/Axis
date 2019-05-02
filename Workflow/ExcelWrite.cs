@@ -35,7 +35,7 @@ namespace Axis.Workflow
         bool hideHeaders = false;
         List<string> log = new List<string>();
 
-        public ExcelWrite() : base("Excel Write", "Write", "Write to an Excel file.", "Axis", "7. Workflow")
+        public ExcelWrite() : base("Excel Write", "Write", "Write to an Excel file.", "Axis", "8. Workflow")
         {
         }
 

@@ -21,7 +21,7 @@ namespace Axis.Tools
         }
         public override GH_Exposure Exposure => GH_Exposure.tertiary;
 
-        public StandardDeviation() : base("Standard Deviation", "SD", "Calculate the standard deviation for a given list of values.", "Axis", "7. Workflow")
+        public StandardDeviation() : base("Standard Deviation", "SD", "Calculate the standard deviation for a given list of values.", "Axis", "8. Workflow")
         {
         }
 

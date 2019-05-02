@@ -21,7 +21,7 @@ namespace Axis.Tools
         }
         public override GH_Exposure Exposure => GH_Exposure.tertiary;
 
-        public CharacterList() : base("Character List", "Chars", "Create a list of concatenated characters of N length.", "Axis", "7. Workflow")
+        public CharacterList() : base("Character List", "Chars", "Create a list of concatenated characters of N length.", "Axis", "8. Workflow")
         {
         }
 

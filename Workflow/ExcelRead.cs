@@ -31,7 +31,7 @@ namespace Axis.Workflow
 
         List<string> log = new List<string>();
 
-        public ExcelRead() : base("Excel Read", "Read", "Read an Excel file from a path.", "Axis", "7. Workflow")
+        public ExcelRead() : base("Excel Read", "Read", "Read an Excel file from a path.", "Axis", "8. Workflow")
         {
         }
 

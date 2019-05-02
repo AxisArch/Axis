@@ -20,7 +20,7 @@ namespace Axis.Workflow
             get { return new Guid("5189002a-165c-4c60-865a-edd558b26599"); }
         }
 
-        public OpenFolder() : base("Open Folder", "Open", "Open a folder using it's path.", "Axis", "7. Workflow")
+        public OpenFolder() : base("Open Folder", "Open", "Open a folder using it's path.", "Axis", "8. Workflow")
         {
         }
 

@@ -139,19 +139,22 @@ namespace Axis.Core
         public string Declaration { get; }
         public Transform FlangeOffset { get; }
         public bool Type { get; }
+        public Vector3d relTool { get; }
 
         public static Tool Default { get; }
 
         static Tool()
         {
-            Default = new Tool("DefaultTool", Plane.WorldXY, 1.5, null, false);
+            Default = new Tool("DefaultTool", Plane.WorldXY, 1.5, null, false, Vector3d.Zero);
         }
 
-        public Tool(string name, Plane TCP, double weight, List<Mesh> mesh, bool type)
+        public Tool(string name, Plane TCP, double weight, List<Mesh> mesh, bool type, Vector3d relToolOffset)
         {
             string toolName = name;
             string COG = "[0.0,0.0,10.0]";
             string userOffset = "[1,0,0,0],0,0,0]]";
+            bool relT = false;
+            Vector3d tOffset = relToolOffset;
 
             string strPosX, strPosY, strPosZ;
 
@@ -186,6 +189,7 @@ namespace Axis.Core
 
             string declaration;
 
+
             if (type)
             {
                 /*
@@ -213,6 +217,7 @@ namespace Axis.Core
             this.Geometry = mesh;
             this.Declaration = declaration;
             this.FlangeOffset = fOffset;
+            this.relTool = tOffset;
         }
     }
 }
