@@ -36,7 +36,7 @@ namespace Axis
         bool extRotary = false;
         bool extLinear = false;
         
-        public CreateTarget() : base("Robot Target", "Target", "Create custom robot targets.", "Axis", "3. Targets")
+        public CreateTarget() : base("Plane Target", "Target", "Create custom robot targets from planes.", "Axis", "3. Targets")
         {
         }
 
@@ -47,10 +47,9 @@ namespace Axis
             pManager.AddGenericParameter("Zone", "Zone", "Approximation zone per target, in mm.", GH_ParamAccess.list);
             pManager.AddGenericParameter("Tool", "Tool", "Tool to use for operation.", GH_ParamAccess.list);
             pManager.AddGenericParameter("Wobj", "Wobj", "Wobj to use for operation.", GH_ParamAccess.list);
-            pManager[1].Optional = true;
-            pManager[2].Optional = true;
-            pManager[3].Optional = true;
-            pManager[4].Optional = true;
+
+            for (int i = 0; i < 5; i++)
+                pManager[i].Optional = true;
         }
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
@@ -94,18 +93,25 @@ namespace Axis
             // Check to see if we have speeds, and if they are custom speed objects, otherwise use values.
             if (hasSpeed)
             {
+                // Default speed dictionary.
+                Dictionary<double, Speed> defaultSpeeds = Util.ABBSpeeds();
+                double speedVal = 0;
+
                 foreach (GH_ObjectWrapper speedIn in speedsIn)
                 {
                     GH_ObjectWrapper speedObj = speedIn;
-
                     Type cType = speedObj.Value.GetType();
-                    double speedVal = 0;
-                    GH_Convert.ToDouble_Primary(speedObj.Value, ref speedVal);
+                    GH_Convert.ToDouble_Secondary(speedObj.Value, ref speedVal);
 
                     if (cType.Name == "Speed")
                         speeds.Add(speedObj.Value as Speed);
                     else
-                        speeds.Add(new Speed(speedVal));
+                    {
+                        if (!defaultSpeeds.ContainsKey(speedVal))
+                            AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Supplied speed value is non-standard. Please supply a default value (check the Axis Wiki - Controlling Speed for more info) or create a custom speed using the Speed component.");
+                        else
+                            speeds.Add(defaultSpeeds[speedVal]);
+                    }
                 }
             }
             // If we don't have any speed values, use the default speed.
@@ -115,19 +121,25 @@ namespace Axis
             // Check to see if we have zones, and if they are custom zones objects, otherwise use values.
             if (hasZone)
             {
+                // Default zone dictionary.
+                Dictionary<double, Zone> defaultZones = Util.ABBZones();
+                double zoneVal = 0;
+
                 foreach (GH_ObjectWrapper zoneIn in zonesIn)
                 {
                     GH_ObjectWrapper zoneObj = zoneIn;
-
                     Type cType = zoneObj.Value.GetType();
-
-                    double zoneVal = 0;
-                    GH_Convert.ToDouble_Primary(zoneObj.Value, ref zoneVal);
+                    GH_Convert.ToDouble_Secondary(zoneObj.Value, ref zoneVal);
 
                     if (cType.Name == "Zone")
                         zones.Add(zoneObj.Value as Zone);
                     else
-                        zones.Add(new Zone(false, zoneVal));
+                    {
+                        if (!defaultZones.ContainsKey(zoneVal))
+                            AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Supplied zone value is non-standard. Please supply a default value (check the Axis Wiki - Controlling Zone for more info) or create a custom zone using the Zoe component.");
+                        else
+                            zones.Add(defaultZones[zoneVal]);
+                    }
                 }
             }
             // If we don't have any zone values, use the default zone.

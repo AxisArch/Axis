@@ -30,7 +30,7 @@ namespace Axis.Targets
             get { return new Guid("8854333d-79f7-47e0-9b80-03966486b42b"); }
         }
 
-        public CreateJointTarget() : base("Joint Target", "Joint Target", "Compose an absolute joint target from a list of axis values.", "Axis", "3. Targets")
+        public CreateJointTarget() : base("Joint Target", "Joint", "Compose an absolute joint target from a list of axis values.", "Axis", "3. Targets")
         {
         }
 
@@ -45,15 +45,9 @@ namespace Axis.Targets
             pManager.AddGenericParameter("Tool", "Tool", "Tool to use for operation.", GH_ParamAccess.item);
             pManager.AddGenericParameter("Speed", "Speed", "Speed to use for the movement.", GH_ParamAccess.item);
             pManager.AddGenericParameter("Zone", "Zone", "Zone to use for the movement.", GH_ParamAccess.item);
-            pManager[0].Optional = true;
-            pManager[1].Optional = true;
-            pManager[2].Optional = true;
-            pManager[3].Optional = true;
-            pManager[4].Optional = true;
-            pManager[5].Optional = true;
-            pManager[6].Optional = true;
-            pManager[7].Optional = true;
-            pManager[8].Optional = true;
+
+            for (int i = 0; i < 9; i++)
+                pManager[i].Optional = true;
         }
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
@@ -72,8 +66,12 @@ namespace Axis.Targets
             double rot = 0;
             double lin = 0;
             Tool tool = Tool.Default;
-            GH_ObjectWrapper speedIn = null;
-            GH_ObjectWrapper zoneIn = null;
+            GH_ObjectWrapper speedIn = new GH_ObjectWrapper();
+            GH_ObjectWrapper zoneIn = new GH_ObjectWrapper();
+
+            bool hasTool = true;
+            bool hasSpeed = true;
+            bool hasZone = true;
 
             if (!DA.GetData(0, ref a1)) a1 = 0;
             if (!DA.GetData(1, ref a2)) a2 = 0;
@@ -81,40 +79,58 @@ namespace Axis.Targets
             if (!DA.GetData(3, ref a4)) a4 = 0;
             if (!DA.GetData(4, ref a5)) a5 = 0;
             if (!DA.GetData(5, ref a6)) a6 = 0;
-            if (!DA.GetData(6, ref tool)) ;
-            if (!DA.GetData(7, ref speedIn)) ;
-            if (!DA.GetData(8, ref zoneIn)) ;
+            if (!DA.GetData(6, ref tool)) hasTool = false; ;
+            if (!DA.GetData(7, ref speedIn)) hasSpeed = false;
+            if (!DA.GetData(8, ref zoneIn)) hasZone = false;
 
             Speed speed = Speed.Default;
             Zone zone = Zone.Default;
 
-            // Check to see if we have a speed, and if it's a custom speed object, otherwise cast the value provided.
-            if (speedIn != null)
+            // Check to see if we have speeds, and if they are custom speed objects, otherwise use values.
+            if (hasSpeed)
             {
-                GH_ObjectWrapper speedObj = speedIn;
+                // Default speed dictionary.
+                Dictionary<double, Speed> defaultSpeeds = Util.ABBSpeeds();
+                double speedVal = 0;
 
+                GH_ObjectWrapper speedObj = speedIn;
                 Type cType = speedObj.Value.GetType();
+                GH_Convert.ToDouble_Secondary(speedObj.Value, ref speedVal);
 
                 if (cType.Name == "Speed")
                     speed = speedObj.Value as Speed;
                 else
-                    speed = new Speed(Convert.ToDouble(speedObj.Value));
+                {
+                    if (!defaultSpeeds.ContainsKey(speedVal))
+                        AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Supplied speed value is non-standard. Please supply a default value (check the Axis Wiki - Controlling Speed for more info) or create a custom speed using the Speed component.");
+                    else
+                        speed = defaultSpeeds[speedVal];
+                }
             }
-            // If we don't have a speed value, use the default speed.
+            // If we don't have any speed values, use the default speed.
             else
                 speed = Speed.Default;
 
-            // Check to see if we a zone, and if it's a custom zones object, otherwise cast the value provided.
-            if (zoneIn != null)
+            // Check to see if we have zones, and if they are custom zones objects, otherwise use values.
+            if (hasZone)
             {
-                GH_ObjectWrapper zoneObj = zoneIn;
+                // Default zone dictionary.
+                Dictionary<double, Zone> defaultZones = Util.ABBZones();
+                double zoneVal = 0;
 
+                GH_ObjectWrapper zoneObj = zoneIn;
                 Type cType = zoneObj.Value.GetType();
+                GH_Convert.ToDouble_Secondary(zoneObj.Value, ref zoneVal);
 
                 if (cType.Name == "Zone")
                     zone = zoneObj.Value as Zone;
                 else
-                    zone = new Zone(false, Convert.ToDouble(zoneObj.Value));
+                {
+                    if (!defaultZones.ContainsKey(zoneVal))
+                        AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Supplied zone value is non-standard. Please supply a default value (check the Axis Wiki - Controlling Zone for more info) or create a custom zone using the Zoe component.");
+                    else
+                        zone = defaultZones[zoneVal];
+                }
             }
             // If we don't have any zone values, use the default zone.
             else

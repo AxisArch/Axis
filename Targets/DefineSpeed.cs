@@ -74,7 +74,7 @@ namespace Axis.Targets
             List<Speed> speeds = new List<Speed>();
             List<string> declarations = new List<string>();
 
-            // Default and current zone dictionaries.
+            // Default and current speed dictionaries.
             Dictionary<double, Speed> defaultSpeeds = Util.ABBSpeeds();
             Dictionary<double, Speed> presentSpeeds = new Dictionary<double, Speed>();
 
