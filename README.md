@@ -26,3 +26,10 @@ The target components can be supplied with default speed values (double) corresp
 <img src="https://github.com/rhughes42/Axis/blob/master/Images/StandardSpeeds.PNG" width="400">
 
 Alternatively, custom speeds can be created using the Speed component from the Toolpath tab. The component accepts a non-standard TCP path speed and creates a custom speed object. Additional functionality can be accessed by right-clicking the component, such as specifying the specific speed components or outputting a declaration for the custom speed, which can be passed to the code generation component when creating the program files.
+
+## Controlling Zone
+The target components can similarly be supplied with default zone values (double) corresponding to the TCP Path Radius from the following table:
+
+<img src="https://github.com/rhughes42/Axis/blob/master/Images/StandardZones.PNG" width="400">
+
+Alternatively, custom zones can be created using the Zone component from the toolpath tab. The component accepts a non-standard TCP path radius and creates a custom zone object. Additional functionality can be accessed by right-clicking the component, such as specifying the specific zone components or outputting a declaration for the custom zone, which can be passed to the code generation component when creating the program files.
