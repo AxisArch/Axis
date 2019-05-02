@@ -341,6 +341,9 @@ namespace Axis.Core
                         // Absolute target checks
                         else if (mType == MotionType.AbsoluteJoint)
                         {
+                            // Grab the joint angles from the joint target instead of using IK.
+                            angles = targ.JointAngles;
+
                             for (int i = 0; i < 5; i++)
                             {
                                 // Check if the solution value is inside the manufacturer permitted range
@@ -350,12 +353,6 @@ namespace Axis.Core
                                     log.Add("Axis " + axis.ToString() + " is out of rotation domain at command " + counter.ToString() + ".");
                                     break;
                                 }
-                            }
-                            // Check for wrist singularity, clear the list of preview colors and override
-                            if (angles[4] < singularityTol && angles[4] > -singularityTol)
-                            {
-                                log.Add("Wrist singularity at command " + counter.ToString() + ".");
-                                break;
                             }
                         }
 

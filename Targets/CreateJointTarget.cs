@@ -79,7 +79,7 @@ namespace Axis.Targets
             if (!DA.GetData(3, ref a4)) a4 = 0;
             if (!DA.GetData(4, ref a5)) a5 = 0;
             if (!DA.GetData(5, ref a6)) a6 = 0;
-            if (!DA.GetData(6, ref tool)) hasTool = false; ;
+            if (!DA.GetData(6, ref tool)) hasTool = false;
             if (!DA.GetData(7, ref speedIn)) hasSpeed = false;
             if (!DA.GetData(8, ref zoneIn)) hasZone = false;
 
