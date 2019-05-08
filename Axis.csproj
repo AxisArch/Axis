@@ -348,7 +348,10 @@
   <ItemGroup>
     <None Include="Resources\SurfaceFrame.png" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="bin\" />
+    <Folder Include="Vision\" />
+  </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Vision.png" />
   </ItemGroup>
@@ -361,8 +364,7 @@
   </Target>
   -->
   <PropertyGroup>
-    <PostBuildEvent>Copy "$(TargetPath)" "$(TargetDir)$(ProjectName).gha"
-</PostBuildEvent>
+    <PostBuildEvent>Copy "$(TargetPath)" "$(TargetDir)$(ProjectName).gha"</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug32|AnyCPU' ">
     <StartArguments>
