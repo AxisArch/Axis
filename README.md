@@ -13,8 +13,10 @@ The latest release version of Axis can be installed using the MSI installer. Thi
 
 ## Building From Source
 To build the solution from source, you need to first change the following project variables:
-* The build output path (Properties) needs to be changed to reflect the current system e.g ..\..\..\..\AppData\Roaming\Grasshopper\Libraries\Axis\
-* To debug the solution you need to update the path to your Rhino installation directory (Debug) e.g C:\Program Files\Rhino 6\System\Rhino.exe
+* The build output path (Properties) needs to be changed to reflect the current system
+e.g  ..\\..\\..\\..\AppData\Roaming\Grasshopper\Libraries\Axis\
+* To debug the solution you need to update the path to your Rhino installation directory (Debug)
+e.g C:\Program Files\Rhino 6\System\Rhino.exe
 
 ## Dependencies
 The core of library is dependent on the following libraries:
