@@ -344,7 +344,7 @@ namespace Axis.Core
                             // Grab the joint angles from the joint target instead of using IK.
                             angles = targ.JointAngles;
 
-                            for (int i = 0; i < 5; i++)
+                            for (int i = 0; i < 6; i++)
                             {
                                 // Check if the solution value is inside the manufacturer permitted range
                                 if (angles[i] > robot.MaxAngles[i] || angles[i] < robot.MinAngles[i])
