@@ -350,7 +350,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="bin\" />
-    <Folder Include="Vision\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Vision.png" />

@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows.Forms;
-
 using Grasshopper.Kernel;
+using Grasshopper.Kernel.Parameters;
+using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 using Axis.Tools;
 using Axis.Core;
 using Axis.Targets;
-using Grasshopper.Kernel.Parameters;
-using System.Linq;
-using Grasshopper.Kernel.Types;
 
 namespace Axis
 {
@@ -29,8 +28,9 @@ namespace Axis
         }
 
         // Boolean toggle for context menu items.
-        bool manufacturer = false;
-        bool interpolationTypes = false;
+        bool m_manufacturer = false;
+        bool m_interpolationTypes = false;
+        bool m_outputTarget = false;
 
         // External axis presence.
         bool extRotary = false;
@@ -54,7 +54,6 @@ namespace Axis
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddTextParameter("Code", "Code", "Code representation of target.", GH_ParamAccess.list);
             pManager.AddGenericParameter("Targets", "Targets", "Robot targets.", GH_ParamAccess.list);
         }
 
@@ -81,7 +80,7 @@ namespace Axis
             if (!DA.GetDataList(4, wobjs)) wobjs.Add(CSystem.Default);
 
             // If interpolation types are specified, get them.
-            if (interpolationTypes) { if (!DA.GetDataList("Method", methods)) return; }
+            if (m_interpolationTypes) { if (!DA.GetDataList("Method", methods)) return; }
 
             // If the inputs are present, get the external axis values.
             if (extRotary) { if (!DA.GetDataList("Rotary", eRotVals)) return; }
@@ -160,7 +159,7 @@ namespace Axis
 
             for (int i = 0; i < planes.Count; i++)
             {
-                if (interpolationTypes)
+                if (m_interpolationTypes)
                 {
                     // Method
                     if (i < methods.Count) { method = methods[i]; }
@@ -216,10 +215,10 @@ namespace Axis
                 else if (method == 2) { mType = MotionType.AbsoluteJoint; }
 
                 // Create the robot target.
-                Target robTarg = new Target(planes[i], mType, speed, zone, tool, wobj, extRot, extLin, manufacturer);
+                Target robTarg = new Target(planes[i], mType, speed, zone, tool, wobj, extRot, extLin, m_manufacturer);
                 targets.Add(robTarg);
 
-                if (manufacturer == false) // Output the ABB string.
+                if (m_manufacturer == false) // Output the ABB string.
                 {
                     code.Add(robTarg.StrABB);
                 }
@@ -229,8 +228,10 @@ namespace Axis
                 }
             }
 
-            DA.SetDataList(0, code);
-            DA.SetDataList(1, targets);
+            DA.SetDataList(0, targets);
+
+            if (m_outputTarget)
+                DA.SetDataList("Code", code);
         }
 
         // Build a list of optional input parameters
@@ -242,45 +243,64 @@ namespace Axis
         };
 
         // Build a list of optional output parameters
-        IGH_Param[] outputParams = new IGH_Param[3]
+        IGH_Param[] outputParams = new IGH_Param[1]
         {
-        new Param_String() { Name = "Speed", NickName = "Speed", Description = "The current speed of the robot at each point in the simulation in mm/s." },
-        new Param_String() { Name = "Angles", NickName = "Angles", Description = "The current angle values of the robot at each point in the simulation in degrees." },
-        new Param_String() { Name = "Motion", NickName = "Motion", Description = "The current motion type of the robot at each point in the simulation." },
+        new Param_String() { Name = "Code", NickName = "Code", Description = "Robot targets formatted as strings." }
         };
 
         // The following functions append menu items and then handle the item clicked event.
         protected override void AppendAdditionalComponentMenuItems(System.Windows.Forms.ToolStripDropDown menu)
         {
-            ToolStripMenuItem kukaTarget = Menu_AppendItem(menu, "Create KUKA Targets", kuka_Click, true, manufacturer);
-            kukaTarget.ToolTipText = "Create robot targets formatted in KRL for KUKA robots.";
+            ToolStripMenuItem outputCode = Menu_AppendItem(menu, "Output Code", outputCode_Click, true, m_outputTarget);
+            outputCode.ToolTipText = "Output a string representation of the robot targets.";
 
             ToolStripSeparator seperator = Menu_AppendSeparator(menu);
+
+            ToolStripMenuItem kukaTarget = Menu_AppendItem(menu, "Create KUKA Targets", kuka_Click, true, m_manufacturer);
+            kukaTarget.ToolTipText = "Create robot targets formatted in KRL for KUKA robots.";
+
+            ToolStripSeparator seperator2 = Menu_AppendSeparator(menu);
 
             ToolStripMenuItem extRotAxisCheck = Menu_AppendItem(menu, "Use Rotary Axis", rotAxis_Click, true, extRotary);
             extRotAxisCheck.ToolTipText = "Add an input for external rotary axis position values.";
             ToolStripMenuItem extLinAxisCheck = Menu_AppendItem(menu, "Use Linear Axis", linAxis_Click, true, extLinear);
             extLinAxisCheck.ToolTipText = "Add an input for external linear axis position values.";
 
-            ToolStripSeparator seperator2 = Menu_AppendSeparator(menu);
+            ToolStripSeparator seperator3 = Menu_AppendSeparator(menu);
 
-            ToolStripMenuItem interpolation = Menu_AppendItem(menu, "Specify Interpolation Types", interpolation_Click, true, interpolationTypes);
+            ToolStripMenuItem interpolation = Menu_AppendItem(menu, "Specify Interpolation Types", interpolation_Click, true, m_interpolationTypes);
             interpolation.ToolTipText = "Specify the interpolation type per target. [0 = Linear, 1 = Joint]";
+        }
+
+        private void outputCode_Click(object sender, EventArgs e)
+        {
+            RecordUndoEvent("OutputCode");
+            m_outputTarget = !m_outputTarget;
+
+            if (m_outputTarget)
+            {
+                AddOutput(0);
+            }
+            else
+            {
+                Params.UnregisterOutputParameter(Params.Input.FirstOrDefault(x => x.Name == "Code"), true);
+            }
+            ExpireSolution(true);
         }
 
         private void kuka_Click(object sender, EventArgs e)
         {
             RecordUndoEvent("KukaTargets");
-            manufacturer = !manufacturer;
+            m_manufacturer = !m_manufacturer;
             ExpireSolution(true);
         }
 
         private void interpolation_Click(object sender, EventArgs e)
         {
             RecordUndoEvent("InterpolationTypes");
-            interpolationTypes = !interpolationTypes;
+            m_interpolationTypes = !m_interpolationTypes;
 
-            if (interpolationTypes)
+            if (m_interpolationTypes)
             {
                 AddInput(0);
             }
@@ -378,20 +398,20 @@ namespace Axis
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
-            writer.SetBoolean("KukaTargets", this.manufacturer);
+            writer.SetBoolean("KukaTargets", this.m_manufacturer);
             writer.SetBoolean("RotAxis", this.extRotary);
             writer.SetBoolean("LinAxis", this.extLinear);
-            writer.SetBoolean("Method", this.interpolationTypes);
+            writer.SetBoolean("Method", this.m_interpolationTypes);
             return base.Write(writer);
         }
 
         // Deserialize this instance from a Grasshopper reader object.
         public override bool Read(GH_IO.Serialization.GH_IReader reader)
         {
-            this.manufacturer = reader.GetBoolean("KukaTargets");
+            this.m_manufacturer = reader.GetBoolean("KukaTargets");
             this.extRotary = reader.GetBoolean("RotAxis");
             this.extLinear = reader.GetBoolean("LinAxis");
-            this.interpolationTypes = reader.GetBoolean("Method");
+            this.m_interpolationTypes = reader.GetBoolean("Method");
             return base.Read(reader);
         }
 
