@@ -4,8 +4,17 @@ The library is written in C# and compiled against .NET 4.6.1. The library is und
 
 - [x] Component cleanup and simplification
 - [x] Online control for IRC5 controllers
+- [x] Creating a Windows installer file
 - [ ] Fast program checking
 - [ ] Full-feature support for KUKA robots
+
+## Installation
+The latest release version of Axis can be installed using the MSI installer. This will copy Axis to your Grasshopper libraries folder along with a library of user objects and all necessry dependency files.
+
+## Building From Source
+To build the solution from source, you need to first change the following project variables:
+* The build output path (Properties) needs to be changed to reflect the current system e.g ..\..\..\..\AppData\Roaming\Grasshopper\Libraries\Axis\
+* To debug the solution you need to update the path to your Rhino installation directory (Debug) e.g C:\Program Files\Rhino 6\System\Rhino.exe
 
 ## Dependencies
 The core of library is dependent on the following libraries:
