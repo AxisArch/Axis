@@ -13,7 +13,6 @@ namespace Axis.Targets
 {
     public class CoordinateSystem : GH_Component, IGH_VariableParameterComponent
     {
-
         protected override System.Drawing.Bitmap Icon
         {
             get

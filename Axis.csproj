@@ -263,13 +263,6 @@
     <Compile Include="RAPID\Comment.cs" />
     <Compile Include="RAPID\DefineProcedure.cs" />
     <Compile Include="RAPID\SoftMove.cs" />
-    <Compile Include="Workflow\CreateLayer.cs" />
-    <Compile Include="Workflow\ExcelCreate.cs" />
-    <Compile Include="Workflow\ExcelRead.cs" />
-    <Compile Include="Workflow\ExcelWrite.cs" />
-    <Compile Include="Workflow\LayerObjects.cs" />
-    <Compile Include="Workflow\SelectFolder.cs" />
-    <Compile Include="Workflow\OpenFolder.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
