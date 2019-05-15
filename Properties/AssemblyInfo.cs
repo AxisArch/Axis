@@ -12,7 +12,7 @@ using Rhino.PlugIns;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Axis Consulting")]
 [assembly: AssemblyProduct("Axis")]
-[assembly: AssemblyCopyright("Copyright © Axis 2019")]
+[assembly: AssemblyCopyright("Copyright © 2019 Axis Consulting")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
