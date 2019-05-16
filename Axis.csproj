@@ -251,7 +251,7 @@
     <Compile Include="Targets\Target.cs" />
     <Compile Include="Tools\CollisionDetection.cs" />
     <Compile Include="Geometry\PlaneToQuat.cs" />
-    <Compile Include="Licensing\GetLicenseInformation.cs" />
+    <Compile Include="Core\GetLicenseInformation.cs" />
     <Compile Include="Tools\LinearInterpolation.cs" />
     <Compile Include="Geometry\QuatToPlane.cs" />
     <Compile Include="Tools\CharacterList.cs" />
