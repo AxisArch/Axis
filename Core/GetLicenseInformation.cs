@@ -6,7 +6,7 @@ using Grasshopper.Kernel;
 using Rhino.Geometry;
 using System.Diagnostics;
 
-namespace Axis.Tools
+namespace Axis.Core
 {
     public class GetLicenseInformation : GH_Component
     {

@@ -249,14 +249,10 @@
     <Compile Include="Robot\System.cs" />
     <Compile Include="Targets\DefineZone.cs" />
     <Compile Include="Targets\Target.cs" />
-    <Compile Include="Tools\CollisionDetection.cs" />
     <Compile Include="Geometry\PlaneToQuat.cs" />
     <Compile Include="Core\GetLicenseInformation.cs" />
-    <Compile Include="Tools\LinearInterpolation.cs" />
+    <Compile Include="Targets\LinearInterpolation.cs" />
     <Compile Include="Geometry\QuatToPlane.cs" />
-    <Compile Include="Tools\CharacterList.cs" />
-    <Compile Include="Tools\StandardDeviation.cs" />
-    <Compile Include="Tools\SnapValues.cs" />
     <Compile Include="Utilities.cs" />
     <Compile Include="RAPID\Acceleration.cs" />
     <Compile Include="RAPID\CallProcedure.cs" />

@@ -6,7 +6,7 @@ using Rhino.Geometry;
 
 using Axis.Tools;
 
-namespace Axis.Tools
+namespace Axis.Targets
 {
     public class LinearInterpolation : GH_Component
     {
