@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using Grasshopper.Kernel;
 using Rhino.Geometry;
 
-using Axis.Tools;
 using Axis.Core;
 
 namespace Axis.Targets

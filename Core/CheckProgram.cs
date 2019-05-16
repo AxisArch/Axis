@@ -6,7 +6,6 @@ using Grasshopper.Kernel.Types;
 
 using Rhino.Geometry;
 using Axis.Robot;
-using Axis.Tools;
 using Axis.Targets;
 
 namespace Axis.Core

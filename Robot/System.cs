@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using static System.Math;
 
 using Rhino.Geometry;
-using Axis.Tools;
 
 namespace Axis.Core
 {

@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using Grasshopper.Kernel;
 using Rhino.Geometry;
 
-using Axis.Tools;
 using Grasshopper.Kernel.Parameters;
 using System.Windows.Forms;
 using System.Linq;
@@ -24,7 +23,7 @@ namespace Axis.Targets
         {
             get { return new Guid("{b11f15a4-c0dd-43d6-aecd-d87d2fb05664}"); }
         }
-        public override GH_Exposure Exposure => GH_Exposure.secondary;
+        public override GH_Exposure Exposure => GH_Exposure.primary;
 
         bool outputDeclarations = false;
 
