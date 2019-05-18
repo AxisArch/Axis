@@ -19,7 +19,7 @@ namespace Axis.Properties {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -113,9 +113,9 @@ namespace Axis.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap Core {
+        internal static System.Drawing.Bitmap CSystem {
             get {
-                object obj = ResourceManager.GetObject("Core", resourceCulture);
+                object obj = ResourceManager.GetObject("CSystem", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -456,16 +456,6 @@ namespace Axis.Properties {
         internal static System.Drawing.Bitmap Vision {
             get {
                 object obj = ResourceManager.GetObject("Vision", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap Wobj {
-            get {
-                object obj = ResourceManager.GetObject("Wobj", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

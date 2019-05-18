@@ -16,7 +16,7 @@ namespace Axis.Geometry
         {
             get
             {
-                return Axis.Properties.Resources.Core;
+                return Axis.Properties.Resources.Robot;
             }
         }
         public override Guid ComponentGuid

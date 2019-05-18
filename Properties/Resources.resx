@@ -133,8 +133,8 @@
   <data name="Contour" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Contour.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="Core" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Core.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="CSystem" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\CSystem.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="DigitalIn" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\DigitalIn.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -237,9 +237,6 @@
   </data>
   <data name="Vision" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Vision.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Wobj" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Wobj.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="Zone" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Zone.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>

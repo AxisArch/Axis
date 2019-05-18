@@ -258,7 +258,6 @@
   <ItemGroup>
     <None Include="app.config" />
     <None Include="Resources\Tool.png" />
-    <None Include="Resources\Wobj.png" />
     <None Include="Resources\Robot.png" />
     <None Include="Resources\RAPID.png" />
     <None Include="Resources\RapidMovement.png" />
@@ -275,7 +274,6 @@
     <None Include="Resources\Online.png" />
     <None Include="Resources\MonitorTCP.png" />
     <None Include="Resources\Contour.png" />
-    <None Include="Resources\Core.png" />
     <None Include="Resources\DigitalIn.png" />
     <None Include="Resources\DigitalOut.png" />
     <None Include="Resources\Export.png" />
@@ -336,6 +334,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Vision.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Resources\AlignOrigin.png" />
+    <Content Include="Resources\CSystem.png" />
+    <Content Include="Resources\JointTarget.png" />
+    <None Include="Resources\Test24.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -16,7 +16,7 @@ namespace Axis.Targets
         {
             get
             {
-                return Properties.Resources.Wobj;
+                return Properties.Resources.CSystem;
             }
         }
         public override Guid ComponentGuid
