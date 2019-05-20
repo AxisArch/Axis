@@ -86,6 +86,15 @@ namespace Axis.Robot
                 if (!DA.GetData("Offset", ref reltoolOffset)) return;
             }
 
+            // Move TCP for simulation if reltool is used
+            if (relTool)
+            {
+                var moveVector = reltoolOffset;
+                moveVector.Transform(Transform.PlaneToPlane(Plane.WorldXY, TCP));
+                TCP.Transform(Transform.Translation(moveVector));
+            }
+
+
             Tool tool = new Tool(name, TCP, weight, mesh, manufacturer, reltoolOffset);
 
             DA.SetData(0, tool);
