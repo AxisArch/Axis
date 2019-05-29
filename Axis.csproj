@@ -340,6 +340,8 @@
     <Content Include="Resources\AlignOrigin.png" />
     <Content Include="Resources\CSystem.png" />
     <Content Include="Resources\JointTarget.png" />
+    <None Include="Resources\Tool_blue.png" />
+    <None Include="Resources\Robot_blue.png" />
     <None Include="Resources\Test24.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
