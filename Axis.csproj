@@ -236,7 +236,6 @@
     <Compile Include="Core\CodeGenerator.cs" />
     <Compile Include="Styles.cs" />
     <Compile Include="Targets\CreateJointTarget.cs" />
-    <Compile Include="Targets\HomePose.cs" />
     <Compile Include="Properties\AxisInfo.cs" />
     <Compile Include="Targets\FlipPlane.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
