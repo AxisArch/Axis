@@ -27,7 +27,7 @@ namespace Axis.Targets
 
         bool outputDeclarations = false;
 
-        public CoordinateSystem() : base("Work Object", "WObj", "Create a new work object or robot base from geometry or controller calibration values.", "Axis", "4. Toolpath")
+        public CoordinateSystem() : base("Work Object", "WObj", "Create a new work object or robot base from geometry or controller calibration values.", "Axis", "2. Robot")
         {
         }
 
