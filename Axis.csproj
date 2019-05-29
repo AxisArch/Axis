@@ -221,6 +221,8 @@
   <ItemGroup>
     <Compile Include="Core\CheckProgram.cs" />
     <Compile Include="Geometry\SurfaceFrame.cs" />
+    <Compile Include="IO\GetDI.cs" />
+    <Compile Include="IO\SetDO.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
