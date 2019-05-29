@@ -91,6 +91,7 @@ namespace Axis.Robot
             {
                 var moveVector = reltoolOffset;
                 moveVector.Transform(Transform.PlaneToPlane(Plane.WorldXY, TCP));
+                moveVector.Reverse();
                 TCP.Transform(Transform.Translation(moveVector));
             }
 
