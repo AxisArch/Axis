@@ -8,7 +8,7 @@ namespace Axis.Targets
 {
     public class FlipPlane : GH_Component
     {
-        public override GH_Exposure Exposure => GH_Exposure.tertiary;
+        public override GH_Exposure Exposure => GH_Exposure.secondary;
         protected override System.Drawing.Bitmap Icon
         {
             get

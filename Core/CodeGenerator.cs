@@ -171,7 +171,7 @@ namespace Axis.Core
 
                     // Headers
                     KRL.Add("; KUKA Robot Code");
-                    KRL.Add("; Generated with Axis v0.2");
+                    KRL.Add("; Generated with Axis 1.0");
                     KRL.Add("; Created: " + DateTime.Now.ToString());
                     KRL.Add(" ");
 
@@ -238,7 +238,7 @@ namespace Axis.Core
                     // Headers
                     RAPID.Add("MODULE " + strModName);
                     RAPID.Add("! ABB Robot Code");
-                    RAPID.Add("! Generated with Axis Beta");
+                    RAPID.Add("! Generated with Axis 1.0");
                     RAPID.Add("! Created: " + DateTime.Now.ToString());
                     RAPID.Add("! Author: " + Environment.UserName.ToString());
                     RAPID.Add(" ");

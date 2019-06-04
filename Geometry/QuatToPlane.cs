@@ -3,7 +3,6 @@ using System.Collections.Generic;
 
 using Grasshopper.Kernel;
 using Rhino.Geometry;
-using Axis.Tools;
 
 namespace Axis.Geometry
 {
@@ -14,7 +13,7 @@ namespace Axis.Geometry
         {
             get
             {
-                return Properties.Resources.Core;
+                return Properties.Resources.Robot;
             }
         }
         public override Guid ComponentGuid

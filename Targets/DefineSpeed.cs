@@ -74,7 +74,7 @@ namespace Axis.Targets
             List<Speed> speeds = new List<Speed>();
             List<string> declarations = new List<string>();
 
-            // Default and current zone dictionaries.
+            // Default and current speed dictionaries.
             Dictionary<double, Speed> defaultSpeeds = Util.ABBSpeeds();
             Dictionary<double, Speed> presentSpeeds = new Dictionary<double, Speed>();
 
@@ -354,6 +354,7 @@ namespace Axis.Targets
             writer.SetBoolean("UseExtRot", this.m_ExtRot);
             writer.SetBoolean("UseTime", this.m_Time);
             writer.SetBoolean("UseName", this.m_Name);
+            writer.SetBoolean("OutputDec", this.m_Declaration);
             return base.Write(writer);
         }
 
@@ -365,6 +366,7 @@ namespace Axis.Targets
             this.m_ExtRot = reader.GetBoolean("UseExtRot");
             this.m_Time = reader.GetBoolean("UseTime");
             this.m_Name = reader.GetBoolean("UseName");
+            this.m_Declaration = reader.GetBoolean("OutputDec");
             return base.Read(reader);
         }
 

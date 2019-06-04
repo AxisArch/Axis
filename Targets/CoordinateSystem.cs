@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using Grasshopper.Kernel;
 using Rhino.Geometry;
 
-using Axis.Tools;
 using Grasshopper.Kernel.Parameters;
 using System.Windows.Forms;
 using System.Linq;
@@ -13,22 +12,22 @@ namespace Axis.Targets
 {
     public class CoordinateSystem : GH_Component, IGH_VariableParameterComponent
     {
-        public override GH_Exposure Exposure => GH_Exposure.primary;
         protected override System.Drawing.Bitmap Icon
         {
             get
             {
-                return Properties.Resources.Wobj;
+                return Properties.Resources.CSystem;
             }
         }
         public override Guid ComponentGuid
         {
             get { return new Guid("{b11f15a4-c0dd-43d6-aecd-d87d2fb05664}"); }
         }
+        public override GH_Exposure Exposure => GH_Exposure.primary;
 
         bool outputDeclarations = false;
 
-        public CoordinateSystem() : base("Work Object", "WObj", "Create a new work object or robot base from geometry or controller calibration values.", "Axis", "4. Toolpath")
+        public CoordinateSystem() : base("Work Object", "WObj", "Create a new work object or robot base from geometry or controller calibration values.", "Axis", "2. Robot")
         {
         }
 

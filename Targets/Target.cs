@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using Grasshopper.Kernel;
 using Rhino.Geometry;
 
-using Axis.Tools;
 using Axis.Core;
 
 namespace Axis.Targets
@@ -128,8 +127,18 @@ namespace Axis.Targets
                     }                
                 }
 
+                
                 // External axis values
                 string lin = "9E9"; string rot = "9E9";
+
+                //RelTool Offset
+                //Working Example below
+                //MoveL RelTool ([[416.249, -110.455, 0],[0, 0, 1, 0], cData, eAxis], 0, 0,-120), v50, z1, tool0 \Wobj:=wobj0;
+
+
+                
+                //Creating Point
+                string robtarget = "";
                 if (extRot != Util.ExAxisTol || extLin != Util.ExAxisTol) // If the external axis value is present... (otherwise 0.00001 is passed as a default value).
                 {
                     if (extLin != Util.ExAxisTol)
@@ -140,10 +149,20 @@ namespace Axis.Targets
                     {
                         rot = Math.Round(extRot, 2).ToString(); // Get the external axis value per target and round it to two decimal places.
                     }
-                    strABB = movement + @" [[" + ABBposition + "],[" + strQuat + "]," + " cData, " + "[" + rot + ", " + lin + ", 9E9, 9E9, 9E9, 9E9]" + "], " + strSpeed + ", " + strZone + ", " + tool.Name + " " + workObject + ";";
+                    robtarget = @" [[" + ABBposition + "],[" + strQuat + "]," + " cData, " + "[" + rot + ", " + lin + ", 9E9, 9E9, 9E9, 9E9]" + "]";
                 }
-                else { strABB = movement + @" [[" + ABBposition + "],[" + strQuat + "]," + " cData, eAxis], " + strSpeed + ", " + strZone + ", " + tool.Name + " " + workObject + ";"; }
+                else{ robtarget = @" [[" + ABBposition + "],[" + strQuat + "]," + " cData, eAxis]";}
 
+                if (tool.relTool != Vector3d.Zero)
+                {
+                    //MoveL RelTool ([[416.249, -110.455, 0],[0, 0, 1, 0], cData, eAxis], 0, 0,-120), v50, z1, tool0 \Wobj:=wobj0;
+                    string offset = tool.relTool.X.ToString() + ", " + tool.relTool.Y.ToString() + "," + tool.relTool.Z.ToString();
+                    strABB = movement + @" RelTool (" + robtarget + ", " + offset + "), " + strSpeed + ", " + strZone + ", " + tool.Name + " " + workObject + ";";
+                }
+                else
+                {
+                    strABB = movement + robtarget + ", " + strSpeed + ", " + strZone + ", " + tool.Name + " " + workObject + ";";
+                }              
             }
 
             else // KUKA Targets
@@ -184,13 +203,14 @@ namespace Axis.Targets
             this.StrKUKA = strKUKA;
         }
 
-        public Target(List<double> axisVals, Speed speed, Zone zone, double extRot, double extLin, bool robot)
+        public Target(List<double> axisVals, Speed speed, Zone zone, Tool tool, double extRot, double extLin, bool robot)
         {
             string strABB = null;
             string strZone = zone.Name;
             string jTarg = "[" + axisVals[0].ToString() + ", " + axisVals[1].ToString() + ", " + axisVals[2].ToString() + ", " + axisVals[3].ToString() + ", " + axisVals[4].ToString() + ", " + axisVals[5].ToString() + "]";
 
             this.JointAngles = axisVals;
+            this.Tool = tool;
 
             string strSpeed = null;
 
@@ -220,6 +240,12 @@ namespace Axis.Targets
                 }
             }
 
+            string toolName = "tool0";
+            if (tool.Name != "DefaultTool")
+            {
+                toolName = tool.Name;
+            }
+
             // External axis values
             string lin = "9E9"; string rot = "9E9";
             if (extRot != Util.ExAxisTol || extLin != Util.ExAxisTol) // If the external axis value is present... (otherwise 0.00001 is passed as a default value).
@@ -233,12 +259,12 @@ namespace Axis.Targets
                     rot = Math.Round(extRot, 2).ToString(); // Get the external axis value per target and round it to two decimal places.
                 }
 
-                strABB = @"MoveAbsJ [" + jTarg + ", [" + rot + ", " + lin + ", 9E9, 9E9, 9E9, 9E9]" + "], " + strSpeed + ", " + strZone + ", tool0;";
+                strABB = @"MoveAbsJ [" + jTarg + ", [" + rot + ", " + lin + ", 9E9, 9E9, 9E9, 9E9]" + "], " + strSpeed + ", " + strZone + ", " + tool.Name + ";";
             }
-            else { strABB = @"MoveAbsJ [" + jTarg + ", [9E9, 9E9, 9E9, 9E9, 9E9, 9E9]" + "], " + strSpeed + ", " + strZone + ", tool0;"; }
+            else { strABB = @"MoveAbsJ [" + jTarg + ", [9E9, 9E9, 9E9, 9E9, 9E9, 9E9]" + "], " + strSpeed + ", " + strZone + ", " + tool.Name + ";"; }
 
             // Set publicly accessible property values based on the data.
-            this.ExtRot = extRot;
+                this.ExtRot = extRot;
             this.ExtLin = extLin;
             this.StrABB = strABB;
             this.Method = MotionType.AbsoluteJoint;
@@ -293,7 +319,7 @@ namespace Axis.Targets
             Default = new Zone(false, 5, 25, 25, 15, 35, 5, "DefaultZone");
         }
 
-        public Zone(bool stop, double pathRadius, double pathOrient, double pathExternal, double orientation, double linExternal, double rotExternal, string name)
+        public Zone(bool stop = false, double pathRadius = 5, double pathOrient = 8, double pathExternal = 8, double orientation = 0.8, double linExternal = 8, double rotExternal = 0.8, string name = null)
         {
             this.Name = name;
             this.PathRadius = pathRadius;
