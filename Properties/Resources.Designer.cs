@@ -19,7 +19,7 @@ namespace Axis.Properties {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -57,6 +57,16 @@ namespace Axis.Properties {
             }
             set {
                 resourceCulture = value;
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap AlignOrigin {
+            get {
+                object obj = ResourceManager.GetObject("AlignOrigin", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
@@ -106,6 +116,16 @@ namespace Axis.Properties {
         internal static System.Drawing.Bitmap Contour {
             get {
                 object obj = ResourceManager.GetObject("Contour", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Core {
+            get {
+                object obj = ResourceManager.GetObject("Core", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -206,6 +226,16 @@ namespace Axis.Properties {
         internal static System.Drawing.Bitmap IK {
             get {
                 object obj = ResourceManager.GetObject("IK", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap JointTarget {
+            get {
+                object obj = ResourceManager.GetObject("JointTarget", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -333,16 +363,6 @@ namespace Axis.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap Robot_blue {
-            get {
-                object obj = ResourceManager.GetObject("Robot_blue", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
         internal static System.Drawing.Bitmap SelectFolder {
             get {
                 object obj = ResourceManager.GetObject("SelectFolder", resourceCulture);
@@ -463,9 +483,9 @@ namespace Axis.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap Tool_blue {
+        internal static System.Drawing.Bitmap Vision {
             get {
-                object obj = ResourceManager.GetObject("Tool_blue", resourceCulture);
+                object obj = ResourceManager.GetObject("Vision", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -473,9 +493,9 @@ namespace Axis.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap Vision {
+        internal static System.Drawing.Bitmap Wobj {
             get {
-                object obj = ResourceManager.GetObject("Vision", resourceCulture);
+                object obj = ResourceManager.GetObject("Wobj", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

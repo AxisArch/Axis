@@ -258,41 +258,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <None Include="Resources\Tool.png" />
-    <None Include="Resources\Robot.png" />
-    <None Include="Resources\RAPID.png" />
-    <None Include="Resources\RapidMovement.png" />
-    <None Include="Resources\Play.png" />
-    <None Include="Resources\Target.png" />
-    <None Include="Resources\ZoneControl.png" />
-    <None Include="Resources\Zone.png" />
-    <None Include="Resources\SpeedControl.png" />
-    <None Include="Resources\Speed.png" />
-    <None Include="Resources\Simulation.png" />
-    <None Include="Resources\ShowZone.png" />
-    <None Include="Resources\ShowToolpath.png" />
-    <None Include="Resources\ShowTarget.png" />
-    <None Include="Resources\Online.png" />
-    <None Include="Resources\MonitorTCP.png" />
-    <None Include="Resources\Contour.png" />
-    <None Include="Resources\DigitalIn.png" />
-    <None Include="Resources\DigitalOut.png" />
-    <None Include="Resources\Export.png" />
-    <None Include="Resources\MethodControl.png" />
-    <None Include="Resources\CodeGen.png" />
-    <None Include="Resources\KRL.png" />
-    <None Include="Resources\License.png" />
-    <None Include="Resources\FK.png" />
-    <None Include="Resources\IK.png" />
-    <None Include="Resources\Collision.png" />
-    <None Include="Resources\Flip.png" />
-    <None Include="Resources\Lerp.png" />
   </ItemGroup>
   <ItemGroup>
     <WCFMetadata Include="Service References\" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Layers.png" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -301,13 +269,37 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\Snap.png" />
+    <Folder Include="bin\" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\OpenFolder.png" />
+    <None Include="Resources\AlignOrigin.png" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\SelectFolder.png" />
+    <None Include="Resources\CharList.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\CheckProgram.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\CodeGen.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Collision.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Contour.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Core.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\CSystem.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\DigitalIn.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\DigitalOut.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\ExcelCreate.png" />
@@ -319,30 +311,103 @@
     <None Include="Resources\ExcelWrite.png" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\CharList.png" />
+    <None Include="Resources\Export.png" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\CheckProgram.png" />
+    <None Include="Resources\FK.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Flip.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\IK.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\JointTarget.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\KRL.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Layers.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Lerp.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\License.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\MethodControl.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\MonitorTCP.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Online.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\OpenFolder.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Play.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\RAPID.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\RapidMovement.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Robot.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\SelectFolder.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ShowTarget.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ShowToolpath.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ShowZone.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\SigmaS.png" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Resources\Simulation.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Snap.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Speed.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\SpeedControl.png" />
+  </ItemGroup>
+  <ItemGroup>
     <None Include="Resources\SurfaceFrame.png" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="bin\" />
+    <None Include="Resources\Target.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Tool.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Vision.png" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Resources\AlignOrigin.png" />
-    <Content Include="Resources\CSystem.png" />
-    <Content Include="Resources\JointTarget.png" />
-    <None Include="Resources\Tool_blue.png" />
-    <None Include="Resources\Robot_blue.png" />
-    <None Include="Resources\Test24.png" />
+    <None Include="Resources\Wobj.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Zone.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ZoneControl.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
