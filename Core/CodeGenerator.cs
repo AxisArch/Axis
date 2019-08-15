@@ -347,7 +347,7 @@ namespace Axis.Core
                                 writer.WriteLine(KRL[i]);
                             }
                         }
-                        this.Message = "Exported";
+                        Util.AutoClosingMessageBox.Show("Export Successful!", "Export", 1300);
                     }
                     else
                     {
@@ -365,7 +365,7 @@ namespace Axis.Core
                                 mainProc.WriteLine(RAPID[i]);
                             }
                         }
-                        this.Message = "Exported";
+                        Util.AutoClosingMessageBox.Show("Export Successful!", "Export", 1300);
                     }
                 }
             }

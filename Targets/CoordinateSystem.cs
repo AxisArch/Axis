@@ -24,8 +24,10 @@ namespace Axis.Targets
             get { return new Guid("{b11f15a4-c0dd-43d6-aecd-d87d2fb05664}"); }
         }
         public override GH_Exposure Exposure => GH_Exposure.primary;
-
-        bool outputDeclarations = false;
+        
+        // Optional context menu toggles
+        bool m_dynamicCS = false;
+        bool m_outputDeclarations = false;
 
         public CoordinateSystem() : base("Work Object", "WObj", "Create a new work object or robot base from geometry or controller calibration values.", "Axis", "2. Robot")
         {
@@ -49,7 +51,7 @@ namespace Axis.Targets
             List<string> names = new List<string>();
             List<Plane> planes = new List<Plane>();
 
-            if (!DA.GetDataList(0, names)) names.Add("Woobj0");
+            if (!DA.GetDataList(0, names)) names.Add("WObj0");
             if (!DA.GetDataList(1, planes)) planes.Add(Plane.WorldXY);
 
             // Declare an empty string to hold our outputs.
@@ -83,7 +85,7 @@ namespace Axis.Targets
 
             DA.SetDataList(0, cSystems);
 
-            if (outputDeclarations)
+            if (m_outputDeclarations)
             {
                 DA.SetDataList("Dec", declarations);
             }
@@ -98,16 +100,24 @@ namespace Axis.Targets
         // The following functions append menu items and then handle the item clicked event.
         protected override void AppendAdditionalComponentMenuItems(ToolStripDropDown menu)
         {
-            ToolStripMenuItem outputDec = Menu_AppendItem(menu, "Output Declarations", output_Click, true, outputDeclarations);
+            ToolStripMenuItem dynamicCS = Menu_AppendItem(menu, "Dynamic Coordinate System", dynamic_Click, true, m_dynamicCS);
+            dynamicCS.ToolTipText = "Specify a dynamic coordinate system (rotary or linear axis holds the work object).";
+            ToolStripMenuItem outputDec = Menu_AppendItem(menu, "Output Declarations", output_Click, true, m_outputDeclarations);
             outputDec.ToolTipText = "Output the declarations in RAPID format.";
+        }
+
+        private void dynamic_Click(object sender, EventArgs e)
+        {
+            RecordUndoEvent("CSDynClick");
+            m_dynamicCS = !m_dynamicCS;
         }
 
         private void output_Click(object sender, EventArgs e)
         {
             RecordUndoEvent("CSDecClick");
-            outputDeclarations = !outputDeclarations;
+            m_outputDeclarations = !m_outputDeclarations;
 
-            if (outputDeclarations)
+            if (m_outputDeclarations)
             {
                 AddOutput(0);
             }
@@ -147,14 +157,16 @@ namespace Axis.Targets
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
-            writer.SetBoolean("CSDec", this.outputDeclarations);
+            writer.SetBoolean("CSDyn", this.m_dynamicCS);
+            writer.SetBoolean("CSDec", this.m_outputDeclarations);
             return base.Write(writer);
         }
 
         // Deserialize this instance from a Grasshopper reader object.
         public override bool Read(GH_IO.Serialization.GH_IReader reader)
         {
-            this.outputDeclarations = reader.GetBoolean("CSDec");
+            this.m_dynamicCS = reader.GetBoolean("CSDyn");
+            this.m_outputDeclarations = reader.GetBoolean("CSDec");
             return base.Read(reader);
         }
 
