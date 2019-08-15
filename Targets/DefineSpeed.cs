@@ -89,7 +89,7 @@ namespace Axis.Targets
                     }
                     else
                     {
-                        Speed speed = new Speed(100, 30, "v100", timeVals[i]);
+                        Speed speed = new Speed(100, 30, "time_" + timeVals[i].ToString(), timeVals[i]);
                         speeds.Add(speed);
                     }
                 }
@@ -124,7 +124,8 @@ namespace Axis.Targets
                         }
                         else
                         {
-                            speed = new Speed(linVals[i], rotVal, "v" + linVals[i].ToString(), 0);
+                            string name = linVals[i].ToString().Replace('.', '_');
+                            speed = new Speed(linVals[i], rotVal, "v" + name, 0);
                         }
                     }
 

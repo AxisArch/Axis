@@ -66,8 +66,6 @@ namespace Axis.Robot
             if (!DA.GetData(1, ref TCP)) return;
             if (!DA.GetDataList(2, mesh) && mesh == null) return;
 
-
-
             if (manufacturer)
             {
                 this.Message = "KUKA";
@@ -95,7 +93,6 @@ namespace Axis.Robot
                 TCP.Transform(Transform.Translation(moveVector));
             }
 
-
             Tool tool = new Tool(name, TCP, weight, mesh, manufacturer, reltoolOffset);
 
             DA.SetData(0, tool);
@@ -110,7 +107,7 @@ namespace Axis.Robot
         IGH_Param[] inputParams = new IGH_Param[2]
         {
             new Param_Number() { Name = "Weight", NickName = "Weight", Description = "The weight of the tool in kilograms. Necessary for accurate motion planning." },
-            new Param_Vector() { Name = "Offset", NickName = "Offset", Description = "Relative tool offset in mm." },
+            new Param_Number() { Name = "Offset", NickName = "Offset", Description = "Relative tool offset in mm." },
         };
 
         IGH_Param[] outputParams = new IGH_Param[1]
