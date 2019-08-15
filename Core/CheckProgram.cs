@@ -77,7 +77,7 @@ namespace Axis.Core
             else { indices = new List<int>() { 2, 2, 2, 2, 2, 2 }; } // Otherwise assign indices from the robot object.
 
             int counter = 0;
-            
+
             Target targ = null;
             MotionType mType = MotionType.Linear;
 
@@ -115,7 +115,7 @@ namespace Axis.Core
                     target = tempTarg;
 
                     mType = targ.Method;
-                    
+
                     // Get axis points from custom robot class.
                     Point3d P1 = robot.AxisPoints[0];
                     Point3d P2 = robot.AxisPoints[1];

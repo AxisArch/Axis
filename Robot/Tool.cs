@@ -60,7 +60,7 @@ namespace Axis.Robot
             Plane TCP = Plane.WorldXY;
             double weight = 2.5;
             List<Mesh> mesh = new List<Mesh>();
-            Vector3d reltoolOffset = new Vector3d(0,0,0);
+            Vector3d reltoolOffset = new Vector3d(0, 0, 0);
 
             if (!DA.GetData(0, ref name)) return;
             if (!DA.GetData(1, ref TCP)) return;
@@ -103,7 +103,7 @@ namespace Axis.Robot
             if (declaration)
             {
                 DA.SetData("Declaration", tool.Declaration);
-            }            
+            }
         }
 
         // Build a list of optional input and output parameters

@@ -71,7 +71,7 @@ namespace Axis.Core
             bool export = false;
 
             List<GH_ObjectWrapper> program = new List<GH_ObjectWrapper>();
-            
+
             List<string> strHeaders = new List<string>();
             List<string> strDeclarations = new List<string>();
             List<string> strProgram = new List<string>();
@@ -153,7 +153,7 @@ namespace Axis.Core
                     else
                     {
                         strProgram.Add(targ.StrKUKA);
-                    }                    
+                    }
                 }
             }
 
@@ -302,7 +302,7 @@ namespace Axis.Core
                             RAPID.Add(strProgram[i]);
                         }
                     }
-                    
+
 
                     // Close Main Proc
                     RAPID.Add(" ");
@@ -488,7 +488,7 @@ namespace Axis.Core
             Params.OnParametersChanged();
             ExpireSolution(true);
         }
-        
+
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
@@ -672,6 +672,5 @@ namespace Axis.Core
     }
     */
 }
- 
- 
- 
+
+

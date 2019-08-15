@@ -25,7 +25,7 @@ namespace Axis.Core
         }
         public override GH_Exposure Exposure => GH_Exposure.primary;
 
-        public InverseKinematics() : base("Inverse Kinematics", "Kinematics", "Inverse and forward kinematics for a 6 degree of freedom robotic arm, based on Lobster Reloaded by Daniel Piker.","Axis", "1. Core")
+        public InverseKinematics() : base("Inverse Kinematics", "Kinematics", "Inverse and forward kinematics for a 6 degree of freedom robotic arm, based on Lobster Reloaded by Daniel Piker.", "Axis", "1. Core")
         {
         }
 
@@ -361,8 +361,8 @@ namespace Axis.Core
                         // Check for singularity and replace the preview color.
                         if (selectedAngles[4] > -singularityTol && selectedAngles[4] < singularityTol)
                         {
-                        colors[5] = (Styles.Blue);
-                        log.Add("Close to singularity.");
+                            colors[5] = (Styles.Blue);
+                            log.Add("Close to singularity.");
                         }
                     }
                     catch { }
@@ -405,7 +405,7 @@ namespace Axis.Core
             if (isValid)
             {
                 currPos = radAngles;
-            }         
+            }
             else // Otherwise, revert to the last valid pose.
             {
                 radAngles = currPos;
@@ -553,7 +553,7 @@ namespace Axis.Core
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No tool mesh present.");
             }
-                        
+
             colorsOut = colors;
             logOut = log;
 

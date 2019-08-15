@@ -64,12 +64,12 @@ namespace Axis.Core
             double position = 0.000;
             bool hasToolpath = true;
 
-            if (!DA.GetDataList(0, toolpath)) { hasToolpath = false; return; } 
+            if (!DA.GetDataList(0, toolpath)) { hasToolpath = false; return; }
             if (!DA.GetData(1, ref begin)) return;
             if (!DA.GetData(2, ref reset)) return;
 
             if (timeline) { if (!DA.GetData("Timeline", ref position)) return; }
-            
+
             int index = 0;
             double programLength = toolpath.Count - 1;
             string mode = "Auto | ";
@@ -117,7 +117,7 @@ namespace Axis.Core
             List<double> externals = new List<double>();
             double linExt = 0;
             double rotExt = 0;
-            
+
             if (cType.Name == "GH_String")
             {
                 string cmd = currTarg.Value.ToString();
@@ -460,4 +460,3 @@ namespace Axis.Core
         void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
     }
 }
- 
