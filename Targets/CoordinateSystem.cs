@@ -79,7 +79,7 @@ namespace Axis.Targets
                 string dec = "PERS wobjdata " + name + @" := [FALSE, TRUE, "", [[" + posX.ToString() + ", " + posY.ToString() + ", " + posZ.ToString() + "],[" + Math.Round(quat.A, 6).ToString() + ", " + Math.Round(quat.B, 6).ToString() + ", " + Math.Round(quat.C, 6).ToString() + ", " + Math.Round(quat.D, 6).ToString() + "]],[0, 0, 0],[1, 0, 0, 0]]];";
                 declarations.Add(dec);
 
-                CSystem cSys = new CSystem(name, planes[i]);
+                CSystem cSys = new CSystem(name, planes[i], m_dynamicCS);
                 cSystems.Add(cSys);
             }
 
@@ -110,6 +110,7 @@ namespace Axis.Targets
         {
             RecordUndoEvent("CSDynClick");
             m_dynamicCS = !m_dynamicCS;
+            ExpireSolution(true);
         }
 
         private void output_Click(object sender, EventArgs e)

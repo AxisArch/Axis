@@ -38,13 +38,23 @@ namespace Axis.Targets
             Quaternion realQuat = Util.QuaternionFromPlane(target);
 
             // Set publicly accessible property values based on the manufacturer data.
-            this.Plane = target;
             this.Quaternion = realQuat;
             this.ExtRot = extRot;
             this.ExtLin = extLin;
             this.WorkObject = wobj.Name;
             this.Method = method;
             this.Tool = tool;
+
+            // Copy target in case we are using a dynamic CS
+            Plane dynamicTarget = new Plane(target);
+            if (wobj.Dynamic)
+            {
+                Transform rot = Transform.Rotation(extRot.ToRadians(), wobj.CSPlane.Origin);
+                if (dynamicTarget.Transform(rot))
+                    this.Plane = dynamicTarget;
+            }
+            else
+                this.Plane = target;
 
             // Offset with the CSystem to get the right program code.
             Transform xForm = Transform.PlaneToPlane(wobj.CSPlane, Plane.WorldXY);
@@ -338,18 +348,20 @@ namespace Axis.Targets
     {
         public string Name { get; set; }
         public Plane CSPlane { get; set; }
+        public bool Dynamic { get; set; }
 
         public static CSystem Default { get; set; }
 
-        public CSystem(string name, Plane csPlane)
+        public CSystem(string name, Plane csPlane, bool dynamicCS)
         {
             this.Name = name;
             this.CSPlane = csPlane;
+            this.Dynamic = dynamicCS;
         }
 
         static CSystem()
         {
-            Default = new CSystem("Default", Plane.WorldXY);
+            Default = new CSystem("Default", Plane.WorldXY, false);
         }
     }
 
