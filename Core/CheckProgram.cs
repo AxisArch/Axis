@@ -6,7 +6,6 @@ using Grasshopper.Kernel.Types;
 
 using Rhino.Geometry;
 using Axis.Robot;
-using Axis.Tools;
 using Axis.Targets;
 
 namespace Axis.Core
@@ -78,7 +77,7 @@ namespace Axis.Core
             else { indices = new List<int>() { 2, 2, 2, 2, 2, 2 }; } // Otherwise assign indices from the robot object.
 
             int counter = 0;
-            
+
             Target targ = null;
             MotionType mType = MotionType.Linear;
 
@@ -116,7 +115,7 @@ namespace Axis.Core
                     target = tempTarg;
 
                     mType = targ.Method;
-                    
+
                     // Get axis points from custom robot class.
                     Point3d P1 = robot.AxisPoints[0];
                     Point3d P2 = robot.AxisPoints[1];
@@ -341,7 +340,10 @@ namespace Axis.Core
                         // Absolute target checks
                         else if (mType == MotionType.AbsoluteJoint)
                         {
-                            for (int i = 0; i < 5; i++)
+                            // Grab the joint angles from the joint target instead of using IK.
+                            angles = targ.JointAngles;
+
+                            for (int i = 0; i < 6; i++)
                             {
                                 // Check if the solution value is inside the manufacturer permitted range
                                 if (angles[i] > robot.MaxAngles[i] || angles[i] < robot.MinAngles[i])
@@ -350,12 +352,6 @@ namespace Axis.Core
                                     log.Add("Axis " + axis.ToString() + " is out of rotation domain at command " + counter.ToString() + ".");
                                     break;
                                 }
-                            }
-                            // Check for wrist singularity, clear the list of preview colors and override
-                            if (angles[4] < singularityTol && angles[4] > -singularityTol)
-                            {
-                                log.Add("Wrist singularity at command " + counter.ToString() + ".");
-                                break;
                             }
                         }
 

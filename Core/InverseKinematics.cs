@@ -6,7 +6,6 @@ using Rhino.Geometry;
 using Grasshopper.Kernel;
 
 using Axis.Robot;
-using Axis.Tools;
 using Axis.Targets;
 
 namespace Axis.Core
@@ -26,7 +25,7 @@ namespace Axis.Core
         }
         public override GH_Exposure Exposure => GH_Exposure.primary;
 
-        public InverseKinematics() : base("Inverse Kinematics", "Kinematics", "Inverse and forward kinematics for a 6 degree of freedom robotic arm, based on Lobster Reloaded by Daniel Piker.","Axis", "1. Core")
+        public InverseKinematics() : base("Inverse Kinematics", "Kinematics", "Inverse and forward kinematics for a 6 degree of freedom robotic arm, based on Lobster Reloaded by Daniel Piker.", "Axis", "1. Core")
         {
         }
 
@@ -75,7 +74,7 @@ namespace Axis.Core
             List<double> anglesOut = new List<double>();
             Plane flangeOut = new Plane();
             List<Mesh> meshesOut = new List<Mesh>();
-            List<string> colorsOut = new List<string>();
+            List<System.Drawing.Color> colorsOut = new List<System.Drawing.Color>();
             List<string> logOut = new List<string>();
             List<object> debugOut = new List<object>();
             List<Plane> planesOut = new List<Plane>();
@@ -86,7 +85,7 @@ namespace Axis.Core
                 indices = new List<int>() { 2, 2, 2, 2, 2, 2 };
             }
 
-            List<string> colors = new List<string>();
+            List<System.Drawing.Color> colors = new List<System.Drawing.Color>();
             List<string> log = new List<string>();
             List<Plane> aPlns = new List<Plane>();
 
@@ -104,11 +103,11 @@ namespace Axis.Core
                     // Check if the solution value is inside the manufacturer permitted range
                     if (angles[i] < robot.MaxAngles[i] && angles[i] > robot.MinAngles[i])
                     {
-                        colors.Add("210, 210, 210");
+                        colors.Add(Styles.DarkGrey);
                     }
                     else
                     {
-                        colors.Add("202, 47, 24");
+                        colors.Add(Styles.Pink);
                         log.Add("Axis " + i.ToString() + " is out of rotation domain.");
                         isValid = false;
                     }
@@ -339,28 +338,34 @@ namespace Axis.Core
                 radAngles[5] = A6.ToRadians();
 
                 // Add the base colour as standard.
-                colors.Add("210, 210, 210");
+                colors.Add(Styles.DarkGrey);
 
                 for (int i = 0; i < 6; i++)
                 {
+
                     // Check if the solution value is inside the manufacturer permitted range.
                     if (selectedAngles[i] < robot.MaxAngles[i] && selectedAngles[i] > robot.MinAngles[i])
                     {
-                        colors.Add("210, 210, 210"); // Near white.
+                        colors.Add(Styles.DarkGrey);
                     }
                     else
                     {
-                        colors.Add("202, 47, 24"); // Red.
+                        colors.Add(Styles.Pink);
                         log.Add("Axis " + i + " is out of rotation domain.");
                         isValid = false;
                     }
 
-                    // Check for singularity and replace the preview color.
-                    if (selectedAngles[4] > -singularityTol && selectedAngles[4] < singularityTol)
+                    // If no tool is present this would else fail
+                    try
                     {
-                        colors[5] = ("59, 162, 117");
-                        log.Add("Close to singularity.");
+                        // Check for singularity and replace the preview color.
+                        if (selectedAngles[4] > -singularityTol && selectedAngles[4] < singularityTol)
+                        {
+                            colors[5] = (Styles.Blue);
+                            log.Add("Close to singularity.");
+                        }
                     }
+                    catch { }
                 }
             }
 
@@ -400,7 +405,7 @@ namespace Axis.Core
             if (isValid)
             {
                 currPos = radAngles;
-            }         
+            }
             else // Otherwise, revert to the last valid pose.
             {
                 radAngles = currPos;
@@ -533,15 +538,32 @@ namespace Axis.Core
             // Transform tool per target to robot flange.
             List<Mesh> toolMeshes = new List<Mesh>();
             Transform orientFlange = Transform.PlaneToPlane(Plane.WorldXY, flangeOut);
-            foreach (Mesh m in robTarg.Tool.Geometry)
+
+            // Add warning if no mesh is present
+            try
             {
-                Mesh tool = m.DuplicateMesh();
-                tool.Transform(orientFlange);
-                toolMeshes.Add(tool);
+                foreach (Mesh m in robTarg.Tool.Geometry)
+                {
+                    Mesh tool = m.DuplicateMesh();
+                    tool.Transform(orientFlange);
+                    toolMeshes.Add(tool);
+                }
             }
-                        
+            catch
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No tool mesh present.");
+            }
+
             colorsOut = colors;
             logOut = log;
+
+            // Colour mesh
+            /*
+            for (int i = 0; i < meshesOut.Count; i++)
+            {
+                meshesOut[i].VertexColors.CreateMonotoneMesh(colorsOut[i]);
+            }
+            */
 
             // Output data
             DA.SetDataList(0, meshesOut);
@@ -553,4 +575,3 @@ namespace Axis.Core
         }
     }
 }
- 

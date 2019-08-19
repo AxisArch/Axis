@@ -71,7 +71,7 @@ namespace Axis.Core
             bool export = false;
 
             List<GH_ObjectWrapper> program = new List<GH_ObjectWrapper>();
-            
+
             List<string> strHeaders = new List<string>();
             List<string> strDeclarations = new List<string>();
             List<string> strProgram = new List<string>();
@@ -153,7 +153,7 @@ namespace Axis.Core
                     else
                     {
                         strProgram.Add(targ.StrKUKA);
-                    }                    
+                    }
                 }
             }
 
@@ -171,7 +171,7 @@ namespace Axis.Core
 
                     // Headers
                     KRL.Add("; KUKA Robot Code");
-                    KRL.Add("; Generated with Axis v0.2");
+                    KRL.Add("; Generated with Axis 1.0");
                     KRL.Add("; Created: " + DateTime.Now.ToString());
                     KRL.Add(" ");
 
@@ -238,7 +238,7 @@ namespace Axis.Core
                     // Headers
                     RAPID.Add("MODULE " + strModName);
                     RAPID.Add("! ABB Robot Code");
-                    RAPID.Add("! Generated with Axis Beta");
+                    RAPID.Add("! Generated with Axis 1.0");
                     RAPID.Add("! Created: " + DateTime.Now.ToString());
                     RAPID.Add("! Author: " + Environment.UserName.ToString());
                     RAPID.Add(" ");
@@ -302,7 +302,7 @@ namespace Axis.Core
                             RAPID.Add(strProgram[i]);
                         }
                     }
-                    
+
 
                     // Close Main Proc
                     RAPID.Add(" ");
@@ -347,7 +347,7 @@ namespace Axis.Core
                                 writer.WriteLine(KRL[i]);
                             }
                         }
-                        this.Message = "Exported";
+                        Util.AutoClosingMessageBox.Show("Export Successful!", "Export", 1300);
                     }
                     else
                     {
@@ -365,7 +365,7 @@ namespace Axis.Core
                                 mainProc.WriteLine(RAPID[i]);
                             }
                         }
-                        this.Message = "Exported";
+                        Util.AutoClosingMessageBox.Show("Export Successful!", "Export", 1300);
                     }
                 }
             }
@@ -488,7 +488,7 @@ namespace Axis.Core
             Params.OnParametersChanged();
             ExpireSolution(true);
         }
-        
+
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
@@ -672,6 +672,5 @@ namespace Axis.Core
     }
     */
 }
- 
- 
- 
+
+

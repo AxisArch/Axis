@@ -45,13 +45,13 @@ namespace Axis.Core
             pManager.AddPointParameter("Points", "Points", "Axis intersection points for kinematics. (Upper base, shoulder, elbow and wrist.)", GH_ParamAccess.list);
             pManager.AddNumberParameter("Minimums", "Minimums", "Joint minimum angles, as a list of doubles.", GH_ParamAccess.list);
             pManager.AddNumberParameter("Maximums", "Maximums", "Joint maximum angles, as a list of doubles.", GH_ParamAccess.list);
-            pManager.AddIntegerParameter("Indices", "Indices", "Inverse kinematic solution indices.", GH_ParamAccess.list, new List<int>() { 2, 2, 2, 2, 2, 2 } );
+            pManager.AddIntegerParameter("Indices", "Indices", "Inverse kinematic solution indices.", GH_ParamAccess.list, new List<int>() { 2, 2, 2, 2, 2, 2 });
             pManager.AddMeshParameter("Mesh", "Mesh", "List of robot mesh geometry. [Base + 6 joint meshes]", GH_ParamAccess.list);
             pManager.AddPlaneParameter("Base", "Base", "Optional custom robot base plane. [Default = World XY]", GH_ParamAccess.item, Plane.WorldXY);
             pManager[3].Optional = true;
             pManager[5].Optional = true;
         }
-        
+
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
             pManager.AddGenericParameter("Robot", "Robot", "Custom robot data type.", GH_ParamAccess.item);
@@ -95,7 +95,7 @@ namespace Axis.Core
         {
             ToolStripMenuItem KukaRobot = Menu_AppendItem(menu, "Create KUKA Robot", kuka_Click, true, m_Manufacturer);
             KukaRobot.ToolTipText = "Create a KUKA robot. Used to choose the robot language in the post processor.";
-            
+
             ToolStripSeparator seperator = Menu_AppendSeparator(menu);
 
             ToolStripMenuItem PoseOut = Menu_AppendItem(menu, "Output Start Pose", pose_Click, true, m_Pose);

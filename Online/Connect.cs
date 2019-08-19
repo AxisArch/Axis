@@ -8,7 +8,6 @@ using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Grasshopper.Kernel.Parameters;
 
-
 using Rhino.Geometry;
 
 using ABB.Robotics.Controllers;

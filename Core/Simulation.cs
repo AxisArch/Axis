@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
-using Axis.Tools;
 using Axis.Targets;
 
 using Grasshopper.Kernel;
@@ -65,12 +64,12 @@ namespace Axis.Core
             double position = 0.000;
             bool hasToolpath = true;
 
-            if (!DA.GetDataList(0, toolpath)) { hasToolpath = false; return; } 
+            if (!DA.GetDataList(0, toolpath)) { hasToolpath = false; return; }
             if (!DA.GetData(1, ref begin)) return;
             if (!DA.GetData(2, ref reset)) return;
 
             if (timeline) { if (!DA.GetData("Timeline", ref position)) return; }
-            
+
             int index = 0;
             double programLength = toolpath.Count - 1;
             string mode = "Auto | ";
@@ -118,7 +117,7 @@ namespace Axis.Core
             List<double> externals = new List<double>();
             double linExt = 0;
             double rotExt = 0;
-            
+
             if (cType.Name == "GH_String")
             {
                 string cmd = currTarg.Value.ToString();
@@ -289,9 +288,9 @@ namespace Axis.Core
         IGH_Param[] outputParams = new IGH_Param[4]
         {
         new Param_Number() { Name = "Speed", NickName = "Speed", Description = "The current speed of the robot in mm/s." },
-        new Param_String() { Name = "Angles", NickName = "Angles", Description = "The current angle values of the robot." },
-        new Param_String() { Name = "Motion", NickName = "Motion", Description = "The current motion type of the robot." },
-        new Param_String() { Name = "External", NickName = "External", Description = "The current external axis values as a list." },
+        new Param_Number() { Name = "Angles", NickName = "Angles", Description = "The current angle values of the robot." },
+        new Param_Number() { Name = "Motion", NickName = "Motion", Description = "The current motion type of the robot." },
+        new Param_Number() { Name = "External", NickName = "External", Description = "The current external axis values as a list." },
         };
 
         // The following functions append menu items and then handle the item clicked event.
@@ -461,4 +460,3 @@ namespace Axis.Core
         void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
     }
 }
- 

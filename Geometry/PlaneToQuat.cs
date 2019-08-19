@@ -6,7 +6,6 @@ using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
 
 using Rhino.Geometry;
-using Axis.Tools;
 
 namespace Axis.Geometry
 {
@@ -17,7 +16,7 @@ namespace Axis.Geometry
         {
             get
             {
-                return Axis.Properties.Resources.Core;
+                return Axis.Properties.Resources.Robot;
             }
         }
         public override Guid ComponentGuid
