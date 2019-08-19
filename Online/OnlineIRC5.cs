@@ -9,7 +9,7 @@ using Rhino.Geometry;
 
 using StreamTools;
 using Axis.Targets;
-using Axis.Tools;
+//using Axis.Tools;
 
 namespace Axis.Online
 {
@@ -29,7 +29,7 @@ namespace Axis.Online
         {
             get
             {
-                return Properties.Resources.iconWarning;
+                return Properties.Resources.Online;
             }
         }
         public override Guid ComponentGuid

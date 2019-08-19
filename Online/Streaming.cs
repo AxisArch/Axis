@@ -54,7 +54,14 @@ namespace Axis.Online
 
         Pos pos = new Pos();
         Orient ori = new Orient();
+        Pos posTool = new Pos();
+        Orient oriTool = new Orient();
         Pose pose = new Pose();
+        RobJoint robJoint = new RobJoint();
+        ToolData streemingTool = new ToolData();
+        Speed speed = new Speed();
+        Zone zone = new Zone();
+
 
 
         /// <summary>
@@ -235,25 +242,63 @@ namespace Axis.Online
                 {
                     IpcMessage message = new IpcMessage();
 
+                    string motion = targ.Method.ToString();
+
                     pos.X = (float)targ.Position.X;
                     pos.Y = (float)targ.Position.Y;
                     pos.Z = (float)targ.Position.Z;
 
+                    posTool.X = (float)targ.Tool.TCP.OriginX;
+                    posTool.Y = (float)targ.Tool.TCP.OriginY;
+                    posTool.Z = (float)targ.Tool.TCP.OriginZ;
 
                     ori.Q1 = targ.Quaternion.A;
                     ori.Q2 = targ.Quaternion.B;
                     ori.Q3 = targ.Quaternion.C;
                     ori.Q4 = targ.Quaternion.D;
 
-                    pose.Trans = pos;
-                    pose.Rot = ori;
+                    Quaternion quatTool = Util.QuaternionFromPlane(targ.Tool.TCP);
+                    oriTool.Q1 = quatTool.A;
+                    oriTool.Q2 = quatTool.B;
+                    oriTool.Q3 = quatTool.C;
+                    oriTool.Q4 = quatTool.D;
+
+                    if (targ.JointAngles != null)
+                    {
+                        robJoint.Rax_1 = (float)targ.JointAngles[0];
+                        robJoint.Rax_2 = (float)targ.JointAngles[1];
+                        robJoint.Rax_3 = (float)targ.JointAngles[2];
+                        robJoint.Rax_4 = (float)targ.JointAngles[3];
+                        robJoint.Rax_5 = (float)targ.JointAngles[4];
+                        robJoint.Rax_6 = (float)targ.JointAngles[5];
+                    }
+
+                    pose.Trans = posTool;
+                    pose.Rot = oriTool;
+
+                    
+                    speed.TranslationSpeed = targ.Speed.TranslationSpeed;
+                    speed.RotationSpeed = targ.Speed.RotationSpeed;
+                    zone.PathRadius = targ.Zone.PathRadius;
+                    zone.PathOrient = targ.Zone.PathOrient;
+
+                    //streemingTool
 
                     string content = "SD;[" +
-                        "\"Linear\"," +
-                        pos.ToString() + "," +
-                        ori.ToString() + "," +
-                        pose.ToString() +
-                        "]";
+                            "\"" + 
+                            motion +
+                            "\"," +
+                            pos.ToString() + "," +
+                            ori.ToString() + "," +
+                            robJoint.ToString() + "," +
+                            speed.TranslationSpeed.ToString() + "," +
+                            speed.RotationSpeed.ToString() + "," +
+                            pose.ToString() +
+                            //zone.PathRadius.ToString() + "," +
+                            //zone.PathOrient.ToString() +
+                            "]";
+                    
+
 
                     byte[] data = new UTF8Encoding().GetBytes(content);
 
