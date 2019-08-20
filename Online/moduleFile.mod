@@ -11,19 +11,13 @@
 !        num ZoneTCP;
 !        num ZoneOrg;
     ENDRECORD
-
-!    RECORD SD
-!        string MoveMethod;
-!        robjoint JointTarg;
-!        pos RobTarg;
-!        orient Orientation;
-!        num TCPSpeed;
-!        num ReorSpeed;
-!        pose ToolFrame;
-!    ENDRECORD
-
-    PERS tooldata StreamingTool:=[TRUE,[[7.10543E-15,-1.06581E-14,213.732],[0.707107,0,0,-0.707107]],[1,[0,0,1E-04],[1,0,0,0],0,0,0]];
-    VAR speeddata StreamingSpeed:= [ 100, 20, 200, 15 ]; ! Custom speed object for online testing.
+    
+    RECORD SE
+        string Hello;
+    ENDRECORD
+ 
+    PERS tooldata StreamingTool:=[TRUE,[[31.6965,61.8812,133.379],[0.207982,0.10829,0.44888,0.862278]],[1,[0,0,1E-04],[1,0,0,0],0,0,0]];
+    VAR speeddata StreamingSpeed:= [ 100, 20, 200, 15 ];
     VAR zonedata StreamingZone:= [False, 0.3, 0.3, 0.3, 0.03, 0.3, 0.03 ];
 
     VAR bool flag:=FALSE;
@@ -72,41 +66,22 @@
                 MoveL [MyData.RobTarg,MyData.Orientation,[0,0,0,0],[9E9,9E9,9E9,9E9,9E9,9E9]],StreamingSpeed,StreamingZone,StreamingTool;
                 RestoPath;               
             ENDIF
+            
             If MyData.MoveMethod="Joint" THEN
                 StorePath;
                 MoveJ [MyData.RobTarg,MyData.Orientation,[0,0,0,0],[9E9,9E9,9E9,9E9,9E9,9E9]],StreamingSpeed,StreamingZone,StreamingTool;
                 RestoPath;               
             ENDIF
+            
             If MyData.MoveMethod="AbsoluteJoint" THEN
                 StorePath;
                 MoveAbsJ [MyData.JointTarget, [0, 0, 9E9, 9E9, 9E9, 9E9]], StreamingSpeed, StreamingZone, StreamingTool;
                 RestoPath;               
             ENDIF
+            
         ENDIF
-
-
-
-        
-!        IF header.datatype="SD" THEN
-
-!            RMQGetMsgData msg,MyData;
-!            StreamingTool.tframe:=MyData.ToolFrame;
-
-!            If MyData.MoveMethod="MJ" THEN
-!                StorePath;
-!                MoveAbsJ [MyData.JointTarg,[0,9E9,9E9,9E9,9E9,9E9]],testTCPSpeed,z1,StreamingTool\Wobj:=Wobj0;
-!                RestoPath;
-
-!            ELSEIF MyData.MoveMethod="ML" THEN
-!                StorePath;
-!                MoveL [MyData.RobTarg,MyData.Orientation,[0,0,0,0],[0,9E9,9E9,9E9,9E9,9E9]],testTCPSpeed,z1,StreamingTool\WObj:=Wobj0;
-!                RestoPath;
-
-!            ENDIF
-!        ELSE
-!            TPWrite "Unknown message data received...";
-!        ENDIF
-
+        IF header.datatype="SE" THEN    
+            RMQGetMsgData msg, MyData;
+        ENDIF
     ENDTRAP
-
 ENDMODULE

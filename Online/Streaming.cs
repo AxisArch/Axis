@@ -12,6 +12,7 @@ using Grasshopper.Kernel.Parameters;
 
 
 using Rhino.Geometry;
+using Grasshopper;
 
 using ABB.Robotics;
 using ABB.Robotics.Controllers;
@@ -340,7 +341,8 @@ namespace Axis.Online
             {
                 List<string> ModFile = new List<string>();
 
-                using (TextReader reader = File.OpenText(@"Online\moduleFile.mod"))
+                string test = Folders.AppDataFolder;
+                using (TextReader reader = File.OpenText(Folders.AppDataFolder + @"Libraries\Axis\Online\moduleFile.mod"))
                 {
                     string line;
                     while ((line = reader.ReadLine()) != null)
