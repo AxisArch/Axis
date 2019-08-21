@@ -283,7 +283,7 @@ namespace Axis
             }
             else
             {
-                Params.UnregisterOutputParameter(Params.Input.FirstOrDefault(x => x.Name == "Code"), true);
+                Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Code"), true);
             }
             ExpireSolution(true);
         }

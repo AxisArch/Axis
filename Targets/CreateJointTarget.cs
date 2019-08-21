@@ -154,7 +154,7 @@ namespace Axis.Targets
         // Build a list of optional input parameters
         IGH_Param[] inputParams = new IGH_Param[]
         {
-        new Param_Integer() { Name = "Rotary", NickName = "Rotary", Description = "An external rotary axis position in degrees.", Access = GH_ParamAccess.item },
+        new Param_Number() { Name = "Rotary", NickName = "Rotary", Description = "An external rotary axis position in degrees.", Access = GH_ParamAccess.item },
         new Param_Number() { Name = "Linear", NickName = "Linear", Description = "An external linear axis position in degrees.", Access = GH_ParamAccess.item },
         };
 
