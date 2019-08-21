@@ -27,6 +27,7 @@ namespace Axis.Targets
         
         // Optional context menu toggles
         bool m_dynamicCS = false;
+        Plane eAxis = Plane.WorldXY;
         bool m_outputDeclarations = false;
 
         public CoordinateSystem() : base("Work Object", "WObj", "Create a new work object or robot base from geometry or controller calibration values.", "Axis", "2. Robot")
@@ -54,6 +55,8 @@ namespace Axis.Targets
             if (!DA.GetDataList(0, names)) names.Add("WObj0");
             if (!DA.GetDataList(1, planes)) planes.Add(Plane.WorldXY);
 
+            if (m_dynamicCS) { if (!DA.GetData("External Axis", ref eAxis)) return; }
+
             // Declare an empty string to hold our outputs.
             List<string> declarations = new List<string>();
             List<CSystem> cSystems = new List<CSystem>();
@@ -79,7 +82,7 @@ namespace Axis.Targets
                 string dec = "PERS wobjdata " + name + @" := [FALSE, TRUE, "", [[" + posX.ToString() + ", " + posY.ToString() + ", " + posZ.ToString() + "],[" + Math.Round(quat.A, 6).ToString() + ", " + Math.Round(quat.B, 6).ToString() + ", " + Math.Round(quat.C, 6).ToString() + ", " + Math.Round(quat.D, 6).ToString() + "]],[0, 0, 0],[1, 0, 0, 0]]];";
                 declarations.Add(dec);
 
-                CSystem cSys = new CSystem(name, planes[i], m_dynamicCS);
+                CSystem cSys = new CSystem(name, planes[i], m_dynamicCS, eAxis);
                 cSystems.Add(cSys);
             }
 
@@ -90,6 +93,12 @@ namespace Axis.Targets
                 DA.SetDataList("Dec", declarations);
             }
         }
+
+        // Build a list of optional input parameters
+        IGH_Param[] inputParams = new IGH_Param[1]
+        {
+        new Param_Plane() { Name = "External Axis", NickName = "eAxis", Description = "A plane that discribes the location of the external axis.", Access = GH_ParamAccess.item},
+        };
 
         // Build a list of optional output parameters
         IGH_Param[] outputParams = new IGH_Param[1]
@@ -110,6 +119,15 @@ namespace Axis.Targets
         {
             RecordUndoEvent("CSDynClick");
             m_dynamicCS = !m_dynamicCS;
+
+            if (m_dynamicCS)
+            {
+                AddInput(0);
+            }
+            else
+            {
+                Params.UnregisterInputParameter(Params.Input.FirstOrDefault(x => x.Name == "External Axis"), true);
+            }
             ExpireSolution(true);
         }
 
@@ -126,6 +144,32 @@ namespace Axis.Targets
             {
                 Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Declarations"), true);
             }
+            ExpireSolution(true);
+        }
+
+        // Register the new input parameters to our component.
+        private void AddInput(int index)
+        {
+            IGH_Param parameter = inputParams[index];
+
+            if (Params.Input.Any(x => x.Name == parameter.Name))
+                Params.UnregisterInputParameter(Params.Input.First(x => x.Name == parameter.Name), true);
+            else
+            {
+                int insertIndex = Params.Input.Count;
+                for (int i = 0; i < Params.Input.Count; i++)
+                {
+                    int otherIndex = Array.FindIndex(inputParams, x => x.Name == Params.Input[i].Name);
+                    if (otherIndex > index)
+                    {
+                        insertIndex = i;
+                        break;
+                    }
+                }
+
+                Params.RegisterInputParam(parameter, insertIndex);
+            }
+            Params.OnParametersChanged();
             ExpireSolution(true);
         }
 

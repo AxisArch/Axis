@@ -49,7 +49,7 @@ namespace Axis.Targets
             Plane dynamicTarget = new Plane(target);
             if (wobj.Dynamic)
             {
-                Transform rot = Transform.Rotation(extRot.ToRadians(), wobj.CSPlane.Origin);
+                Transform rot = Transform.Rotation(extRot.ToRadians(),wobj.ExternalAxis.Normal , wobj.ExternalAxis.Origin);
                 if (dynamicTarget.Transform(rot))
                     this.Plane = dynamicTarget;
             }
@@ -349,19 +349,21 @@ namespace Axis.Targets
         public string Name { get; set; }
         public Plane CSPlane { get; set; }
         public bool Dynamic { get; set; }
+        public Plane ExternalAxis { get; set; }
 
         public static CSystem Default { get; set; }
 
-        public CSystem(string name, Plane csPlane, bool dynamicCS)
+        public CSystem(string name, Plane csPlane, bool dynamicCS, Plane eAxisPlane)
         {
             this.Name = name;
             this.CSPlane = csPlane;
             this.Dynamic = dynamicCS;
+            this.ExternalAxis = eAxisPlane;
         }
 
         static CSystem()
         {
-            Default = new CSystem("Default", Plane.WorldXY, false);
+            Default = new CSystem("Default", Plane.WorldXY, false, Plane.WorldXY);
         }
     }
 
