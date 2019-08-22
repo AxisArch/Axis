@@ -30,6 +30,7 @@ namespace Axis.Online
         //Optionable Log
         private bool logOption = false;
         private bool logOptionOut = false;
+        private bool lQOption = false;
         public List<string> Status { get; set; }
 
         private bool modOption = false;
@@ -37,6 +38,7 @@ namespace Axis.Online
         public Controller controller = null;
         private Task[] tasks = null;
         public IpcQueue RobotQueue { get; set; }
+        private Queue<IpcMessage> LocalQueue = new Queue<IpcMessage>();
 
         private bool stream;
         private int ioMonitoringOn = 0;
@@ -108,6 +110,7 @@ namespace Axis.Online
             GH_ObjectWrapper controller = new GH_ObjectWrapper();
             Controller abbController = null;
             bool clear = false;
+            bool lqclear = false;
             bool monitorTCP = false;
             bool monitorIO = false;
             bool stream = false;
@@ -121,6 +124,10 @@ namespace Axis.Online
             if (logOption)
             {
                 if (!DA.GetData("Clear", ref clear)) ;
+            }
+            if (lQOption)
+            {
+                if (!DA.GetData("Clear Local Queue", ref lqclear)) ;
             }
 
 
@@ -298,25 +305,44 @@ namespace Axis.Online
                             //zone.PathRadius.ToString() + "," +
                             //zone.PathOrient.ToString() +
                             "]";
-                    
 
+                    var lim = RobotQueue.MessageSizeLimit;
+                    var capacity = RobotQueue.Capacity;
+                    var ID = RobotQueue.QueueId;
 
                     byte[] data = new UTF8Encoding().GetBytes(content);
 
                     message.SetData(data);
-                    try
+
+
+                    if (LocalQueue.Count != 0)
                     {
-                        RobotQueue.Send(message);
-                        //Reset PP and restart if if error on controller(?)
+                        LocalQueue.Enqueue(message);
+                        try
+                        {
+                            RobotQueue.Send(LocalQueue.Dequeue());
+                        }
+                        catch (Exception e) { }
                     }
-                    catch (Exception e)
+                    else
                     {
-                        // Clear que if full
-                        return;
-                        //throw;
+                        try
+                        {
+                            RobotQueue.Send(message);
+                        }
+                        catch (Exception e)
+                        {
+                            // Clear que if full
+                            //log.Add("Messaeg Que is Full");
+                            LocalQueue.Enqueue(message);
+                        }
                     }
+
                 }
             }
+
+            // Clear the local queue
+            if (lqclear) { LocalQueue.Clear(); try { abbController.Ipc.DeleteQueue(abbController.Ipc.GetQueue(RobotQueue.QueueName).QueueId); } catch { } }
 
             // Clear log
             if (clear)
@@ -362,9 +388,10 @@ namespace Axis.Online
         /// Additional Input and Output parameters for the component
         /// </summary>
         // Build a list of optional input parameters
-        IGH_Param[] inputParams = new IGH_Param[1]
+        IGH_Param[] inputParams = new IGH_Param[2]
         {
             new Param_Boolean() { Name = "Clear", NickName = "Clear", Description = "Clear the communication log.", Access = GH_ParamAccess.item, Optional = true},
+            new Param_Boolean() { Name = "Clear Local Queue", NickName = "Clear LQ", Description = "Clear the the local Queue", Access = GH_ParamAccess.item, Optional = true},
         };
         // Build a list of optional output parameters
         IGH_Param[] outputParams = new IGH_Param[2]
@@ -376,6 +403,8 @@ namespace Axis.Online
         // The following functions append menu items and then handle the item clicked event.
         protected override void AppendAdditionalComponentMenuItems(System.Windows.Forms.ToolStripDropDown menu)
         {
+            ToolStripMenuItem LQueue = Menu_AppendItem(menu, "Local Queue", lQueue_Click, true, lQOption);
+            LQueue.ToolTipText = "This will enable a local queue";
             ToolStripMenuItem modFile = Menu_AppendItem(menu, "Steaming Module", mod_Click, true, modOption);
             modFile.ToolTipText = "Activate the module file output";
             ToolStripMenuItem log = Menu_AppendItem(menu, "Log", log_Click, true, logOption);
@@ -416,6 +445,22 @@ namespace Axis.Online
             else
             {
                 Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Steaming Module"), true);
+            }
+
+            //ExpireSolution(true);
+        }
+        private void lQueue_Click(object sender, EventArgs e)
+        {
+            RecordUndoEvent("Local Queue");
+            lQOption = !lQOption;
+
+            if (lQOption)
+            {
+                AddInput(1);
+            }
+            else
+            {
+                Params.UnregisterInputParameter(Params.Output.FirstOrDefault(x => x.Name == "Steaming Module"), true);
             }
 
             //ExpireSolution(true);
@@ -479,7 +524,8 @@ namespace Axis.Online
         {
             writer.SetBoolean("LogOptionSetModule", this.logOption);
             writer.SetBoolean("LogOptionSetOutModule", this.logOptionOut);
-            writer.SetBoolean("ModFileOption", this.modOption); 
+            writer.SetBoolean("ModFileOption", this.modOption);
+            writer.SetBoolean("Local Queue", this.lQOption);
             return base.Write(writer);
         }
 
@@ -489,6 +535,7 @@ namespace Axis.Online
             this.logOption = reader.GetBoolean("LogOptionSetModule");
             this.logOptionOut = reader.GetBoolean("LogOptionSetOutModule");
             this.modOption = reader.GetBoolean("ModFileOption");
+            this.lQOption = reader.GetBoolean("Local Queue");
             return base.Read(reader);
         }
 
