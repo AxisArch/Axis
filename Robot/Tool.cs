@@ -107,7 +107,7 @@ namespace Axis.Robot
         IGH_Param[] inputParams = new IGH_Param[2]
         {
             new Param_Number() { Name = "Weight", NickName = "Weight", Description = "The weight of the tool in kilograms. Necessary for accurate motion planning." },
-            new Param_Number() { Name = "Offset", NickName = "Offset", Description = "Relative tool offset in mm." },
+            new Param_Vector() { Name = "Offset", NickName = "Offset", Description = "Relative tool offset in mm." },
         };
 
         IGH_Param[] outputParams = new IGH_Param[1]
