@@ -11,6 +11,7 @@ namespace Axis.Targets
     public class DefineZone : GH_Component, IGH_VariableParameterComponent
     {
         // Sticky context menu item values.
+        bool m_Stop = false;
         bool m_Reorient = false;
         bool m_ToolReorient = false;
         bool m_ExtAxis = false;
@@ -96,113 +97,122 @@ namespace Axis.Targets
             {
                 Zone zone = new Zone(false, 5, 7.5, 7.5, 0.5, 7.5, 0.5, "EmptyZone");
 
-                if (snapDefault && defaultZones.ContainsKey(pathTCP[i]))
+                // If we want to program stop points, do so and skip the rest.
+                if (m_Stop)
                 {
-                    zone = defaultZones[pathTCP[i]];
+                    zone = defaultZones[-1];
                     zones.Add(zone);
                 }
                 else
                 {
-                    // Set the finepoint if our radius is -1, and ignore the rest.
-                    if (pathTCP[i] == -1)
+                    if (snapDefault && defaultZones.ContainsKey(pathTCP[i]))
                     {
-                        zone.StopPoint = true;
+                        zone = defaultZones[pathTCP[i]];
                         zones.Add(zone);
                     }
                     else
                     {
-                        zone.StopPoint = false;
-                        zone.PathRadius = pathTCP[i];
-
-                        // Path zone reorientation
-                        if (m_Reorient)
+                        // Set the finepoint if our radius is -1, and ignore the rest.
+                        if (pathTCP[i] == -1)
                         {
-                            if (i < orientTCP.Count)
-                            {
-                                zone.PathOrient = orientTCP[i];
-                            }
-                            else { zone.PathOrient = orientTCP[orientTCP.Count - 1]; }
-                        }
-                        else
-                        {
-                            // Use the default convention of a value of 1.5 times the TCP path val.
-                            zone.PathOrient = pathTCP[i] * 1.5;
-                        }
-
-                        // External zone 
-                        if (m_ExtAxis)
-                        {
-                            if (i < extTCP.Count)
-                            {
-                                zone.PathExternal = extTCP[i];
-                            }
-                            else { zone.PathExternal = extTCP[extTCP.Count - 1]; }
-                        }
-                        else
-                        {
-                            // Use the default convention of a value of 1.5 times the TCP path val.
-                            zone.PathExternal = pathTCP[i] * 1.5;
-                        }
-
-                        // Tool reorientation degrees
-                        if (m_ToolReorient)
-                        {
-                            if (i < orientation.Count)
-                            {
-                                zone.Orientation = orientation[i];
-                            }
-                            else { zone.Orientation = orientation[orientation.Count - 1]; }
-                        }
-                        else
-                        {
-                            // Use the default convention of a value of 1.5 times the TCP path val divided by 10.
-                            zone.Orientation = (pathTCP[i] * 1.5) / 10;
-                        }
-
-                        // Linear external axis zone
-                        if (m_LinExt)
-                        {
-                            if (i < linExt.Count)
-                            {
-                                zone.LinearExternal = linExt[i];
-                            }
-                            else { zone.LinearExternal = linExt[linExt.Count - 1]; }
-                        }
-                        else
-                        {
-                            // Use the default convention of a value of 1.5 times the TCP path val.
-                            zone.LinearExternal = (pathTCP[i] * 1.5);
-                        }
-
-                        // Linear external axis zone
-                        if (m_RotExt)
-                        {
-                            if (i < rotExt.Count)
-                            {
-                                zone.RotaryExternal = rotExt[i];
-                            }
-                            else { zone.RotaryExternal = rotExt[rotExt.Count - 1]; }
-                        }
-                        else
-                        {
-                            // Use the default convention of a value of 1.5 times the TCP path val divided by 10
-                            zone.RotaryExternal = (pathTCP[i] * 1.5) / 10;
-                        }
-
-                        zone.Name = "Zone" + zone.PathRadius.ToString();
-
-                        // Check to see if the dictionary contains the current zone, if not, add it.
-                        if (presentZones.ContainsKey(pathTCP[i]))
-                        {
+                            zone.StopPoint = true;
                             zones.Add(zone);
                         }
                         else
                         {
-                            zones.Add(zone);
-                            presentZones.Add(zone.PathRadius, zone);
+                            zone.StopPoint = false;
+                            zone.PathRadius = pathTCP[i];
+
+                            // Path zone reorientation
+                            if (m_Reorient)
+                            {
+                                if (i < orientTCP.Count)
+                                {
+                                    zone.PathOrient = orientTCP[i];
+                                }
+                                else { zone.PathOrient = orientTCP[orientTCP.Count - 1]; }
+                            }
+                            else
+                            {
+                                // Use the default convention of a value of 1.5 times the TCP path val.
+                                zone.PathOrient = pathTCP[i] * 1.5;
+                            }
+
+                            // External zone 
+                            if (m_ExtAxis)
+                            {
+                                if (i < extTCP.Count)
+                                {
+                                    zone.PathExternal = extTCP[i];
+                                }
+                                else { zone.PathExternal = extTCP[extTCP.Count - 1]; }
+                            }
+                            else
+                            {
+                                // Use the default convention of a value of 1.5 times the TCP path val.
+                                zone.PathExternal = pathTCP[i] * 1.5;
+                            }
+
+                            // Tool reorientation degrees
+                            if (m_ToolReorient)
+                            {
+                                if (i < orientation.Count)
+                                {
+                                    zone.Orientation = orientation[i];
+                                }
+                                else { zone.Orientation = orientation[orientation.Count - 1]; }
+                            }
+                            else
+                            {
+                                // Use the default convention of a value of 1.5 times the TCP path val divided by 10.
+                                zone.Orientation = (pathTCP[i] * 1.5) / 10;
+                            }
+
+                            // Linear external axis zone
+                            if (m_LinExt)
+                            {
+                                if (i < linExt.Count)
+                                {
+                                    zone.LinearExternal = linExt[i];
+                                }
+                                else { zone.LinearExternal = linExt[linExt.Count - 1]; }
+                            }
+                            else
+                            {
+                                // Use the default convention of a value of 1.5 times the TCP path val.
+                                zone.LinearExternal = (pathTCP[i] * 1.5);
+                            }
+
+                            // Linear external axis zone
+                            if (m_RotExt)
+                            {
+                                if (i < rotExt.Count)
+                                {
+                                    zone.RotaryExternal = rotExt[i];
+                                }
+                                else { zone.RotaryExternal = rotExt[rotExt.Count - 1]; }
+                            }
+                            else
+                            {
+                                // Use the default convention of a value of 1.5 times the TCP path val divided by 10
+                                zone.RotaryExternal = (pathTCP[i] * 1.5) / 10;
+                            }
+
+                            zone.Name = "Zone" + zone.PathRadius.ToString();
+
+                            // Check to see if the dictionary contains the current zone, if not, add it.
+                            if (presentZones.ContainsKey(pathTCP[i]))
+                            {
+                                zones.Add(zone);
+                            }
+                            else
+                            {
+                                zones.Add(zone);
+                                presentZones.Add(zone.PathRadius, zone);
+                            }
                         }
                     }
-                }
+                }                
             }
             DA.SetDataList(0, zones);
 
@@ -239,12 +249,17 @@ namespace Axis.Targets
         // The following functions append menu items and then handle the item clicked event.
         protected override void AppendAdditionalComponentMenuItems(System.Windows.Forms.ToolStripDropDown menu)
         {
+            ToolStripMenuItem stopPoint = Menu_AppendItem(menu, "Specify a Stop Point", stop_Click, true, m_Stop);
+            stopPoint.ToolTipText = "Specify the tool reorientation zone in mm.";
+
+            ToolStripSeparator seperator = Menu_AppendSeparator(menu);
+
             ToolStripMenuItem orientOpt = Menu_AppendItem(menu, "Specify Reorientation Zone", rot_Click, true, m_Reorient);
             orientOpt.ToolTipText = "Specify the tool reorientation zone in mm.";
             ToolStripMenuItem extAxOpt = Menu_AppendItem(menu, "Specify External Linear Speed", extAxis_Click, true, m_ExtAxis);
             extAxOpt.ToolTipText = "Specify the external rotary axis zone in mm.";
 
-            ToolStripSeparator seperator = Menu_AppendSeparator(menu);
+            ToolStripSeparator seperator2 = Menu_AppendSeparator(menu);
 
             ToolStripMenuItem toolOriOpt = Menu_AppendItem(menu, "Specify Reorientation Degrees", toolDeg_Click, true, m_ToolReorient);
             toolOriOpt.ToolTipText = "Specify the tool reorientation zone in degrees.";
@@ -253,10 +268,17 @@ namespace Axis.Targets
             ToolStripMenuItem rotExtOpt = Menu_AppendItem(menu, "Specify Rotary External Axis Zone", rotExt_Click, true, m_RotExt);
             rotExtOpt.ToolTipText = "Specify the rotary external axis zone in degrees.";
 
-            ToolStripSeparator seperator2 = Menu_AppendSeparator(menu);
+            ToolStripSeparator seperator3 = Menu_AppendSeparator(menu);
 
             ToolStripMenuItem declarationCheck = Menu_AppendItem(menu, "Output Declarations", declaration_Click, true, m_Declaration);
             declarationCheck.ToolTipText = "Output the formatted zone declaration.";
+        }
+
+        private void stop_Click(object sender, EventArgs e)
+        {
+            RecordUndoEvent("StopPoint");
+            m_Stop = !m_Stop;
+            ExpireSolution(true);
         }
 
         private void rot_Click(object sender, EventArgs e)
