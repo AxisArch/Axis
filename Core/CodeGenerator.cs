@@ -17,6 +17,7 @@ namespace Axis.Core
 {
     public class CodeGenerator : GH_Component, IGH_VariableParameterComponent
     {
+        // Sticky variables for authentification.
         bool foundLicense = false;
         bool validLicense = false;
 

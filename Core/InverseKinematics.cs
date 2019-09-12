@@ -47,7 +47,7 @@ namespace Axis.Core
 
         // Sticky variables.
         public double[] currPos = { 0, -90, 90, 0, 0, 0 };
-        public int singularityTol = 5;
+        public static int singularityTol = 5;
         protected List<double[]> motionPlan = new List<double[]>();
 
         protected override void SolveInstance(IGH_DataAccess DA)
@@ -220,12 +220,12 @@ namespace Axis.Core
             // Add warning if no mesh is present
             catch { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No tool mesh present."); }
             
+            /* METHOD IN UTIL
             // Colour mesh
-            /*
             for (int i = 0; i < meshesOut.Count; i++)
                 meshesOut[i].VertexColors.CreateMonotoneMesh(colors[i]);
-            */
-
+                */
+            
             // Output data
             DA.SetDataList(0, robMesh);
             DA.SetData(1, flange);
@@ -236,144 +236,13 @@ namespace Axis.Core
         }
 
         /// <summary>
-        /// Update robot mesh geometry based on axis values. Returns a list of mesh geometry.
-        /// </summary>
-        /// <param name="robot"></param>
-        /// <param name="radAngles"></param>
-        /// <param name="robPlanes"></param>
-        /// <param name="flange"></param>
-        /// <returns></returns>
-        public List<Mesh> UpdateRobotMeshes(Manipulator robot, double[] radAngles, out List<Plane> planesOut, out Plane flange)
-        {
-            List<Mesh> meshes = robot.IKMeshes;
-            List<Plane> aPlanes = robot.tAxisPlanes;
-            List<Plane> robPlanes = new List<Plane>();
-            Plane robBase = robot.RobBasePlane;
-
-            List<Mesh> meshesOut = new List<Mesh>();
-            meshesOut.Add(meshes[0]);
-
-            Transform Rot1 = Transform.Rotation(-1 * radAngles[0], robBase.ZAxis, robBase.Origin);
-            List<Mesh> Meshes1 = new List<Mesh>();
-            List<Plane> Planes1 = new List<Plane>();
-            for (int i = 1; i < meshes.Count; i++)
-            {
-                Mesh temp = meshes[i].DuplicateMesh();
-                temp.Transform(Rot1);
-                Meshes1.Add(temp);
-            }
-            for (int i = 0; i < 6; i++)
-            {
-                Plane temp = new Plane(aPlanes[i]);
-                temp.Transform(Rot1);
-                Planes1.Add(temp);
-            }
-            meshesOut.Add(Meshes1[0]);
-
-            Transform Rot2 = Transform.Rotation(radAngles[1] + Math.PI / 2, Planes1[0].ZAxis, Planes1[0].Origin);
-            List<Mesh> Meshes2 = new List<Mesh>();
-            List<Plane> Planes2 = new List<Plane>();
-            for (int i = 1; i < Meshes1.Count; i++)
-            {
-                Mesh temp = Meshes1[i].DuplicateMesh();
-                temp.Transform(Rot2);
-                Meshes2.Add(temp);
-            }
-            for (int i = 0; i < Planes1.Count; i++)
-            {
-                Plane temp = new Plane(Planes1[i]);
-                temp.Transform(Rot2);
-                Planes2.Add(temp);
-            }
-            robPlanes.Add(Planes1[0]);
-            meshesOut.Add(Meshes2[0]);
-
-            Transform Rot3 = Transform.Rotation(radAngles[2] - Math.PI / 2, Planes2[1].ZAxis, Planes2[1].Origin);
-            List<Mesh> Meshes3 = new List<Mesh>();
-            List<Plane> Planes3 = new List<Plane>();
-            for (int i = 1; i < Meshes2.Count; i++)
-            {
-                Mesh temp = Meshes2[i].DuplicateMesh();
-                temp.Transform(Rot3);
-                Meshes3.Add(temp);
-            }
-            for (int i = 0; i < Planes2.Count; i++)
-            {
-                Plane temp = new Plane(Planes2[i]);
-                temp.Transform(Rot3);
-                Planes3.Add(temp);
-            }
-            robPlanes.Add(Planes2[1]);
-            meshesOut.Add(Meshes3[0]);
-
-            Transform Rot4 = Transform.Rotation(radAngles[3] * -1.0, Planes3[2].ZAxis, Planes3[2].Origin);
-            List<Mesh> Meshes4 = new List<Mesh>();
-            List<Plane> Planes4 = new List<Plane>();
-            for (int i = 1; i < Meshes3.Count; i++)
-            {
-                Mesh temp = Meshes3[i].DuplicateMesh();
-                temp.Transform(Rot4);
-                Meshes4.Add(temp);
-            }
-            for (int i = 0; i < Planes3.Count; i++)
-            {
-                Plane temp = new Plane(Planes3[i]);
-                temp.Transform(Rot4);
-                Planes4.Add(temp);
-            }
-            robPlanes.Add(Planes3[2]);
-            meshesOut.Add(Meshes4[0]);
-
-            Transform Rot5 = Transform.Rotation(radAngles[4], Planes4[3].ZAxis, Planes4[3].Origin);
-            List<Mesh> Meshes5 = new List<Mesh>();
-            List<Plane> Planes5 = new List<Plane>();
-            for (int i = 1; i < Meshes4.Count; i++)
-            {
-                Mesh temp = Meshes4[i].DuplicateMesh();
-                temp.Transform(Rot5);
-                Meshes5.Add(temp);
-            }
-            for (int i = 0; i < Planes4.Count; i++)
-            {
-                Plane temp = new Plane(Planes4[i]);
-                temp.Transform(Rot5);
-                Planes5.Add(temp);
-            }
-            robPlanes.Add(Planes4[3]);
-            meshesOut.Add(Meshes5[0]);
-
-            Transform Rot6 = Transform.Rotation(-1.0 * radAngles[5], Planes5[4].ZAxis, Planes5[4].Origin);
-            List<Mesh> Meshes6 = new List<Mesh>();
-            List<Plane> Planes6 = new List<Plane>();
-            for (int i = 1; i < Meshes5.Count; i++)
-            {
-                Mesh temp = Meshes5[i].DuplicateMesh();
-                temp.Transform(Rot6);
-                Meshes6.Add(temp);
-            }
-            for (int i = 0; i < Planes5.Count; i++)
-            {
-                Plane temp = new Plane(Planes5[i]);
-                temp.Transform(Rot6);
-                Planes6.Add(temp);
-            }
-            robPlanes.Add(Planes5[4]);
-            meshesOut.Add(Meshes6[0]);
-
-            flange = Planes6[Planes6.Count - 1];
-            planesOut = robPlanes;
-
-            return meshesOut;
-        }
-
-        /// <summary>
         /// Closed form inverse kinematics for a 6 DOF industrial robot. Returns a list of lists (multiple values for each axis).
         /// </summary>
         /// <param name="robot"></param>
         /// <param name="target"></param>
         /// <param name="log"></param>
         /// <returns></returns>
-        public List<List<double>> TargetInverseKinematics(Manipulator robot, Plane target, out List<string> log)
+        public static List<List<double>> TargetInverseKinematics(Manipulator robot, Plane target, out List<string> log)
         {
             // Get axis points from custom robot class.
             Point3d[] RP = new Point3d[] {robot.AxisPoints[0], robot.AxisPoints[1], robot.AxisPoints[2], robot.AxisPoints[3] };
@@ -521,6 +390,137 @@ namespace Axis.Core
 
             log = info; // Output the log.
             return angles; // Return the angles.
+        }
+
+        /// <summary>
+        /// Update robot mesh geometry based on axis values. Returns a list of mesh geometry.
+        /// </summary>
+        /// <param name="robot"></param>
+        /// <param name="radAngles"></param>
+        /// <param name="robPlanes"></param>
+        /// <param name="flange"></param>
+        /// <returns></returns>
+        public List<Mesh> UpdateRobotMeshes(Manipulator robot, double[] radAngles, out List<Plane> planesOut, out Plane flange)
+        {
+            List<Mesh> meshes = robot.IKMeshes;
+            List<Plane> aPlanes = robot.tAxisPlanes;
+            List<Plane> robPlanes = new List<Plane>();
+            Plane robBase = robot.RobBasePlane;
+
+            List<Mesh> meshesOut = new List<Mesh>();
+            meshesOut.Add(meshes[0]);
+
+            Transform Rot1 = Transform.Rotation(-1 * radAngles[0], robBase.ZAxis, robBase.Origin);
+            List<Mesh> Meshes1 = new List<Mesh>();
+            List<Plane> Planes1 = new List<Plane>();
+            for (int i = 1; i < meshes.Count; i++)
+            {
+                Mesh temp = meshes[i].DuplicateMesh();
+                temp.Transform(Rot1);
+                Meshes1.Add(temp);
+            }
+            for (int i = 0; i < 6; i++)
+            {
+                Plane temp = new Plane(aPlanes[i]);
+                temp.Transform(Rot1);
+                Planes1.Add(temp);
+            }
+            meshesOut.Add(Meshes1[0]);
+
+            Transform Rot2 = Transform.Rotation(radAngles[1] + Math.PI / 2, Planes1[0].ZAxis, Planes1[0].Origin);
+            List<Mesh> Meshes2 = new List<Mesh>();
+            List<Plane> Planes2 = new List<Plane>();
+            for (int i = 1; i < Meshes1.Count; i++)
+            {
+                Mesh temp = Meshes1[i].DuplicateMesh();
+                temp.Transform(Rot2);
+                Meshes2.Add(temp);
+            }
+            for (int i = 0; i < Planes1.Count; i++)
+            {
+                Plane temp = new Plane(Planes1[i]);
+                temp.Transform(Rot2);
+                Planes2.Add(temp);
+            }
+            robPlanes.Add(Planes1[0]);
+            meshesOut.Add(Meshes2[0]);
+
+            Transform Rot3 = Transform.Rotation(radAngles[2] - Math.PI / 2, Planes2[1].ZAxis, Planes2[1].Origin);
+            List<Mesh> Meshes3 = new List<Mesh>();
+            List<Plane> Planes3 = new List<Plane>();
+            for (int i = 1; i < Meshes2.Count; i++)
+            {
+                Mesh temp = Meshes2[i].DuplicateMesh();
+                temp.Transform(Rot3);
+                Meshes3.Add(temp);
+            }
+            for (int i = 0; i < Planes2.Count; i++)
+            {
+                Plane temp = new Plane(Planes2[i]);
+                temp.Transform(Rot3);
+                Planes3.Add(temp);
+            }
+            robPlanes.Add(Planes2[1]);
+            meshesOut.Add(Meshes3[0]);
+
+            Transform Rot4 = Transform.Rotation(radAngles[3] * -1.0, Planes3[2].ZAxis, Planes3[2].Origin);
+            List<Mesh> Meshes4 = new List<Mesh>();
+            List<Plane> Planes4 = new List<Plane>();
+            for (int i = 1; i < Meshes3.Count; i++)
+            {
+                Mesh temp = Meshes3[i].DuplicateMesh();
+                temp.Transform(Rot4);
+                Meshes4.Add(temp);
+            }
+            for (int i = 0; i < Planes3.Count; i++)
+            {
+                Plane temp = new Plane(Planes3[i]);
+                temp.Transform(Rot4);
+                Planes4.Add(temp);
+            }
+            robPlanes.Add(Planes3[2]);
+            meshesOut.Add(Meshes4[0]);
+
+            Transform Rot5 = Transform.Rotation(radAngles[4], Planes4[3].ZAxis, Planes4[3].Origin);
+            List<Mesh> Meshes5 = new List<Mesh>();
+            List<Plane> Planes5 = new List<Plane>();
+            for (int i = 1; i < Meshes4.Count; i++)
+            {
+                Mesh temp = Meshes4[i].DuplicateMesh();
+                temp.Transform(Rot5);
+                Meshes5.Add(temp);
+            }
+            for (int i = 0; i < Planes4.Count; i++)
+            {
+                Plane temp = new Plane(Planes4[i]);
+                temp.Transform(Rot5);
+                Planes5.Add(temp);
+            }
+            robPlanes.Add(Planes4[3]);
+            meshesOut.Add(Meshes5[0]);
+
+            Transform Rot6 = Transform.Rotation(-1.0 * radAngles[5], Planes5[4].ZAxis, Planes5[4].Origin);
+            List<Mesh> Meshes6 = new List<Mesh>();
+            List<Plane> Planes6 = new List<Plane>();
+            for (int i = 1; i < Meshes5.Count; i++)
+            {
+                Mesh temp = Meshes5[i].DuplicateMesh();
+                temp.Transform(Rot6);
+                Meshes6.Add(temp);
+            }
+            for (int i = 0; i < Planes5.Count; i++)
+            {
+                Plane temp = new Plane(Planes5[i]);
+                temp.Transform(Rot6);
+                Planes6.Add(temp);
+            }
+            robPlanes.Add(Planes5[4]);
+            meshesOut.Add(Meshes6[0]);
+
+            flange = Planes6[Planes6.Count - 1];
+            planesOut = robPlanes;
+
+            return meshesOut;
         }
     }
 }
