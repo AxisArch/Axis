@@ -99,7 +99,7 @@ namespace Axis.Core
                         targ = currTarg.Value as Target; // Cast back to target type
                     }
 
-                    target = targ.Plane;
+                    target = new Plane(targ.Plane);
 
                     // Transform the robot target from the base plane to the XY plane.
                     target.Transform(robot.InverseRemap);
