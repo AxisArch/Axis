@@ -54,7 +54,7 @@ namespace Axis.Core
         {
             Target robTarg = null;
             Manipulator robot = null;
-            
+
             if (!DA.GetData(0, ref robot)) return;
             DA.GetData(1, ref robTarg);
 
@@ -64,8 +64,8 @@ namespace Axis.Core
             List<int> indices = new List<int>() { 2, 2, 2, 2, 2, 2 };
             if (robot.Indices.Count == 6) indices = robot.Indices;
 
-            // Kinematics
-            bool isValid = true;
+            // Kinematics error flags
+            bool isValid = true; bool overheadSing = false; bool wristSing = false; bool outOfReach = false; bool outOfRotation = false;
 
             List<double> angles = new List<double>();
             List<double> selectedAngles = new List<double>();
@@ -86,8 +86,7 @@ namespace Axis.Core
                     else
                     {
                         colors.Add(Styles.Pink);
-                        log.Add("Axis " + i.ToString() + " is out of rotation domain.");
-                        isValid = false;
+                        outOfRotation = true;
                     }
                     selectedAngles.Add(angles[i]);
                 }
@@ -117,8 +116,7 @@ namespace Axis.Core
                 target = tempTarg;
 
                 // Inverse kinematics
-                List<string> ikLog = new List<string>();
-                List<List<double>> ikAngles = TargetInverseKinematics(robot, target, out ikLog);
+                List<List<double>> ikAngles = TargetInverseKinematics(robot, target, out overheadSing, out outOfReach);
 
                 // Select an angle from each list and make the radian version.
                 for (int i = 0; i < ikAngles.Count; i++)
@@ -133,31 +131,8 @@ namespace Axis.Core
                     selectedAngles.Add(sel);
                 }
 
-                // Colours
-                colors.Add(Styles.DarkGrey);
-                for (int i = 0; i < 6; i++)
-                {
-                    // Check if the solution value is inside the manufacturer permitted range.
-                    if (selectedAngles[i] < robot.MaxAngles[i] && selectedAngles[i] > robot.MinAngles[i])
-                        colors.Add(Styles.DarkGrey);
-                    else
-                    {
-                        colors.Add(Styles.Pink);
-                        log.Add("Axis " + i + " is out of rotation domain.");
-                        isValid = false;
-                    }
-                    try
-                    {
-                        // Check for singularity and replace the preview color.
-                        if (selectedAngles[4] > -singularityTol && selectedAngles[4] < singularityTol)
-                        {
-                            colors[5] = (Styles.Blue);
-                            log.Add("Close to singularity.");
-                        }
-                    }
-                    catch { }
-                }
-                colors.Add(Styles.DarkGrey); // Hardcoded tool color
+                // Check the joint angles.
+                colors = CheckJointAngles(robot, selectedAngles, out wristSing, out outOfRotation);
             }
 
             /*
@@ -192,6 +167,13 @@ namespace Axis.Core
             }
             */
 
+            // Handle errors
+            if (overheadSing || wristSing || outOfReach || outOfRotation) isValid = false;
+            if (overheadSing) log.Add("Close to overhead singularity.");
+            if (wristSing) log.Add("Close to wrist singularity.");
+            if (outOfReach) log.Add("Target out of range.");
+            if (outOfRotation) log.Add("Joint out of range.");
+
             // Check the validity of the current target and update the current position if ok, otherwise use last valid.
             double[] robPos = currPos;
             if (isValid)
@@ -219,13 +201,13 @@ namespace Axis.Core
             }
             // Add warning if no mesh is present
             catch { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No tool mesh present."); }
-            
+
             /* METHOD IN UTIL
             // Colour mesh
             for (int i = 0; i < meshesOut.Count; i++)
                 meshesOut[i].VertexColors.CreateMonotoneMesh(colors[i]);
                 */
-            
+
             // Output data
             DA.SetDataList(0, robMesh);
             DA.SetData(1, flange);
@@ -236,16 +218,21 @@ namespace Axis.Core
         }
 
         /// <summary>
-        /// Closed form inverse kinematics for a 6 DOF industrial robot. Returns a list of lists (multiple values for each axis).
+        /// Closed form inverse kinematics for a 6 DOF industrial robot. Returns flags for validity and error types.
         /// </summary>
         /// <param name="robot"></param>
         /// <param name="target"></param>
-        /// <param name="log"></param>
+        /// <param name="overheadSing"></param>
+        /// <param name="outOfReach"></param>
         /// <returns></returns>
-        public static List<List<double>> TargetInverseKinematics(Manipulator robot, Plane target, out List<string> log)
+        public static List<List<double>> TargetInverseKinematics(Manipulator robot, Plane target, out bool overheadSing, out bool outOfReach)
         {
+            // Validity checks
+            bool unreachable = true;
+            bool singularity = false;
+
             // Get axis points from custom robot class.
-            Point3d[] RP = new Point3d[] {robot.AxisPoints[0], robot.AxisPoints[1], robot.AxisPoints[2], robot.AxisPoints[3] };
+            Point3d[] RP = new Point3d[] { robot.AxisPoints[0], robot.AxisPoints[1], robot.AxisPoints[2], robot.AxisPoints[3] };
 
             // Lists of doubles to hold our axis values and our output log.
             List<double> a1list = new List<double>(), a2list = new List<double>(), a3list = new List<double>(), a4list = new List<double>(), a5list = new List<double>(), a6list = new List<double>();
@@ -258,7 +245,7 @@ namespace Axis.Core
 
             // Check for overhead singularity and add message to log if needed
             if (WristLocation.Y < singularityTol && WristLocation.Y > -singularityTol && WristLocation.X < singularityTol && WristLocation.X > -singularityTol)
-                info.Add("Overhead singularity detected.");
+                singularity = true;
 
             // Standard cases for axis one.
             if (angle1 > Math.PI) angle1 -= 2 * Math.PI;
@@ -302,6 +289,11 @@ namespace Axis.Core
                 // Do the intersections and store them as pars.
                 Rhino.Geometry.Intersect.Intersection.SphereSphere(Sphere1, Sphere2, out Circ);
                 Rhino.Geometry.Intersect.Intersection.PlaneCircle(ElbowPlane, Circ, out Par1, out Par2);
+
+                // Logic to check if the target is unreachable.
+                if (unreachable)
+                    if (Par1 == double.NaN || Par2 == double.NaN)
+                        unreachable = false;
 
                 // Get the points.
                 Point3d IntersectPt1 = Circ.PointAt(Par1), IntersectPt2 = Circ.PointAt(Par2);
@@ -378,7 +370,7 @@ namespace Axis.Core
                     }
                 }
             }
-          
+
             // Compile our list of all axis angle value lists.
             List<List<double>> angles = new List<List<double>>();
             angles.Add(a1list); angles.Add(a2list); angles.Add(a3list); angles.Add(a4list); angles.Add(a5list); angles.Add(a6list);
@@ -388,8 +380,56 @@ namespace Axis.Core
                 for (int k = 0; k < 8; k++)
                     aList[k] = Util.ToDegrees(aList[k]);
 
-            log = info; // Output the log.
+            // Update validity based on flags
+            outOfReach = unreachable;
+            overheadSing = singularity;
+
             return angles; // Return the angles.
+        }
+
+        /// <summary>
+        /// Check joint angle values against the robot model data. Outputs flags for joint error and wrist singularity. Returns a list of colors.
+        /// </summary>
+        /// <param name="robot"></param>
+        /// <param name="selectedAngles"></param>
+        /// <param name="wristSing"></param>
+        /// <param name="outOfRotation"></param>
+        /// <returns></returns>
+        public static List<System.Drawing.Color> CheckJointAngles(Manipulator robot, List<double> selectedAngles, out bool wristSing, out bool outOfRotation)
+        {
+            // Colours
+            List<System.Drawing.Color> colors = new List<System.Drawing.Color>();
+            colors.Add(Styles.DarkGrey); // Add robot base.
+
+            bool rotationError = false; bool singularity = false;
+
+            for (int i = 0; i < 6; i++)
+            {
+                // Check if the solution value is inside the manufacturer permitted range.
+                if (selectedAngles[i] < robot.MaxAngles[i] && selectedAngles[i] > robot.MinAngles[i])
+                    colors.Add(Styles.DarkGrey);
+                else
+                {
+                    colors.Add(Styles.Pink);
+                    rotationError = true;
+                }
+                try
+                {
+                    // Check for singularity and replace the preview color.
+                    if (selectedAngles[4] > -singularityTol && selectedAngles[4] < singularityTol)
+                    {
+                        colors[5] = (Styles.Blue);
+                        singularity = true;
+                    }
+                }
+                catch { }
+            }
+            colors.Add(Styles.DarkGrey); // Hardcoded tool color
+
+            outOfRotation = rotationError;
+            wristSing = singularity;
+
+            return colors;
         }
 
         /// <summary>

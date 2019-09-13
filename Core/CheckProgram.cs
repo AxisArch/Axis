@@ -102,52 +102,54 @@ namespace Axis.Core
                     // Check the movement type.
                     mType = targ.Method;
 
-                    List<string> msg = new List<string>();
+                    // Kinematics
+                    bool overheadSing = false; bool outOfReach = false; bool wristSing = false; bool outOfRotation = false;
+                    List<System.Drawing.Color> colors = new List<System.Drawing.Color>();
+
                     if (mType != MotionType.NoMovement)
                     {
                         if (mType == MotionType.Linear || mType == MotionType.Joint)
                         {
-                            List<string> info = new List<string>();
-                            List<List<double>> results = InverseKinematics.TargetInverseKinematics(robot, target, out info);
-                            foreach (string s in info)
-                                msg.Add("[" + counter.ToString() + "]" + s);
+                            List<List<double>> ikAngles = InverseKinematics.TargetInverseKinematics(robot, target, out overheadSing, out outOfReach);
+                            if (overheadSing) log.Add(counter.ToString() + ": Singularity");
+                            if (outOfReach) log.Add(counter.ToString() + ": Unreachable");
+
+                            // Select an angle from each list and make the radian version.
+                            List<double> selectedAngles = new List<double>();
+                            for (int i = 0; i < ikAngles.Count; i++)
+                            {
+                                double sel = ikAngles[i][indices[i]];
+
+                                // Correction for setup
+                                if (i == 1) sel += 90;
+                                if (i == 2) sel -= 90;
+
+                                selectedAngles.Add(sel);
+                            }
+
+                            // Check the joint angles.
+                            colors = InverseKinematics.CheckJointAngles(robot, selectedAngles, out wristSing, out outOfRotation);
+                            if (wristSing) log.Add(counter.ToString() + ": Wrist Singularity");
+                            if (outOfRotation) log.Add(counter.ToString() + ": Joint Error");
+
+                            if (overheadSing || outOfReach || wristSing || outOfRotation) errorPositions.Add(errorPos);
                         }
                         else if (mType == MotionType.AbsoluteJoint)
                         {
-                            // Grab the joint angles from the joint target instead of using IK.
-                            angles = targ.JointAngles;
-
-                            List<string> info = new List<string>();
-                            for (int i = 0; i < 6; i++)
-                            {
-                                // Check if the solution value is inside the manufacturer permitted range
-                                if (angles[i] > robot.MaxAngles[i] || angles[i] < robot.MinAngles[i])
-                                {
-                                    int axis = i + 1;
-                                    info.Add("Axis " + axis.ToString() + " is out of rotation domain");
-                                    break;
-                                }
-                            }
-                            foreach (string s in info)
-                                msg.Add("[" + counter.ToString() + "]" + s);
+                            // Check the joint angles.
+                            colors = InverseKinematics.CheckJointAngles(robot, targ.JointAngles, out wristSing, out outOfRotation);
+                            if (wristSing) log.Add(counter.ToString() + ": Wrist Singularity");
+                            if (outOfRotation) log.Add(counter.ToString() + ": Joint Error");
                         }
                         counter++; // Update the position in the program.
                     }
-                    log.AddRange(msg);
                 }
             }
-            else
-            {
-                this.Message = "Disabled";
-                log.Add("Program check not active.");
-            }
+            else this.Message = "Disabled";
 
-            if (log.Count == 0)
-            {
-                log.Add("No kinematic errors were found in program.");
-                this.Message = "No Errors";
-            }
-            else { this.Message = "Check Log"; }
+            // Component messages
+            if (log.Count == 0) this.Message = "No Errors";
+            else this.Message = "Errors";
 
             DA.SetDataList(0, log);
             DA.SetDataList(1, errorPositions);
