@@ -7,10 +7,12 @@ using System.Drawing;
 
 namespace Axis
 {
+    /// <summary>
+    /// Simple styling class for plugin colors.
+    /// All colors from the pallette at https://flatuicolors.com/palette/cn
+    /// </summary>
     public class Styles
     {
-        // All colors come from pallette at https://flatuicolors.com/palette/cn
-
         // Greys
         public static Color DarkGrey = Color.FromArgb(47, 53, 66); // Prestige Blue
         public static Color MediumGrey = Color.FromArgb(87, 96, 111); // Grisaille

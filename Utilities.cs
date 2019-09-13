@@ -2,15 +2,17 @@
 using static System.Math;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.IO;
 using System.Data;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Runtime.InteropServices;
 using System.Drawing;
 using System.Windows.Forms;
+using System.Text;
 using System.Threading.Tasks;
 
-using Excel = Microsoft.Office.Interop.Excel; // Microsoft Excel 14 object in references-> COM tab
+using Excel = Microsoft.Office.Interop.Excel;
 
 using Rhino;
 using Rhino.Commands;
@@ -21,16 +23,23 @@ using Rhino.DocObjects;
 
 using Axis.Targets;
 
+using Newtonsoft.Json;
+
 namespace Axis
 {
     public static class Util
     {
+        // Public constants across the plugin.
         public const int DefaultSpeed = 200;
         public const int DefaultZone = 1;
         public const int DefaultTime = 5;
         public const double ExAxisTol = 0.00001;
-        internal const double SingularityTol = 0.0001;
+        const double SingularityTol = 0.0001;
 
+        /// <summary>
+        /// List of standard ABB zones as a dictionary.
+        /// </summary>
+        /// <returns></returns>
         public static Dictionary<double, Zone> ABBZones()
         {
             Dictionary<double, Zone> zones = new Dictionary<double, Zone>();
@@ -54,6 +63,10 @@ namespace Axis
             return zones;
         }
 
+        /// <summary>
+        /// List of standard ABB speeds as a dictionary.
+        /// </summary>
+        /// <returns></returns>
         public static Dictionary<double, Speed> ABBSpeeds()
         {
             Dictionary<double, Speed> speeds = new Dictionary<double, Speed>();
@@ -87,6 +100,7 @@ namespace Axis
             return speeds;
         }
 
+        // Simple math conversion functions.
         internal static double ToRadians(this double value)
         {
             return value * (PI / 180);
@@ -97,6 +111,13 @@ namespace Axis
             return value * (180 / PI);
         }
 
+        /// <summary>
+        /// Create a plane based on a quaternion rotation and a location in space.
+        /// Gets the rotation of the quaternion as a plane and centres is at the point.
+        /// </summary>
+        /// <param name="point"></param>
+        /// <param name="quaternion"></param>
+        /// <returns></returns>
         public static Plane QuaternionToPlane(Point3d point, Quaternion quaternion)
         {
             Plane plane;
@@ -105,6 +126,18 @@ namespace Axis
             return plane;
         }
 
+        /// <summary>
+        /// Create a plane based on a quaternion rotation and a location in space.
+        /// Overloaded method that accepts double values instead of points.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <param name="z"></param>
+        /// <param name="q1"></param>
+        /// <param name="q2"></param>
+        /// <param name="q3"></param>
+        /// <param name="q4"></param>
+        /// <returns></returns>
         public static Plane QuaternionToPlane(double x, double y, double z, double q1, double q2, double q3, double q4)
         {
             var point = new Point3d(x, y, z);
@@ -112,7 +145,12 @@ namespace Axis
             return QuaternionToPlane(point, quaternion);
         }
 
-        // Conversion based on the Robots plugin (https://github.com/visose/Robots) and Lobster Reloaded by Daniel Piker.
+        /// <summary>
+        /// Get the Quaternion description of the rotation of a plane target.
+        /// Conversion based on the Robots plugin (https://github.com/visose/Robots).
+        /// </summary>
+        /// <param name="inPlane"></param>
+        /// <returns></returns>
         public static Quaternion QuaternionFromPlane(Plane inPlane)
         {
             // Initialize the vectors which will store each axis of our plane frame.
@@ -179,7 +217,12 @@ namespace Axis
             return quat;
         }
 
-        // Based on (https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles)
+        /// <summary>
+        /// Convert the Quaternion representation of a rotation to Euler angles.
+        /// Based on (https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles)
+        /// </summary>
+        /// <param name="q"></param>
+        /// <returns></returns>
         public static List<double> QuaternionToEuler(Quaternion q)
         {
             List<double> eulers = new List<double>();
@@ -208,7 +251,16 @@ namespace Axis
             return eulers;
         }
 
-        /// Quaternion interpolation code from the Robots plugin (https://github.com/visose/Robots) based on: http://www.grasshopper3d.com/group/lobster/forum/topics/lobster-reloaded
+        /// <summary>
+        /// Linear interpolate between two planes.
+        /// Quaternion interpolation code from the Robots plugin (https://github.com/visose/Robots)
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <param name="t"></param>
+        /// <param name="min"></param>
+        /// <param name="max"></param>
+        /// <returns></returns>
         public static Plane Lerp(Plane a, Plane b, double t, double min, double max)
         {
             t = (t - min) / (max - min);
@@ -226,12 +278,27 @@ namespace Axis
             return a;
         }
 
+        /// <summary>
+        /// Remap a value from one domain to another.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="startLow"></param>
+        /// <param name="startHigh"></param>
+        /// <param name="targetLow"></param>
+        /// <param name="targetHigh"></param>
+        /// <returns></returns>
         public static double Remap(double value, double startLow, double startHigh, double targetLow, double targetHigh)
         {
             double remappedValue = targetLow + (value - startLow) / (startHigh - startLow) * (targetHigh - targetLow);
             return remappedValue;
         }
 
+
+        /// <summary>
+        /// Compute the standard deviation for a set of values.
+        /// </summary>
+        /// <param name="values"></param>
+        /// <returns></returns>
         public static double StandardDev(List<double> values)
         {
             double sd = 0;
@@ -252,33 +319,37 @@ namespace Axis
             return sd;
         }
 
+        /// <summary>
+        /// Split a command into it's component parts based on manufacturer conventions.
+        /// </summary>
+        /// <param name="s"></param>
+        /// <param name="manufacturer"></param>
+        /// <returns></returns>
         public static string[] SplitCommand(string s, string manufacturer)
         {
             // Use a char array of manufacturer specific delimeters to split the command.
             char[] delimiters = new char[] { };
 
             if (manufacturer == "ABB")
-            {
                 delimiters = new char[] { ',', '[', ']', '{', ' ' };
-            }
-            else
-            {
-                // Insert KUKA command delimiters.
-                delimiters = new char[] { };
-            }
+            else // Not implemented
+                delimiters = new char[] { }; // Insert KUKA command delimiters.
 
             string[] parts = s.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
             return parts;
         }
 
+        /// <summary>
+        /// Split a program into seperate chunks to fit robot controller memory.
+        /// </summary>
+        /// <param name="program"></param>
+        /// <param name="nSize"></param>
+        /// <returns></returns>
         public static List<List<string>> SplitProgram(List<string> program, int nSize = 5000)
         {
             var list = new List<List<string>>();
-
             for (int i = 0; i < program.Count; i += nSize)
-            {
                 list.Add(program.GetRange(i, Math.Min(nSize, program.Count - i)));
-            }
 
             return list;
         }
@@ -296,23 +367,30 @@ namespace Axis
             else if (oType == ObjectType.Point) { return 5; }
 
             else // If the geoemtry type is not found, return -1.
-            {
                 return -1;
-            }
         }
 
+        /// <summary>
+        /// Snap values to a list of snap values.
+        /// </summary>
+        /// <param name="values"></param>
+        /// <param name="snaps"></param>
+        /// <returns></returns>
         public static List<double> SnapValues(List<double> values, List<double> snaps)
         {
             List<double> snappedValues = new List<double>();
-            double closest = 0;
             for (int i = 0; i < values.Count; i++)
-            {
-                closest = snaps.Aggregate((x, y) => Math.Abs(x - values[i]) < Math.Abs(y - values[i]) ? x : y);
-                snappedValues.Add(closest);
-            }
+                snappedValues.Add(snaps.Aggregate((x, y) => Math.Abs(x - values[i]) < Math.Abs(y - values[i]) ? x : y));
             return snappedValues;
         }
 
+        /// <summary>
+        /// Create a CSV file at a certain file location using a specified delim character.
+        /// </summary>
+        /// <param name="table"></param>
+        /// <param name="path"></param>
+        /// <param name="name"></param>
+        /// <param name="delim"></param>
         public static void CreateCSV(DataTable table, string path, string name, string delim)
         {
 
@@ -324,28 +402,26 @@ namespace Axis
 
             // Write headers
             foreach (DataColumn c in table.Columns)
-            {
                 row.Add(c.ColumnName.ToString());
-            }
             sb.AppendLine(string.Join(delimiter, row));
 
             // Write data
             foreach (DataRow r in table.Rows)
             {
                 row.Clear();
-
                 // Go through each column adding to a list of strings
                 foreach (DataColumn c in table.Columns)
-                {
                     row.Add(r[c.ColumnName].ToString());
-                }
-
                 sb.AppendLine(string.Join(delimiter, row));
             }
-
             File.WriteAllText(filePath, sb.ToString());
         }
 
+        /// <summary>
+        /// Read an Excel file and return the associated DataTable.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
         public static DataTable ReadExcel(string path)
         {
             DataTable dt = new DataTable();
@@ -424,6 +500,9 @@ namespace Axis
             public static extern bool FreeConsole();
         }
 
+        /// <summary>
+        /// Logic for the automatically closing message box "popup".
+        /// </summary>
         public class AutoClosingMessageBox
         {
             System.Threading.Timer _timeoutTimer;
@@ -453,6 +532,49 @@ namespace Axis
             [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto)]
             static extern IntPtr SendMessage(IntPtr hWnd, UInt32 Msg, IntPtr wParam, IntPtr lParam);
         }
+
+        /// <summary>
+        /// Colour a list of meshes.
+        /// </summary>
+        /// <param name="meshes"></param>
+        /// <param name="colors"></param>
+        /// <returns></returns>
+        public static List<Mesh> ColorMeshes(List<Mesh> meshes, List<Color> colors)
+        {
+            List<Mesh> meshOut = new List<Mesh>();
+            for (int i = 0; i < meshes.Count; i++)
+                meshOut[i].VertexColors.CreateMonotoneMesh(colors[i]);
+            return meshOut;
+        }
+    }
+
+    /// <summary>
+    /// Axis web communications class.
+    /// </summary>
+    public static class AxisWebServices
+    {
+        private static readonly HttpClient Client = new HttpClient();
+        public static string SendSmif(List<string> messages, string projectId, string token)
+        {
+            string json = JsonConvert.SerializeObject(messages);
+            try
+            {
+                string url = $"emptyURL";
+                var result = PostJson(url, json, token);
+                return result.ReasonPhrase;
+            }
+            catch (Exception e) { }
+            return "Unknown failure.";
+        }
+
+        private static HttpResponseMessage PostJson(string url, string json, string token)
+        {
+            Uri uri = new Uri(url);
+            Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var responseTask = Client.PostAsync(url, content);
+            return responseTask.Result;
+        }
     }
 }
- 

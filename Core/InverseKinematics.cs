@@ -29,11 +29,6 @@ namespace Axis.Core
         {
         }
 
-        // Inverse kinematics for a six-axis industrial robot, based on Lobster Reloaded by Daniel Piker
-        /*
-         * WIP: Create compound transformation for end effector, only transform meshes once & integrate toggle to simulate entire program without displaying meshes.
-         * */
-
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddGenericParameter("Robot", "Robot", "Robot object to use for inverse kinematics. You can define this using the robot creator tool.", GH_ParamAccess.item);
@@ -50,50 +45,35 @@ namespace Axis.Core
             pManager.AddMeshParameter("Tool", "Tool", "Tool mesh as list.", GH_ParamAccess.list);
         }
 
+        // Sticky variables.
         public double[] currPos = { 0, -90, 90, 0, 0, 0 };
+        public static int singularityTol = 5;
         protected List<double[]> motionPlan = new List<double[]>();
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            // Initialize variables to store the incoming data
             Target robTarg = null;
             Manipulator robot = null;
-            List<int> indices = new List<int>();
-            List<double> angles = new List<double>();
-            int singularityTol = 5;
 
-            // Get the data.
             if (!DA.GetData(0, ref robot)) return;
             DA.GetData(1, ref robTarg);
 
-            // Get the list of kinematic indices from the robot definition.
-            indices = robot.Indices;
-            Plane target = Plane.WorldXY;
-            bool isValid = true;
-
-            List<double> anglesOut = new List<double>();
-            Plane flangeOut = new Plane();
-            List<Mesh> meshesOut = new List<Mesh>();
-            List<System.Drawing.Color> colorsOut = new List<System.Drawing.Color>();
-            List<string> logOut = new List<string>();
-            List<object> debugOut = new List<object>();
-            List<Plane> planesOut = new List<Plane>();
-
-
-            if (indices.Count != 6)
-            {
-                indices = new List<int>() { 2, 2, 2, 2, 2, 2 };
-            }
-
-            List<System.Drawing.Color> colors = new List<System.Drawing.Color>();
             List<string> log = new List<string>();
-            List<Plane> aPlns = new List<Plane>();
 
+            // Get the list of kinematic indices from the robot definition, otherwise use default values.
+            List<int> indices = new List<int>() { 2, 2, 2, 2, 2, 2 };
+            if (robot.Indices.Count == 6) indices = robot.Indices;
+
+            // Kinematics error flags
+            bool isValid = true; bool overheadSing = false; bool wristSing = false; bool outOfReach = false; bool outOfRotation = false;
+
+            List<double> angles = new List<double>();
+            List<double> selectedAngles = new List<double>();
             double[] radAngles = new double[6];
 
-            List<double> selectedAngles = new List<double>();
+            List<System.Drawing.Color> colors = new List<System.Drawing.Color>();
 
-            if (robTarg.Method == MotionType.AbsoluteJoint)
+            if (robTarg.Method == MotionType.AbsoluteJoint) // Forward kinematics
             {
                 colors.Clear();
                 for (int i = 0; i < 5; i++)
@@ -102,271 +82,57 @@ namespace Axis.Core
 
                     // Check if the solution value is inside the manufacturer permitted range
                     if (angles[i] < robot.MaxAngles[i] && angles[i] > robot.MinAngles[i])
-                    {
                         colors.Add(Styles.DarkGrey);
-                    }
                     else
                     {
                         colors.Add(Styles.Pink);
-                        log.Add("Axis " + i.ToString() + " is out of rotation domain.");
-                        isValid = false;
+                        outOfRotation = true;
                     }
                     selectedAngles.Add(angles[i]);
                 }
-
-                // For KUKA, adjust the angles to conform with the home position.
-                if (robot.Manufacturer != true)
+                if (robot.Manufacturer != true) // Adjust for KUKA home position being different to ABB.
                 {
-                    // Adjust the first three axis positions.
                     radAngles[0] = -angles[0].ToRadians();
                     radAngles[1] = (angles[1] - 90).ToRadians();
                     radAngles[2] = (angles[2] + 90).ToRadians();
-
                     for (int i = 3; i < 6; i++)
-                    {
                         radAngles[i] = angles[i].ToRadians();
-                    }
                 }
                 else
-                {
                     for (int i = 0; i < 6; i++)
-                    {
                         radAngles[i] = angles[i].ToRadians();
-                    }
-                }
             }
-
-            else
+            else // Inverse kinematics
             {
-                target = robTarg.Plane;
-
-                // Transform the robot target from the base plane to the XY plane.
+                // Transform the robot target from the robot base plane to the XY plane.
+                Plane target = robTarg.Plane;
                 target.Transform(robot.InverseRemap);
 
                 Transform xForm = Transform.PlaneToPlane(Plane.WorldXY, target);
-
                 Plane tempTarg = Plane.WorldXY;
 
                 tempTarg.Transform(robTarg.Tool.FlangeOffset);
                 tempTarg.Transform(xForm);
-
                 target = tempTarg;
 
-                // Get axis points from custom robot class.
-                Point3d P1 = robot.AxisPoints[0];
-                Point3d P2 = robot.AxisPoints[1];
-                Point3d P3 = robot.AxisPoints[2];
-                Point3d P4 = robot.AxisPoints[3];
+                // Inverse kinematics
+                List<List<double>> ikAngles = TargetInverseKinematics(robot, target, out overheadSing, out outOfReach);
 
-                List<double> a1list = new List<double>();
-                List<double> a2list = new List<double>();
-                List<double> a3list = new List<double>();
-                List<double> a4list = new List<double>();
-                List<double> a5list = new List<double>();
-                List<double> a6list = new List<double>();
-
-                // Find the wrist position by moving back along the robot flange the distance of the wrist link
-                // defined in the DH / robot parameters
-                Point3d WristLocation = new Point3d(target.PointAt(0, 0, -robot.WristOffset));
-
-                double Axis1Angle = -1 * Math.Atan2(WristLocation.Y, WristLocation.X);
-
-                // Check for overhead singularity
-                if (WristLocation.Y < singularityTol && WristLocation.Y > -singularityTol && WristLocation.X < singularityTol && WristLocation.X > -singularityTol)
+                // Select an angle from each list and make the radian version.
+                for (int i = 0; i < ikAngles.Count; i++)
                 {
-                    log.Add("Overhead singularity detected.");
+                    double sel = ikAngles[i][indices[i]];
+                    radAngles[i] = sel.ToRadians();
+
+                    // Correction for setup
+                    if (i == 1) sel += 90;
+                    if (i == 2) sel -= 90;
+
+                    selectedAngles.Add(sel);
                 }
 
-                if (Axis1Angle > Math.PI)
-                {
-                    Axis1Angle -= 2 * Math.PI;
-                }
-
-                for (int j = 0; j < 4; j++)
-                {
-                    a1list.Add(Axis1Angle);
-                }
-
-                Axis1Angle += Math.PI;
-
-                if (Axis1Angle > Math.PI)
-                {
-                    Axis1Angle -= 2 * Math.PI;
-                }
-
-                for (int j = 0; j < 4; j++)
-                {
-                    a1list.Add(1 * Axis1Angle);
-                }
-
-                // Generate four sets of values for each option of axis one
-                for (int j = 0; j < 2; j++)
-                {
-                    Axis1Angle = a1list[j * 4];
-
-                    Transform Rotation = Transform.Rotation(-1 * Axis1Angle, Point3d.Origin);
-
-                    Point3d P1A = new Point3d(P1);
-                    Point3d P2A = new Point3d(P2);
-                    Point3d P3A = new Point3d(P3);
-
-                    // Transform each of our new points with our new transformation.
-                    P1A.Transform(Rotation);
-                    P2A.Transform(Rotation);
-                    P3A.Transform(Rotation);
-
-                    Vector3d ElbowDir = new Vector3d(1, 0, 0);
-                    ElbowDir.Transform(Rotation);
-                    Plane ElbowPlane = new Plane(P1A, ElbowDir, Plane.WorldXY.ZAxis);
-
-                    Sphere Sphere1 = new Sphere(P1A, robot.LowerArmLength);
-                    Sphere Sphere2 = new Sphere(WristLocation, robot.UpperArmLength);
-                    Circle Circ = new Circle();
-
-                    double Par1 = new double();
-                    double Par2 = new double();
-
-                    Rhino.Geometry.Intersect.Intersection.SphereSphere(Sphere1, Sphere2, out Circ);
-                    Rhino.Geometry.Intersect.Intersection.PlaneCircle(ElbowPlane, Circ, out Par1, out Par2);
-
-                    Point3d IntersectPt1 = Circ.PointAt(Par1);
-                    Point3d IntersectPt2 = Circ.PointAt(Par2);
-
-                    for (int k = 0; k < 2; k++)
-                    {
-                        Point3d ElbowPt = new Point3d();
-
-                        if (k == 0)
-                        { ElbowPt = IntersectPt1; }
-                        else
-                        { ElbowPt = IntersectPt2; }
-
-                        double elbowx, elbowy, wristx, wristy; // Parameters in the elbow plane.
-
-                        ElbowPlane.ClosestParameter(ElbowPt, out elbowx, out elbowy);
-                        ElbowPlane.ClosestParameter(WristLocation, out wristx, out wristy);
-
-                        double Axis2Angle = Math.Atan2(elbowy, elbowx);
-                        double Axis3Angle = Math.PI - Axis2Angle + Math.Atan2(wristy - elbowy, wristx - elbowx) - robot.AxisFourOffset;
-
-                        for (int n = 0; n < 2; n++)
-                        {
-                            a2list.Add(-Axis2Angle);
-
-                            double Axis3AngleWrapped = -Axis3Angle + Math.PI;
-                            while (Axis3AngleWrapped >= Math.PI) Axis3AngleWrapped -= 2 * Math.PI;
-                            while (Axis3AngleWrapped < -Math.PI) Axis3AngleWrapped += 2 * Math.PI;
-                            a3list.Add(Axis3AngleWrapped);
-                        }
-
-                        for (int n = 0; n < 2; n++)
-                        {
-                            Vector3d Axis4 = new Vector3d(WristLocation - ElbowPt);
-                            Axis4.Rotate(-robot.AxisFourOffset, ElbowPlane.ZAxis);
-                            Vector3d LowerArm = new Vector3d(ElbowPt - P1A);
-                            Plane TempPlane = ElbowPlane;
-                            TempPlane.Rotate(Axis2Angle + Axis3Angle, TempPlane.ZAxis);
-
-                            Plane Axis4Plane = new Rhino.Geometry.Plane(WristLocation, TempPlane.ZAxis, -1.0 * TempPlane.YAxis);
-
-                            double axis6x, axis6y;
-                            Axis4Plane.ClosestParameter(target.Origin, out axis6x, out axis6y);
-
-                            double Axis4Angle = Math.Atan2(axis6y, axis6x);
-                            if (n == 1)
-                            {
-                                Axis4Angle += Math.PI;
-                                if (Axis4Angle > Math.PI)
-                                {
-                                    Axis4Angle -= 2 * Math.PI;
-                                }
-                            }
-
-                            double Axis4AngleWrapped = Axis4Angle + Math.PI / 2;
-                            while (Axis4AngleWrapped >= Math.PI) Axis4AngleWrapped -= 2 * Math.PI;
-                            while (Axis4AngleWrapped < -Math.PI) Axis4AngleWrapped += 2 * Math.PI;
-                            a4list.Add(Axis4AngleWrapped);
-
-                            Plane ikAxis5Plane = new Rhino.Geometry.Plane(Axis4Plane);
-                            ikAxis5Plane.Rotate(Axis4Angle, Axis4Plane.ZAxis);
-                            ikAxis5Plane = new Rhino.Geometry.Plane(WristLocation, -ikAxis5Plane.ZAxis, ikAxis5Plane.XAxis);
-
-                            ikAxis5Plane.ClosestParameter(target.Origin, out axis6x, out axis6y);
-                            double Axis5Angle = Math.Atan2(axis6y, axis6x);
-                            a5list.Add(Axis5Angle);
-
-                            Plane ikAxis6Plane = new Rhino.Geometry.Plane(ikAxis5Plane);
-                            ikAxis6Plane.Rotate(Axis5Angle, ikAxis5Plane.ZAxis);
-                            ikAxis6Plane = new Rhino.Geometry.Plane(WristLocation, -ikAxis6Plane.YAxis, ikAxis6Plane.ZAxis);
-
-                            double endx, endy;
-                            ikAxis6Plane.ClosestParameter(target.PointAt(1, 0), out endx, out endy);
-
-                            double Axis6Angle = (Math.Atan2(endy, endx));
-                            a6list.Add(Axis6Angle);
-                        }
-                    }
-                }
-
-                for (int k = 0; k < 8; k++)
-                {
-                    a1list[k] = Util.ToDegrees(a1list[k]);
-                    a2list[k] = Util.ToDegrees(a2list[k]);
-                    a3list[k] = Util.ToDegrees(a3list[k]);
-                    a4list[k] = Util.ToDegrees(a4list[k]);
-                    a5list[k] = Util.ToDegrees(a5list[k]);
-                    a6list[k] = Util.ToDegrees(a6list[k]);
-                }
-
-                double A1 = a1list[indices[0]];
-                selectedAngles.Add(A1);
-                radAngles[0] = A1.ToRadians();
-                double A2 = a2list[indices[1]] + 90;
-                selectedAngles.Add(A2);
-                radAngles[1] = (A2 - 90).ToRadians();
-                double A3 = a3list[indices[2]] - 90;
-                selectedAngles.Add(A3);
-                radAngles[2] = (A3 + 90).ToRadians();
-                double A4 = a4list[indices[3]];
-                selectedAngles.Add(A4);
-                radAngles[3] = A4.ToRadians();
-                double A5 = a5list[indices[4]];
-                selectedAngles.Add(A5);
-                radAngles[4] = A5.ToRadians();
-                double A6 = a6list[indices[5]];
-                selectedAngles.Add(A6);
-                radAngles[5] = A6.ToRadians();
-
-                // Add the base colour as standard.
-                colors.Add(Styles.DarkGrey);
-
-                for (int i = 0; i < 6; i++)
-                {
-
-                    // Check if the solution value is inside the manufacturer permitted range.
-                    if (selectedAngles[i] < robot.MaxAngles[i] && selectedAngles[i] > robot.MinAngles[i])
-                    {
-                        colors.Add(Styles.DarkGrey);
-                    }
-                    else
-                    {
-                        colors.Add(Styles.Pink);
-                        log.Add("Axis " + i + " is out of rotation domain.");
-                        isValid = false;
-                    }
-
-                    // If no tool is present this would else fail
-                    try
-                    {
-                        // Check for singularity and replace the preview color.
-                        if (selectedAngles[4] > -singularityTol && selectedAngles[4] < singularityTol)
-                        {
-                            colors[5] = (Styles.Blue);
-                            log.Add("Close to singularity.");
-                        }
-                    }
-                    catch { }
-                }
+                // Check the joint angles.
+                colors = CheckJointAngles(robot, selectedAngles, out wristSing, out outOfRotation);
             }
 
             /*
@@ -401,21 +167,287 @@ namespace Axis.Core
             }
             */
 
-            // Check the validity of the current target and update the current position if ok.
+            // Handle errors
+            if (overheadSing || wristSing || outOfReach || outOfRotation) isValid = false;
+            if (overheadSing) log.Add("Close to overhead singularity.");
+            if (wristSing) log.Add("Close to wrist singularity.");
+            if (outOfReach) log.Add("Target out of range.");
+            if (outOfRotation) log.Add("Joint out of range.");
+
+            // Check the validity of the current target and update the current position if ok, otherwise use last valid.
+            double[] robPos = currPos;
             if (isValid)
             {
-                currPos = radAngles;
+                robPos = radAngles; currPos = radAngles;
             }
-            else // Otherwise, revert to the last valid pose.
+            else robPos = currPos;
+
+            //  Update the position of our robot geometry and store the outputs.
+            List<Plane> planesOut = new List<Plane>();
+            Plane flange = new Plane();
+            List<Mesh> robMesh = UpdateRobotMeshes(robot, robPos, out planesOut, out flange);
+
+            // Transform tool per target to robot flange.
+            List<Mesh> toolMeshes = new List<Mesh>();
+            Transform orientFlange = Transform.PlaneToPlane(Plane.WorldXY, flange);
+            try
             {
-                radAngles = currPos;
+                foreach (Mesh m in robTarg.Tool.Geometry)
+                {
+                    Mesh tool = m.DuplicateMesh();
+                    tool.Transform(orientFlange);
+                    toolMeshes.Add(tool);
+                }
+            }
+            // Add warning if no mesh is present
+            catch { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No tool mesh present."); }
+
+            /* METHOD IN UTIL
+            // Colour mesh
+            for (int i = 0; i < meshesOut.Count; i++)
+                meshesOut[i].VertexColors.CreateMonotoneMesh(colors[i]);
+                */
+
+            // Output data
+            DA.SetDataList(0, robMesh);
+            DA.SetData(1, flange);
+            DA.SetDataList(2, selectedAngles);
+            DA.SetDataList(3, colors);
+            DA.SetDataList(4, log);
+            DA.SetDataList(5, toolMeshes);
+        }
+
+        /// <summary>
+        /// Closed form inverse kinematics for a 6 DOF industrial robot. Returns flags for validity and error types.
+        /// </summary>
+        /// <param name="robot"></param>
+        /// <param name="target"></param>
+        /// <param name="overheadSing"></param>
+        /// <param name="outOfReach"></param>
+        /// <returns></returns>
+        public static List<List<double>> TargetInverseKinematics(Manipulator robot, Plane target, out bool overheadSing, out bool outOfReach)
+        {
+            // Validity checks
+            bool unreachable = true;
+            bool singularity = false;
+
+            // Get axis points from custom robot class.
+            Point3d[] RP = new Point3d[] { robot.AxisPoints[0], robot.AxisPoints[1], robot.AxisPoints[2], robot.AxisPoints[3] };
+
+            // Lists of doubles to hold our axis values and our output log.
+            List<double> a1list = new List<double>(), a2list = new List<double>(), a3list = new List<double>(), a4list = new List<double>(), a5list = new List<double>(), a6list = new List<double>();
+            List<string> info = new List<string>();
+
+            // Find the wrist position by moving back along the robot flange the distance of the wrist link.
+            Point3d WristLocation = new Point3d(target.PointAt(0, 0, -robot.WristOffset));
+
+            double angle1 = -1 * Math.Atan2(WristLocation.Y, WristLocation.X);
+
+            // Check for overhead singularity and add message to log if needed
+            if (WristLocation.Y < singularityTol && WristLocation.Y > -singularityTol && WristLocation.X < singularityTol && WristLocation.X > -singularityTol)
+                singularity = true;
+
+            // Standard cases for axis one.
+            if (angle1 > Math.PI) angle1 -= 2 * Math.PI;
+            for (int j = 0; j < 4; j++)
+                a1list.Add(angle1);
+
+            // Other cases for axis one.
+            angle1 += Math.PI;
+            if (angle1 > Math.PI) angle1 -= 2 * Math.PI;
+            for (int j = 0; j < 4; j++)
+                a1list.Add(1 * angle1);
+
+            // Generate four sets of values for each option of axis one
+            for (int j = 0; j < 2; j++)
+            {
+                angle1 = a1list[j * 4];
+
+                // Rotate all of our points based on axis one.
+                Transform Rotation = Transform.Rotation(-1 * angle1, Point3d.Origin);
+
+                Point3d P1A = new Point3d(RP[0]);
+                Point3d P2A = new Point3d(RP[1]);
+                Point3d P3A = new Point3d(RP[2]);
+
+                P1A.Transform(Rotation);
+                P2A.Transform(Rotation);
+                P3A.Transform(Rotation);
+
+                // Define the elbow direction and create a plane there.
+                Vector3d ElbowDir = new Vector3d(1, 0, 0);
+                ElbowDir.Transform(Rotation);
+                Plane ElbowPlane = new Plane(P1A, new Vector3d(1, 0, 0), Plane.WorldXY.ZAxis);
+
+                // Create our spheres for doing the intersections.
+                Sphere Sphere1 = new Sphere(P1A, robot.LowerArmLength);
+                Sphere Sphere2 = new Sphere(WristLocation, robot.UpperArmLength);
+                Circle Circ = new Circle();
+
+                double Par1 = new double(), Par2 = new double();
+
+                // Do the intersections and store them as pars.
+                Rhino.Geometry.Intersect.Intersection.SphereSphere(Sphere1, Sphere2, out Circ);
+                Rhino.Geometry.Intersect.Intersection.PlaneCircle(ElbowPlane, Circ, out Par1, out Par2);
+
+                // Logic to check if the target is unreachable.
+                if (unreachable)
+                    if (Par1 == double.NaN || Par2 == double.NaN)
+                        unreachable = false;
+
+                // Get the points.
+                Point3d IntersectPt1 = Circ.PointAt(Par1), IntersectPt2 = Circ.PointAt(Par2);
+
+                // Solve IK for the remaining axes using these points.
+                for (int k = 0; k < 2; k++)
+                {
+                    Point3d ElbowPt = new Point3d();
+
+                    if (k == 0) ElbowPt = IntersectPt1;
+                    else ElbowPt = IntersectPt2;
+
+                    // Parameters in the elbow plane.
+                    double elbowx, elbowy, wristx, wristy;
+
+                    ElbowPlane.ClosestParameter(ElbowPt, out elbowx, out elbowy);
+                    ElbowPlane.ClosestParameter(WristLocation, out wristx, out wristy);
+
+                    double angle2 = Math.Atan2(elbowy, elbowx);
+                    double angle3 = Math.PI - angle2 + Math.Atan2(wristy - elbowy, wristx - elbowx) - robot.AxisFourOffset;
+
+                    for (int n = 0; n < 2; n++)
+                    {
+                        a2list.Add(-angle2);
+                        double axis3Wrapped = -angle3 + Math.PI;
+                        while (axis3Wrapped >= Math.PI) axis3Wrapped -= 2 * Math.PI;
+                        while (axis3Wrapped < -Math.PI) axis3Wrapped += 2 * Math.PI;
+                        a3list.Add(axis3Wrapped);
+                    }
+
+                    for (int n = 0; n < 2; n++)
+                    {
+                        Vector3d Axis4 = new Vector3d(WristLocation - ElbowPt);
+                        Axis4.Rotate(-robot.AxisFourOffset, ElbowPlane.ZAxis);
+                        Vector3d LowerArm = new Vector3d(ElbowPt - P1A);
+                        Plane TempPlane = ElbowPlane;
+                        TempPlane.Rotate(angle2 + angle3, TempPlane.ZAxis);
+
+                        Plane Axis4Plane = new Rhino.Geometry.Plane(WristLocation, TempPlane.ZAxis, -1.0 * TempPlane.YAxis);
+
+                        double axis6x, axis6y;
+                        Axis4Plane.ClosestParameter(target.Origin, out axis6x, out axis6y);
+
+                        double angle4 = Math.Atan2(axis6y, axis6x);
+                        if (n == 1)
+                        {
+                            angle4 += Math.PI;
+                            if (angle4 > Math.PI)
+                                angle4 -= 2 * Math.PI;
+                        }
+
+                        double Axis4AngleWrapped = angle4 + Math.PI / 2;
+                        while (Axis4AngleWrapped >= Math.PI) Axis4AngleWrapped -= 2 * Math.PI;
+                        while (Axis4AngleWrapped < -Math.PI) Axis4AngleWrapped += 2 * Math.PI;
+                        a4list.Add(Axis4AngleWrapped);
+
+                        Plane ikAxis5Plane = new Rhino.Geometry.Plane(Axis4Plane);
+                        ikAxis5Plane.Rotate(angle4, Axis4Plane.ZAxis);
+                        ikAxis5Plane = new Rhino.Geometry.Plane(WristLocation, -ikAxis5Plane.ZAxis, ikAxis5Plane.XAxis);
+
+                        ikAxis5Plane.ClosestParameter(target.Origin, out axis6x, out axis6y);
+                        double angle5 = Math.Atan2(axis6y, axis6x);
+                        a5list.Add(angle5);
+
+                        Plane ikAxis6Plane = new Rhino.Geometry.Plane(ikAxis5Plane);
+                        ikAxis6Plane.Rotate(angle5, ikAxis5Plane.ZAxis);
+                        ikAxis6Plane = new Rhino.Geometry.Plane(WristLocation, -ikAxis6Plane.YAxis, ikAxis6Plane.ZAxis);
+
+                        double endx, endy;
+                        ikAxis6Plane.ClosestParameter(target.PointAt(1, 0), out endx, out endy);
+
+                        double angle6 = (Math.Atan2(endy, endx));
+                        a6list.Add(angle6);
+                    }
+                }
             }
 
-            // Start updating all of the meshes based on the selected angles list.
+            // Compile our list of all axis angle value lists.
+            List<List<double>> angles = new List<List<double>>();
+            angles.Add(a1list); angles.Add(a2list); angles.Add(a3list); angles.Add(a4list); angles.Add(a5list); angles.Add(a6list);
+
+            // Convert all angles to degrees.
+            foreach (List<double> aList in angles)
+                for (int k = 0; k < 8; k++)
+                    aList[k] = Util.ToDegrees(aList[k]);
+
+            // Update validity based on flags
+            outOfReach = unreachable;
+            overheadSing = singularity;
+
+            return angles; // Return the angles.
+        }
+
+        /// <summary>
+        /// Check joint angle values against the robot model data. Outputs flags for joint error and wrist singularity. Returns a list of colors.
+        /// </summary>
+        /// <param name="robot"></param>
+        /// <param name="selectedAngles"></param>
+        /// <param name="wristSing"></param>
+        /// <param name="outOfRotation"></param>
+        /// <returns></returns>
+        public static List<System.Drawing.Color> CheckJointAngles(Manipulator robot, List<double> selectedAngles, out bool wristSing, out bool outOfRotation)
+        {
+            // Colours
+            List<System.Drawing.Color> colors = new List<System.Drawing.Color>();
+            colors.Add(Styles.DarkGrey); // Add robot base.
+
+            bool rotationError = false; bool singularity = false;
+
+            for (int i = 0; i < 6; i++)
+            {
+                // Check if the solution value is inside the manufacturer permitted range.
+                if (selectedAngles[i] < robot.MaxAngles[i] && selectedAngles[i] > robot.MinAngles[i])
+                    colors.Add(Styles.DarkGrey);
+                else
+                {
+                    colors.Add(Styles.Pink);
+                    rotationError = true;
+                }
+                try
+                {
+                    // Check for singularity and replace the preview color.
+                    if (selectedAngles[4] > -singularityTol && selectedAngles[4] < singularityTol)
+                    {
+                        colors[5] = (Styles.Blue);
+                        singularity = true;
+                    }
+                }
+                catch { }
+            }
+            colors.Add(Styles.DarkGrey); // Hardcoded tool color
+
+            outOfRotation = rotationError;
+            wristSing = singularity;
+
+            return colors;
+        }
+
+        /// <summary>
+        /// Update robot mesh geometry based on axis values. Returns a list of mesh geometry.
+        /// </summary>
+        /// <param name="robot"></param>
+        /// <param name="radAngles"></param>
+        /// <param name="robPlanes"></param>
+        /// <param name="flange"></param>
+        /// <returns></returns>
+        public List<Mesh> UpdateRobotMeshes(Manipulator robot, double[] radAngles, out List<Plane> planesOut, out Plane flange)
+        {
             List<Mesh> meshes = robot.IKMeshes;
             List<Plane> aPlanes = robot.tAxisPlanes;
+            List<Plane> robPlanes = new List<Plane>();
             Plane robBase = robot.RobBasePlane;
 
+            List<Mesh> meshesOut = new List<Mesh>();
             meshesOut.Add(meshes[0]);
 
             Transform Rot1 = Transform.Rotation(-1 * radAngles[0], robBase.ZAxis, robBase.Origin);
@@ -433,7 +465,6 @@ namespace Axis.Core
                 temp.Transform(Rot1);
                 Planes1.Add(temp);
             }
-
             meshesOut.Add(Meshes1[0]);
 
             Transform Rot2 = Transform.Rotation(radAngles[1] + Math.PI / 2, Planes1[0].ZAxis, Planes1[0].Origin);
@@ -451,8 +482,7 @@ namespace Axis.Core
                 temp.Transform(Rot2);
                 Planes2.Add(temp);
             }
-
-            aPlns.Add(Planes1[0]);
+            robPlanes.Add(Planes1[0]);
             meshesOut.Add(Meshes2[0]);
 
             Transform Rot3 = Transform.Rotation(radAngles[2] - Math.PI / 2, Planes2[1].ZAxis, Planes2[1].Origin);
@@ -470,8 +500,7 @@ namespace Axis.Core
                 temp.Transform(Rot3);
                 Planes3.Add(temp);
             }
-
-            aPlns.Add(Planes2[1]);
+            robPlanes.Add(Planes2[1]);
             meshesOut.Add(Meshes3[0]);
 
             Transform Rot4 = Transform.Rotation(radAngles[3] * -1.0, Planes3[2].ZAxis, Planes3[2].Origin);
@@ -489,8 +518,7 @@ namespace Axis.Core
                 temp.Transform(Rot4);
                 Planes4.Add(temp);
             }
-
-            aPlns.Add(Planes3[2]);
+            robPlanes.Add(Planes3[2]);
             meshesOut.Add(Meshes4[0]);
 
             Transform Rot5 = Transform.Rotation(radAngles[4], Planes4[3].ZAxis, Planes4[3].Origin);
@@ -508,8 +536,7 @@ namespace Axis.Core
                 temp.Transform(Rot5);
                 Planes5.Add(temp);
             }
-
-            aPlns.Add(Planes4[3]);
+            robPlanes.Add(Planes4[3]);
             meshesOut.Add(Meshes5[0]);
 
             Transform Rot6 = Transform.Rotation(-1.0 * radAngles[5], Planes5[4].ZAxis, Planes5[4].Origin);
@@ -527,51 +554,13 @@ namespace Axis.Core
                 temp.Transform(Rot6);
                 Planes6.Add(temp);
             }
-
-            aPlns.Add(Planes5[4]);
+            robPlanes.Add(Planes5[4]);
             meshesOut.Add(Meshes6[0]);
 
-            flangeOut = Planes6[Planes6.Count - 1];
-            anglesOut = selectedAngles;
-            planesOut = aPlns;
+            flange = Planes6[Planes6.Count - 1];
+            planesOut = robPlanes;
 
-            // Transform tool per target to robot flange.
-            List<Mesh> toolMeshes = new List<Mesh>();
-            Transform orientFlange = Transform.PlaneToPlane(Plane.WorldXY, flangeOut);
-
-            // Add warning if no mesh is present
-            try
-            {
-                foreach (Mesh m in robTarg.Tool.Geometry)
-                {
-                    Mesh tool = m.DuplicateMesh();
-                    tool.Transform(orientFlange);
-                    toolMeshes.Add(tool);
-                }
-            }
-            catch
-            {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No tool mesh present.");
-            }
-
-            colorsOut = colors;
-            logOut = log;
-
-            // Colour mesh
-            /*
-            for (int i = 0; i < meshesOut.Count; i++)
-            {
-                meshesOut[i].VertexColors.CreateMonotoneMesh(colorsOut[i]);
-            }
-            */
-
-            // Output data
-            DA.SetDataList(0, meshesOut);
-            DA.SetData(1, flangeOut);
-            DA.SetDataList(2, anglesOut);
-            DA.SetDataList(3, colorsOut);
-            DA.SetDataList(4, logOut);
-            DA.SetDataList(5, toolMeshes);
+            return meshesOut;
         }
     }
 }
