@@ -15,6 +15,7 @@ using ABB.Robotics.Controllers.Messaging;
 using ABB.Robotics.Controllers.IOSystemDomain;
 
 using Axis.Targets;
+//using Axis.Core;
 
 
 namespace Axis.Online
@@ -154,6 +155,15 @@ namespace Axis.Online
             double cRobQ4 = 0;
 
             Quaternion cRobQuat = new Quaternion();
+
+
+            //Check for valid licence
+            /*if (bool (Core.AuthTest.loggedIn) != true)
+            {
+                new GH_RuntimeMessage("Please sign in to confirm your licence", GH_RuntimeMessageLevel.Error);
+                return;
+            }*/
+
 
             if (activate)
             {
