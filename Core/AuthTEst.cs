@@ -16,7 +16,7 @@ namespace Axis.Core
 
         public AuthTest() : base("Login", "Login", "Log in to Axis", "Axis", "Core")
         {
-            
+
         }
 
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
@@ -34,10 +34,55 @@ namespace Axis.Core
             bool run = false;
             if (!DA.GetData(0, ref run)) return;
 
-            // Make sure we are logged in to Spacemaker
+            // Set up our client to handle the login.
+            Auth0ClientOptions clientOptions = new Auth0ClientOptions
+            {
+                Domain = "axisarch.eu.auth0.com",
+                ClientId = "bDiJKd5tM8eqHsTX01ovqyFvOSBnC4mE",
+                Browser = new WebBrowserBrowser("Authenticating...", 400, 400)
+            };
+
+            var client = new Auth0Client(clientOptions);
+            clientOptions.PostLogoutRedirectUri = clientOptions.RedirectUri;
+
+            var extra = new Dictionary<string, string>()
+            {
+                {"response_type", "code"}
+            };
+
+            // Handle the logout.
+            if (loggedIn && !run)
+            {
+                client.LogoutAsync();
+                loggedIn = false;
+                this.Message = "Logged Out";
+            }
+
+            // Handle the login.
             if (!loggedIn && run)
             {
-                Login();
+                client.LoginAsync(extra).ContinueWith(t =>
+                {
+                    if (!t.Result.IsError)
+                    {
+                        Properties.Settings.Default.Token = t.Result.AccessToken;
+                        Debug.WriteLine("Logged in with token... " + t.Result.AccessToken);
+                        log.Clear();
+                        log.Add("[" + DateTime.Now.TimeOfDay.ToString().Split('.')[0] + "] ");
+                        log.Add("Logged in to Axis.");
+                        this.Message = "OK";
+                        loggedIn = true;
+                    }
+                    else
+                    {
+                        Debug.WriteLine("Error logging in: " + t.Result.Error);
+                        log.Add(t.Result.ToString());
+                        log.Add("Error logging in: " + t.Result.Error);
+                        loggedIn = false;
+                    }
+                    t.Dispose();
+                });
+
                 if (loggedIn) this.Message = "Logged In";
                 else this.Message = "Error";
             }
@@ -63,7 +108,7 @@ namespace Axis.Core
                 DA.SetDataList(0, log);
             */
         }
-
+        /*
         public void Login()
         {
             Auth0ClientOptions clientOptions = new Auth0ClientOptions
@@ -74,18 +119,15 @@ namespace Axis.Core
             };
 
             var client = new Auth0Client(clientOptions);
-            clientOptions.PostLogoutRedirectUri = clientOptions.RedirectUri;
-            /*
+            //clientOptions.PostLogoutRedirectUri = clientOptions.RedirectUri;
+
             var extra = new Dictionary<string, string>()
             {
                 {"response_type", "code"}
             };
-            */
 
-            //client.LoginAsync(extra).ContinueWith(t =>
-            client.LoginAsync();
-            /*
-            client.LoginAsync().ContinueWith(t =>
+            //client.LoginAsync().ContinueWith(t =>
+            client.LoginAsync(extra).ContinueWith(t =>
             {
                 if (!t.Result.IsError)
                 {
@@ -96,17 +138,16 @@ namespace Axis.Core
                     log.Add("Logged in to Axis.");
                     loggedIn = true;
                 }
+                else
+                {
+                    Debug.WriteLine("Error logging in: " + t.Result.Error);
+                    log.Add("Error logging in: " + t.Result.Error);
+                    loggedIn = false;
+                }
                 t.Dispose();
-                //else
-                //{
-                //    Debug.WriteLine("Error logging in: " + t.Result.Error);
-                //    log.Add("Error logging in: " + t.Result.Error);
-                //    loggedIn = false;
-                //}
-                
             });
-            */
         }
+        */
 
         protected override System.Drawing.Bitmap Icon
         {
