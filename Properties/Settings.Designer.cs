@@ -34,5 +34,17 @@ namespace Axis.Properties {
                 this["Token"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool Acsess {
+            get {
+                return ((bool)(this["Acsess"]));
+            }
+            set {
+                this["Acsess"] = value;
+            }
+        }
     }
 }
