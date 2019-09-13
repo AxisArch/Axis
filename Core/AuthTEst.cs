@@ -87,6 +87,8 @@ namespace Axis.Core
                 else this.Message = "Error";
             }
 
+            Properties.Settings.Default.Acsess = loggedIn;
+
             DA.SetDataList(0, log);
 
             /*
