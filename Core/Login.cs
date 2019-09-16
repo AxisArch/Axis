@@ -6,6 +6,7 @@ using Grasshopper.Kernel;
 using Rhino.Geometry;
 
 using Auth0.OidcClient;
+using static Axis.Properties.Settings;
 
 namespace Axis.Core
 {
@@ -60,22 +61,21 @@ namespace Axis.Core
                 client.LogoutAsync();
                 loggedIn = false;
                 this.Message = "Logged Out";
+                log.Add("Logged out of Axis at " + System.DateTime.Now.ToShortDateString()); 
             }
 
             // Handle the login.
             if (!loggedIn && run)
             {
-                // Async login as a task, can grab a lot of details from t.[] if needed. (User, permissions etc.).
-                // Thinking that this can be used to limit functionality based on pricing.
                 client.LoginAsync(extra).ContinueWith(t =>
                 {
                     if (!t.Result.IsError)
                     {
-                        Properties.Settings.Default.Token = t.Result.AccessToken;
-                        Debug.WriteLine("Logged in with token... " + t.Result.AccessToken);
+                        Default.Token = t.Result.AccessToken;
                         log.Clear();
-                        log.Add("[" + DateTime.Now.TimeOfDay.ToString().Split('.')[0] + "] ");
-                        log.Add("Logged in to Axis.");
+                        log.Add("Logged in to Axis at " + DateTime.Now.ToShortTimeString());
+                        DateTime validTo = DateTime.Now.AddDays(2);
+                        log.Add("Login valid to: " + validTo.ToLongDateString() + ", " + validTo.ToShortTimeString());
                         this.Message = "OK";
                         loggedIn = true;
                     }
@@ -89,9 +89,13 @@ namespace Axis.Core
                     t.Dispose();
                 });
 
+                // Update our login time.
+                Default.LastLoggedIn = DateTime.Now;
+
                 if (loggedIn) this.Message = "Logged In";
                 else this.Message = "Error";
             }
+            Axis.Properties.Settings.Default.LoggedIn = loggedIn;
             DA.SetDataList(0, log);
         }
        

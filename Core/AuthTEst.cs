@@ -9,9 +9,7 @@ namespace Axis.Core
 {
     public class AuthTest : GH_Component
     {
-        public bool loggedIn = Axis.Properties.Settings.Default.LoggedIn;
-
-        public AuthTest() : base("Test", "Test", "Test", "Axis", "1. Core")
+        public AuthTest() : base("Auth Test", "Auth", "Test", "Axis", "1. Core")
         {
         }
 
@@ -27,11 +25,20 @@ namespace Axis.Core
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             List<string> log = new List<string>();
+            bool loggedIn = Default.LoggedIn;
+            System.DateTime lastLogin = Default.LastLoggedIn;
 
             if (Default.LoggedIn)
             {
-                log.Add("OK");
-                log.Add(Default.LastLoggedIn.ToString());
+                log.Add("Logged in.");
+                log.Add("LLI: " + lastLogin.ToLongDateString() + ", " + lastLogin.ToShortTimeString());
+                DateTime validTo = lastLogin.AddDays(2);
+                int valid = DateTime.Compare(System.DateTime.Now, validTo);
+                if (valid < 0)
+                {
+                    log.Add("Login token valid.");
+                    log.Add("Valid to: " + validTo.ToLongDateString() + ", " + validTo.ToShortTimeString());
+                }
             }
 
             if (loggedIn) this.Message = "Logged In";
