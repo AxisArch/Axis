@@ -44,7 +44,6 @@ namespace Axis.Targets
             pManager.AddGenericParameter("Tool", "Tool", "Tool to use for operation.", GH_ParamAccess.item);
             pManager.AddGenericParameter("Speed", "Speed", "Speed to use for the movement.", GH_ParamAccess.item);
             pManager.AddGenericParameter("Zone", "Zone", "Zone to use for the movement.", GH_ParamAccess.item);
-
             for (int i = 0; i < 9; i++)
                 pManager[i].Optional = true;
         }
@@ -56,13 +55,7 @@ namespace Axis.Targets
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            double a1 = 0;
-            double a2 = 0;
-            double a3 = 0;
-            double a4 = 0;
-            double a5 = 0;
-            double a6 = 0;
-            double rot = 0;
+            double a1 = 0; double a2 = 0; double a3 = 0; double a4 = 0; double a5 = 0; double a6 = 0; double rot = 0;
             double lin = 0;
             Tool tool = Tool.Default;
             GH_ObjectWrapper speedIn = new GH_ObjectWrapper();

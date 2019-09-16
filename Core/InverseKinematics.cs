@@ -202,11 +202,9 @@ namespace Axis.Core
             // Add warning if no mesh is present
             catch { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No tool mesh present."); }
 
-            /* METHOD IN UTIL
+            // ******** Check that this works
             // Colour mesh
-            for (int i = 0; i < meshesOut.Count; i++)
-                meshesOut[i].VertexColors.CreateMonotoneMesh(colors[i]);
-                */
+            robMesh = Util.ColorMeshes(robMesh, colors);
 
             // Output data
             DA.SetDataList(0, robMesh);

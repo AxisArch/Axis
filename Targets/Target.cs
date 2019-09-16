@@ -28,7 +28,7 @@ namespace Axis.Targets
         public string StrKUKA { get; }
 
         public MotionType Method { get; }
-        public string StrMethod { get; }     
+        public string StrMethod { get; }
 
         public static Target Default { get; }
 
@@ -49,7 +49,7 @@ namespace Axis.Targets
             Plane dynamicTarget = new Plane(target);
             if (wobj.Dynamic)
             {
-                Transform rot = Transform.Rotation(extRot.ToRadians(),wobj.ExternalAxis.Normal , wobj.ExternalAxis.Origin);
+                Transform rot = Transform.Rotation(extRot.ToRadians(), wobj.ExternalAxis.Normal, wobj.ExternalAxis.Origin);
                 if (dynamicTarget.Transform(rot))
                     this.Plane = dynamicTarget;
             }
@@ -77,12 +77,13 @@ namespace Axis.Targets
             string strKUKA = null;
             string strZone = zone.Name;
             string strSpeed = null;
+            string exLin = "9E9";
+            string exRot = "9E9";
 
+            // Tool
             string toolName = String.Empty;
             if (tool.Name != "DefaultTool")
-            {
                 toolName = tool.Name;
-            }
 
             // Work object
             string workObject = @"\Wobj:=" + wobj.Name;
@@ -110,19 +111,11 @@ namespace Axis.Targets
                     movement = "MoveJ";
                     this.StrMethod = "Joint";
                 }
-                
+
                 if (speed.Time > 0)
                 {
-                    /*
-                    Time
-                    Data type: num
-                    This argument is used to specify the total time in seconds during which the robot moves. It is
-                    then substituted for the corresponding speed data.
-                    */
                     if (speed != null)
-                    {
                         strSpeed = speed.Name + @"\T:=" + speed.Time.ToString();
-                    }
                     else
                     {
                         // If we dont have speed data to begin with, then replace it with a default value.
@@ -132,36 +125,24 @@ namespace Axis.Targets
                 else
                 {
                     if (speed.Name != null)
-                    {
                         strSpeed = speed.Name;
-                    }                
                 }
 
-                
-                // External axis values
-                string lin = "9E9"; string rot = "9E9";
-
-                //RelTool Offset
-                //Working Example below
-                //MoveL RelTool ([[416.249, -110.455, 0],[0, 0, 1, 0], cData, eAxis], 0, 0,-120), v50, z1, tool0 \Wobj:=wobj0;
-
-
-                
                 //Creating Point
                 string robtarget = "";
                 if (extRot != Util.ExAxisTol || extLin != Util.ExAxisTol) // If the external axis value is present... (otherwise 0.00001 is passed as a default value).
                 {
                     if (extLin != Util.ExAxisTol)
                     {
-                        lin = Math.Round(extLin, 4).ToString();
+                        exLin = Math.Round(extLin, 4).ToString();
                     }
                     if (extRot != Util.ExAxisTol)
                     {
-                        rot = Math.Round(extRot, 2).ToString(); // Get the external axis value per target and round it to two decimal places.
+                        exRot = Math.Round(extRot, 2).ToString(); // Get the external axis value per target and round it to two decimal places.
                     }
-                    robtarget = @" [[" + ABBposition + "],[" + strQuat + "]," + " cData, " + "[" + rot + ", " + lin + ", 9E9, 9E9, 9E9, 9E9]" + "]";
+                    robtarget = @" [[" + ABBposition + "],[" + strQuat + "]," + " cData, " + "[" + exRot + ", " + exLin + ", 9E9, 9E9, 9E9, 9E9]" + "]";
                 }
-                else{ robtarget = @" [[" + ABBposition + "],[" + strQuat + "]," + " cData, eAxis]";}
+                else { robtarget = @" [[" + ABBposition + "],[" + strQuat + "]," + " cData, eAxis]"; }
 
                 if (tool.relTool != Vector3d.Zero)
                 {
@@ -172,7 +153,7 @@ namespace Axis.Targets
                 else
                 {
                     strABB = movement + robtarget + ", " + strSpeed + ", " + strZone + ", " + tool.Name + " " + workObject + ";";
-                }              
+                }
             }
 
             else // KUKA Targets
@@ -226,60 +207,39 @@ namespace Axis.Targets
 
             if (speed.Time > 0)
             {
-                /*
-                Time
-                Data type: num
-                This argument is used to specify the total time in seconds during which the robot moves. It is
-                then substituted for the corresponding speed data.
-                */
                 if (speed != null)
-                {
                     strSpeed = speed.Name + @"\T:=" + speed.Time.ToString();
-                }
                 else
-                {
-                    // If we dont have speed data to begin with, then replace it with a default value.
                     strSpeed = @"v200\T:=" + speed.Time.ToString();
-                }
             }
             else
             {
                 if (speed.Name != null)
-                {
                     strSpeed = speed.Name;
-                }
             }
 
+            // ******** CTool() instead of Tool0?
             string toolName = "tool0";
             if (tool.Name != "DefaultTool")
-            {
                 toolName = tool.Name;
-            }
 
             // External axis values
             string lin = "9E9"; string rot = "9E9";
             if (extRot != Util.ExAxisTol || extLin != Util.ExAxisTol) // If the external axis value is present... (otherwise 0.00001 is passed as a default value).
             {
                 if (extLin != Util.ExAxisTol)
-                {
                     lin = Math.Round(extLin, 4).ToString();
-                }
                 if (extRot != Util.ExAxisTol)
-                {
                     rot = Math.Round(extRot, 2).ToString(); // Get the external axis value per target and round it to two decimal places.
-                }
 
                 strABB = @"MoveAbsJ [" + jTarg + ", [" + rot + ", " + lin + ", 9E9, 9E9, 9E9, 9E9]" + "], " + strSpeed + ", " + strZone + ", " + tool.Name + ";";
             }
             else { strABB = @"MoveAbsJ [" + jTarg + ", [9E9, 9E9, 9E9, 9E9, 9E9, 9E9]" + "], " + strSpeed + ", " + strZone + ", " + tool.Name + ";"; }
 
-            // Set publicly accessible property values based on the data.
-                this.ExtRot = extRot;
+            this.ExtRot = extRot;
             this.ExtLin = extLin;
             this.StrABB = strABB;
             this.Method = MotionType.AbsoluteJoint;
-
-            // CTool() instead of tool0; *********
             this.StrMethod = "Absolute Joint";
         }
 
