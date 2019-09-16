@@ -9,6 +9,8 @@ namespace Axis.Core
 {
     public class AuthTest : GH_Component
     {
+        public bool loggedIn = Axis.Properties.Settings.Default.LoggedIn;
+
         public AuthTest() : base("Test", "Test", "Test", "Axis", "1. Core")
         {
         }
@@ -29,35 +31,12 @@ namespace Axis.Core
             if (Default.LoggedIn)
             {
                 log.Add("OK");
-                log.Add(Default.LastLogin.ToString());
-            }
-                client.LoginAsync(extra).ContinueWith(t =>
-                {
-                    if (!t.Result.IsError)
-                    {
-                        Properties.Settings.Default.Token = t.Result.AccessToken;
-                        Debug.WriteLine("Logged in with token... " + t.Result.AccessToken);
-                        log.Clear();
-                        log.Add("[" + DateTime.Now.TimeOfDay.ToString().Split('.')[0] + "] ");
-                        log.Add("Logged in to Axis.");
-                        this.Message = "OK";
-                        loggedIn = true;
-                    }
-                    else
-                    {
-                        Debug.WriteLine("Error logging in: " + t.Result.Error);
-                        log.Add(t.Result.ToString());
-                        log.Add("Error logging in: " + t.Result.Error);
-                        loggedIn = false;
-                    }
-                    t.Dispose();
-                });
-
-                if (loggedIn) this.Message = "Logged In";
-                else this.Message = "Error";
+                log.Add(Default.LastLoggedIn.ToString());
             }
 
-            Properties.Settings.Default.Acsess = loggedIn;
+            if (loggedIn) this.Message = "Logged In";
+            else this.Message = "Error";
+
 
             DA.SetDataList(0, log);
         }

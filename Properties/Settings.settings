@@ -5,16 +5,11 @@
     <Setting Name="Token" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
-<<<<<<< HEAD
     <Setting Name="LoggedIn" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">True</Value>
-    </Setting>
-    <Setting Name="LastLogin" Type="System.DateTime" Scope="User">
-      <Value Profile="(Default)">2019-07-01</Value>
-=======
-    <Setting Name="Acsess" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
->>>>>>> 6579a4ce791b10ef3423687cfd6a477537a6d053
+    </Setting>
+    <Setting Name="LastLoggedIn" Type="System.DateTime" Scope="User">
+      <Value Profile="(Default)" />
     </Setting>
   </Settings>
 </SettingsFile>

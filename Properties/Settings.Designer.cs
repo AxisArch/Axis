@@ -37,8 +37,7 @@ namespace Axis.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-<<<<<<< HEAD
-        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
         public bool LoggedIn {
             get {
                 return ((bool)(this["LoggedIn"]));
@@ -50,22 +49,12 @@ namespace Axis.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("2019-07-01")]
-        public global::System.DateTime LastLogin {
+        public global::System.DateTime LastLoggedIn {
             get {
-                return ((global::System.DateTime)(this["LastLogin"]));
+                return ((global::System.DateTime)(this["LastLoggedIn"]));
             }
             set {
-                this["LastLogin"] = value;
-=======
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool Acsess {
-            get {
-                return ((bool)(this["Acsess"]));
-            }
-            set {
-                this["Acsess"] = value;
->>>>>>> 6579a4ce791b10ef3423687cfd6a477537a6d053
+                this["LastLoggedIn"] = value;
             }
         }
     }
