@@ -1,27 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 
 using Grasshopper.Kernel;
 using Rhino.Geometry;
-
-using Auth0.OidcClient;
+using static Axis.Properties.Settings;
 
 namespace Axis.Core
 {
     public class AuthTest : GH_Component
     {
-        public List<string> log = new List<string>();
-        public bool loggedIn = false;
-
-        public AuthTest() : base("Login", "Login", "Log in to Axis", "Axis", "Core")
+        public AuthTest() : base("Auth Test", "Auth", "Test", "Axis", "1. Core")
         {
-
         }
 
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddBooleanParameter("Run", "Run", "Open a browser window and log in to Axis", GH_ParamAccess.item);
         }
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
@@ -31,125 +24,29 @@ namespace Axis.Core
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            bool run = false;
-            if (!DA.GetData(0, ref run)) return;
+            List<string> log = new List<string>();
+            bool loggedIn = Default.LoggedIn;
+            System.DateTime lastLogin = Default.LastLoggedIn;
 
-            // Set up our client to handle the login.
-            Auth0ClientOptions clientOptions = new Auth0ClientOptions
+            if (Default.LoggedIn)
             {
-                Domain = "axisarch.eu.auth0.com",
-                ClientId = "bDiJKd5tM8eqHsTX01ovqyFvOSBnC4mE",
-                Browser = new WebBrowserBrowser("Authenticating...", 400, 400)
-            };
-
-            var client = new Auth0Client(clientOptions);
-            clientOptions.PostLogoutRedirectUri = clientOptions.RedirectUri;
-
-            var extra = new Dictionary<string, string>()
-            {
-                {"response_type", "code"}
-            };
-
-            // Handle the logout.
-            if (loggedIn && !run)
-            {
-                client.LogoutAsync();
-                loggedIn = false;
-                this.Message = "Logged Out";
-            }
-
-            // Handle the login.
-            if (!loggedIn && run)
-            {
-                client.LoginAsync(extra).ContinueWith(t =>
+                log.Add("Logged in.");
+                log.Add("LLI: " + lastLogin.ToLongDateString() + ", " + lastLogin.ToShortTimeString());
+                DateTime validTo = lastLogin.AddDays(2);
+                int valid = DateTime.Compare(System.DateTime.Now, validTo);
+                if (valid < 0)
                 {
-                    if (!t.Result.IsError)
-                    {
-                        Properties.Settings.Default.Token = t.Result.AccessToken;
-                        Debug.WriteLine("Logged in with token... " + t.Result.AccessToken);
-                        log.Clear();
-                        log.Add("[" + DateTime.Now.TimeOfDay.ToString().Split('.')[0] + "] ");
-                        log.Add("Logged in to Axis.");
-                        this.Message = "OK";
-                        loggedIn = true;
-                    }
-                    else
-                    {
-                        Debug.WriteLine("Error logging in: " + t.Result.Error);
-                        log.Add(t.Result.ToString());
-                        log.Add("Error logging in: " + t.Result.Error);
-                        loggedIn = false;
-                    }
-                    t.Dispose();
-                });
-
-                if (loggedIn) this.Message = "Logged In";
-                else this.Message = "Error";
+                    log.Add("Login token valid.");
+                    log.Add("Valid to: " + validTo.ToLongDateString() + ", " + validTo.ToShortTimeString());
+                }
             }
 
-            Properties.Settings.Default.Acsess = loggedIn;
+            if (loggedIn) this.Message = "Logged In";
+            else this.Message = "Error";
+
 
             DA.SetDataList(0, log);
-
-            /*
-            // If we have data and and ID, send the data and update the UI
-            Debug.WriteLine("Sending messages...");
-            Debug.WriteLine("Token" + Properties.Settings.Default.Token);
-            string msg = SpacemakerServices.SendSmif(messages, projectID, Properties.Settings.Default.Token);
-            Debug.WriteLine(msg);
-
-            if (msg == "OK")
-                this.Message = "Live";
-            else
-            {
-                this.Message = "Error";
-                log.Add("[" + DateTime.Now.TimeOfDay.ToString().Split('.')[0] + "] " + msg);
-            }
-
-            if (m_outputLog)
-                DA.SetDataList(0, log);
-            */
         }
-        /*
-        public void Login()
-        {
-            Auth0ClientOptions clientOptions = new Auth0ClientOptions
-            {
-                Domain = "axisarch.eu.auth0.com",
-                ClientId = "bDiJKd5tM8eqHsTX01ovqyFvOSBnC4mE",
-                Browser = new WebBrowserBrowser("Authenticating...", 400, 400)
-            };
-
-            var client = new Auth0Client(clientOptions);
-            //clientOptions.PostLogoutRedirectUri = clientOptions.RedirectUri;
-
-            var extra = new Dictionary<string, string>()
-            {
-                {"response_type", "code"}
-            };
-
-            //client.LoginAsync().ContinueWith(t =>
-            client.LoginAsync(extra).ContinueWith(t =>
-            {
-                if (!t.Result.IsError)
-                {
-                    Properties.Settings.Default.Token = t.Result.AccessToken;
-                    Debug.WriteLine("Logged in with token... " + t.Result.AccessToken);
-                    log.Clear();
-                    log.Add("[" + DateTime.Now.TimeOfDay.ToString().Split('.')[0] + "] ");
-                    log.Add("Logged in to Axis.");
-                    loggedIn = true;
-                }
-                else
-                {
-                    Debug.WriteLine("Error logging in: " + t.Result.Error);
-                    log.Add("Error logging in: " + t.Result.Error);
-                    loggedIn = false;
-                }
-                t.Dispose();
-            });
-        }
-        */
 
         protected override System.Drawing.Bitmap Icon
         {
@@ -161,7 +58,7 @@ namespace Axis.Core
 
         public override Guid ComponentGuid
         {
-            get { return new Guid("54b2cc2c-688d-4972-a234-2c9976d0a9f8"); }
+            get { return new Guid("10f5cef1-1906-422e-bb81-9f5304fb7902"); }
         }
     }
 }

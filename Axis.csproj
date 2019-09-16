@@ -312,6 +312,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Core\CheckProgram.cs" />
+    <Compile Include="Core\Login.cs" />
     <Compile Include="Core\AuthTest.cs" />
     <Compile Include="Geometry\SurfaceFrame.cs" />
     <Compile Include="IO\GetDI.cs" />

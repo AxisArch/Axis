@@ -38,12 +38,23 @@ namespace Axis.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool Acsess {
+        public bool LoggedIn {
             get {
-                return ((bool)(this["Acsess"]));
+                return ((bool)(this["LoggedIn"]));
             }
             set {
-                this["Acsess"] = value;
+                this["LoggedIn"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        public global::System.DateTime LastLoggedIn {
+            get {
+                return ((global::System.DateTime)(this["LastLoggedIn"]));
+            }
+            set {
+                this["LastLoggedIn"] = value;
             }
         }
     }
