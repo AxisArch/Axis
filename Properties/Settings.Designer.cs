@@ -51,7 +51,8 @@ namespace Axis.Properties {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         public global::System.DateTime LastLoggedIn {
             get {
-                return ((global::System.DateTime)(this["LastLoggedIn"]));
+                try{ return ((global::System.DateTime)(this["LastLoggedIn"])); }
+                catch { return System.DateTime.MinValue; }
             }
             set {
                 this["LastLoggedIn"] = value;
