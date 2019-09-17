@@ -7,6 +7,7 @@ using Rhino.Geometry;
 
 using Auth0.OidcClient;
 using static Axis.Properties.Settings;
+using System.Linq;
 
 namespace Axis.Core
 {
@@ -34,6 +35,15 @@ namespace Axis.Core
         {
             bool run = false;
             if (!DA.GetData(0, ref run)) return;
+
+            //Check if the connected input is a toggle
+            //int id = this.Params.IndexOfInputParam("Run");
+            IList<IGH_Param> listInput = this.Params.Input[0].Sources;
+            List<bool> nameBool = new List<bool>();
+            foreach (IGH_Param input in listInput) { nameBool.Add(input.Name == "Boolean Toggle" | input.Name == "False Start Toggle"); }
+            if (nameBool.Contains(false) ) { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Please only connect a toggle"); return; }
+
+
 
             // Set up our client to handle the login.
             Auth0ClientOptions clientOptions = new Auth0ClientOptions
@@ -89,6 +99,7 @@ namespace Axis.Core
                     t.Dispose();
                 });
 
+                
                 // Update our login time.
                 Default.LastLoggedIn = DateTime.Now;
 

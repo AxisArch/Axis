@@ -37,10 +37,11 @@ namespace Axis.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
         public bool LoggedIn {
             get {
-                return ((bool)(this["LoggedIn"]));
+                try { return ((bool)(this["LoggedIn"])); }
+                catch { return false; }
+                
             }
             set {
                 this["LoggedIn"] = value;
@@ -51,8 +52,9 @@ namespace Axis.Properties {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         public global::System.DateTime LastLoggedIn {
             get {
-                try{ return ((global::System.DateTime)(this["LastLoggedIn"])); }
+                try { return ((global::System.DateTime)(this["LastLoggedIn"])); }
                 catch { return System.DateTime.MinValue; }
+                
             }
             set {
                 this["LastLoggedIn"] = value;
