@@ -451,8 +451,13 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Resources\AlignOrigin.png" />
+    <None Include="Resources\Streaming.png" />
+    <None Include="Resources\Set Module.png" />
+    <None Include="Resources\Connect.png" />
     <Content Include="Resources\CSystem.png" />
+    <None Include="Resources\Get Module.png" />
     <Content Include="Resources\JointTarget.png" />
+    <None Include="Resources\Star Stop.png" />
     <None Include="Resources\Tool_blue.png" />
     <None Include="Resources\Robot_blue.png" />
     <None Include="Resources\Test24.png" />

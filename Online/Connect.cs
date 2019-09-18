@@ -51,26 +51,36 @@ namespace Axis.Online
         IGH_Component Component;
 
         GH_DocumentIO docIO = new GH_DocumentIO();
+        List<IGH_Param> delInputs = new List<IGH_Param>();
         Grasshopper.Kernel.Special.GH_ValueList vl = new Grasshopper.Kernel.Special.GH_ValueList();
 
         // Callbacks
         private void createValuelist(GH_Document doc)
         {
-            Params.Input[3].AddSource(vl);
-        }
-        private void updateValuelist(GH_Document doc)
-        {
-            IList<IGH_Param> sources = this.Params.Input[3].Sources;
-            foreach (IGH_Param source in sources)
+            //try { Params.Input[3].RemoveAllSources(); }
+            //catch { }
+            if (delInputs != null && delInputs.Count > 0)
             {
-                if (source.Name == "Value List" | source.Name == "Controller")
+                doc.AddObject(vl, false, 1);
+
+                for (int i = 0; i < delInputs.Count; ++i)
                 {
-                    Params.Input[3].ReplaceSource(source, vl);
+                    Params.Input[3].RemoveSource(delInputs[i]);
+                    delInputs[i].IsolateObject();
+                    doc.RemoveObject(delInputs[i], false);
+                    doc.AddObject(vl, false, 1);
                 }
+                Params.Input[3].AddSource(vl);
+            }
+
+            if (false)
+            {
+                
             }
             
-        }
 
+            delInputs.Clear();
+        }
 
         /// <summary>
         /// Initializes a new instance of the Controller class.
@@ -186,9 +196,6 @@ namespace Axis.Online
                     //get active GH doc else abort
                     GH_Document doc = OnPingDocument();
                     if (docIO.Document == null) return;
-
-
-
                     doc.MergeDocument(docIO.Document);
 
                     //Create or replace input
@@ -201,34 +208,38 @@ namespace Axis.Online
                         System.Drawing.PointF currPivot = Params.Input[3].Attributes.Pivot;
                         //set the pivot of the new object
                         vl.Attributes.Pivot = new System.Drawing.PointF(currPivot.X - 210, currPivot.Y - 11);
+                        Params.Input[3].AddSource(vl);
 
-                        // Find out what this is doing and why
-                        docIO.Document.SelectAll();
-                        docIO.Document.ExpireSolution();
-                        docIO.Document.MutateAllIds();
-                        IEnumerable<IGH_DocumentObject> objs = docIO.Document.Objects;
-                        doc.DeselectAll();
-                        doc.UndoUtil.RecordAddObjectEvent("Create Accent List", objs);
-                        doc.MergeDocument(docIO.Document);
 
-                        doc.ScheduleSolution(10, createValuelist);
 
                     }
-                    /*else
+                    else
                     {
+                        IList<IGH_Param> sources = this.Params.Input[3].Sources;
+                        for (int i = 0; i< sources.Count; ++i)
+                        {
+                            if (sources[i].Name == "Value List" | sources[i].Name == "Controller")
+                            {
+                                //get the pivot of the "source" value list
+                                System.Drawing.PointF currPivot = sources[i].Attributes.Pivot;
+                                //set the pivot of the new object
+                                vl.Attributes.Pivot = new System.Drawing.PointF(currPivot.X, currPivot.Y);
+                                delInputs.Add(sources[i]);
+                            }
+                        }
 
-                        // Find out what this is doing and why
-                        docIO.Document.SelectAll();
-                        docIO.Document.ExpireSolution();
-                        docIO.Document.MutateAllIds();
-                        IEnumerable<IGH_DocumentObject> objs = docIO.Document.Objects;
-                        doc.DeselectAll();
-                        doc.UndoUtil.RecordAddObjectEvent("Create Accent List", objs);
-                        doc.MergeDocument(docIO.Document);
+                    }
 
-                        doc.ScheduleSolution(10, updateValuelist);
-                    }*/
+                    // Find out what this is doing and why
+                    docIO.Document.SelectAll();
+                    docIO.Document.ExpireSolution();
+                    docIO.Document.MutateAllIds();
+                    IEnumerable<IGH_DocumentObject> objs = docIO.Document.Objects;
+                    doc.DeselectAll();
+                    doc.UndoUtil.RecordAddObjectEvent("Create Accent List", objs);
+                    doc.MergeDocument(docIO.Document);
 
+                    doc.ScheduleSolution(10, createValuelist);
 
                 }
 
@@ -462,7 +473,7 @@ namespace Axis.Online
             {
                 //You can add image files to your project resources and access them like this:
                 // return Resources.IconForThisComponent;
-                return Properties.Resources.Online;
+                return Properties.Resources.Connect;
             }
         }
 
