@@ -5,14 +5,11 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 
-
+using Rhino.Geometry;
+using Grasshopper;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Grasshopper.Kernel.Parameters;
-
-
-using Rhino.Geometry;
-using Grasshopper;
 
 using ABB.Robotics;
 using ABB.Robotics.Controllers;
@@ -27,33 +24,32 @@ namespace Axis.Online
 {
     public class Streaming : GH_Component, IGH_VariableParameterComponent
     {
-        //Optionable Log
-        private bool logOption = false;
-        private bool logOptionOut = false;
-        private bool lQOption = false;
-        public List<string> Status { get; set; }
+        // Optionable Log
+        bool logOption = false;
+        bool logOptionOut = false;
+        bool lQOption = false;
 
-        private bool modOption = false;
+        List<string> Status { get; set; }
 
-        public Controller controller = null;
-        private Task[] tasks = null;
-        public IpcQueue RobotQueue { get; set; }
-        private Queue<IpcMessage> LocalQueue = new Queue<IpcMessage>();
+        bool modOption = false;
+        bool stream;
 
-        private bool stream;
-        private int ioMonitoringOn = 0;
-        private int ioMonitoringOff = 0;
-        private int tcpMonitoringOn = 0;
-        private int tcpMonitoringOff = 0;
+        Controller controller = null;
+        Task[] tasks = null;
+        IpcQueue RobotQueue { get; set; }
+        Queue<IpcMessage> LocalQueue = new Queue<IpcMessage>();
 
-
+        // State switch variables for TCP monitoring.
+        int ioMonitoringOn = 0; int ioMonitoringOff = 0; 
+        int tcpMonitoringOn = 0; int tcpMonitoringOff = 0;
+        
         ABB.Robotics.Controllers.RapidDomain.RobTarget cRobTarg;
         System.Byte[] data;
 
         // Create a list of string to store a log of the connection status.
-        private List<string> log = new List<string>();
-        private List<string> IOstatus = new List<string>();
-        private Plane tcp = new Plane();
+        List<string> log = new List<string>();
+        List<string> IOstatus = new List<string>();
+        Plane tcp = new Plane();
 
         Pos pos = new Pos();
         Orient ori = new Orient();
@@ -65,21 +61,10 @@ namespace Axis.Online
         Speed speed = new Speed();
         Zone zone = new Zone();
 
-
-
-        /// <summary>
-        /// Initializes a new instance of the MyComponent1 class.
-        /// </summary>
-        public Streaming()
-          : base("Live Strem Code", "Strem",
-              "Stream instructions to a robot controller",
-              "Axis", "9. Online")
+        public Streaming() : base("Live Connection", "Stream", "Stream instructions to a robot controller", "Axis", "9. Online")
         {
         }
 
-        /// <summary>
-        /// Registers all the input parameters for this component.
-        /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddGenericParameter("Controller", "Controller", "Recives the output from a controller module", GH_ParamAccess.item);
@@ -87,33 +72,27 @@ namespace Axis.Online
             pManager.AddBooleanParameter("TCP", "TCP", "Opional monitoring of the TCP.", GH_ParamAccess.item, false);
             pManager.AddBooleanParameter("IO", "IO", "Opional monitoring of the IO system. (Only signals registered as common will be monitored.)", GH_ParamAccess.item, false);
             pManager.AddGenericParameter("Target", "Target", "Target for robot positioning.", GH_ParamAccess.item);
-
-            //Input optional
+            // Inputs optional
             for (int i = 0; i < 5; ++i){pManager[i].Optional = true;}
         }
 
-        /// <summary>
-        /// Registers all the output parameters for this component.
-        /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
             pManager.AddTextParameter("IO", "IO", "IO status.", GH_ParamAccess.list);
             pManager.AddPlaneParameter("TCP", "TCP", "TCP status.", GH_ParamAccess.item);
         }
 
-        /// <summary>
-        /// This is the method that actually does the work.
-        /// </summary>
-        /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            GH_ObjectWrapper controller = new GH_ObjectWrapper();
-            Controller abbController = null;
             bool clear = false;
             bool lqclear = false;
             bool monitorTCP = false;
             bool monitorIO = false;
             bool stream = false;
+
+            GH_ObjectWrapper controller = new GH_ObjectWrapper();
+            Controller abbController = null;
+            IpcMessage message = new IpcMessage();
             Target targ = null;
 
             if (!DA.GetData("Controller", ref controller)) ;
@@ -122,42 +101,27 @@ namespace Axis.Online
             if (!DA.GetData("IO", ref monitorIO)) ;
             if (!DA.GetData("Target", ref targ)) ;
             if (logOption)
-            {
                 if (!DA.GetData("Clear", ref clear)) ;
-            }
             if (lQOption)
-            {
                 if (!DA.GetData("Clear Local Queue", ref lqclear)) ;
-            }
-
-
-            double cRobX = 0;
-            double cRobY = 0;
-            double cRobZ = 0;
-
-            double cRobQ1 = 0;
-            double cRobQ2 = 0;
-            double cRobQ3 = 0;
-            double cRobQ4 = 0;
-
+            
+            // Current robot positions and rotations
+            double cRobX = 0; double cRobY = 0; double cRobZ = 0;
+            double cRobQ1 = 0; double cRobQ2 = 0; double cRobQ3 = 0; double cRobQ4 = 0;
             Quaternion cRobQuat = new Quaternion();
 
             //Check for valid input, else top execuion
             AxisController myAxisController = controller.Value as AxisController;
             if ((myAxisController != null) && (myAxisController.axisControllerState == true))
-            {
                 abbController = myAxisController;
-            }
-            else { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No active controller connected"); return; }
+            else { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No active controller connected."); return; }
 
             // Get T_ROB1 queue to send messages to the RAPID task.
             if (!abbController.Ipc.Exists("RMQ_T_ROB1"))
-            {
                 abbController.Ipc.CreateQueue("RMQ_T_ROB1", 10, Ipc.MaxMessageSize);
-            }
 
             // Get RobotQueue
-            if (RobotQueue== null)
+            if (RobotQueue == null)
             {
                 tasks = abbController.Rapid.GetTasks();
                 IpcQueue robotQueue = abbController.Ipc.GetQueue("RMQ_T_ROB1");
@@ -167,17 +131,14 @@ namespace Axis.Online
                 log.Add("Established RMQ for T_ROB1 on network controller.");
                 log.Add("Rapid Message Queue ID:" + queueID.ToString() + ".");
                 log.Add("Rapid Message Queue Name:" + queueName + ".");
-                RobotQueue = robotQueue;
-                
+                RobotQueue = robotQueue;                
             }
 
-            // If active, update the status of the TCP.
+            // TCP monitoring
             if (monitorTCP)
             {
                 if (tcpMonitoringOn == 0)
-                {
                     log.Add("TCP monitoring started.");
-                }
 
                 cRobTarg = tasks[0].GetRobTarget();
 
@@ -196,18 +157,16 @@ namespace Axis.Online
 
                 tcp = Util.QuaternionToPlane(cRobPos, cRobQuat);
 
-                tcpMonitoringOn += 1;
-                tcpMonitoringOff = 0;
+                tcpMonitoringOn += 1; tcpMonitoringOff = 0;
+
+                ExpireSolution(true);
             }
             else if (tcpMonitoringOn > 0)
             {
                 if (tcpMonitoringOff == 0)
-                {
                     log.Add("TCP monitoring stopped.");
-                }
 
-                tcpMonitoringOff += 1;
-                tcpMonitoringOn = 0;
+                tcpMonitoringOff += 1; tcpMonitoringOn = 0;
             }
 
             // If active, update the status of the IO system.
@@ -230,8 +189,8 @@ namespace Axis.Online
                     IOstatus.Add(sigVal);
                 }
 
-                ioMonitoringOn += 1;
-                ioMonitoringOff = 0;
+                ioMonitoringOn += 1; ioMonitoringOff = 0; // Update state switch variables for IO monitoring.
+                ExpireSolution(true);
             }
             else if (ioMonitoringOn > 0)
             {
@@ -240,17 +199,14 @@ namespace Axis.Online
                     log.Add("Signal monitoring stopped.");
                 }
 
-                ioMonitoringOff += 1;
-                ioMonitoringOn = 0;
+                ioMonitoringOff += 1; ioMonitoringOn = 0;
             }
 
-            // Steam a target to a controller
+            // Stream a target to a controller
             if (stream)
             {
                 if (targ != null)
                 {
-                    IpcMessage message = new IpcMessage();
-
                     string motion = targ.Method.ToString();
 
                     pos.X = (float)targ.Position.X;
@@ -284,7 +240,6 @@ namespace Axis.Online
 
                     pose.Trans = posTool;
                     pose.Rot = oriTool;
-
                     
                     speed.TranslationSpeed = targ.Speed.TranslationSpeed;
                     speed.RotationSpeed = targ.Speed.RotationSpeed;
@@ -309,66 +264,34 @@ namespace Axis.Online
 
                     var lim = RobotQueue.MessageSizeLimit;
                     var capacity = RobotQueue.Capacity;
-                    var ID = RobotQueue.QueueId;
+                    var qID = RobotQueue.QueueId;
 
                     byte[] data = new UTF8Encoding().GetBytes(content);
 
                     message.SetData(data);
 
-
+                    try { RobotQueue.Send(message); }
+                    catch (Exception e)
+                    {
+                        // Clear queue if full
+                        log.Add("Error sending message.");
+                        /*
+                        if (lQOption)
+                            LocalQueue.Enqueue(message);
+                            */
+                    }
+                    /*
                     if (LocalQueue.Count != 0 && lQOption)
                     {
                         LocalQueue.Enqueue(message);
-                        try
-                        {
-                            RobotQueue.Send(LocalQueue.Dequeue());
-                        }
+                        try { RobotQueue.Send(LocalQueue.Dequeue()); }
                         catch (Exception e) { }
                     }
                     else
                     {
-                        try
-                        {
-                            RobotQueue.Send(message);
-                        }
-                        catch (Exception e)
-                        {
-                            // Clear que if full
-                            log.Add("Messaeg Que is Full");
-                            //Int32 qID = abbController.Ipc.GetQueue(RobotQueue.QueueName).QueueId;
-                            //var q = abbController.Ipc.Queues;
-
-                           
-
-                            //abbController.Ipc.DeleteQueue(qID);
-
-                            //int queueId = abbController.Ipc.GetQueueId(RobotQueue.QueueName);
-                            //if (abbController.Ipc.Exists(RobotQueue.QueueName)) { abbController.Ipc.DeleteQueue(queueId); }
-
-                            try
-                            {
-                                for (int i = -500; i < 500; i++)
-                                {
-                                    try
-                                    {
-                                        //System.Threading.Thread.Sleep(5000);
-                                        abbController.Ipc.DeleteQueue(i);
-                                        log.Add(i.ToString());
-                                    }
-                                    catch { throw; }
-                                }
-                            }
-                            catch { log.Add("None Found"); }
-
-
-                            if (lQOption)
-                            {
-                                LocalQueue.Enqueue(message);
-                            }
-                            
-                        }
+                        
                     }
-
+                    */
                 }
             }
 
@@ -408,16 +331,9 @@ namespace Axis.Online
                     }
                 }
                 DA.SetDataList("Steaming Module", ModFile);
-
             }
-
-            ExpireSolution(true);
-
         }
 
-        /// <summary>
-        /// Additional Input and Output parameters for the component
-        /// </summary>
         // Build a list of optional input parameters
         IGH_Param[] inputParams = new IGH_Param[2]
         {
@@ -496,7 +412,6 @@ namespace Axis.Online
 
             //ExpireSolution(true);
         }
-
 
         // Register the new input parameters to our component.
         private void AddInput(int index)
