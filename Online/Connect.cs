@@ -53,36 +53,24 @@ namespace Axis.Online
         GH_DocumentIO docIO = new GH_DocumentIO();
         Grasshopper.Kernel.Special.GH_ValueList vl = new Grasshopper.Kernel.Special.GH_ValueList();
 
-
-        private void ScheduleCallback(GH_Document doc)
+        // Callbacks
+        private void createValuelist(GH_Document doc)
         {
-            //Create or replace input
-            if (Params.Input[3].Sources.Count == 0)
+            Params.Input[3].AddSource(vl);
+        }
+        private void updateValuelist(GH_Document doc)
+        {
+            IList<IGH_Param> sources = this.Params.Input[3].Sources;
+            foreach (IGH_Param source in sources)
             {
-                // place the object
-                docIO.Document.AddObject(vl, false, 1);
-
-                //get the pivot of the "accent" param
-                System.Drawing.PointF currPivot = Params.Input[3].Attributes.Pivot;
-                //set the pivot of the new object
-                vl.Attributes.Pivot = new System.Drawing.PointF(currPivot.X - 210, currPivot.Y - 11);
-
-                //Connect vl to input
-                Params.Input[3].AddSource(vl);
-
-            }
-            else
-            {
-                IList<IGH_Param> sources = this.Params.Input[3].Sources;
-                foreach (IGH_Param source in sources)
+                if (source.Name == "Value List" | source.Name == "Controller")
                 {
-                    if (source.Name == "Value List" | source.Name == "Controller")
-                    {
-                        Params.Input[3].ReplaceSource(source, vl);
-                    }
+                    Params.Input[3].ReplaceSource(source, vl);
                 }
             }
+            
         }
+
 
         /// <summary>
         /// Initializes a new instance of the Controller class.
@@ -200,18 +188,49 @@ namespace Axis.Online
                     if (docIO.Document == null) return;
 
 
-                    // Find out what this is doing and why
-                    docIO.Document.SelectAll();
-                    docIO.Document.ExpireSolution();
-                    docIO.Document.MutateAllIds();
-                    IEnumerable<IGH_DocumentObject> objs = docIO.Document.Objects;
-                    doc.DeselectAll();
-                    doc.UndoUtil.RecordAddObjectEvent("Create Accent List", objs);
+
                     doc.MergeDocument(docIO.Document);
-                    doc.ScheduleSolution(10, ScheduleCallback);
+
+                    //Create or replace input
+                    if (Params.Input[3].Sources.Count == 0)
+                    {
+                        // place the object
+                        docIO.Document.AddObject(vl, false, 1);
+
+                        //get the pivot of the "accent" param
+                        System.Drawing.PointF currPivot = Params.Input[3].Attributes.Pivot;
+                        //set the pivot of the new object
+                        vl.Attributes.Pivot = new System.Drawing.PointF(currPivot.X - 210, currPivot.Y - 11);
+
+                        // Find out what this is doing and why
+                        docIO.Document.SelectAll();
+                        docIO.Document.ExpireSolution();
+                        docIO.Document.MutateAllIds();
+                        IEnumerable<IGH_DocumentObject> objs = docIO.Document.Objects;
+                        doc.DeselectAll();
+                        doc.UndoUtil.RecordAddObjectEvent("Create Accent List", objs);
+                        doc.MergeDocument(docIO.Document);
+
+                        doc.ScheduleSolution(10, createValuelist);
+
+                    }
+                    /*else
+                    {
+
+                        // Find out what this is doing and why
+                        docIO.Document.SelectAll();
+                        docIO.Document.ExpireSolution();
+                        docIO.Document.MutateAllIds();
+                        IEnumerable<IGH_DocumentObject> objs = docIO.Document.Objects;
+                        doc.DeselectAll();
+                        doc.UndoUtil.RecordAddObjectEvent("Create Accent List", objs);
+                        doc.MergeDocument(docIO.Document);
+
+                        doc.ScheduleSolution(10, updateValuelist);
+                    }*/
 
 
-            }
+                }
 
                 if (kill && controller != null)
                 {
