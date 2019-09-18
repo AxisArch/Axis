@@ -19,7 +19,7 @@ namespace Axis.Core
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("Log", "Log", "Log", GH_ParamAccess.list);
+            pManager.AddTextParameter("Log", "Log", "Log", GH_ParamAccess.list);
         }
 
         protected override void SolveInstance(IGH_DataAccess DA)
@@ -28,7 +28,7 @@ namespace Axis.Core
             bool loggedIn = Default.LoggedIn;
             System.DateTime lastLogin = Default.LastLoggedIn;
 
-            if (loggedIn)
+            if (Default.LoggedIn)
             {
                 log.Add("Logged in.");
                 log.Add("LLI: " + lastLogin.ToLongDateString() + ", " + lastLogin.ToShortTimeString());
@@ -43,6 +43,7 @@ namespace Axis.Core
 
             if (loggedIn) this.Message = "Logged In";
             else this.Message = "Error";
+
 
             DA.SetDataList(0, log);
         }
