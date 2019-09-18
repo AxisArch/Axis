@@ -315,7 +315,7 @@ namespace Axis.Online
                     message.SetData(data);
 
 
-                    if (LocalQueue.Count != 0)
+                    if (LocalQueue.Count != 0 && lQOption)
                     {
                         LocalQueue.Enqueue(message);
                         try
@@ -333,8 +333,36 @@ namespace Axis.Online
                         catch (Exception e)
                         {
                             // Clear que if full
-                            //log.Add("Messaeg Que is Full");
-                            LocalQueue.Enqueue(message);
+                            log.Add("Messaeg Que is Full");
+                            //Int32 qID = abbController.Ipc.GetQueue(RobotQueue.QueueName).QueueId;
+                            //var q = abbController.Ipc.Queues;
+
+                            //abbController.Ipc.DeleteQueue(qID);
+
+                            //int queueId = abbController.Ipc.GetQueueId(RobotQueue.QueueName);
+                            //if (abbController.Ipc.Exists(RobotQueue.QueueName)) { abbController.Ipc.DeleteQueue(queueId); }
+
+                            try
+                            {
+                                for (int i = -500; i < 500; i++)
+                                {
+                                    try
+                                    {
+                                        //System.Threading.Thread.Sleep(5000);
+                                        abbController.Ipc.DeleteQueue(i);
+                                        log.Add(i.ToString());
+                                    }
+                                    catch { throw; }
+                                }
+                            }
+                            catch { log.Add("None Found"); }
+
+
+                            if (lQOption)
+                            {
+                                LocalQueue.Enqueue(message);
+                            }
+                            
                         }
                     }
 

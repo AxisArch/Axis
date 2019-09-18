@@ -141,9 +141,9 @@ namespace Axis.Online
                     }
                     else { log.Add("Scan timed out. No controllers were found."); }
                 }
-
+                
                 // Populate value list
-                if (clear && controllers.Length > 0 && controllers!= null)
+                if (controllers.Length > 0 && controllers!= null)
                 {
                     //instantiate  new value list and clear it
                     var vallist = new Grasshopper.Kernel.Special.GH_ValueList();
@@ -155,13 +155,28 @@ namespace Axis.Online
                         var item = new Grasshopper.Kernel.Special.GH_ValueListItem(controllers[i].Name, i.ToString());
                         vallist.ListItems.Add(item);
                     }
+                    List<IGH_Param> sources = new List<IGH_Param>();
 
-                    //Until now, the slider is a hypothetical object.
-                    // This command makes it 'real' and adds it to the canvas.
-                    //GrasshopperDocument.AddObject(vallist, false);
+                    IList<IGH_Param> inputs = this.Component.Params.Input;
+                    foreach (IGH_Param input in inputs)
+                    {
+                        if (input.Name == "Index") { sources.Add(input); }
+                    }
 
-                    //Connect the new slider to this component
-                    //this.Component.Params.Input[3].AddSource(vallist);
+                    foreach (IGH_Param source in sources)
+                    {
+                        source.ReplaceSource(source, vallist);
+                        //Until now, the slider is a hypothetical object.
+                        // This command makes it 'real' and adds it to the canvas.
+                        //GrasshopperDocument.AddObject(vallist, false);
+                        //GrasshopperDocument.AddObject(vallist, false, 0);
+
+                        //Connect the new slider to this component
+                        //this.Component.Params.Input[3].AddSource(vallist);
+                        //this.Component.Params.Input[3].AddSource(vallist);
+
+                    }
+
                 }
 
                 if (kill && controller != null)
