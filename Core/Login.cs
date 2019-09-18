@@ -50,7 +50,7 @@ namespace Axis.Core
             {
                 Domain = "axisarch.eu.auth0.com",
                 ClientId = "bDiJKd5tM8eqHsTX01ovqyFvOSBnC4mE",
-                Browser = new WebBrowserBrowser("Authenticating...", 400, 600)
+                Browser = new WebBrowserBrowser("Authenticating...", 400, 640)
             };
 
             // Initiate the client
@@ -61,9 +61,6 @@ namespace Axis.Core
             {
                 {"response_type", "code"}
             };
-
-            // *********
-            // Run 'Get License Information'- send CPU ID etc. as a attrib of the token that can later be checked?
 
             // Handle the logout.
             if (loggedIn && !run)
