@@ -15,6 +15,7 @@ using ABB.Robotics.Controllers.Messaging;
 using ABB.Robotics.Controllers.IOSystemDomain;
 
 using Axis.Targets;
+//using Axis.Core;
 
 
 namespace Axis.Online
@@ -154,6 +155,15 @@ namespace Axis.Online
             double cRobQ4 = 0;
 
             Quaternion cRobQuat = new Quaternion();
+
+
+            //Check for valid licence
+            /*if (bool (Core.AuthTest.loggedIn) != true)
+            {
+                new GH_RuntimeMessage("Please sign in to confirm your licence", GH_RuntimeMessageLevel.Error);
+                return;
+            }*/
+
 
             if (activate)
             {
@@ -412,24 +422,14 @@ namespace Axis.Online
                         pose.Trans = pos;
                         pose.Rot = ori;
 
-                        //string content = "SD;" + targ.Method.ToString() + "," + pose.ToString();
-                        //string content = @"SD; MoveL [[452.449, 317.017, 170.838],[0, 0, 1, 0], cData, eAxis], v50, z150, tool0 \Wobj:=wobj0;";
-                        //string content = @"SD; MoveL [[242.500, -253.300, 73.9],[0.00249, -0.25881, 0.96592, -0.00403], cData, eAxis], v100, z150, tool0 \Wobj:=wobj0;";
-                        //string content = @"SD; MoveL [[341.000, -253.300, 73.9],[0.00249, -0.25881, 0.96592, -0.00403], cData, eAxis], v100, z150, tool0 \Wobj:=wobj0;";
-                        string content = @"SD; Linear,[[452.4485,317.0168,170.8382],[0,0,1,0]]";
-                        //string content = @"bool;TRUE";
+                        string content = "SD;[" +
+                            "\"Linear\"," +
+                            pos.ToString() + "," +
+                            ori.ToString() +"," +
+                            pose.ToString() +
+                            "]";
 
-                        
-                        byte[] msgdata = new UTF8Encoding().GetBytes(content);
-                        data = msgdata;
-
-
-                        /*
-                        for (int i = 0; i < msgdata.Length; i++)
-                        {
-                           data[i] = (ABB.Robotics.Controllers.RapidDomain.Byte[])msgdata[i];
-                        }*/
-                        
+                        byte[] data = new UTF8Encoding().GetBytes(content);
 
                         message.SetData(data);
                         RobotQueue.Send(message);

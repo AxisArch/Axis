@@ -10,7 +10,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
-using Axis.Tools;
+using Axis.Core;
 
 namespace StreamTools
 {
@@ -228,7 +228,7 @@ namespace StreamTools
 	    */
         public void setQuaternion(Rhino.Geometry.Quaternion quat)
         {
-            List<double> eulers = Axis.Tools.Util.QuaternionToEuler(quat);
+            List<double> eulers = Axis.Util.QuaternionToEuler(quat);
 
             double roundedE1 = Math.Round(eulers[0], 4);
             string r1 = roundedE1.ToString();

@@ -44,6 +44,11 @@ namespace Axis.Targets
             this.WorkObject = wobj.Name;
             this.Method = method;
             this.Tool = tool;
+            this.Speed = speed;
+            this.Zone = zone;
+            this.ExtRot = extRot;
+            this.ExtLin = extLin;
+            
 
             // Copy target in case we are using a dynamic CS
             Plane dynamicTarget = new Plane(target);
@@ -202,6 +207,10 @@ namespace Axis.Targets
 
             this.JointAngles = axisVals;
             this.Tool = tool;
+            this.Speed = speed;
+            this.Zone = zone;
+            this.ExtRot = extRot;
+            this.ExtLin = extLin;
 
             string strSpeed = null;
 

@@ -103,6 +103,16 @@ namespace Axis.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Connect {
+            get {
+                object obj = ResourceManager.GetObject("Connect", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap Core {
             get {
                 object obj = ResourceManager.GetObject("Core", resourceCulture);
@@ -166,6 +176,16 @@ namespace Axis.Properties {
         internal static System.Drawing.Bitmap Flip {
             get {
                 object obj = ResourceManager.GetObject("Flip", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Get_Module {
+            get {
+                object obj = ResourceManager.GetObject("Get_Module", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -313,6 +333,16 @@ namespace Axis.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Set_Module {
+            get {
+                object obj = ResourceManager.GetObject("Set_Module", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap ShowTarget {
             get {
                 object obj = ResourceManager.GetObject("ShowTarget", resourceCulture);
@@ -386,6 +416,26 @@ namespace Axis.Properties {
         internal static System.Drawing.Bitmap SpeedControl {
             get {
                 object obj = ResourceManager.GetObject("SpeedControl", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Star_Stop {
+            get {
+                object obj = ResourceManager.GetObject("Star_Stop", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Streaming {
+            get {
+                object obj = ResourceManager.GetObject("Streaming", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

@@ -24,27 +24,23 @@ using Axis.Targets;
 
 namespace Axis.Online
 {
-    public class SetModule : GH_Component, IGH_VariableParameterComponent
+    public class StartStop : GH_Component, IGH_VariableParameterComponent
     {
-        public List<string> Status { get; set; }
-        //public Controller controller = null;
-        private Task[] tasks = null;
-
-        private bool send = false;
+        //Optionable Log
         private bool logOption = false;
         private bool logOptionOut = false;
-        private bool sending = false;
-
-        // Create a list of string to store a log of the connection status.
         private List<string> log = new List<string>();
+        public List<string> Status { get; set; }
 
+        public Controller controllers = null;
+        private Task[] tasks = null;
 
         /// <summary>
-        /// Initializes a new instance of the WriteModuleToControler class.
+        /// Initializes a new instance of the MyComponent1 class.
         /// </summary>
-        public SetModule()
-          : base("Set Module", "Set Mod",
-              "Set the main module on the robot controller",
+        public StartStop()
+          : base("Start/Stop", "Start/Stop",
+              "Controll a programm running on a robot controller",
               "Axis", "9. Online")
         {
         }
@@ -54,10 +50,10 @@ namespace Axis.Online
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddGenericParameter("Controller", "Controller", "Recives the output from a controller module", GH_ParamAccess.item);
-            pManager.AddBooleanParameter("Send", "Send", "Send to module", GH_ParamAccess.item, false);
-            pManager.AddTextParameter("Moduel", "Module", "Module to be wtritten to the controller.", GH_ParamAccess.list);
-            pManager[1].Optional = true;
+            pManager.AddGenericParameter("Controller", "Controller", "Recives the output from a controller module", GH_ParamAccess.list);
+            pManager.AddBooleanParameter("Reset PP", "Reset PP", "Set the program pointed back to the main entry point for the current task.", GH_ParamAccess.item, false);
+            pManager.AddBooleanParameter("Begin", "Begin", "Start the default task on the controller.", GH_ParamAccess.item, false);
+            pManager.AddBooleanParameter("Stop", "Stop", "Stop the default task on the controller.", GH_ParamAccess.item, false);
         }
 
         /// <summary>
@@ -73,126 +69,122 @@ namespace Axis.Online
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            GH_ObjectWrapper controller = new GH_ObjectWrapper();
-            List<string> modFile = new List<string>();
+            List<GH_ObjectWrapper> controllers = new List<GH_ObjectWrapper>();
             Controller abbController = null;
+            bool resetPP = false;
+            bool begin = false;
+            bool stop = false;
             bool clear = false;
-
-
-            if (!DA.GetData("Controller", ref controller)) ;
-            if (!DA.GetData("Send", ref send)) ;
-            if (!DA.GetDataList("Moduel", modFile)){ return; }
+            if (!DA.GetDataList("Controller", controllers)) ;
+            if (!DA.GetData("Reset PP", ref resetPP)) ;
+            if (!DA.GetData("Begin", ref begin)) ;
+            if (!DA.GetData("Stop", ref stop)) ;
             if (logOption)
             {
                 if (!DA.GetData("Clear", ref clear)) ;
             }
+            // Check for input
+            if (controllers.Count == 0) { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No active contoller conected"); }
 
-            //Check for valid input, else top execuion
-            AxisController myAxisController = controller.Value as AxisController;
-            if ((myAxisController != null) && (myAxisController.axisControllerState == true))
+            // Body of the code  
+            for (int i = 0; i < controllers.Count; i++)
             {
-                abbController = myAxisController;
-            }
-            else { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No active controller connected"); return;}
-
-
-            if ((abbController != null) && send)
-            {
-                
-                var filename = "MyModule";
-                var tempFile = Path.GetTempPath() + @"\" + filename + ".mod";
-
-                using (StreamWriter writer = new StreamWriter(tempFile, false))
+                //Check for valid input, else top execuion
+                AxisController myAxisController = controllers[i].Value as AxisController;
+                if ((myAxisController != null) && (myAxisController.axisControllerState == true))
                 {
-                    for (int i = 0; i < modFile.Count; i++)
+                    abbController = myAxisController;
+                }
+                else { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No active controller connected"); return; }
+
+                tasks = abbController.Rapid.GetTasks();
+
+                if (resetPP && abbController != null)
+                {
+                    using (Mastership m = Mastership.Request(abbController.Rapid))
                     {
-                        writer.WriteLine(modFile[i]);
+                        // Reset program pointer to main.
+                        try
+                        {
+                            tasks[0].ResetProgramPointer();                            
+                        }
+                        catch (Exception){log.Add("Opperation not allowed in current state");}
+
                     }
                 }
 
-                //Not working perfectly yet
-                if (sending == false)
+                if (begin)
                 {
-                    sending = true;
-                    log.Add("Sending moduel to controller");
+                    // Execute robot tasks present on controller.
                     try
                     {
-                        using (Mastership m = Mastership.Request(abbController.Rapid))
+                        if (abbController.OperatingMode == ControllerOperatingMode.Auto)
                         {
-                            if (abbController.IsVirtual)
+                            using (Mastership m = Mastership.Request(abbController.Rapid))
                             {
-                                // Load program to virtual controller
-                                tasks = abbController.Rapid.GetTasks();
-                                tasks[0].LoadModuleFromFile(tempFile, RapidLoadMode.Replace);
-
-                                if (File.Exists(tempFile)) { File.Delete(tempFile); }
-                                log.Add("Program has been loaded to virtual controler");
-                                sending = false;
+                                // Perform operation.
+                                tasks[0].Start();
+                                log.Add("Robot program started on robot " + abbController.SystemName + ".");
                             }
-                            else
-                            {
-                                // Load program to physical controller
-                                tasks = abbController.Rapid.GetTasks();
-
-                                // Missing Check if file and directory exist
-                                if (abbController.FileSystem.DirectoryExists(@"Axis"))
-                                {
-                                    if (abbController.FileSystem.FileExists(@"Axis/AxisModule.mod"))
-                                    {
-                                        abbController.FileSystem.RemoveFile(@"Axis/AxisModule.mod");
-                                    }
-                                }
-                                else
-                                {
-                                    abbController.FileSystem.CreateDirectory(@"Axis");
-                                }
-
-                                //Delete all previouse tasks
-                                for (int i=0; i < tasks.Length; ++i) { tasks[i].DeleteProgram(); }
-
-                                //Code 
-                                abbController.FileSystem.PutFile(tempFile, @"Axis/AxisModule.mod");
-                                var sucsess = tasks[0].LoadModuleFromFile(@"Axis/AxisModule.mod", RapidLoadMode.Replace);
-
-                                if (sucsess)
-                                {
-                                    log.Add("Program has been loaded to controler");
-                                }
-                                else
-                                {
-                                    log.Add("The program contains at least one error and cannot be loaded");
-                                }
-
-                                if (File.Exists(tempFile)) { File.Delete(tempFile); }
-
-                                sending = false;
-                            }
-
+                        }
+                        else
+                        {
+                            log.Add("Automatic mode is required to start execution from a remote client.");
                         }
                     }
-                    catch (Exception e) { log.Add("Can't write to controller"); log.Add(e.ToString()); sending = false; if (File.Exists(tempFile)) { File.Delete(tempFile); }; return; }
-                    //log.Add("Program has been loaded");
+                    catch (System.InvalidOperationException ex)
+                    {
+                        log.Add("Mastership is held by another client." + ex.Message);
+                    }
+                    catch (System.Exception ex)
+                    {
+                        log.Add("Unexpected error occurred: " + ex.Message);
+                    }
+                }
+
+                if (stop)
+                {
+                    try
+                    {
+                        if (abbController.OperatingMode == ControllerOperatingMode.Auto)
+                        {
+                            using (Mastership m = Mastership.Request(abbController.Rapid))
+                            {
+                                // Stop operation.
+                                tasks[0].Stop(StopMode.Immediate);
+                                log.Add("Robot program stopped on robot " + abbController.SystemName + ".");
+                            }
+                        }
+                        else
+                        {
+                            log.Add("Automatic mode is required to stop execution from a remote client.");
+                        }
+                    }
+                    catch (System.InvalidOperationException ex)
+                    {
+                        log.Add("Mastership is held by another client." + ex.Message);
+                    }
+                    catch (System.Exception ex)
+                    {
+                        log.Add("Unexpected error occurred: " + ex.Message);
+                    }
                 }
             }
-            
 
+            // Clear log
             if (clear)
             {
                 log.Clear();
                 log.Add("Log cleared.");
             }
 
+            //Output log
             if (logOptionOut)
             {
                 Status = log;
                 DA.SetDataList("Log", log);
             }
-
-            
-
-            //ExpireSolution(true);
         }
-    
 
         /// <summary>
         /// Additional Input and Output parameters for the component
@@ -234,9 +226,9 @@ namespace Axis.Online
                 logOptionOut = false;
             }
 
-            ExpireSolution(true);
+            //ExpireSolution(true);
         }
-    
+
 
         // Register the new input parameters to our component.
         private void AddInput(int index)
@@ -305,7 +297,7 @@ namespace Axis.Online
             this.logOptionOut = reader.GetBoolean("LogOptionSetOutModule");
             return base.Read(reader);
         }
-       
+
         /// <summary>
         /// Implement this interface in your component if you want to enable variable parameter UI.
         /// </summary>
@@ -314,6 +306,7 @@ namespace Axis.Online
         IGH_Param IGH_VariableParameterComponent.CreateParameter(GH_ParameterSide side, int index) => null;
         bool IGH_VariableParameterComponent.DestroyParameter(GH_ParameterSide side, int index) => false;
         void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
+
 
         /// <summary>
         /// Provides an Icon for the component.
@@ -324,7 +317,7 @@ namespace Axis.Online
             {
                 //You can add image files to your project resources and access them like this:
                 // return Resources.IconForThisComponent;
-                return Properties.Resources.Set_Module;
+                return Properties.Resources.Star_Stop;
             }
         }
 
@@ -333,7 +326,7 @@ namespace Axis.Online
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("676a28f1-9320-4a02-a9bc-59c617dd04d0"); }
+            get { return new Guid("1dca8994-0a96-4454-a5bb-28c8bd911829"); }
         }
     }
 }

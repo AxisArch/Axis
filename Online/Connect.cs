@@ -25,6 +25,7 @@ namespace Axis.Online
         public string ControllerID { get; set; }
         public List<string> Status { get; set; }
         public Controller controller = null;
+        public bool updateVL = false;
         private Task[] tasks = null;
         public IpcQueue RobotQueue { get; set; }
 
@@ -45,7 +46,41 @@ namespace Axis.Online
 
         // Create a list of string to store a log of the connection status.
         private List<string> log = new List<string>();
-        
+
+        GH_Document GrasshopperDocument;
+        IGH_Component Component;
+
+        GH_DocumentIO docIO = new GH_DocumentIO();
+        List<IGH_Param> delInputs = new List<IGH_Param>();
+        Grasshopper.Kernel.Special.GH_ValueList vl = new Grasshopper.Kernel.Special.GH_ValueList();
+
+        // Callbacks
+        private void createValuelist(GH_Document doc)
+        {
+            //try { Params.Input[3].RemoveAllSources(); }
+            //catch { }
+            if (delInputs != null && delInputs.Count > 0)
+            {
+                doc.AddObject(vl, false, 1);
+
+                for (int i = 0; i < delInputs.Count; ++i)
+                {
+                    Params.Input[3].RemoveSource(delInputs[i]);
+                    delInputs[i].IsolateObject();
+                    doc.RemoveObject(delInputs[i], false);
+                    doc.AddObject(vl, false, 1);
+                }
+                Params.Input[3].AddSource(vl);
+            }
+
+            if (false)
+            {
+                
+            }
+            
+
+            delInputs.Clear();
+        }
 
         /// <summary>
         /// Initializes a new instance of the Controller class.
@@ -64,7 +99,7 @@ namespace Axis.Online
         {
             pManager.AddBooleanParameter("Activate", "Activate", "Activate the online communication module.", GH_ParamAccess.item, false);
             pManager.AddBooleanParameter("Scan", "Scan", "Scan the network for available controllers.", GH_ParamAccess.item, false);
-            pManager.AddTextParameter("IP", "IP", "IP adress of the controller to connect to.", GH_ParamAccess.item);
+            pManager.AddTextParameter("IP", "IP", "IP adress of the controller to connect to.", GH_ParamAccess.list);
             pManager.AddIntegerParameter("Index", "Index", "Index of the controller to connect to (if multiple connections are possible).", GH_ParamAccess.item, 0);
             pManager.AddBooleanParameter("Connect", "Connect", "Connect to the network controller.", GH_ParamAccess.item, false);
             pManager.AddBooleanParameter("Kill", "Kill", "Kill the process; logoff and dispose of network controllers.", GH_ParamAccess.item, false);
@@ -93,14 +128,14 @@ namespace Axis.Online
             bool scan = false;
             bool kill = false;
             bool clear = false;
-            string ip = System.String.Empty;
+            List<string> ipAddresses = new List<string>();
             int index = 0;
             bool connect = false;
          
           
             if (!DA.GetData("Activate", ref activate)) ;
-            if (!DA.GetData("Scan", ref scan)) ;         
-            if (!DA.GetData("IP", ref ip)) ;
+            if (!DA.GetData("Scan", ref scan)) ;
+            if (!DA.GetDataList("IP",  ipAddresses)){return;}
             if (!DA.GetData("Index", ref index)) ;
             if (!DA.GetData("Connect", ref connect)) ;
             if (!DA.GetData("Kill", ref kill)) ;
@@ -111,14 +146,21 @@ namespace Axis.Online
             }
             
             this.controllerIndex = index;
-            
+
             if (activate)
             {
                 if (scan)
                 {
-                    // Scan the network for controllers and add them to our controller array
+                    // Scan the network for controllers and add them to our controller array       
                     scanner.Scan();
+
+                    if (ipAddresses != null)
+                    {
+                        foreach (string ip in ipAddresses) { NetworkScanner.AddRemoteController(ip); }
+                    }
+
                     controllers = scanner.GetControllers();
+                    updateVL = true;
 
                     if (controllers.Length > 0)
                     {
@@ -131,6 +173,74 @@ namespace Axis.Online
                         }
                     }
                     else { log.Add("Scan timed out. No controllers were found."); }
+                }
+
+                // Populate value list
+                if (updateVL && (controllers != null))
+                {
+                    updateVL = false;
+                    docIO.Document = new GH_Document();
+
+                    //instantiate  new value list and clear it
+                    vl.ListItems.Clear();
+                    vl.NickName = "Controller";
+                    vl.Name = "Controller";
+
+                    //Create values for list and populate it
+                    for (int i = 0; i < controllers.Length; ++i)
+                    {
+                        var item = new Grasshopper.Kernel.Special.GH_ValueListItem(controllers[i].ControllerName + " - " + controllers[i].Name, i.ToString());
+                        vl.ListItems.Add(item);
+                    }
+
+                    //get active GH doc else abort
+                    GH_Document doc = OnPingDocument();
+                    if (docIO.Document == null) return;
+                    doc.MergeDocument(docIO.Document);
+
+                    //Create or replace input
+                    if (Params.Input[3].Sources.Count == 0)
+                    {
+                        // place the object
+                        docIO.Document.AddObject(vl, false, 1);
+
+                        //get the pivot of the "accent" param
+                        System.Drawing.PointF currPivot = Params.Input[3].Attributes.Pivot;
+                        //set the pivot of the new object
+                        vl.Attributes.Pivot = new System.Drawing.PointF(currPivot.X - 210, currPivot.Y - 11);
+                        Params.Input[3].AddSource(vl);
+
+
+
+                    }
+                    else
+                    {
+                        IList<IGH_Param> sources = this.Params.Input[3].Sources;
+                        for (int i = 0; i< sources.Count; ++i)
+                        {
+                            if (sources[i].Name == "Value List" | sources[i].Name == "Controller")
+                            {
+                                //get the pivot of the "source" value list
+                                System.Drawing.PointF currPivot = sources[i].Attributes.Pivot;
+                                //set the pivot of the new object
+                                vl.Attributes.Pivot = new System.Drawing.PointF(currPivot.X, currPivot.Y);
+                                delInputs.Add(sources[i]);
+                            }
+                        }
+
+                    }
+
+                    // Find out what this is doing and why
+                    docIO.Document.SelectAll();
+                    docIO.Document.ExpireSolution();
+                    docIO.Document.MutateAllIds();
+                    IEnumerable<IGH_DocumentObject> objs = docIO.Document.Objects;
+                    doc.DeselectAll();
+                    doc.UndoUtil.RecordAddObjectEvent("Create Accent List", objs);
+                    doc.MergeDocument(docIO.Document);
+
+                    doc.ScheduleSolution(10, createValuelist);
+
                 }
 
                 if (kill && controller != null)
@@ -212,10 +322,12 @@ namespace Axis.Online
                     }
                 }
 
+                if (logOptionOut)
+                {
+                    Status = log;
+                    DA.SetDataList("Log", log);
+                }
 
-                Status = log;
-                DA.SetDataList("Log", log);
-                
 
                 if (controller != null)
                 {
@@ -224,8 +336,6 @@ namespace Axis.Online
 
                 }
                 else { DA.SetData(0, "No active connection"); }
-
-                ExpireSolution(true);
             }
             
         }
@@ -363,7 +473,7 @@ namespace Axis.Online
             {
                 //You can add image files to your project resources and access them like this:
                 // return Resources.IconForThisComponent;
-                return Properties.Resources.Online;
+                return Properties.Resources.Connect;
             }
         }
 

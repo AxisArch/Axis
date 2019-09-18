@@ -335,6 +335,11 @@
     <Compile Include="Geometry\SurfaceFrame.cs" />
     <Compile Include="IO\GetDI.cs" />
     <Compile Include="IO\SetDO.cs" />
+    <Compile Include="Online\AxisControllers.cs" />
+    <Compile Include="Online\Connect.cs" />
+    <Compile Include="Online\SetModule.cs" />
+    <Compile Include="Online\StartStop.cs" />
+    <Compile Include="Online\Streaming.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -375,6 +380,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <None Include="Online\moduleFile.mod">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -509,6 +517,21 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\ZoneControl.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Star Stop.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Connect.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Get Module.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Set Module.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Streaming.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
