@@ -25,6 +25,7 @@ namespace Axis.Online
         public string ControllerID { get; set; }
         public List<string> Status { get; set; }
         public Controller controller = null;
+        public bool updateVL = false;
         private Task[] tasks = null;
         public IpcQueue RobotQueue { get; set; }
 
@@ -49,6 +50,39 @@ namespace Axis.Online
         GH_Document GrasshopperDocument;
         IGH_Component Component;
 
+        GH_DocumentIO docIO = new GH_DocumentIO();
+        Grasshopper.Kernel.Special.GH_ValueList vl = new Grasshopper.Kernel.Special.GH_ValueList();
+
+
+        private void ScheduleCallback(GH_Document doc)
+        {
+            //Create or replace input
+            if (Params.Input[3].Sources.Count == 0)
+            {
+                // place the object
+                docIO.Document.AddObject(vl, false, 1);
+
+                //get the pivot of the "accent" param
+                System.Drawing.PointF currPivot = Params.Input[3].Attributes.Pivot;
+                //set the pivot of the new object
+                vl.Attributes.Pivot = new System.Drawing.PointF(currPivot.X - 210, currPivot.Y - 11);
+
+                //Connect vl to input
+                Params.Input[3].AddSource(vl);
+
+            }
+            else
+            {
+                IList<IGH_Param> sources = this.Params.Input[3].Sources;
+                foreach (IGH_Param source in sources)
+                {
+                    if (source.Name == "Value List" | source.Name == "Controller")
+                    {
+                        Params.Input[3].ReplaceSource(source, vl);
+                    }
+                }
+            }
+        }
 
         /// <summary>
         /// Initializes a new instance of the Controller class.
@@ -128,6 +162,7 @@ namespace Axis.Online
                     }
 
                     controllers = scanner.GetControllers();
+                    updateVL = true;
 
                     if (controllers.Length > 0)
                     {
@@ -141,43 +176,42 @@ namespace Axis.Online
                     }
                     else { log.Add("Scan timed out. No controllers were found."); }
                 }
-                
+
                 // Populate value list
-                if (controllers.Length > 0 && controllers!= null)
+                if (updateVL && (controllers != null))
                 {
+                    updateVL = false;
+                    docIO.Document = new GH_Document();
+
                     //instantiate  new value list and clear it
-                    var vallist = new Grasshopper.Kernel.Special.GH_ValueList();
-                    vallist.ListItems.Clear();
+                    vl.ListItems.Clear();
+                    vl.NickName = "Controller";
+                    vl.Name = "Controller";
 
                     //Create values for list and populate it
                     for (int i = 0; i < controllers.Length; ++i)
                     {
-                        var item = new Grasshopper.Kernel.Special.GH_ValueListItem(controllers[i].Name, i.ToString());
-                        vallist.ListItems.Add(item);
-                    }
-                    List<IGH_Param> sources = new List<IGH_Param>();
-
-                    IList<IGH_Param> inputs = this.Component.Params.Input;
-                    foreach (IGH_Param input in inputs)
-                    {
-                        if (input.Name == "Index") { sources.Add(input); }
+                        var item = new Grasshopper.Kernel.Special.GH_ValueListItem(controllers[i].ControllerName + " - " + controllers[i].Name, i.ToString());
+                        vl.ListItems.Add(item);
                     }
 
-                    foreach (IGH_Param source in sources)
-                    {
-                        source.ReplaceSource(source, vallist);
-                        //Until now, the slider is a hypothetical object.
-                        // This command makes it 'real' and adds it to the canvas.
-                        //GrasshopperDocument.AddObject(vallist, false);
-                        //GrasshopperDocument.AddObject(vallist, false, 0);
+                    //get active GH doc else abort
+                    GH_Document doc = OnPingDocument();
+                    if (docIO.Document == null) return;
 
-                        //Connect the new slider to this component
-                        //this.Component.Params.Input[3].AddSource(vallist);
-                        //this.Component.Params.Input[3].AddSource(vallist);
 
-                    }
+                    // Find out what this is doing and why
+                    docIO.Document.SelectAll();
+                    docIO.Document.ExpireSolution();
+                    docIO.Document.MutateAllIds();
+                    IEnumerable<IGH_DocumentObject> objs = docIO.Document.Objects;
+                    doc.DeselectAll();
+                    doc.UndoUtil.RecordAddObjectEvent("Create Accent List", objs);
+                    doc.MergeDocument(docIO.Document);
+                    doc.ScheduleSolution(10, ScheduleCallback);
 
-                }
+
+            }
 
                 if (kill && controller != null)
                 {
@@ -264,7 +298,6 @@ namespace Axis.Online
                     DA.SetDataList("Log", log);
                 }
 
-                
 
                 if (controller != null)
                 {
@@ -273,8 +306,6 @@ namespace Axis.Online
 
                 }
                 else { DA.SetData(0, "No active connection"); }
-
-                //ExpireSolution(true);
             }
             
         }

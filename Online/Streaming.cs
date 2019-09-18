@@ -168,6 +168,7 @@ namespace Axis.Online
                 log.Add("Rapid Message Queue ID:" + queueID.ToString() + ".");
                 log.Add("Rapid Message Queue Name:" + queueName + ".");
                 RobotQueue = robotQueue;
+                
             }
 
             // If active, update the status of the TCP.
@@ -336,6 +337,8 @@ namespace Axis.Online
                             log.Add("Messaeg Que is Full");
                             //Int32 qID = abbController.Ipc.GetQueue(RobotQueue.QueueName).QueueId;
                             //var q = abbController.Ipc.Queues;
+
+                           
 
                             //abbController.Ipc.DeleteQueue(qID);
 
