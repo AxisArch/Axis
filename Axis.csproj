@@ -178,24 +178,31 @@
     </Reference>
     <Reference Include="Auth0.OidcClient, Version=2.4.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\Auth0.OidcClient.WPF.2.4.0\lib\net452\Auth0.OidcClient.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Auth0.OidcClient.Core, Version=2.4.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\Auth0.OidcClient.Core.2.4.0\lib\net452\Auth0.OidcClient.Core.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Eto, Version=2.4.6815.16896, Culture=neutral, PublicKeyToken=552281e97c755530, processorArchitecture=MSIL">
       <HintPath>packages\RhinoCommon.6.8.18240.20051\lib\net45\Eto.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="GH_IO, Version=6.8.18240.20050, Culture=neutral, PublicKeyToken=6a29997d2e6b4f97, processorArchitecture=MSIL">
       <HintPath>packages\Grasshopper.6.8.18240.20051\lib\net45\GH_IO.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Grasshopper, Version=6.8.18240.20050, Culture=neutral, PublicKeyToken=dda4f5ec2cd80803, processorArchitecture=MSIL">
       <HintPath>packages\Grasshopper.6.8.18240.20051\lib\net45\Grasshopper.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="IdentityModel, Version=3.10.0.0, Culture=neutral, PublicKeyToken=e7877f4675df049f, processorArchitecture=MSIL">
       <HintPath>packages\IdentityModel.3.10.0\lib\net452\IdentityModel.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="IdentityModel.OidcClient, Version=2.9.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\IdentityModel.OidcClient.2.9.0\lib\net452\IdentityModel.OidcClient.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="MathNet.Numerics, Version=4.7.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\MathNet.Numerics.4.7.0\lib\net40\MathNet.Numerics.dll</HintPath>
@@ -206,18 +213,23 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="Microsoft.Extensions.DependencyInjection.Abstractions, Version=1.1.1.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
       <HintPath>packages\Microsoft.Extensions.DependencyInjection.Abstractions.1.1.1\lib\netstandard1.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Microsoft.Extensions.Logging, Version=1.1.2.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
       <HintPath>packages\Microsoft.Extensions.Logging.1.1.2\lib\netstandard1.1\Microsoft.Extensions.Logging.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Microsoft.Extensions.Logging.Abstractions, Version=1.1.2.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
       <HintPath>packages\Microsoft.Extensions.Logging.Abstractions.1.1.2\lib\netstandard1.1\Microsoft.Extensions.Logging.Abstractions.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Microsoft.IdentityModel.Logging, Version=5.2.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>packages\Microsoft.IdentityModel.Logging.5.2.1\lib\net451\Microsoft.IdentityModel.Logging.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Microsoft.IdentityModel.Tokens, Version=5.2.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>packages\Microsoft.IdentityModel.Tokens.5.2.1\lib\net451\Microsoft.IdentityModel.Tokens.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Microsoft.Office.Interop.Excel, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
       <HintPath>packages\Microsoft.Office.Interop.Excel.15.0.4795.1000\lib\net20\Microsoft.Office.Interop.Excel.dll</HintPath>
@@ -233,9 +245,11 @@
     <Reference Include="PresentationFramework" />
     <Reference Include="Rhino.UI, Version=6.8.18240.20050, Culture=neutral, PublicKeyToken=552281e97c755530, processorArchitecture=MSIL">
       <HintPath>packages\RhinoCommon.6.8.18240.20051\lib\net45\Rhino.UI.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="RhinoCommon, Version=6.8.18240.20050, Culture=neutral, PublicKeyToken=552281e97c755530, processorArchitecture=MSIL">
       <HintPath>packages\RhinoCommon.6.8.18240.20051\lib\net45\RhinoCommon.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.AppContext, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
@@ -251,6 +265,7 @@
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Diagnostics.DiagnosticSource, Version=4.0.1.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>packages\System.Diagnostics.DiagnosticSource.4.3.0\lib\net46\System.Diagnostics.DiagnosticSource.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="System.Drawing" />
     <Reference Include="System.Globalization.Calendars, Version=4.0.2.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
@@ -258,6 +273,7 @@
     </Reference>
     <Reference Include="System.IdentityModel.Tokens.Jwt, Version=5.2.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>packages\System.IdentityModel.Tokens.Jwt.5.2.1\lib\net451\System.IdentityModel.Tokens.Jwt.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="System.IO.Compression, Version=4.1.2.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>packages\System.IO.Compression.4.3.0\lib\net46\System.IO.Compression.dll</HintPath>
@@ -299,6 +315,7 @@
     </Reference>
     <Reference Include="System.Text.Encodings.Web, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>packages\System.Text.Encodings.Web.4.5.0\lib\netstandard2.0\System.Text.Encodings.Web.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
@@ -306,7 +323,7 @@
     <Reference Include="System.Xml.ReaderWriter, Version=4.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>packages\System.Xml.ReaderWriter.4.3.0\lib\net46\System.Xml.ReaderWriter.dll</HintPath>
       <Private>True</Private>
-      <Private>True</Private>
+      <Private>False</Private>
     </Reference>
     <Reference Include="WindowsBase" />
   </ItemGroup>
@@ -362,41 +379,9 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
-    <None Include="Resources\Tool.png" />
-    <None Include="Resources\Robot.png" />
-    <None Include="Resources\RAPID.png" />
-    <None Include="Resources\RapidMovement.png" />
-    <None Include="Resources\Play.png" />
-    <None Include="Resources\Target.png" />
-    <None Include="Resources\ZoneControl.png" />
-    <None Include="Resources\Zone.png" />
-    <None Include="Resources\SpeedControl.png" />
-    <None Include="Resources\Speed.png" />
-    <None Include="Resources\Simulation.png" />
-    <None Include="Resources\ShowZone.png" />
-    <None Include="Resources\ShowToolpath.png" />
-    <None Include="Resources\ShowTarget.png" />
-    <None Include="Resources\Online.png" />
-    <None Include="Resources\MonitorTCP.png" />
-    <None Include="Resources\Contour.png" />
-    <None Include="Resources\DigitalIn.png" />
-    <None Include="Resources\DigitalOut.png" />
-    <None Include="Resources\Export.png" />
-    <None Include="Resources\MethodControl.png" />
-    <None Include="Resources\CodeGen.png" />
-    <None Include="Resources\KRL.png" />
-    <None Include="Resources\License.png" />
-    <None Include="Resources\FK.png" />
-    <None Include="Resources\IK.png" />
-    <None Include="Resources\Collision.png" />
-    <None Include="Resources\Flip.png" />
-    <None Include="Resources\Lerp.png" />
   </ItemGroup>
   <ItemGroup>
     <WCFMetadata Include="Service References\" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Layers.png" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -405,48 +390,124 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\Snap.png" />
+    <Folder Include="bin\" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\OpenFolder.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\SelectFolder.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\ExcelCreate.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\ExcelRead.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\ExcelWrite.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\CharList.png" />
+    <None Include="Resources\AlignOrigin.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\CheckProgram.png" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Resources\CodeGen.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Collision.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Core.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\CSystem.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\DigitalIn.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\DigitalOut.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Export.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\FK.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Flip.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\IK.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\JointTarget.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\KRL.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Layers.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Lerp.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\License.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\MethodControl.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Online.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\OpenFolder.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Play.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\RAPID.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Robot.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Robot_1.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\SelectFolder.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ShowTarget.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ShowToolpath.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ShowZone.png" />
+  </ItemGroup>
+  <ItemGroup>
     <None Include="Resources\SigmaS.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Simulation.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Snap.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Speed.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\SpeedControl.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\SurfaceFrame.png" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="bin\" />
+    <None Include="Resources\Target.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Tool.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Vision.png" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Resources\AlignOrigin.png" />
-    <Content Include="Resources\CSystem.png" />
-    <Content Include="Resources\JointTarget.png" />
-    <None Include="Resources\Tool_blue.png" />
-    <None Include="Resources\Robot_blue.png" />
-    <None Include="Resources\Test24.png" />
+    <None Include="Resources\Zone.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ZoneControl.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

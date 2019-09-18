@@ -118,8 +118,8 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="CharList" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\CharList.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="AlignOrigin" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\AlignOrigin.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="CheckProgram" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\CheckProgram.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -130,8 +130,8 @@
   <data name="Collision" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Collision.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="Contour" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Contour.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="Core" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Core.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="CSystem" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\CSystem.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -141,15 +141,6 @@
   </data>
   <data name="DigitalOut" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\DigitalOut.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="ExcelCreate" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\ExcelCreate.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="ExcelRead" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\ExcelRead.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="ExcelWrite" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\ExcelWrite.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="Export" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Export.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -162,6 +153,9 @@
   </data>
   <data name="IK" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\IK.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="JointTarget" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\JointTarget.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="KRL" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\KRL.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -178,9 +172,6 @@
   <data name="MethodControl" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\MethodControl.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="MonitorTCP" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\MonitorTCP.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
   <data name="Online" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Online.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
@@ -193,11 +184,11 @@
   <data name="RAPID" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\RAPID.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="RapidMovement" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\RapidMovement.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
   <data name="Robot" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Robot.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Robot_1" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Robot_1.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="SelectFolder" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\SelectFolder.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -243,11 +234,5 @@
   </data>
   <data name="ZoneControl" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\ZoneControl.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Robot_blue" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Robot_blue.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Tool_blue" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Tool_blue.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>
