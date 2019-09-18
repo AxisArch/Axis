@@ -44,7 +44,6 @@ namespace Axis.Targets
             pManager.AddGenericParameter("Tool", "Tool", "Tool to use for operation.", GH_ParamAccess.item);
             pManager.AddGenericParameter("Speed", "Speed", "Speed to use for the movement.", GH_ParamAccess.item);
             pManager.AddGenericParameter("Zone", "Zone", "Zone to use for the movement.", GH_ParamAccess.item);
-
             for (int i = 0; i < 9; i++)
                 pManager[i].Optional = true;
         }
@@ -56,13 +55,7 @@ namespace Axis.Targets
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            double a1 = 0;
-            double a2 = 0;
-            double a3 = 0;
-            double a4 = 0;
-            double a5 = 0;
-            double a6 = 0;
-            double rot = 0;
+            double a1 = 0; double a2 = 0; double a3 = 0; double a4 = 0; double a5 = 0; double a6 = 0; double rot = 0;
             double lin = 0;
             Tool tool = Tool.Default;
             GH_ObjectWrapper speedIn = new GH_ObjectWrapper();
@@ -154,8 +147,8 @@ namespace Axis.Targets
         // Build a list of optional input parameters
         IGH_Param[] inputParams = new IGH_Param[]
         {
-        new Param_Integer() { Name = "Rotary", NickName = "Rotary", Description = "A list of external rotary axis positions in degrees. If one value is supplied it will be applied to all targets.", Access = GH_ParamAccess.list },
-        new Param_Number() { Name = "Linear", NickName = "Linear", Description = "A list of external linear axis positions in degrees. If one value is supplied it will be applied to all targets.", Access = GH_ParamAccess.list },
+        new Param_Number() { Name = "Rotary", NickName = "Rotary", Description = "An external rotary axis position in degrees.", Access = GH_ParamAccess.item },
+        new Param_Number() { Name = "Linear", NickName = "Linear", Description = "An external linear axis position in degrees.", Access = GH_ParamAccess.item },
         };
 
         // The following functions append menu items and then handle the item clicked event.
@@ -265,4 +258,3 @@ namespace Axis.Targets
         void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
     }
 }
- 

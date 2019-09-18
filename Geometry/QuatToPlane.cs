@@ -36,11 +36,6 @@ namespace Axis.Geometry
             pManager.AddPlaneParameter("Plane", "Plane", "Output plane.", GH_ParamAccess.item);
         }
 
-        /// <summary>
-        /// Convert a quaternion to a plane description and set the
-        /// plane origin a the supplied point location.
-        /// </summary>
-        /// <param name="DA"></param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             Point3d inPoint = new Point3d();

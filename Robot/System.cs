@@ -55,7 +55,7 @@ namespace Axis.Core
             this.AxisFourOffset = axisFourOffsetAngle;
             this.MinAngles = minAngles;
             this.MaxAngles = maxAngles;
-            
+
             // Create axis planes in relation to robot joint points.
             List<Plane> axisPlanes = new List<Plane>();
             List<Plane> tAxisPlanes = new List<Plane>();
@@ -163,7 +163,7 @@ namespace Axis.Core
             else { strPosX = posX.ToString("#.##"); }
 
             double posY = TCP.Origin.Y;
-            if (posY < 0.005 && posY> -0.005) { strPosY = "0.00"; }
+            if (posY < 0.005 && posY > -0.005) { strPosY = "0.00"; }
             else { strPosY = posY.ToString("#.##"); }
 
             double posZ = TCP.Origin.Z;

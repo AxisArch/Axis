@@ -8,36 +8,20 @@ namespace Axis.Geometry
 {
     public class SurfaceFrame : GH_Component
     {
-        /// <summary>
-        /// Initializes a new instance of the MyComponent1 class.
-        /// </summary>
-        public SurfaceFrame()
-          : base("Surface Frame", "Frame",
-              "Reparamaterize a surface and return the frame at U:0.5, V:0.5.",
-              "Axis", "5. Geometry")
+        public SurfaceFrame() : base("Surface Frame", "Frame", "Reparamaterize a surface and return the frame at U:0.5, V:0.5.", "Axis", "5. Geometry")
         {
         }
 
-        /// <summary>
-        /// Registers all the input parameters for this component.
-        /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddSurfaceParameter("Surface", "S", "Surface to return frame on.", GH_ParamAccess.list);
         }
 
-        /// <summary>
-        /// Registers all the output parameters for this component.
-        /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
             pManager.AddPlaneParameter("Frame", "F", "Surface frame at U:0.5, V:0.5.", GH_ParamAccess.list);
         }
 
-        /// <summary>
-        /// This is the method that actually does the work.
-        /// </summary>
-        /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             List<Surface> surfs = new List<Surface>();
@@ -67,9 +51,6 @@ namespace Axis.Geometry
             DA.SetDataList(0, frames);
         }
 
-        /// <summary>
-        /// Provides an Icon for the component.
-        /// </summary>
         protected override System.Drawing.Bitmap Icon
         {
             get
@@ -78,9 +59,6 @@ namespace Axis.Geometry
             }
         }
 
-        /// <summary>
-        /// Gets the unique ID for this component. Do not change this ID after release.
-        /// </summary>
         public override Guid ComponentGuid
         {
             get { return new Guid("ab5216a3-81b1-4c80-a6bb-da54b9a8169a"); }

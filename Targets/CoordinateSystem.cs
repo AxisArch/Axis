@@ -24,8 +24,11 @@ namespace Axis.Targets
             get { return new Guid("{b11f15a4-c0dd-43d6-aecd-d87d2fb05664}"); }
         }
         public override GH_Exposure Exposure => GH_Exposure.primary;
-
-        bool outputDeclarations = false;
+        
+        // Optional context menu toggles
+        bool m_dynamicCS = false;
+        Plane eAxis = Plane.WorldXY;
+        bool m_outputDeclarations = false;
 
         public CoordinateSystem() : base("Work Object", "WObj", "Create a new work object or robot base from geometry or controller calibration values.", "Axis", "2. Robot")
         {
@@ -49,8 +52,10 @@ namespace Axis.Targets
             List<string> names = new List<string>();
             List<Plane> planes = new List<Plane>();
 
-            if (!DA.GetDataList(0, names)) names.Add("Woobj0");
+            if (!DA.GetDataList(0, names)) names.Add("WObj0");
             if (!DA.GetDataList(1, planes)) planes.Add(Plane.WorldXY);
+
+            if (m_dynamicCS) { if (!DA.GetData("External Axis", ref eAxis)) return; }
 
             // Declare an empty string to hold our outputs.
             List<string> declarations = new List<string>();
@@ -77,17 +82,23 @@ namespace Axis.Targets
                 string dec = "PERS wobjdata " + name + @" := [FALSE, TRUE, "", [[" + posX.ToString() + ", " + posY.ToString() + ", " + posZ.ToString() + "],[" + Math.Round(quat.A, 6).ToString() + ", " + Math.Round(quat.B, 6).ToString() + ", " + Math.Round(quat.C, 6).ToString() + ", " + Math.Round(quat.D, 6).ToString() + "]],[0, 0, 0],[1, 0, 0, 0]]];";
                 declarations.Add(dec);
 
-                CSystem cSys = new CSystem(name, planes[i]);
+                CSystem cSys = new CSystem(name, planes[i], m_dynamicCS, eAxis);
                 cSystems.Add(cSys);
             }
 
             DA.SetDataList(0, cSystems);
 
-            if (outputDeclarations)
+            if (m_outputDeclarations)
             {
                 DA.SetDataList("Dec", declarations);
             }
         }
+
+        // Build a list of optional input parameters
+        IGH_Param[] inputParams = new IGH_Param[1]
+        {
+        new Param_Plane() { Name = "External Axis", NickName = "eAxis", Description = "A plane that discribes the location of the external axis.", Access = GH_ParamAccess.item},
+        };
 
         // Build a list of optional output parameters
         IGH_Param[] outputParams = new IGH_Param[1]
@@ -98,16 +109,34 @@ namespace Axis.Targets
         // The following functions append menu items and then handle the item clicked event.
         protected override void AppendAdditionalComponentMenuItems(ToolStripDropDown menu)
         {
-            ToolStripMenuItem outputDec = Menu_AppendItem(menu, "Output Declarations", output_Click, true, outputDeclarations);
+            ToolStripMenuItem dynamicCS = Menu_AppendItem(menu, "Dynamic Coordinate System", dynamic_Click, true, m_dynamicCS);
+            dynamicCS.ToolTipText = "Specify a dynamic coordinate system (rotary or linear axis holds the work object).";
+            ToolStripMenuItem outputDec = Menu_AppendItem(menu, "Output Declarations", output_Click, true, m_outputDeclarations);
             outputDec.ToolTipText = "Output the declarations in RAPID format.";
+        }
+
+        private void dynamic_Click(object sender, EventArgs e)
+        {
+            RecordUndoEvent("CSDynClick");
+            m_dynamicCS = !m_dynamicCS;
+
+            if (m_dynamicCS)
+            {
+                AddInput(0);
+            }
+            else
+            {
+                Params.UnregisterInputParameter(Params.Input.FirstOrDefault(x => x.Name == "External Axis"), true);
+            }
+            ExpireSolution(true);
         }
 
         private void output_Click(object sender, EventArgs e)
         {
             RecordUndoEvent("CSDecClick");
-            outputDeclarations = !outputDeclarations;
+            m_outputDeclarations = !m_outputDeclarations;
 
-            if (outputDeclarations)
+            if (m_outputDeclarations)
             {
                 AddOutput(0);
             }
@@ -115,6 +144,32 @@ namespace Axis.Targets
             {
                 Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Declarations"), true);
             }
+            ExpireSolution(true);
+        }
+
+        // Register the new input parameters to our component.
+        private void AddInput(int index)
+        {
+            IGH_Param parameter = inputParams[index];
+
+            if (Params.Input.Any(x => x.Name == parameter.Name))
+                Params.UnregisterInputParameter(Params.Input.First(x => x.Name == parameter.Name), true);
+            else
+            {
+                int insertIndex = Params.Input.Count;
+                for (int i = 0; i < Params.Input.Count; i++)
+                {
+                    int otherIndex = Array.FindIndex(inputParams, x => x.Name == Params.Input[i].Name);
+                    if (otherIndex > index)
+                    {
+                        insertIndex = i;
+                        break;
+                    }
+                }
+
+                Params.RegisterInputParam(parameter, insertIndex);
+            }
+            Params.OnParametersChanged();
             ExpireSolution(true);
         }
 
@@ -147,14 +202,16 @@ namespace Axis.Targets
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
-            writer.SetBoolean("CSDec", this.outputDeclarations);
+            writer.SetBoolean("CSDyn", this.m_dynamicCS);
+            writer.SetBoolean("CSDec", this.m_outputDeclarations);
             return base.Write(writer);
         }
 
         // Deserialize this instance from a Grasshopper reader object.
         public override bool Read(GH_IO.Serialization.GH_IReader reader)
         {
-            this.outputDeclarations = reader.GetBoolean("CSDec");
+            this.m_dynamicCS = reader.GetBoolean("CSDyn");
+            this.m_outputDeclarations = reader.GetBoolean("CSDec");
             return base.Read(reader);
         }
 

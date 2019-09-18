@@ -40,11 +40,6 @@ namespace Axis.Geometry
             pManager.AddNumberParameter("Quaternion", "Quat", "Rotation as four-component quaternion string.", GH_ParamAccess.list);
         }
 
-        /// <summary>
-        /// Convert a plane to a quaternion description of the
-        /// rotation and point describing the origin.
-        /// </summary>
-        /// <param name="DA"></param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             Plane inPlane = new Plane(Plane.WorldXY);
@@ -65,9 +60,7 @@ namespace Axis.Geometry
             DA.SetDataList(0, quatComps);
 
             if (originOut)
-            {
                 DA.SetData("Origin", origin);
-            }
         }
 
         IGH_Param[] parameters = new IGH_Param[1]

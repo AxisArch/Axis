@@ -27,6 +27,7 @@ namespace Axis
         }
 
         // Boolean toggle for context menu items.
+        bool m_outputCode = false;
         bool m_manufacturer = false;
         bool m_interpolationTypes = false;
         bool m_outputTarget = false;
@@ -282,7 +283,7 @@ namespace Axis
             }
             else
             {
-                Params.UnregisterOutputParameter(Params.Input.FirstOrDefault(x => x.Name == "Code"), true);
+                Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Code"), true);
             }
             ExpireSolution(true);
         }
@@ -397,6 +398,7 @@ namespace Axis
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
+            writer.SetBoolean("OutputCode", this.m_outputCode);
             writer.SetBoolean("KukaTargets", this.m_manufacturer);
             writer.SetBoolean("RotAxis", this.extRotary);
             writer.SetBoolean("LinAxis", this.extLinear);
@@ -407,6 +409,7 @@ namespace Axis
         // Deserialize this instance from a Grasshopper reader object.
         public override bool Read(GH_IO.Serialization.GH_IReader reader)
         {
+            this.m_outputCode = reader.GetBoolean("OutputCode");
             this.m_manufacturer = reader.GetBoolean("KukaTargets");
             this.extRotary = reader.GetBoolean("RotAxis");
             this.extLinear = reader.GetBoolean("LinAxis");

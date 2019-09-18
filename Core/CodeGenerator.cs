@@ -17,9 +17,6 @@ namespace Axis.Core
 {
     public class CodeGenerator : GH_Component, IGH_VariableParameterComponent
     {
-        bool foundLicense = false;
-        bool validLicense = false;
-
         // Sticky variables for the options.
         bool modName = false;
         bool declarations = false;
@@ -51,11 +48,7 @@ namespace Axis.Core
             pManager.AddTextParameter("Path", "Path", "File path for code generation.", GH_ParamAccess.item, Environment.SpecialFolder.Desktop.ToString());
             pManager.AddTextParameter("File", "File", "File name for code generation.", GH_ParamAccess.item, "RobotProgram");
             pManager.AddBooleanParameter("Export", "Export", "Export the file as to the path specified [ABB exports as both a .mod and a .prg file. KUKA exports as a .src file.", GH_ParamAccess.item, false);
-            pManager[0].Optional = true;
-            pManager[1].Optional = true;
-            pManager[2].Optional = true;
-            pManager[3].Optional = true;
-            pManager[4].Optional = true;
+            for (int i = 0; i < 5; i++) pManager[i].Optional = true;
         }
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
@@ -71,7 +64,7 @@ namespace Axis.Core
             bool export = false;
 
             List<GH_ObjectWrapper> program = new List<GH_ObjectWrapper>();
-            
+
             List<string> strHeaders = new List<string>();
             List<string> strDeclarations = new List<string>();
             List<string> strProgram = new List<string>();
@@ -84,33 +77,6 @@ namespace Axis.Core
             List<string> RAPID = new List<string>();
             List<string> KRL = new List<string>();
 
-            /*
-            // Check to see if we have a valid license.
-            if (licenseCount == 0)
-            {
-                var publicKey = File.ReadAllText(Grasshopper.Folders.DefaultAssemblyFolder.ToString() + @"\Axis\publicKey.xml");
-                string licensePath = Grasshopper.Folders.DefaultAssemblyFolder.ToString() + @"\Axis\License.xml";
-
-                XmlDocument license = new XmlDocument();
-                license.Load(licensePath);
-
-                string licenseStatus = new LicenseValidator(publicKey, licensePath).ValidateXmlDocumentLicense(license);
-
-                if (licenseStatus == "License validated.")
-                {
-                    licenseCount = 1;
-                    this.Message = "License Validated Successfully.";
-                }
-                else if (licenseStatus == "License has expired.")
-                {
-                    this.Message = "License Expired";
-                }
-                else
-                {
-                    this.Message = "Problem Validating License";
-                }
-            }
-            */
             if (!DA.GetDataList("Program", program)) return;
             if (!DA.GetDataList("Procedures", strProcedures)) return;
             if (!DA.GetData("Path", ref path)) return;
@@ -119,20 +85,11 @@ namespace Axis.Core
 
             // Get the optional inputs.
             if (modName)
-            {
                 if (!DA.GetData("Name", ref strModName)) return;
-            }
             if (overrides)
-            {
                 if (!DA.GetDataList("Overrides", strOverrides)) ;
-            }
             if (declarations)
-            {
                 if (!DA.GetDataList("Declarations", strDeclarations)) ;
-            }
-
-            // Override license control.
-            bool foundLicense = true;
 
             // Convert targets to strings.
             foreach (GH_ObjectWrapper command in program)
@@ -153,12 +110,12 @@ namespace Axis.Core
                     else
                     {
                         strProgram.Add(targ.StrKUKA);
-                    }                    
+                    }
                 }
             }
 
-            // If we have a valid program and a license, continue..
-            if (strProgram != null && foundLicense)
+            // If we have a valid program and we are logged in...
+            if (strProgram != null)
             {
                 if (manufacturer)
                 {
@@ -302,7 +259,7 @@ namespace Axis.Core
                             RAPID.Add(strProgram[i]);
                         }
                     }
-                    
+
 
                     // Close Main Proc
                     RAPID.Add(" ");
@@ -347,7 +304,7 @@ namespace Axis.Core
                                 writer.WriteLine(KRL[i]);
                             }
                         }
-                        this.Message = "Exported";
+                        Util.AutoClosingMessageBox.Show("Export Successful!", "Export", 1300);
                     }
                     else
                     {
@@ -365,7 +322,7 @@ namespace Axis.Core
                                 mainProc.WriteLine(RAPID[i]);
                             }
                         }
-                        this.Message = "Exported";
+                        Util.AutoClosingMessageBox.Show("Export Successful!", "Export", 1300);
                     }
                 }
             }
@@ -488,7 +445,7 @@ namespace Axis.Core
             Params.OnParametersChanged();
             ExpireSolution(true);
         }
-        
+
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
@@ -511,167 +468,12 @@ namespace Axis.Core
             return base.Read(reader);
         }
 
-        /// <summary>
-        /// Implement this interface in your component if you want to enable variable parameter UI.
-        /// </summary>
         bool IGH_VariableParameterComponent.CanInsertParameter(GH_ParameterSide side, int index) => false;
         bool IGH_VariableParameterComponent.CanRemoveParameter(GH_ParameterSide side, int index) => false;
         IGH_Param IGH_VariableParameterComponent.CreateParameter(GH_ParameterSide side, int index) => null;
         bool IGH_VariableParameterComponent.DestroyParameter(GH_ParameterSide side, int index) => false;
         void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
     }
-
-    /*
-    /// <summary>
-    /// License validator validates a license file
-    /// that can be located on disk.
-    /// </summary>
-    public class LicenseValidator : AbstractLicenseValidator
-    {
-        private readonly string licensePath;
-        private string inMemoryLicense;
-
-        /// <summary>
-        /// Creates a new instance of <seealso cref="LicenseValidator"/>.
-        /// </summary>
-        /// <param name="publicKey">public key</param>
-        /// <param name="licensePath">path to license file</param>
-        public LicenseValidator(string publicKey, string licensePath)
-            : base(publicKey)
-        {
-            this.licensePath = licensePath;
-        }
-
-        /// <summary>
-        /// Creates a new instance of <seealso cref="LicenseValidator"/>.
-        /// </summary>
-        /// <param name="publicKey">public key</param>
-        /// <param name="licensePath">path to license file</param>
-        /// <param name="licenseServerUrl">license server endpoint address</param>
-        /// <param name="clientId">Id of the license holder</param>
-        public LicenseValidator(string publicKey, string licensePath, string licenseServerUrl, Guid clientId)
-            : base(publicKey, licenseServerUrl, clientId)
-        {
-            this.licensePath = licensePath;
-        }
-
-        /// <summary>
-        /// Gets or Sets the license content
-        /// </summary>
-        protected override string License
-        {
-            get
-            {
-                return inMemoryLicense ?? File.ReadAllText(licensePath);
-            }
-            set
-            {
-                string error = String.Empty ;
-
-                try
-                {
-                    File.WriteAllText(licensePath, value);
-                }
-                catch (Exception e)
-                {
-                    inMemoryLicense = value;                    
-                }
-            }
-        }
-
-        /// <summary>
-        /// Validates loaded license
-        /// </summary>
-        public override void AssertValidLicense()
-        {
-            if (File.Exists(licensePath) == false)
-            {
-                throw new LicenseFileNotFoundException();
-            }
-
-            base.AssertValidLicense();
-
-        }
-
-        /// <summary>
-        /// Removes existing license from the machine.
-        /// </summary>
-        public override void RemoveExistingLicense()
-        {
-            File.Delete(licensePath);
-        }
-
-        public string ValidateXmlDocumentLicense(XmlDocument doc)
-        {
-            var id = doc.SelectSingleNode("/license/@CpuId");
-            var cpuID = id.Value;
-
-            string currentID = GetHardwareId("Win32_Processor", "processorID");
-            if (id == null || cpuID != currentID)
-            {
-                return "Invalid CPU ID.";
-            }
-
-            var serial = doc.SelectSingleNode("/license/@SerialNo");
-            if (serial == null)
-            {
-                return "Invalid serial number.";
-            }
-            
-            var licenseType = doc.SelectSingleNode("/license/@type");
-            if (licenseType == null)
-            {
-                return "Could not find license type.";
-            }
-
-            Rhino.Licensing.LicenseType type = (LicenseType)Enum.Parse(typeof(LicenseType), licenseType.Value);
-
-            var name = doc.SelectSingleNode("/license/name/text()");
-            var userName = name.Value;
-            if (name == null)
-            {
-                return "Could not find full name in license.";
-            }
-
-            DateTime expDT = DateTime.Now;
-            var expiration = doc.SelectSingleNode("/license/@expiration");
-            var expStr = expiration.Value;
-            bool success = DateTime.TryParse(expStr, out expDT);
-            if (success)
-            {
-                if (DateTime.Now.CompareTo(expDT) > 0)
-                {
-                    return "License has expired.";
-                }
-            }
-
-            var license = doc.SelectSingleNode("/license");
-            foreach (XmlAttribute attrib in license.Attributes)
-            {
-                if (attrib.Name == "type" || attrib.Name == "expiration" || attrib.Name == "id")
-                    continue;
-
-                LicenseAttributes[attrib.Name] = attrib.Value;
-            }          
-
-            return "License validated.";
-        }
-
-        public static string GetHardwareId(string key, string propertyValue)
-        {
-            var value = string.Empty;
-            var searcher = new ManagementObjectSearcher("select * from " + key);
-
-            foreach (ManagementObject share in searcher.Get())
-            {
-                value = (string)share.GetPropertyValue(propertyValue);
-            }
-
-            return value;
-        }
-    }
-    */
 }
- 
- 
- 
+
+

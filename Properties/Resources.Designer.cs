@@ -19,7 +19,7 @@ namespace Axis.Properties {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -73,16 +73,6 @@ namespace Axis.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap CharList {
-            get {
-                object obj = ResourceManager.GetObject("CharList", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
         internal static System.Drawing.Bitmap CheckProgram {
             get {
                 object obj = ResourceManager.GetObject("CheckProgram", resourceCulture);
@@ -106,16 +96,6 @@ namespace Axis.Properties {
         internal static System.Drawing.Bitmap Collision {
             get {
                 object obj = ResourceManager.GetObject("Collision", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap Contour {
-            get {
-                object obj = ResourceManager.GetObject("Contour", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -156,36 +136,6 @@ namespace Axis.Properties {
         internal static System.Drawing.Bitmap DigitalOut {
             get {
                 object obj = ResourceManager.GetObject("DigitalOut", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap ExcelCreate {
-            get {
-                object obj = ResourceManager.GetObject("ExcelCreate", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap ExcelRead {
-            get {
-                object obj = ResourceManager.GetObject("ExcelRead", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap ExcelWrite {
-            get {
-                object obj = ResourceManager.GetObject("ExcelWrite", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -293,16 +243,6 @@ namespace Axis.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap MonitorTCP {
-            get {
-                object obj = ResourceManager.GetObject("MonitorTCP", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
         internal static System.Drawing.Bitmap Online {
             get {
                 object obj = ResourceManager.GetObject("Online", resourceCulture);
@@ -343,9 +283,9 @@ namespace Axis.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap RapidMovement {
+        internal static System.Drawing.Bitmap Robot {
             get {
-                object obj = ResourceManager.GetObject("RapidMovement", resourceCulture);
+                object obj = ResourceManager.GetObject("Robot", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -353,9 +293,9 @@ namespace Axis.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap Robot {
+        internal static System.Drawing.Bitmap Robot_1 {
             get {
-                object obj = ResourceManager.GetObject("Robot", resourceCulture);
+                object obj = ResourceManager.GetObject("Robot_1", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -486,16 +426,6 @@ namespace Axis.Properties {
         internal static System.Drawing.Bitmap Vision {
             get {
                 object obj = ResourceManager.GetObject("Vision", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap Wobj {
-            get {
-                object obj = ResourceManager.GetObject("Wobj", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

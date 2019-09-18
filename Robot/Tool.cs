@@ -12,9 +12,6 @@ using Axis.Core;
 
 namespace Axis.Robot
 {
-    /// <summary>
-    /// Define a custom robot tool.
-    /// </summary>
     public class CreateTool : GH_Component, IGH_VariableParameterComponent
     {
         public override GH_Exposure Exposure => GH_Exposure.primary;
@@ -45,7 +42,6 @@ namespace Axis.Robot
             pManager.AddTextParameter("Name", "Name", "Tool name.", GH_ParamAccess.item, "AxisTool");
             pManager.AddPlaneParameter("TCP", "TCP", "Tool Centre Point plane, at end of tool.", GH_ParamAccess.item, Plane.WorldXY);
             pManager.AddMeshParameter("Mesh", "Mesh", "Tool mesh geometry for kinematic preview.", GH_ParamAccess.list);
-            //for (int i = 1; i < 2; ++i) { pManager[i].Optional = true; }
             pManager[2].Optional = true;
         }
 
@@ -60,31 +56,21 @@ namespace Axis.Robot
             Plane TCP = Plane.WorldXY;
             double weight = 2.5;
             List<Mesh> mesh = new List<Mesh>();
-            Vector3d reltoolOffset = new Vector3d(0,0,0);
+            Vector3d reltoolOffset = new Vector3d(0, 0, 0);
 
             if (!DA.GetData(0, ref name)) return;
             if (!DA.GetData(1, ref TCP)) return;
             if (!DA.GetDataList(2, mesh) && mesh == null) return;
 
-
-
             if (manufacturer)
-            {
                 this.Message = "KUKA";
-            }
             else
-            {
                 this.Message = "ABB";
-            }
 
             if (toolWeight)
-            {
                 if (!DA.GetData("Weight", ref weight)) return;
-            }
             if (relTool)
-            {
                 if (!DA.GetData("Offset", ref reltoolOffset)) return;
-            }
 
             // Move TCP for simulation if reltool is used
             if (relTool)
@@ -95,15 +81,12 @@ namespace Axis.Robot
                 TCP.Transform(Transform.Translation(moveVector));
             }
 
-
             Tool tool = new Tool(name, TCP, weight, mesh, manufacturer, reltoolOffset);
 
             DA.SetData(0, tool);
 
             if (declaration)
-            {
                 DA.SetData("Declaration", tool.Declaration);
-            }            
         }
 
         // Build a list of optional input and output parameters
