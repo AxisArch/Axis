@@ -63,9 +63,9 @@ namespace Axis.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap CharList {
+        internal static System.Drawing.Bitmap AlignOrigin {
             get {
-                object obj = ResourceManager.GetObject("CharList", resourceCulture);
+                object obj = ResourceManager.GetObject("AlignOrigin", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -103,19 +103,9 @@ namespace Axis.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap Connect {
+        internal static System.Drawing.Bitmap Core {
             get {
-                object obj = ResourceManager.GetObject("Connect", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap Contour {
-            get {
-                object obj = ResourceManager.GetObject("Contour", resourceCulture);
+                object obj = ResourceManager.GetObject("Core", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -153,36 +143,6 @@ namespace Axis.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap ExcelCreate {
-            get {
-                object obj = ResourceManager.GetObject("ExcelCreate", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap ExcelRead {
-            get {
-                object obj = ResourceManager.GetObject("ExcelRead", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap ExcelWrite {
-            get {
-                object obj = ResourceManager.GetObject("ExcelWrite", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
         internal static System.Drawing.Bitmap Export {
             get {
                 object obj = ResourceManager.GetObject("Export", resourceCulture);
@@ -213,9 +173,9 @@ namespace Axis.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap Get_Module {
+        internal static System.Drawing.Bitmap IK {
             get {
-                object obj = ResourceManager.GetObject("Get_Module", resourceCulture);
+                object obj = ResourceManager.GetObject("IK", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -223,9 +183,9 @@ namespace Axis.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap IK {
+        internal static System.Drawing.Bitmap JointTarget {
             get {
-                object obj = ResourceManager.GetObject("IK", resourceCulture);
+                object obj = ResourceManager.GetObject("JointTarget", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -283,16 +243,6 @@ namespace Axis.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap MonitorTCP {
-            get {
-                object obj = ResourceManager.GetObject("MonitorTCP", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
         internal static System.Drawing.Bitmap Online {
             get {
                 object obj = ResourceManager.GetObject("Online", resourceCulture);
@@ -333,16 +283,6 @@ namespace Axis.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap RapidMovement {
-            get {
-                object obj = ResourceManager.GetObject("RapidMovement", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
         internal static System.Drawing.Bitmap Robot {
             get {
                 object obj = ResourceManager.GetObject("Robot", resourceCulture);
@@ -353,9 +293,9 @@ namespace Axis.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap Robot_blue {
+        internal static System.Drawing.Bitmap Robot_1 {
             get {
-                object obj = ResourceManager.GetObject("Robot_blue", resourceCulture);
+                object obj = ResourceManager.GetObject("Robot_1", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -366,16 +306,6 @@ namespace Axis.Properties {
         internal static System.Drawing.Bitmap SelectFolder {
             get {
                 object obj = ResourceManager.GetObject("SelectFolder", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap Set_Module {
-            get {
-                object obj = ResourceManager.GetObject("Set_Module", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -463,26 +393,6 @@ namespace Axis.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap Star_Stop {
-            get {
-                object obj = ResourceManager.GetObject("Star_Stop", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap Streaming {
-            get {
-                object obj = ResourceManager.GetObject("Streaming", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
         internal static System.Drawing.Bitmap SurfaceFrame {
             get {
                 object obj = ResourceManager.GetObject("SurfaceFrame", resourceCulture);
@@ -506,16 +416,6 @@ namespace Axis.Properties {
         internal static System.Drawing.Bitmap Tool {
             get {
                 object obj = ResourceManager.GetObject("Tool", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap Tool_blue {
-            get {
-                object obj = ResourceManager.GetObject("Tool_blue", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
