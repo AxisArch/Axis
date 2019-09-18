@@ -330,6 +330,7 @@
   <ItemGroup>
     <Compile Include="Core\AuthTest.cs" />
     <Compile Include="Core\CheckProgram.cs" />
+    <Compile Include="Core\OffsetWristKinematics.cs" />
     <Compile Include="Core\Login.cs" />
     <Compile Include="Geometry\SurfaceFrame.cs" />
     <Compile Include="IO\GetDI.cs" />
