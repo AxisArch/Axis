@@ -5,11 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 
-
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Grasshopper.Kernel.Parameters;
-
 
 using Rhino.Geometry;
 
@@ -35,19 +33,12 @@ namespace Axis.Online
         public Controller controllers = null;
         private Task[] tasks = null;
 
-        /// <summary>
-        /// Initializes a new instance of the MyComponent1 class.
-        /// </summary>
-        public StartStop()
-          : base("Start/Stop", "Start/Stop",
+        public StartStop() : base("Start/Stop", "Start/Stop",
               "Controll a programm running on a robot controller",
               "Axis", "9. Online")
         {
         }
 
-        /// <summary>
-        /// Registers all the input parameters for this component.
-        /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddGenericParameter("Controller", "Controller", "Recives the output from a controller module", GH_ParamAccess.list);
@@ -56,17 +47,10 @@ namespace Axis.Online
             pManager.AddBooleanParameter("Stop", "Stop", "Stop the default task on the controller.", GH_ParamAccess.item, false);
         }
 
-        /// <summary>
-        /// Registers all the output parameters for this component.
-        /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
         }
 
-        /// <summary>
-        /// This is the method that actually does the work.
-        /// </summary>
-        /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             List<GH_ObjectWrapper> controllers = new List<GH_ObjectWrapper>();
@@ -95,7 +79,7 @@ namespace Axis.Online
                 {
                     abbController = myAxisController;
                 }
-                else { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No active controller connected"); return; }
+                else { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No active controller connected."); return; }
 
                 tasks = abbController.Rapid.GetTasks();
 
@@ -106,10 +90,9 @@ namespace Axis.Online
                         // Reset program pointer to main.
                         try
                         {
-                            tasks[0].ResetProgramPointer();                            
+                            tasks[0].ResetProgramPointer();
                         }
-                        catch (Exception){log.Add("Opperation not allowed in current state");}
-
+                        catch (Exception) { log.Add("Operation not allowed in current state."); }
                     }
                 }
 
@@ -132,14 +115,8 @@ namespace Axis.Online
                             log.Add("Automatic mode is required to start execution from a remote client.");
                         }
                     }
-                    catch (System.InvalidOperationException ex)
-                    {
-                        log.Add("Mastership is held by another client." + ex.Message);
-                    }
-                    catch (System.Exception ex)
-                    {
-                        log.Add("Unexpected error occurred: " + ex.Message);
-                    }
+                    catch (System.InvalidOperationException ex) { log.Add("Mastership is held by another client." + ex.Message); }
+                    catch (System.Exception ex) { log.Add("Unexpected error occurred: " + ex.Message); }
                 }
 
                 if (stop)
@@ -186,9 +163,6 @@ namespace Axis.Online
             }
         }
 
-        /// <summary>
-        /// Additional Input and Output parameters for the component
-        /// </summary>
         // Build a list of optional input parameters
         IGH_Param[] inputParams = new IGH_Param[1]
         {
@@ -225,10 +199,7 @@ namespace Axis.Online
                 Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Log"), true);
                 logOptionOut = false;
             }
-
-            //ExpireSolution(true);
         }
-
 
         // Register the new input parameters to our component.
         private void AddInput(int index)
@@ -274,11 +245,9 @@ namespace Axis.Online
                         break;
                     }
                 }
-
                 Params.RegisterOutputParam(parameter, insertIndex);
             }
             Params.OnParametersChanged();
-
             ExpireSolution(true);
         }
 
@@ -298,19 +267,12 @@ namespace Axis.Online
             return base.Read(reader);
         }
 
-        /// <summary>
-        /// Implement this interface in your component if you want to enable variable parameter UI.
-        /// </summary>
         bool IGH_VariableParameterComponent.CanInsertParameter(GH_ParameterSide side, int index) => false;
         bool IGH_VariableParameterComponent.CanRemoveParameter(GH_ParameterSide side, int index) => false;
         IGH_Param IGH_VariableParameterComponent.CreateParameter(GH_ParameterSide side, int index) => null;
         bool IGH_VariableParameterComponent.DestroyParameter(GH_ParameterSide side, int index) => false;
         void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
 
-
-        /// <summary>
-        /// Provides an Icon for the component.
-        /// </summary>
         protected override System.Drawing.Bitmap Icon
         {
             get
@@ -321,9 +283,6 @@ namespace Axis.Online
             }
         }
 
-        /// <summary>
-        /// Gets the unique ID for this component. Do not change this ID after release.
-        /// </summary>
         public override Guid ComponentGuid
         {
             get { return new Guid("1dca8994-0a96-4454-a5bb-28c8bd911829"); }

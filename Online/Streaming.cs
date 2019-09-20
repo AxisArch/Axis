@@ -154,18 +154,15 @@ namespace Axis.Online
                 cRobQ4 = Math.Round(cRobTarg.Rot.Q4, 5);
 
                 cRobQuat = new Quaternion(cRobQ1, cRobQ2, cRobQ3, cRobQ4);
-
                 tcp = Util.QuaternionToPlane(cRobPos, cRobQuat);
 
                 tcpMonitoringOn += 1; tcpMonitoringOff = 0;
-
                 ExpireSolution(true);
             }
             else if (tcpMonitoringOn > 0)
             {
                 if (tcpMonitoringOff == 0)
                     log.Add("TCP monitoring stopped.");
-
                 tcpMonitoringOff += 1; tcpMonitoringOn = 0;
             }
 
@@ -246,7 +243,7 @@ namespace Axis.Online
                     zone.PathRadius = targ.Zone.PathRadius;
                     zone.PathOrient = targ.Zone.PathOrient;
 
-                    //streemingTool
+                    // Create streaming tool - otherwise grab current tool, pos etc. as first initialisation.
 
                     string content = "SD;[" +
                             "\"" + 
@@ -278,7 +275,7 @@ namespace Axis.Online
                         /*
                         if (lQOption)
                             LocalQueue.Enqueue(message);
-                            */
+                        */
                     }
                     /*
                     if (LocalQueue.Count != 0 && lQOption)
@@ -377,8 +374,6 @@ namespace Axis.Online
                 Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Log"), true);
                 logOptionOut = false;
             }
-
-            //ExpireSolution(true);
         }
         private void mod_Click(object sender, EventArgs e)
         {
@@ -393,8 +388,6 @@ namespace Axis.Online
             {
                 Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Steaming Module"), true);
             }
-
-            //ExpireSolution(true);
         }
         private void lQueue_Click(object sender, EventArgs e)
         {
@@ -409,8 +402,6 @@ namespace Axis.Online
             {
                 Params.UnregisterInputParameter(Params.Output.FirstOrDefault(x => x.Name == "Steaming Module"), true);
             }
-
-            //ExpireSolution(true);
         }
 
         // Register the new input parameters to our component.

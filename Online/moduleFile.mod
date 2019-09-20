@@ -17,8 +17,8 @@
     ENDRECORD
  
     PERS tooldata StreamingTool:=[TRUE,[[31.6965,61.8812,133.379],[0.207982,0.10829,0.44888,0.862278]],[1,[0,0,1E-04],[1,0,0,0],0,0,0]];
-    VAR speeddata StreamingSpeed:= [ 100, 20, 200, 15 ];
-    VAR zonedata StreamingZone:= [False, 0.3, 0.3, 0.3, 0.03, 0.3, 0.03 ];
+    VAR speeddata StreamingSpeed:=[ 100, 20, 200, 15 ];
+    VAR zonedata StreamingZone:=[False, 0.3, 0.3, 0.3, 0.03, 0.3, 0.03 ];
 
     VAR bool flag:=FALSE;
     VAR intnum connectionNumber;

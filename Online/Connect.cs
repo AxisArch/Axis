@@ -39,11 +39,9 @@ namespace Axis.Online
         private bool logOption;
         private bool logOptionOut;
 
-
         NetworkScanner scanner = new NetworkScanner();
         ControllerInfo[] controllers = null;
-
-
+        
         // Create a list of string to store a log of the connection status.
         private List<string> log = new List<string>();
 
@@ -75,26 +73,15 @@ namespace Axis.Online
 
             if (false)
             {
-                
+                // ?
             }
-            
-
             delInputs.Clear();
         }
 
-        /// <summary>
-        /// Initializes a new instance of the Controller class.
-        /// </summary>
-        public Connect()
-          : base("Controller", "Controller",
-              "Connect to an ABB controller",
-              "Axis", "9. Online")
+        public Connect() : base("Controller", "Controller", "Connect to an ABB controller", "Axis", "9. Online")
         {
         }
 
-        /// <summary>
-        /// Registers all the input parameters for this component.
-        /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddBooleanParameter("Activate", "Activate", "Activate the online communication module.", GH_ParamAccess.item, false);
@@ -102,7 +89,7 @@ namespace Axis.Online
             pManager.AddTextParameter("IP", "IP", "IP adress of the controller to connect to.", GH_ParamAccess.list);
             pManager.AddIntegerParameter("Index", "Index", "Index of the controller to connect to (if multiple connections are possible).", GH_ParamAccess.item, 0);
             pManager.AddBooleanParameter("Connect", "Connect", "Connect to the network controller.", GH_ParamAccess.item, false);
-            pManager.AddBooleanParameter("Kill", "Kill", "Kill the process; logoff and dispose of network controllers.", GH_ParamAccess.item, false);
+            pManager.AddBooleanParameter("Kill", "Kill", "Kill the process, logoff and dispose of network controllers.", GH_ParamAccess.item, false);
 
             for (int i = 0; i < 5; i++)
             {
@@ -110,28 +97,20 @@ namespace Axis.Online
             }
         }
 
-        /// <summary>
-        /// Registers all the output parameters for this component.
-        /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
             pManager.AddGenericParameter("Controller", "Controller", "Connection to Robot contoller", GH_ParamAccess.list);
         }
 
-        /// <summary>
-        /// This is the method that actually does the work.
-        /// </summary>
-        /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
+            bool connect = false;
             bool activate = false;
             bool scan = false;
             bool kill = false;
             bool clear = false;
             List<string> ipAddresses = new List<string>();
-            int index = 0;
-            bool connect = false;
-         
+            int index = 0;         
           
             if (!DA.GetData("Activate", ref activate)) ;
             if (!DA.GetData("Scan", ref scan)) ;
@@ -143,8 +122,7 @@ namespace Axis.Online
             if (logOption)
             {
                 if (!DA.GetData("Clear", ref clear)) ;
-            }
-            
+            }            
             this.controllerIndex = index;
 
             if (activate)
@@ -164,7 +142,7 @@ namespace Axis.Online
 
                     if (controllers.Length > 0)
                     {
-                        log.Add("Controllers found:");
+                        log.Add("Found controllers:");
 
                         // List the controller names that were found on the network.
                         for (int i = 0; i < controllers.Length; i++)
@@ -209,9 +187,6 @@ namespace Axis.Online
                         //set the pivot of the new object
                         vl.Attributes.Pivot = new System.Drawing.PointF(currPivot.X - 210, currPivot.Y - 11);
                         Params.Input[3].AddSource(vl);
-
-
-
                     }
                     else
                     {
@@ -227,7 +202,6 @@ namespace Axis.Online
                                 delInputs.Add(sources[i]);
                             }
                         }
-
                     }
 
                     // Find out what this is doing and why
@@ -238,9 +212,7 @@ namespace Axis.Online
                     doc.DeselectAll();
                     doc.UndoUtil.RecordAddObjectEvent("Create Accent List", objs);
                     doc.MergeDocument(docIO.Document);
-
                     doc.ScheduleSolution(10, createValuelist);
-
                 }
 
                 if (kill && controller != null)
@@ -248,8 +220,7 @@ namespace Axis.Online
                     controller.Logoff();
                     controller.Dispose();
                     controller = null;
-
-                    log.Add("Process killed! Abandon ship!");
+                    log.Add("Process killed, everything aborted!");
                 }
 
                 if (clear)
@@ -304,15 +275,11 @@ namespace Axis.Online
                         {
                             log.Add("Selected controller not available.");
                         }
-
                         ControllerID = controllerID;
                     }
                     else
                     {
-                        if (controller != null)
-                        {
-                            return;
-                        }
+                        if (controller != null) { return; }
                         else
                         {
                             string exceptionMessage = "No robot controllers found on network.";
@@ -328,28 +295,21 @@ namespace Axis.Online
                     DA.SetDataList("Log", log);
                 }
 
-
                 if (controller != null)
                 {
                     AxisController myAxisController = new AxisController(controller);
                     DA.SetData(0, myAxisController);
-
                 }
                 else { DA.SetData(0, "No active connection"); }
-            }
-            
+            }            
         }
-
-
-
-        /// <summary>
-        /// Additional Input and Output parameters for the component
-        /// </summary>
+               
         // Build a list of optional input parameters
         IGH_Param[] inputParams = new IGH_Param[1]
         {
             new Param_Boolean() { Name = "Clear", NickName = "Clear", Description = "Clear the communication log.", Access = GH_ParamAccess.item, Optional = true},
         };
+
         // Build a list of optional output parameters
         IGH_Param[] outputParams = new IGH_Param[1]
         {
@@ -381,11 +341,9 @@ namespace Axis.Online
                 Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Log"), true);
                 logOptionOut = false;
             }
-
             ExpireSolution(true);
         }
-
-
+        
         // Register the new input parameters to our component.
         private void AddInput(int index)
         {
@@ -405,12 +363,12 @@ namespace Axis.Online
                         break;
                     }
                 }
-
                 Params.RegisterInputParam(parameter, insertIndex);
             }
             Params.OnParametersChanged();
             ExpireSolution(true);
         }
+
         // Register the new output parameters to our component.
         private void AddOutput(int index)
         {
@@ -434,7 +392,6 @@ namespace Axis.Online
                 Params.RegisterOutputParam(parameter, insertIndex);
             }
             Params.OnParametersChanged();
-
             ExpireSolution(true);
         }
 
@@ -454,32 +411,20 @@ namespace Axis.Online
             return base.Read(reader);
         }
 
-        /// <summary>
-        /// Implement this interface in your component if you want to enable variable parameter UI.
-        /// </summary>
         bool IGH_VariableParameterComponent.CanInsertParameter(GH_ParameterSide side, int index) => false;
         bool IGH_VariableParameterComponent.CanRemoveParameter(GH_ParameterSide side, int index) => false;
         IGH_Param IGH_VariableParameterComponent.CreateParameter(GH_ParameterSide side, int index) => null;
         bool IGH_VariableParameterComponent.DestroyParameter(GH_ParameterSide side, int index) => false;
         void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
 
-
-        /// <summary>
-        /// Provides an Icon for the component.
-        /// </summary>
         protected override System.Drawing.Bitmap Icon
         {
             get
             {
-                //You can add image files to your project resources and access them like this:
-                // return Resources.IconForThisComponent;
                 return Properties.Resources.Connect;
             }
         }
 
-        /// <summary>
-        /// Gets the unique ID for this component. Do not change this ID after release.
-        /// </summary>
         public override Guid ComponentGuid
         {
             get { return new Guid("20538b5a-c2f6-4b3e-ab91-e59104ff2c71"); }

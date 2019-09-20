@@ -15,13 +15,9 @@ namespace Axis.Online
 {
     public class AxisController
     {
-        // Methods
         public Controller axisController { get; set; }
         public string axisControllerModel { get;}
         public bool axisControllerState { get;  }
-
-        // To be depricatdd
-        //public string axisControllerType { get; }
 
         // Constructors
         public AxisController(Controller controller)
@@ -37,7 +33,6 @@ namespace Axis.Online
             this.axisControllerModel = model;
             this.axisControllerState = conected;
         }
-
        
         // Custom casting
         public static implicit operator Controller(AxisController controller) {
@@ -53,6 +48,4 @@ namespace Axis.Online
         // Overrides
         public override string ToString(){ return "Axis.Controller";} 
     }
-
-
 }
