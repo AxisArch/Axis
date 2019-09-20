@@ -336,6 +336,8 @@
     <Compile Include="IO\GetDI.cs" />
     <Compile Include="IO\SetDO.cs" />
     <Compile Include="Online\AxisControllers.cs" />
+    <Compile Include="Online\Monitoring.cs" />
+    <Compile Include="Online\Toolbox.cs" />
     <Compile Include="Online\Connect.cs" />
     <Compile Include="Online\SetModule.cs" />
     <Compile Include="Online\StartStop.cs" />
@@ -532,6 +534,15 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Streaming.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\EmergencyStop.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\MotorOff.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\UnknownMotorState.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
