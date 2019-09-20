@@ -35,6 +35,8 @@ namespace Axis.Online
         public Controller controllers = null;
         private Task[] tasks = null;
 
+        ControllerState motorState = ControllerState.Init;
+
         /// <summary>
         /// Initializes a new instance of the MyComponent1 class.
         /// </summary>
@@ -98,6 +100,12 @@ namespace Axis.Online
                 else { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No active controller connected"); return; }
 
                 tasks = abbController.Rapid.GetTasks();
+                if (motorState != abbController.State)
+                {
+                    motorState = abbController.State;
+                    DestroyIconCache();
+                }
+
 
                 if (resetPP && abbController != null)
                 {
@@ -317,7 +325,22 @@ namespace Axis.Online
             {
                 //You can add image files to your project resources and access them like this:
                 // return Resources.IconForThisComponent;
-                return Properties.Resources.Star_Stop;
+                if (motorState == ControllerState.MotorsOn)
+                {
+                    return Properties.Resources.Star_Stop;
+                }
+                if (motorState == ControllerState.MotorsOff)
+                {
+                    return Properties.Resources.MotorOff;
+                }
+                if (motorState == ControllerState.EmergencyStop)
+                {
+                    return Properties.Resources.EmergencyStop;
+                }
+                else
+                {
+                    return Properties.Resources.UnknownMotorState;
+                }
             }
         }
 
