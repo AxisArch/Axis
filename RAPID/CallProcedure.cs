@@ -28,7 +28,7 @@ namespace Axis.RAPID
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddTextParameter("Name", "Name", "Name of procedure to call.", GH_ParamAccess.item, "Hello");
-            pManager.AddTextParameter("Arguments", "Args", "Optional procedure arguments.", GH_ParamAccess.list, @"string 'Robo'");
+            pManager.AddTextParameter("Arguments", "Args", "Optional procedure arguments.", GH_ParamAccess.list);
             pManager[1].Optional = true;
         }
 
@@ -58,7 +58,7 @@ namespace Axis.RAPID
             }
             else
             {
-                string proc = strName + "(" + ")" + ";";
+                string proc = strName + ";";
                 strProc.Add(proc);
             }
 
