@@ -27,10 +27,8 @@ namespace Axis.Online
         // Optionable Log
         bool logOption = false;
         bool logOptionOut = false;
-        bool lQOption = false;
 
         List<string> Status { get; set; }
-
 
         Controller controller = null;
         Task[] tasks = null;
@@ -56,10 +54,6 @@ namespace Axis.Online
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddGenericParameter("Controller", "Controller", "Recives the output from a controller module", GH_ParamAccess.item);
-            pManager.AddBooleanParameter("TCP", "TCP", "Opional monitoring of the TCP.", GH_ParamAccess.item, false);
-            pManager.AddBooleanParameter("IO", "IO", "Opional monitoring of the IO system. (Only signals registered as common will be monitored.)", GH_ParamAccess.item, false);
-            // Inputs optional
-            for (int i = 0; i < 5; ++i) { pManager[i].Optional = true; }
         }
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
@@ -70,31 +64,36 @@ namespace Axis.Online
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            bool clear = false;
-            bool lqclear = false;
-            bool monitorTCP = false;
-            bool monitorIO = false;
-            bool stream = false;
-
             GH_ObjectWrapper controller = new GH_ObjectWrapper();
             Controller abbController = null;
-            IpcMessage message = new IpcMessage();
-            Target targ = null;
 
             if (!DA.GetData("Controller", ref controller)) ;
-            if (!DA.GetData("TCP", ref monitorTCP)) ;
-            if (!DA.GetData("IO", ref monitorIO)) ;
-
-            // Current robot positions and rotations
-            double cRobX = 0; double cRobY = 0; double cRobZ = 0;
-            double cRobQ1 = 0; double cRobQ2 = 0; double cRobQ3 = 0; double cRobQ4 = 0;
-            Quaternion cRobQuat = new Quaternion();
 
             //Check for valid input, else top execuion
             AxisController myAxisController = controller.Value as AxisController;
             if ((myAxisController != null) && (myAxisController.axisControllerState == true))
                 abbController = myAxisController;
             else { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No active controller connected."); return; }
+
+            bool monitorTCP = true;
+            bool monitorIO = true;
+
+            bool clear = false;
+
+
+            //Target targ = null;
+
+
+
+
+            tasks = abbController.Rapid.GetTasks();
+
+            // Current robot positions and rotations
+            double cRobX = 0; double cRobY = 0; double cRobZ = 0;
+            double cRobQ1 = 0; double cRobQ2 = 0; double cRobQ3 = 0; double cRobQ4 = 0;
+            Quaternion cRobQuat = new Quaternion();
+            
+
 
             // TCP monitoring
             if (monitorTCP)
@@ -185,23 +184,19 @@ namespace Axis.Online
         }
 
         // Build a list of optional input parameters
-        IGH_Param[] inputParams = new IGH_Param[2]
+        IGH_Param[] inputParams = new IGH_Param[1]
         {
             new Param_Boolean() { Name = "Clear", NickName = "Clear", Description = "Clear the communication log.", Access = GH_ParamAccess.item, Optional = true},
-            new Param_Boolean() { Name = "Clear Local Queue", NickName = "Clear LQ", Description = "Clear the the local Queue", Access = GH_ParamAccess.item, Optional = true},
         };
         // Build a list of optional output parameters
-        IGH_Param[] outputParams = new IGH_Param[2]
+        IGH_Param[] outputParams = new IGH_Param[1]
         {
-            new Param_String() { Name = "Steaming Module", NickName = "SMod", Description = "Module that needsa to be running on the controller for streaming live targets"},
             new Param_String() { Name = "Log", NickName = "Log", Description = "Log checking the connection status"},
         };
 
         // The following functions append menu items and then handle the item clicked event.
         protected override void AppendAdditionalComponentMenuItems(System.Windows.Forms.ToolStripDropDown menu)
         {
-            ToolStripMenuItem LQueue = Menu_AppendItem(menu, "Local Queue", lQueue_Click, true, lQOption);
-            LQueue.ToolTipText = "This will enable a local queue";
             ToolStripMenuItem log = Menu_AppendItem(menu, "Log", log_Click, true, logOption);
             log.ToolTipText = "Activate the log output";
 
@@ -224,22 +219,6 @@ namespace Axis.Online
                 Params.UnregisterInputParameter(Params.Input.FirstOrDefault(x => x.Name == "Clear"), true);
                 Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Log"), true);
                 logOptionOut = false;
-            }
-
-            //ExpireSolution(true);
-        }
-        private void lQueue_Click(object sender, EventArgs e)
-        {
-            RecordUndoEvent("Local Queue");
-            lQOption = !lQOption;
-
-            if (lQOption)
-            {
-                AddInput(1);
-            }
-            else
-            {
-                Params.UnregisterInputParameter(Params.Output.FirstOrDefault(x => x.Name == "Steaming Module"), true);
             }
 
             //ExpireSolution(true);
@@ -302,7 +281,6 @@ namespace Axis.Online
         {
             writer.SetBoolean("LogOptionSetModule", this.logOption);
             writer.SetBoolean("LogOptionSetOutModule", this.logOptionOut);
-            writer.SetBoolean("Local Queue", this.lQOption);
             return base.Write(writer);
         }
 
@@ -311,7 +289,6 @@ namespace Axis.Online
         {
             this.logOption = reader.GetBoolean("LogOptionSetModule");
             this.logOptionOut = reader.GetBoolean("LogOptionSetOutModule");
-            this.lQOption = reader.GetBoolean("Local Queue");
             return base.Read(reader);
         }
 
@@ -333,7 +310,7 @@ namespace Axis.Online
             {
                 //You can add image files to your project resources and access them like this:
                 // return Resources.IconForThisComponent;
-                return Properties.Resources.Streaming;
+                return Properties.Resources.DigitalIn;
             }
         }
 
