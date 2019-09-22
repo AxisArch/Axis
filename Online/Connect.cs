@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using System.Collections.Generic;
 
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
@@ -181,66 +182,16 @@ namespace Axis.Online
                     updateVL = false;
                     docIO.Document = new GH_Document();
 
-                    //instantiate  new value list and clear it
-                    vl.ListItems.Clear();
-                    vl.NickName = "Controller";
-                    vl.Name = "Controller";
+                    GH_Document doc = OnPingDocument();
+                    List<KeyValuePair<string,string>> values = new List<KeyValuePair<string, string>>();
 
                     //Create values for list and populate it
                     for (int i = 0; i < controllers.Length; ++i)
                     {
-                        var item = new Grasshopper.Kernel.Special.GH_ValueListItem(controllers[i].ControllerName + " - " + controllers[i].Name, i.ToString());
-                        vl.ListItems.Add(item);
+                        values.Add(new KeyValuePair<string, string>(controllers[i].ControllerName + " - " + controllers[i].Name, i.ToString()));
                     }
 
-                    //get active GH doc else abort
-                    GH_Document doc = OnPingDocument();
-                    if (docIO.Document == null) return;
-                    doc.MergeDocument(docIO.Document);
-
-                    //Create or replace input
-                    if (Params.Input[3].Sources.Count == 0)
-                    {
-                        // place the object
-                        docIO.Document.AddObject(vl, false, 1);
-
-                        //get the pivot of the "accent" param
-                        System.Drawing.PointF currPivot = Params.Input[3].Attributes.Pivot;
-                        //set the pivot of the new object
-                        vl.Attributes.Pivot = new System.Drawing.PointF(currPivot.X - 210, currPivot.Y - 11);
-                        Params.Input[3].AddSource(vl);
-
-
-
-                    }
-                    else
-                    {
-                        IList<IGH_Param> sources = this.Params.Input[3].Sources;
-                        for (int i = 0; i< sources.Count; ++i)
-                        {
-                            if (sources[i].Name == "Value List" | sources[i].Name == "Controller")
-                            {
-                                //get the pivot of the "source" value list
-                                System.Drawing.PointF currPivot = sources[i].Attributes.Pivot;
-                                //set the pivot of the new object
-                                vl.Attributes.Pivot = new System.Drawing.PointF(currPivot.X, currPivot.Y);
-                                delInputs.Add(sources[i]);
-                            }
-                        }
-
-                    }
-
-                    // Find out what this is doing and why
-                    docIO.Document.SelectAll();
-                    docIO.Document.ExpireSolution();
-                    docIO.Document.MutateAllIds();
-                    IEnumerable<IGH_DocumentObject> objs = docIO.Document.Objects;
-                    doc.DeselectAll();
-                    doc.UndoUtil.RecordAddObjectEvent("Create Accent List", objs);
-                    doc.MergeDocument(docIO.Document);
-
-                    doc.ScheduleSolution(10, createValuelist);
-
+                    Toolbox.SetValueList(doc, this, 3, values, "Controller");
                 }
 
                 if (kill && controller != null)

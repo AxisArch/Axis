@@ -100,11 +100,14 @@ namespace Axis.Online
                 else { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No active controller connected"); return; }
 
                 tasks = abbController.Rapid.GetTasks();
+
+                // Check motor state and set icon
                 if (motorState != abbController.State)
                 {
                     motorState = abbController.State;
                     DestroyIconCache();
                 }
+
 
 
                 if (resetPP && abbController != null)
