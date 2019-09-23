@@ -22,18 +22,7 @@ namespace Axis.Online
             if (docIO.Document == null) return;
             doc.MergeDocument(docIO.Document);
 
-            //instantiate  new value list and clear it
-            GH_ValueList vl = new GH_ValueList();
-            vl.ListItems.Clear();
-            vl.NickName = name;
-            vl.Name = name;
 
-            //Create values for list and populate it
-            for (int i = 0; i < valuePairs.Count; ++i)
-            {
-                var item = new GH_ValueListItem(valuePairs[i].Key, valuePairs[i].Value);
-                vl.ListItems.Add(item);
-            }
 
             // Find out what this is doing and why
             docIO.Document.SelectAll();
@@ -57,6 +46,19 @@ namespace Axis.Online
                 // If nothing has been conected create a new component
                 if (inputs == 0)
                 {
+                    //instantiate  new value list and clear it
+                    GH_ValueList vl = new GH_ValueList();
+                    vl.ListItems.Clear();
+                    vl.NickName = name;
+                    vl.Name = name;
+
+                    //Create values for list and populate it
+                    for (int i = 0; i < valuePairs.Count; ++i)
+                    {
+                        var item = new GH_ValueListItem(valuePairs[i].Key, valuePairs[i].Value);
+                        vl.ListItems.Add(item);
+                    }
+
                     //Add value list to the document
                     document.AddObject(vl, false, 1);
 
@@ -70,33 +72,28 @@ namespace Axis.Online
                 }
 
                 // If inputs exist replace the existing ones
-                /*else
+                else
                 {
                     for (int i = 0; i < inputs; ++i)
                     {
                         if (sources[i].Name == "Value List" | sources[i].Name == name)
                         {
-                            //Create a new value list vor each source
-                            docIO.Document = doc;
-                            List <Guid>  guidVL = new List<Guid> { vl.ComponentGuid };
-                            docIO.Copy(GH_ClipboardType.Global, guidVL);
-                            docIO.Paste(GH_ClipboardType.Global);
-                            docIO.Document.SelectAll();
+                            //instantiate  new value list and clear it
+                            GH_ValueList vl = new GH_ValueList();
+                            vl.ListItems.Clear();
+                            vl.NickName = name;
+                            vl.Name = name;
 
-                            docIO.Document.ExpireSolution();
-                            docIO.Document.MutateAllIds();
-                            IEnumerable<IGH_DocumentObject> pasteObjects = docIO.Document.Objects;
-                            doc.DeselectAll();
-                            //doc.UndoUtil.RecordAddObjectEvent("Create Accent List", pasteObjects);
+                            //Create values for list and populate it
+                            for (int j = 0; j < valuePairs.Count; ++j)
+                            {
+                                var item = new GH_ValueListItem(valuePairs[j].Key, valuePairs[j].Value);
+                                vl.ListItems.Add(item);
+                            }
 
-
-                            List<IGH_DocumentObject> newVL = doc.SelectedObjects();
-                            if (newVL.Count == 0) { return;  }
-
-
-                            document.AddObject(newVL[0], false, 1);
+                            document.AddObject(vl, false, 1);
                             //set the pivot of the new object
-                            newVL[0].Attributes.Pivot = sources[i].Attributes.Pivot;
+                            vl.Attributes.Pivot = sources[i].Attributes.Pivot;
                             
                             var currentSource = sources[i];
                             comp.Params.Input[InputIndex].RemoveSource(sources[i]);
@@ -105,15 +102,14 @@ namespace Axis.Online
                             document.RemoveObject(currentSource, false);
 
                             //Connect new vl
-                            //comp.Params.Input[InputIndex].AddSource();
+                            comp.Params.Input[InputIndex].AddSource(vl);
                         }
                         else
                         {
-                            //document.AddObject(vl, false, 1);
-                            //comp.Params.Input[InputIndex].AddSource(vl);
+                            //Do nothing if it dosent mach any of the above
                         }
                     }
-                }*/
+                }
             }
         }
     }
