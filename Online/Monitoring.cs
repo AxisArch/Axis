@@ -27,6 +27,7 @@ namespace Axis.Online
         // Optionable Log
         bool logOption = false;
         bool logOptionOut = false;
+        bool autoUpdate = false;
 
         List<string> Status { get; set; }
 
@@ -80,12 +81,7 @@ namespace Axis.Online
 
             bool clear = false;
 
-
-            //Target targ = null;
-
-
-
-
+            // Current Robot task
             tasks = abbController.Rapid.GetTasks();
 
             // Current robot positions and rotations
@@ -93,7 +89,6 @@ namespace Axis.Online
             double cRobQ1 = 0; double cRobQ2 = 0; double cRobQ3 = 0; double cRobQ4 = 0;
             Quaternion cRobQuat = new Quaternion();
             
-
 
             // TCP monitoring
             if (monitorTCP)
@@ -120,7 +115,8 @@ namespace Axis.Online
 
                 tcpMonitoringOn += 1; tcpMonitoringOff = 0;
 
-                ExpireSolution(true);
+
+
             }
             else if (tcpMonitoringOn > 0)
             {
@@ -151,7 +147,7 @@ namespace Axis.Online
                 }
 
                 ioMonitoringOn += 1; ioMonitoringOff = 0; // Update state switch variables for IO monitoring.
-                ExpireSolution(true);
+                //ExpireSolution(true);
             }
             else if (ioMonitoringOn > 0)
             {
@@ -181,6 +177,11 @@ namespace Axis.Online
             DA.SetDataList("IO", IOstatus);
             DA.SetData("TCP", new GH_Plane(tcp));
 
+            if (autoUpdate)
+            {
+                ExpireSolution(true);
+            }
+
         }
 
         // Build a list of optional input parameters
@@ -199,6 +200,8 @@ namespace Axis.Online
         {
             ToolStripMenuItem log = Menu_AppendItem(menu, "Log", log_Click, true, logOption);
             log.ToolTipText = "Activate the log output";
+            ToolStripMenuItem update = Menu_AppendItem(menu, "Auto Update", autoUpdate_Click, true, autoUpdate);
+            log.ToolTipText = "Activate the log output";
 
 
             //ToolStripSeparator seperator = Menu_AppendSeparator(menu);
@@ -211,7 +214,7 @@ namespace Axis.Online
             if (logOption)
             {
                 AddInput(0);
-                AddOutput(1);
+                AddOutput(0);
                 logOptionOut = true;
             }
             else
@@ -222,6 +225,12 @@ namespace Axis.Online
             }
 
             //ExpireSolution(true);
+        }
+        private void autoUpdate_Click(object sender, EventArgs e)
+        {
+            RecordUndoEvent("AutoUpdate");
+            autoUpdate = !autoUpdate;
+            ExpireSolution(true);
         }
 
         // Register the new input parameters to our component.
@@ -281,6 +290,7 @@ namespace Axis.Online
         {
             writer.SetBoolean("LogOptionSetModule", this.logOption);
             writer.SetBoolean("LogOptionSetOutModule", this.logOptionOut);
+            writer.SetBoolean("AutoUpdate", this.autoUpdate);
             return base.Write(writer);
         }
 
@@ -289,6 +299,7 @@ namespace Axis.Online
         {
             this.logOption = reader.GetBoolean("LogOptionSetModule");
             this.logOptionOut = reader.GetBoolean("LogOptionSetOutModule");
+            this.autoUpdate = reader.GetBoolean("AutoUpdate");
             return base.Read(reader);
         }
 

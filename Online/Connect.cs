@@ -55,33 +55,6 @@ namespace Axis.Online
         List<IGH_Param> delInputs = new List<IGH_Param>();
         Grasshopper.Kernel.Special.GH_ValueList vl = new Grasshopper.Kernel.Special.GH_ValueList();
 
-        // Callbacks
-        private void createValuelist(GH_Document doc)
-        {
-            //try { Params.Input[3].RemoveAllSources(); }
-            //catch { }
-            if (delInputs != null && delInputs.Count > 0)
-            {
-                doc.AddObject(vl, false, 1);
-
-                for (int i = 0; i < delInputs.Count; ++i)
-                {
-                    Params.Input[3].RemoveSource(delInputs[i]);
-                    delInputs[i].IsolateObject();
-                    doc.RemoveObject(delInputs[i], false);
-                    doc.AddObject(vl, false, 1);
-                }
-                Params.Input[3].AddSource(vl);
-            }
-
-            if (false)
-            {
-                
-            }
-            
-
-            delInputs.Clear();
-        }
 
         /// <summary>
         /// Initializes a new instance of the Controller class.
