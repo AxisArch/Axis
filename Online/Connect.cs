@@ -51,7 +51,6 @@ namespace Axis.Online
         GH_Document GrasshopperDocument;
         IGH_Component Component;
 
-        GH_DocumentIO docIO = new GH_DocumentIO();
         List<IGH_Param> delInputs = new List<IGH_Param>();
         Grasshopper.Kernel.Special.GH_ValueList vl = new Grasshopper.Kernel.Special.GH_ValueList();
 
@@ -153,7 +152,6 @@ namespace Axis.Online
                 if (updateVL && (controllers != null))
                 {
                     updateVL = false;
-                    docIO.Document = new GH_Document();
 
                     GH_Document doc = OnPingDocument();
                     List<KeyValuePair<string,string>> values = new List<KeyValuePair<string, string>>();
