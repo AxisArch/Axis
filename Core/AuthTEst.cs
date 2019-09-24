@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using System.Collections.Generic;
 
 using Grasshopper.Kernel;
@@ -27,6 +28,8 @@ namespace Axis.Core
             List<string> log = new List<string>();
             bool loggedIn = Default.LoggedIn;
             System.DateTime lastLogin = Default.LastLoggedIn;
+
+            log.Add("Axis Version Number: " + Assembly.GetExecutingAssembly().GetName().Version);
 
             if (Default.LoggedIn)
             {
