@@ -204,7 +204,7 @@ namespace Axis.Core
 
             // ******** Check that this works
             // Colour mesh
-            robMesh = Util.ColorMeshes(robMesh, colors);
+            //robMesh = Util.ColorMeshes(robMesh, colors);
 
             // Output data
             DA.SetDataList(0, robMesh);
