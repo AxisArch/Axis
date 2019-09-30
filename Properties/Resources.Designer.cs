@@ -153,6 +153,16 @@ namespace Axis.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap EmergencyStop {
+            get {
+                object obj = ResourceManager.GetObject("EmergencyStop", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap Export {
             get {
                 object obj = ResourceManager.GetObject("Export", resourceCulture);
@@ -256,6 +266,16 @@ namespace Axis.Properties {
         internal static System.Drawing.Bitmap MethodControl {
             get {
                 object obj = ResourceManager.GetObject("MethodControl", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap MotorOff {
+            get {
+                object obj = ResourceManager.GetObject("MotorOff", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -466,6 +486,16 @@ namespace Axis.Properties {
         internal static System.Drawing.Bitmap Tool {
             get {
                 object obj = ResourceManager.GetObject("Tool", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap UnknownMotorState {
+            get {
+                object obj = ResourceManager.GetObject("UnknownMotorState", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

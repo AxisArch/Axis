@@ -12,19 +12,21 @@
 !        num ZoneOrg;
     ENDRECORD
     
-    RECORD SE
-        string Hello;
+    RECORD ME
+        string Text;
     ENDRECORD
  
-    PERS tooldata StreamingTool:=[TRUE,[[31.6965,61.8812,133.379],[0.207982,0.10829,0.44888,0.862278]],[1,[0,0,1E-04],[1,0,0,0],0,0,0]];
-    VAR speeddata StreamingSpeed:=[ 100, 20, 200, 15 ];
-    VAR zonedata StreamingZone:=[False, 0.3, 0.3, 0.3, 0.03, 0.3, 0.03 ];
+    PERS tooldata StreamingTool:=[TRUE,[[0,0,0],[1,0,0,0]],[1,[0,0,1E-04],[1,0,0,0],0,0,0]];
+    VAR speeddata StreamingSpeed:= [ 100, 20, 200, 15 ];
+    !VAR zonedata StreamingZone:= [False, 0.3, 0.3, 0.3, 0.03, 0.3, 0.03 ];
+    VAR zonedata StreamingZone:= [False, 150, 150, 10, 1.5, 150, 1.5 ];
 
     VAR bool flag:=FALSE;
     VAR intnum connectionNumber;
     VAR SD MyData;
+    VAR ME Message;
 
-    PROC main()
+    PROC main()    
         ConfL \Off;
         ConfJ \Off;
         CONNECT connectionNumber WITH Process;
@@ -78,10 +80,12 @@
                 MoveAbsJ [MyData.JointTarget, [0, 0, 9E9, 9E9, 9E9, 9E9]], StreamingSpeed, StreamingZone, StreamingTool;
                 RestoPath;               
             ENDIF
-            
-        ENDIF
-        IF header.datatype="SE" THEN    
-            RMQGetMsgData msg, MyData;
-        ENDIF
+
+        ELSEIF header.datatype="ME" THEN    
+            RMQGetMsgData msg, Message;
+            TPWrite Message.Text;
+		ELSE
+			TPWrite "Unknown data received from Axis...";
+		ENDIF
     ENDTRAP
 ENDMODULE

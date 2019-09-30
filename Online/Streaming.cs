@@ -69,25 +69,19 @@ namespace Axis.Online
         {
             pManager.AddGenericParameter("Controller", "Controller", "Recives the output from a controller module", GH_ParamAccess.item);
             pManager.AddBooleanParameter("Stream", "Stream", "Begin streaming to the robot.", GH_ParamAccess.item, false);
-            pManager.AddBooleanParameter("TCP", "TCP", "Opional monitoring of the TCP.", GH_ParamAccess.item, false);
-            pManager.AddBooleanParameter("IO", "IO", "Opional monitoring of the IO system. (Only signals registered as common will be monitored.)", GH_ParamAccess.item, false);
             pManager.AddGenericParameter("Target", "Target", "Target for robot positioning.", GH_ParamAccess.item);
             // Inputs optional
-            for (int i = 0; i < 5; ++i){pManager[i].Optional = true;}
+            for (int i = 1; i < 3; ++i){pManager[i].Optional = true;}
         }
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddTextParameter("IO", "IO", "IO status.", GH_ParamAccess.list);
-            pManager.AddPlaneParameter("TCP", "TCP", "TCP status.", GH_ParamAccess.item);
         }
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             bool clear = false;
             bool lqclear = false;
-            bool monitorTCP = false;
-            bool monitorIO = false;
             bool stream = false;
 
             GH_ObjectWrapper controller = new GH_ObjectWrapper();
@@ -97,8 +91,6 @@ namespace Axis.Online
 
             if (!DA.GetData("Controller", ref controller)) ;
             if (!DA.GetData("Stream", ref stream)) ;
-            if (!DA.GetData("TCP", ref monitorTCP)) ;
-            if (!DA.GetData("IO", ref monitorIO)) ;
             if (!DA.GetData("Target", ref targ)) ;
             if (logOption)
                 if (!DA.GetData("Clear", ref clear)) ;
@@ -132,71 +124,6 @@ namespace Axis.Online
                 log.Add("Rapid Message Queue ID:" + queueID.ToString() + ".");
                 log.Add("Rapid Message Queue Name:" + queueName + ".");
                 RobotQueue = robotQueue;                
-            }
-
-            // TCP monitoring
-            if (monitorTCP)
-            {
-                if (tcpMonitoringOn == 0)
-                    log.Add("TCP monitoring started.");
-
-                cRobTarg = tasks[0].GetRobTarget();
-
-                cRobX = Math.Round(cRobTarg.Trans.X, 3);
-                cRobY = Math.Round(cRobTarg.Trans.Y, 3);
-                cRobZ = Math.Round(cRobTarg.Trans.Z, 3);
-
-                Point3d cRobPos = new Point3d(cRobX, cRobY, cRobZ);
-
-                cRobQ1 = Math.Round(cRobTarg.Rot.Q1, 5);
-                cRobQ2 = Math.Round(cRobTarg.Rot.Q2, 5);
-                cRobQ3 = Math.Round(cRobTarg.Rot.Q3, 5);
-                cRobQ4 = Math.Round(cRobTarg.Rot.Q4, 5);
-
-                cRobQuat = new Quaternion(cRobQ1, cRobQ2, cRobQ3, cRobQ4);
-                tcp = Util.QuaternionToPlane(cRobPos, cRobQuat);
-
-                tcpMonitoringOn += 1; tcpMonitoringOff = 0;
-                ExpireSolution(true);
-            }
-            else if (tcpMonitoringOn > 0)
-            {
-                if (tcpMonitoringOff == 0)
-                    log.Add("TCP monitoring stopped.");
-                tcpMonitoringOff += 1; tcpMonitoringOn = 0;
-            }
-
-            // If active, update the status of the IO system.
-            if (monitorIO)
-            {
-                if (ioMonitoringOn == 0)
-                {
-                    log.Add("Signal monitoring started.");
-                }
-
-                // Filter only the digital IO system signals.
-                IOFilterTypes dSignalFilter = IOFilterTypes.Common;
-                SignalCollection dSignals = abbController.IOSystem.GetSignals(dSignalFilter);
-
-                IOstatus.Clear();
-                // Iterate through the found collection and print them to the IO monitoring list.
-                foreach (Signal signal in dSignals)
-                {
-                    string sigVal = signal.ToString() + ": " + signal.Value.ToString();
-                    IOstatus.Add(sigVal);
-                }
-
-                ioMonitoringOn += 1; ioMonitoringOff = 0; // Update state switch variables for IO monitoring.
-                ExpireSolution(true);
-            }
-            else if (ioMonitoringOn > 0)
-            {
-                if (ioMonitoringOff == 0)
-                {
-                    log.Add("Signal monitoring stopped.");
-                }
-
-                ioMonitoringOff += 1; ioMonitoringOn = 0;
             }
 
             // Stream a target to a controller
@@ -243,7 +170,7 @@ namespace Axis.Online
                     zone.PathRadius = targ.Zone.PathRadius;
                     zone.PathOrient = targ.Zone.PathOrient;
 
-                    // Create streaming tool - otherwise grab current tool, pos etc. as first initialisation.
+                    //streemingTool
 
                     string content = "SD;[" +
                             "\"" + 
@@ -275,7 +202,7 @@ namespace Axis.Online
                         /*
                         if (lQOption)
                             LocalQueue.Enqueue(message);
-                        */
+                            */
                     }
                     /*
                     if (LocalQueue.Count != 0 && lQOption)
@@ -308,10 +235,6 @@ namespace Axis.Online
                 Status = log;
                 DA.SetDataList("Log", log);
             }
-
-            // Output IO & TCP
-            DA.SetDataList("IO", IOstatus);
-            DA.SetData("TCP", new GH_Plane(tcp));
 
             //Output module file to prime controller for straming
             if (modOption)
@@ -374,6 +297,8 @@ namespace Axis.Online
                 Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Log"), true);
                 logOptionOut = false;
             }
+
+            //ExpireSolution(true);
         }
         private void mod_Click(object sender, EventArgs e)
         {
@@ -388,6 +313,8 @@ namespace Axis.Online
             {
                 Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Steaming Module"), true);
             }
+
+            //ExpireSolution(true);
         }
         private void lQueue_Click(object sender, EventArgs e)
         {
@@ -402,6 +329,8 @@ namespace Axis.Online
             {
                 Params.UnregisterInputParameter(Params.Output.FirstOrDefault(x => x.Name == "Steaming Module"), true);
             }
+
+            //ExpireSolution(true);
         }
 
         // Register the new input parameters to our component.
