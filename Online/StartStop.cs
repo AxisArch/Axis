@@ -37,9 +37,6 @@ namespace Axis.Online
 
         ControllerState motorState = ControllerState.Init;
 
-        /// <summary>
-        /// Initializes a new instance of the MyComponent1 class.
-        /// </summary>
         public StartStop()
           : base("Start/Stop", "Start/Stop",
               "Controll a programm running on a robot controller",
@@ -47,9 +44,7 @@ namespace Axis.Online
         {
         }
 
-        /// <summary>
-        /// Registers all the input parameters for this component.
-        /// </summary>
+
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddGenericParameter("Controller", "Controller", "Recives the output from a controller module", GH_ParamAccess.list);
@@ -58,17 +53,11 @@ namespace Axis.Online
             pManager.AddBooleanParameter("Stop", "Stop", "Stop the default task on the controller.", GH_ParamAccess.item, false);
         }
 
-        /// <summary>
-        /// Registers all the output parameters for this component.
-        /// </summary>
+
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
         }
 
-        /// <summary>
-        /// This is the method that actually does the work.
-        /// </summary>
-        /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             List<GH_ObjectWrapper> controllers = new List<GH_ObjectWrapper>();
@@ -197,9 +186,7 @@ namespace Axis.Online
             }
         }
 
-        /// <summary>
-        /// Additional Input and Output parameters for the component
-        /// </summary>
+
         // Build a list of optional input parameters
         IGH_Param[] inputParams = new IGH_Param[1]
         {
@@ -236,8 +223,6 @@ namespace Axis.Online
                 Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Log"), true);
                 logOptionOut = false;
             }
-
-            //ExpireSolution(true);
         }
 
 
@@ -309,9 +294,7 @@ namespace Axis.Online
             return base.Read(reader);
         }
 
-        /// <summary>
-        /// Implement this interface in your component if you want to enable variable parameter UI.
-        /// </summary>
+
         bool IGH_VariableParameterComponent.CanInsertParameter(GH_ParameterSide side, int index) => false;
         bool IGH_VariableParameterComponent.CanRemoveParameter(GH_ParameterSide side, int index) => false;
         IGH_Param IGH_VariableParameterComponent.CreateParameter(GH_ParameterSide side, int index) => null;
@@ -319,15 +302,11 @@ namespace Axis.Online
         void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
 
 
-        /// <summary>
-        /// Provides an Icon for the component.
-        /// </summary>
+
         protected override System.Drawing.Bitmap Icon
         {
             get
             {
-                //You can add image files to your project resources and access them like this:
-                // return Resources.IconForThisComponent;
                 if (motorState == ControllerState.MotorsOn)
                 {
                     return Properties.Resources.Star_Stop;
@@ -347,9 +326,7 @@ namespace Axis.Online
             }
         }
 
-        /// <summary>
-        /// Gets the unique ID for this component. Do not change this ID after release.
-        /// </summary>
+
         public override Guid ComponentGuid
         {
             get { return new Guid("1dca8994-0a96-4454-a5bb-28c8bd911829"); }

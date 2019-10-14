@@ -39,9 +39,6 @@ namespace Axis.Online
         private List<string> log = new List<string>();
 
 
-        /// <summary>
-        /// Initializes a new instance of the WriteModuleToControler class.
-        /// </summary>
         public SetModule()
           : base("Set Module", "Set Mod",
               "Set the main module on the robot controller",
@@ -49,9 +46,6 @@ namespace Axis.Online
         {
         }
 
-        /// <summary>
-        /// Registers all the input parameters for this component.
-        /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddGenericParameter("Controller", "Controller", "Recives the output from a controller module", GH_ParamAccess.item);
@@ -60,17 +54,11 @@ namespace Axis.Online
             pManager[1].Optional = true;
         }
 
-        /// <summary>
-        /// Registers all the output parameters for this component.
-        /// </summary>
+
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
         }
 
-        /// <summary>
-        /// This is the method that actually does the work.
-        /// </summary>
-        /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             GH_ObjectWrapper controller = new GH_ObjectWrapper();
@@ -193,10 +181,6 @@ namespace Axis.Online
             //ExpireSolution(true);
         }
     
-
-        /// <summary>
-        /// Additional Input and Output parameters for the component
-        /// </summary>
         // Build a list of optional input parameters
         IGH_Param[] inputParams = new IGH_Param[1]
         {
@@ -306,18 +290,13 @@ namespace Axis.Online
             return base.Read(reader);
         }
        
-        /// <summary>
-        /// Implement this interface in your component if you want to enable variable parameter UI.
-        /// </summary>
+
         bool IGH_VariableParameterComponent.CanInsertParameter(GH_ParameterSide side, int index) => false;
         bool IGH_VariableParameterComponent.CanRemoveParameter(GH_ParameterSide side, int index) => false;
         IGH_Param IGH_VariableParameterComponent.CreateParameter(GH_ParameterSide side, int index) => null;
         bool IGH_VariableParameterComponent.DestroyParameter(GH_ParameterSide side, int index) => false;
         void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
 
-        /// <summary>
-        /// Provides an Icon for the component.
-        /// </summary>
         protected override System.Drawing.Bitmap Icon
         {
             get
@@ -328,9 +307,7 @@ namespace Axis.Online
             }
         }
 
-        /// <summary>
-        /// Gets the unique ID for this component. Do not change this ID after release.
-        /// </summary>
+
         public override Guid ComponentGuid
         {
             get { return new Guid("676a28f1-9320-4a02-a9bc-59c617dd04d0"); }
