@@ -9,6 +9,7 @@ using Grasshopper.Kernel.Special;
 
 namespace Axis.Online
 {
+    //merge this class witth Util and update refferences
     class Toolbox
     {
         static public void SetValueList(GH_Document doc,GH_Component comp, int InputIndex, List<KeyValuePair<string, string>> valuePairs, string name)
@@ -22,9 +23,6 @@ namespace Axis.Online
             if (docIO.Document == null) return;
             doc.MergeDocument(docIO.Document);
 
-
-
-            // Find out what this is doing and why
             docIO.Document.SelectAll();
             docIO.Document.ExpireSolution();
             docIO.Document.MutateAllIds();

@@ -5,9 +5,11 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 
+
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Grasshopper.Kernel.Parameters;
+
 
 using Rhino.Geometry;
 
@@ -36,17 +38,22 @@ namespace Axis.Online
         // Create a list of string to store a log of the connection status.
         private List<string> log = new List<string>();
 
-        public SetModule() : base("Set Module", "Set Mod", "Set the main module on the robot controller", "Axis", "9. Online")
+
+        public SetModule()
+          : base("Set Module", "Set Mod",
+              "Set the main module on the robot controller",
+              "Axis", "9. Online")
         {
         }
 
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddGenericParameter("Controller", "Controller", "Robot controller to send to. Use the controller component to find network controllers.", GH_ParamAccess.item);
-            pManager.AddBooleanParameter("Send", "Send", "Send the module.", GH_ParamAccess.item, false);
-            pManager.AddTextParameter("Module", "Module", "Module to be written to the controller.", GH_ParamAccess.list);
+            pManager.AddGenericParameter("Controller", "Controller", "Recives the output from a controller module", GH_ParamAccess.item);
+            pManager.AddBooleanParameter("Send", "Send", "Send to module", GH_ParamAccess.item, false);
+            pManager.AddTextParameter("Moduel", "Module", "Module to be wtritten to the controller.", GH_ParamAccess.list);
             pManager[1].Optional = true;
         }
+
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
@@ -59,9 +66,10 @@ namespace Axis.Online
             Controller abbController = null;
             bool clear = false;
 
+
             if (!DA.GetData("Controller", ref controller)) ;
             if (!DA.GetData("Send", ref send)) ;
-            if (!DA.GetDataList("Module", modFile)) { return; }
+            if (!DA.GetDataList("Moduel", modFile)){ return; }
             if (logOption)
             {
                 if (!DA.GetData("Clear", ref clear)) ;
@@ -73,11 +81,12 @@ namespace Axis.Online
             {
                 abbController = myAxisController;
             }
-            else { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No active controller connected."); return; }
+            else { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No active controller connected"); return;}
+
 
             if ((abbController != null) && send)
             {
-
+                
                 var filename = "MyModule";
                 var tempFile = Path.GetTempPath() + @"\" + filename + ".mod";
 
@@ -93,7 +102,7 @@ namespace Axis.Online
                 if (sending == false)
                 {
                     sending = true;
-                    log.Add("Sending module to controller.");
+                    log.Add("Sending moduel to controller");
                     try
                     {
                         using (Mastership m = Mastership.Request(abbController.Rapid))
@@ -105,7 +114,7 @@ namespace Axis.Online
                                 tasks[0].LoadModuleFromFile(tempFile, RapidLoadMode.Replace);
 
                                 if (File.Exists(tempFile)) { File.Delete(tempFile); }
-                                log.Add("Program loaded to virtual controller.");
+                                log.Add("Program has been loaded to virtual controler");
                                 sending = false;
                             }
                             else
@@ -121,32 +130,39 @@ namespace Axis.Online
                                         abbController.FileSystem.RemoveFile(@"Axis/AxisModule.mod");
                                     }
                                 }
-                                else { abbController.FileSystem.CreateDirectory(@"Axis"); }
+                                else
+                                {
+                                    abbController.FileSystem.CreateDirectory(@"Axis");
+                                }
 
-                                // Delete all previouse tasks
-                                for (int i = 0; i < tasks.Length; ++i) { tasks[i].DeleteProgram(); }
+                                //Delete all previouse tasks
+                                for (int i=0; i < tasks.Length; ++i) { tasks[i].DeleteProgram(); }
 
-                                // Load module 
+                                //Code 
                                 abbController.FileSystem.PutFile(tempFile, @"Axis/AxisModule.mod");
-                                var success = tasks[0].LoadModuleFromFile(@"Axis/AxisModule.mod", RapidLoadMode.Replace);
+                                var sucsess = tasks[0].LoadModuleFromFile(@"Axis/AxisModule.mod", RapidLoadMode.Replace);
 
-                                if (success) { log.Add("Program loaded to robot controller."); }
-                                else { log.Add("The program contains errors and cannot be loaded."); }
+                                if (sucsess)
+                                {
+                                    log.Add("Program has been loaded to controler");
+                                }
+                                else
+                                {
+                                    log.Add("The program contains at least one error and cannot be loaded");
+                                }
 
                                 if (File.Exists(tempFile)) { File.Delete(tempFile); }
+
                                 sending = false;
                             }
+
                         }
                     }
-                    catch (Exception e) // If we run into any problems writing to the controller.
-                    {
-                        log.Add("Can't write to controller.");
-                        log.Add(e.ToString());
-                        sending = false;
-                        if (File.Exists(tempFile)) { File.Delete(tempFile); }; return;
-                    }
+                    catch (Exception e) { log.Add("Can't write to controller"); log.Add(e.ToString()); sending = false; if (File.Exists(tempFile)) { File.Delete(tempFile); }; return; }
+                    //log.Add("Program has been loaded");
                 }
             }
+            
 
             if (clear)
             {
@@ -159,14 +175,17 @@ namespace Axis.Online
                 Status = log;
                 DA.SetDataList("Log", log);
             }
-        }
 
+            
+
+            //ExpireSolution(true);
+        }
+    
         // Build a list of optional input parameters
         IGH_Param[] inputParams = new IGH_Param[1]
         {
             new Param_Boolean() { Name = "Clear", NickName = "Clear", Description = "Clear the communication log.", Access = GH_ParamAccess.item, Optional = true},
         };
-
         // Build a list of optional output parameters
         IGH_Param[] outputParams = new IGH_Param[1]
         {
@@ -201,6 +220,7 @@ namespace Axis.Online
 
             ExpireSolution(true);
         }
+    
 
         // Register the new input parameters to our component.
         private void AddInput(int index)
@@ -221,6 +241,7 @@ namespace Axis.Online
                         break;
                     }
                 }
+
                 Params.RegisterInputParam(parameter, insertIndex);
             }
             Params.OnParametersChanged();
@@ -268,6 +289,7 @@ namespace Axis.Online
             this.logOptionOut = reader.GetBoolean("LogOptionSetOutModule");
             return base.Read(reader);
         }
+       
 
         bool IGH_VariableParameterComponent.CanInsertParameter(GH_ParameterSide side, int index) => false;
         bool IGH_VariableParameterComponent.CanRemoveParameter(GH_ParameterSide side, int index) => false;
@@ -279,9 +301,12 @@ namespace Axis.Online
         {
             get
             {
+                //You can add image files to your project resources and access them like this:
+                // return Resources.IconForThisComponent;
                 return Properties.Resources.Set_Module;
             }
         }
+
 
         public override Guid ComponentGuid
         {

@@ -5,9 +5,11 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 
+
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Grasshopper.Kernel.Parameters;
+
 
 using Rhino.Geometry;
 
@@ -33,11 +35,15 @@ namespace Axis.Online
         public Controller controllers = null;
         private Task[] tasks = null;
 
-        public StartStop() : base("Start/Stop", "Start/Stop",
+        ControllerState motorState = ControllerState.Init;
+
+        public StartStop()
+          : base("Start/Stop", "Start/Stop",
               "Controll a programm running on a robot controller",
               "Axis", "9. Online")
         {
         }
+
 
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
@@ -46,6 +52,7 @@ namespace Axis.Online
             pManager.AddBooleanParameter("Begin", "Begin", "Start the default task on the controller.", GH_ParamAccess.item, false);
             pManager.AddBooleanParameter("Stop", "Stop", "Stop the default task on the controller.", GH_ParamAccess.item, false);
         }
+
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
@@ -79,9 +86,18 @@ namespace Axis.Online
                 {
                     abbController = myAxisController;
                 }
-                else { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No active controller connected."); return; }
+                else { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No active controller connected"); return; }
 
                 tasks = abbController.Rapid.GetTasks();
+
+                // Check motor state and set icon
+                if (motorState != abbController.State)
+                {
+                    motorState = abbController.State;
+                    DestroyIconCache();
+                }
+
+
 
                 if (resetPP && abbController != null)
                 {
@@ -90,9 +106,10 @@ namespace Axis.Online
                         // Reset program pointer to main.
                         try
                         {
-                            tasks[0].ResetProgramPointer();
+                            tasks[0].ResetProgramPointer();                            
                         }
-                        catch (Exception) { log.Add("Operation not allowed in current state."); }
+                        catch (Exception){log.Add("Opperation not allowed in current state");}
+
                     }
                 }
 
@@ -115,8 +132,14 @@ namespace Axis.Online
                             log.Add("Automatic mode is required to start execution from a remote client.");
                         }
                     }
-                    catch (System.InvalidOperationException ex) { log.Add("Mastership is held by another client." + ex.Message); }
-                    catch (System.Exception ex) { log.Add("Unexpected error occurred: " + ex.Message); }
+                    catch (System.InvalidOperationException ex)
+                    {
+                        log.Add("Mastership is held by another client." + ex.Message);
+                    }
+                    catch (System.Exception ex)
+                    {
+                        log.Add("Unexpected error occurred: " + ex.Message);
+                    }
                 }
 
                 if (stop)
@@ -163,6 +186,7 @@ namespace Axis.Online
             }
         }
 
+
         // Build a list of optional input parameters
         IGH_Param[] inputParams = new IGH_Param[1]
         {
@@ -200,6 +224,7 @@ namespace Axis.Online
                 logOptionOut = false;
             }
         }
+
 
         // Register the new input parameters to our component.
         private void AddInput(int index)
@@ -245,9 +270,11 @@ namespace Axis.Online
                         break;
                     }
                 }
+
                 Params.RegisterOutputParam(parameter, insertIndex);
             }
             Params.OnParametersChanged();
+
             ExpireSolution(true);
         }
 
@@ -267,21 +294,38 @@ namespace Axis.Online
             return base.Read(reader);
         }
 
+
         bool IGH_VariableParameterComponent.CanInsertParameter(GH_ParameterSide side, int index) => false;
         bool IGH_VariableParameterComponent.CanRemoveParameter(GH_ParameterSide side, int index) => false;
         IGH_Param IGH_VariableParameterComponent.CreateParameter(GH_ParameterSide side, int index) => null;
         bool IGH_VariableParameterComponent.DestroyParameter(GH_ParameterSide side, int index) => false;
         void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
 
+
+
         protected override System.Drawing.Bitmap Icon
         {
             get
             {
-                //You can add image files to your project resources and access them like this:
-                // return Resources.IconForThisComponent;
-                return Properties.Resources.Star_Stop;
+                if (motorState == ControllerState.MotorsOn)
+                {
+                    return Properties.Resources.Star_Stop;
+                }
+                if (motorState == ControllerState.MotorsOff)
+                {
+                    return Properties.Resources.MotorOff;
+                }
+                if (motorState == ControllerState.EmergencyStop)
+                {
+                    return Properties.Resources.EmergencyStop;
+                }
+                else
+                {
+                    return Properties.Resources.UnknownMotorState;
+                }
             }
         }
+
 
         public override Guid ComponentGuid
         {
