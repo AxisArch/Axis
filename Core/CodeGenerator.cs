@@ -73,6 +73,8 @@ namespace Axis.Core
 
             List<List<string>> procs = new List<List<string>>();
             string smFileName = "Submodule";
+            string filePath = ""; // /Axis/LongCode/ or /
+            string dirHome = "RemovableDisk1:"; //  HOME: or RemovableDisk1:
 
             // Initialize lists to store the robot export code.
             List<string> RAPID = new List<string>();
@@ -310,9 +312,8 @@ namespace Axis.Core
                             "!Set directory for loading",
                             "VAR loadsession load1;",
                             "VAR loadsession load2;",
-
-                            "CONST string sDirHome:= \"HOME:\";",// might need adjustment
-                            "CONST string sFile:= \"/Axis/LongCode/\";", //might need adjustment
+                            $"CONST string sDirHome:= \"{dirHome}\"; ",
+                            $"CONST string sFile:= \"{filePath}\";",
                         };
                         declarations.AddRange(dec);
 
