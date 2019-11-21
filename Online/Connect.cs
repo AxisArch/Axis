@@ -154,7 +154,7 @@ namespace Axis.Online
                         values.Add(new KeyValuePair<string, string>(controllers[i].ControllerName + " - " + controllers[i].Name, i.ToString()));
                     }
 
-                    Toolbox.SetValueList(doc, this, 3, values, "Controller");
+                    Canvas.Component.SetValueList(doc, this, 3, values, "Controller");
                 }
 
                 if (kill && controller != null)

@@ -265,10 +265,10 @@ namespace Axis.Core
 
                     // Commands / Main Module Body
                     List<string> mainBody = new List<string>();
-                    if (progLen < bottomLim ) // Short Program
+                    if (progLen < bottomLim) // Short Program
                     {
                         mainBody.AddRange(strProgram);
-                    }             
+                    }
                     if (Enumerable.Range(bottomLim, topLim).Contains(progLen) && !ignoreLen)  // Medium length program. Will be cut into submodules
                     {
                         mainBody.AddRange(new List<string> {
@@ -287,13 +287,13 @@ namespace Axis.Core
 
                             sub.Insert(0, $"PROC {procName}()");
                             sub.Insert(sub.Count, "ENDPROC");
-                            
+
                             mainBody.Add(procName + ";"); // Add the main call.
                             procCount++;
                         }
 
                         // Add the procs from the subdivision to the custom procedures
-                        foreach (List<string> sub in subs) {customProc.AddRange(sub);}
+                        foreach (List<string> sub in subs) { customProc.AddRange(sub); }
 
                     }
                     if (progLen > topLim && !ignoreLen) // Long program. Will be split up into seperate files
@@ -323,9 +323,9 @@ namespace Axis.Core
 
                         //Insert header and footer around the Code
                         foreach (List<string> proc in procs)
-                        {     
+                        {
                             string procName = procname + procCount.ToString();
-                            proc.InsertRange(0,  new List<string>
+                            proc.InsertRange(0, new List<string>
                             {
                                 "MODULE subModule" ,
                                 $"PROC {procName}()"
@@ -345,7 +345,7 @@ namespace Axis.Core
                             $"StartLoad \\Dynamic, sDirHome \\File:= sFile + \"{smFileName}{0}.mod\", load1;",
                             $"StartLoad \\Dynamic, sDirHome \\File:= sFile + \"{smFileName}{1}.mod\", load2;",
                             ""
-                        }); 
+                        });
                         for (int i = 0; i < procCount; i += 2) // Loop through all sub programms
                         {
                             mainBody.AddRange(new List<string>
@@ -356,22 +356,22 @@ namespace Axis.Core
                                 "",
                             });
 
-                            if (i+2 < procCount) { mainBody.AddRange(new List<string>
+                            if (i + 2 < procCount) { mainBody.AddRange(new List<string>
                             {
                                 $"StartLoad \\Dynamic, sDirHome \\File:= sFile + \"{smFileName}{i+2}.mod\", load1;",
                                 //""
                             }); }
 
-                            if (i+1 < procCount){mainBody.AddRange(new List<string>
+                            if (i + 1 < procCount) { mainBody.AddRange(new List<string>
                             {
                                 "",
                                 $"WaitLoad load2;",
                                 $"% \"{procname}{i+1}\" %;",
                                 $"UnLoad sDirHome \\File:= sFile + \"{smFileName}{i+1}.mod\";",
                                 ""
-                            });}
+                            }); }
 
-                            if (i+3 < procCount) { mainBody.AddRange(new List<string>
+                            if (i + 3 < procCount) { mainBody.AddRange(new List<string>
                             {
                                 $"StartLoad \\Dynamic, sDirHome \\File:= sFile + \"{smFileName}{i+3}.mod\", load2;",
                                 ""
@@ -394,7 +394,7 @@ namespace Axis.Core
 
                     RAPID.AddRange(customProc);
                     RAPID.AddRange(Footer);
-                    
+
 
                     DA.SetDataList(0, RAPID);
                 }
@@ -414,7 +414,7 @@ namespace Axis.Core
                     }
                     else
                     {
-                        File.WriteAllLines($@"{path}\\{filename}.pgf",new List<string>
+                        File.WriteAllLines($@"{path}\\{filename}.pgf", new List<string>
                         {
                             @"<?xml version=""1.0"" encoding=""ISO-8859-1"" ?>",
                             @"<Program>",

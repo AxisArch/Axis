@@ -342,7 +342,6 @@
     <Compile Include="Online\SetModule.cs" />
     <Compile Include="Online\StartStop.cs" />
     <Compile Include="Online\Streaming.cs" />
-    <Compile Include="Online\Toolbox.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

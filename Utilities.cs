@@ -6,11 +6,13 @@ using System.IO;
 using System.Data;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Text;
 using System.Threading.Tasks;
+
 
 using Excel = Microsoft.Office.Interop.Excel;
 
@@ -21,12 +23,19 @@ using Rhino.Geometry;
 using Rhino.Input.Custom;
 using Rhino.DocObjects;
 
+using Grasshopper.Kernel;
+using Grasshopper.Kernel.Special;
+
 using Axis.Targets;
 
 using Newtonsoft.Json;
 
+/// <summary>
+/// Commone Axis specific functions
+/// </summary>
 namespace Axis
 {
+
     public static class Util
     {
         // Public constants across the plugin.
@@ -577,4 +586,305 @@ namespace Axis
             return responseTask.Result;
         }
     }
+
+}
+
+/// <summary>
+/// This namesspcae proviedes fuctions for the modification of RAPID instructions
+/// </summary>
+namespace RAPID
+{
+    /// <summary>
+    /// RAPID module
+    /// </summary>
+    public class Module : IEnumerable<string>
+    {
+        public List<string> mudule
+        { get; private set; }
+
+        List<string> tag = new List<string>
+        {
+            "! ABB Robot Code",
+            $"! Generated with Axis {Assembly.GetExecutingAssembly().GetName().Version}",
+            "! Created: " + DateTime.Now.ToString(),
+            "! Author: " + Environment.UserName.ToString(),
+            " ",
+        };
+        List<string> declarations = new List<string>
+                {
+                    "! Declarations",
+                    "VAR confdata cData := [0,-1,-1,0];",
+                    "VAR extjoint eAxis := [9E9,9E9,9E9,9E9,9E9,9E9];",
+                };
+
+        /// <summary>
+        /// Returns code formated as a RAPID program
+        /// </summary>
+        /// <param name="module">The Rapid module to be packaged as program</param>
+        /// <param name="moduleName">The progarm name</param>
+        /// <returns>A program as list</returns>
+        public Module(Program proc, string modName = "submodule")
+        {
+            var mod = new List<string>();
+            mod.Add($"PROC {modName}()");
+            mod.AddRange(tag);
+            mod.AddRange(proc);
+            mod.Add("ENDPROC");
+
+            this.mudule = mod;
+        }
+        public Module(Program proc, List<string> declarations, string modName = "submodule")
+        {
+            var mod = new List<string>();
+            mod.Add($"PROC {modName}()");
+            mod.AddRange(tag);
+            mod.AddRange(declarations);
+            mod.AddRange(proc);
+            mod.Add("ENDPROC");
+
+            this.mudule = mod;
+        }
+        /// <summary>
+        /// Constructs a RAPID program out of multime modules
+        /// </summary>
+        /// <param name="modules">List of modules to be included</param>
+        /// <param name="procName">The program name</param>
+        public Module(List<Program> procs, string modName = "submodule")
+        {
+            var mod = new List<string>();
+            mod.Add($"PROC {modName}()");
+            foreach (Program proc in procs)
+                { mod.AddRange(proc); }
+            mod.Add("ENDPROC");
+
+            this.mudule = mod;
+        }
+        public Module(List<Program> procs, List<string> declarations, string modName = "submodule")
+        {
+            var mod = new List<string>();
+            mod.Add($"PROC {modName}()");
+            mod.AddRange(declarations);
+            foreach (Program proc in procs)
+            { mod.AddRange(proc); }
+            mod.Add("ENDPROC");
+
+            this.mudule = mod;
+        }
+
+        public void Add(string item)
+        {
+            mudule.Add(item);
+        }
+        public IEnumerator<string> GetEnumerator()
+        {
+            return mudule.GetEnumerator();
+        }
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+    }
+
+    /// <summary>
+    /// RAPID program
+    /// </summary>
+    public class Program: IEnumerable<string>
+    {
+        public List<string> program
+        { get; private set; }
+
+            
+        //Commen code blocks
+        List<string> comment = new List<string>
+                {
+                    " ",
+                    "! Main Procedure",
+                };
+        List<string> progHeader = new List<string>
+                {
+                    @"ConfL \Off;",
+                    @"ConfJ \Off;"
+                };
+        List<string> progFooter = new List<string>
+                {
+                    " ",
+                    "!",
+                    @"ConfL \On;",
+                    @"ConfJ \On;",
+                };
+
+        /// <summary>
+        /// Wrap code in a RAPID programm
+        /// </summary>
+        /// <param name="code">Code to be wrapped</param>
+        /// <param name="procName">The program name</param>
+        public Program(List<string> code, string progName = "procname")
+        {
+            List<string> prog = new List<string>();
+
+            prog.Add($"PROC {progName}()");
+            prog.AddRange(code);
+            prog.Add("ENDPROC");
+            prog.Add(" ");
+
+            this.program = prog;
+        }
+        public Program(List<string> code, List<string> overrides, string progName = "procname")
+        {
+            List<string> prog = new List<string>();
+            prog.Add($"PROC {progName}()");
+            prog.AddRange(overrides);
+            prog.AddRange(code);
+            prog.Add("ENDPROC");
+
+            this.program = prog;
+        }
+
+        /// <summary>
+        /// Creates an empty RAPID program
+        /// </summary>
+        /// <param name="procName">The program name</param>
+        public Program(string procName = "procname")
+        {
+            program = new List<string> {
+                $"PROC {procName}()" ,
+                "ENDPROC"
+            };
+        }
+
+        public void Add(string item)
+        {
+            program.Add(item);
+        }
+        public IEnumerator<string> GetEnumerator()
+        {
+            return program.GetEnumerator();
+        }
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+
+
+
+    }
+}
+
+/// <summary>
+/// This namespace provides functions for canvas manipulation in Grasshopper
+/// </summary
+namespace Canvas
+{
+    /// <summary>
+    /// This class provides functions for components
+    /// </summary>
+    class Component
+    {
+        static public void SetValueList(GH_Document doc, GH_Component comp, int InputIndex, List<KeyValuePair<string, string>> valuePairs, string name)
+        {
+            if (valuePairs.Count == 0) return;
+            doc = doc;
+            comp = comp;
+            GH_DocumentIO docIO = new GH_DocumentIO();
+            docIO.Document = new GH_Document();
+
+            if (docIO.Document == null) return;
+            doc.MergeDocument(docIO.Document);
+
+            docIO.Document.SelectAll();
+            docIO.Document.ExpireSolution();
+            docIO.Document.MutateAllIds();
+            IEnumerable<IGH_DocumentObject> objs = docIO.Document.Objects;
+            doc.DeselectAll();
+            doc.UndoUtil.RecordAddObjectEvent("Create Accent List", objs);
+            doc.MergeDocument(docIO.Document);
+
+            doc.ScheduleSolution(10, chanegValuelist);
+
+
+            void chanegValuelist(GH_Document document)
+            {
+
+                IList<IGH_Param> sources = comp.Params.Input[InputIndex].Sources;
+                int inputs = sources.Count;
+
+
+                // If nothing has been conected create a new component
+                if (inputs == 0)
+                {
+                    //instantiate  new value list and clear it
+                    GH_ValueList vl = new GH_ValueList();
+                    vl.ListItems.Clear();
+                    vl.NickName = name;
+                    vl.Name = name;
+
+                    //Create values for list and populate it
+                    for (int i = 0; i < valuePairs.Count; ++i)
+                    {
+                        var item = new GH_ValueListItem(valuePairs[i].Key, valuePairs[i].Value);
+                        vl.ListItems.Add(item);
+                    }
+
+                    //Add value list to the document
+                    document.AddObject(vl, false, 1);
+
+                    //get the pivot of the "accent" param
+                    System.Drawing.PointF currPivot = comp.Params.Input[InputIndex].Attributes.Pivot;
+                    //set the pivot of the new object
+                    vl.Attributes.Pivot = new System.Drawing.PointF(currPivot.X - 210, currPivot.Y - 11);
+
+                    // Connect to input
+                    comp.Params.Input[InputIndex].AddSource(vl);
+                }
+
+                // If inputs exist replace the existing ones
+                else
+                {
+                    for (int i = 0; i < inputs; ++i)
+                    {
+                        if (sources[i].Name == "Value List" | sources[i].Name == name)
+                        {
+                            //instantiate  new value list and clear it
+                            GH_ValueList vl = new GH_ValueList();
+                            vl.ListItems.Clear();
+                            vl.NickName = name;
+                            vl.Name = name;
+
+                            //Create values for list and populate it
+                            for (int j = 0; j < valuePairs.Count; ++j)
+                            {
+                                var item = new GH_ValueListItem(valuePairs[j].Key, valuePairs[j].Value);
+                                vl.ListItems.Add(item);
+                            }
+
+                            document.AddObject(vl, false, 1);
+                            //set the pivot of the new object
+                            vl.Attributes.Pivot = sources[i].Attributes.Pivot;
+
+                            var currentSource = sources[i];
+                            comp.Params.Input[InputIndex].RemoveSource(sources[i]);
+
+                            currentSource.IsolateObject();
+                            document.RemoveObject(currentSource, false);
+
+                            //Connect new vl
+                            comp.Params.Input[InputIndex].AddSource(vl);
+                        }
+                        else
+                        {
+                            //Do nothing if it dosent mach any of the above
+                        }
+                    }
+                }
+            }
+        }
+    }
+    /*
+    class DoubelClick : Grasshopper.Kernel.Attributes.GH_ComponentAttributes
+    {
+        override RespondToMouseDoubleClick()
+        {
+
+        }
+    }*/
 }
