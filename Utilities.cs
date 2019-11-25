@@ -595,89 +595,75 @@ namespace Axis
 namespace RAPID
 {
     /// <summary>
-    /// RAPID module
+    /// RAPID program
     /// </summary>
-    public class Module : IEnumerable<string>
+    public class Program : IEnumerable<string>
     {
-        public List<string> mudule
-        { get; private set; }
+        public List<string> code { get; private set; }
+        public bool IsMain { get; private set; }
 
-        List<string> tag = new List<string>
-        {
-            "! ABB Robot Code",
-            $"! Generated with Axis {Assembly.GetExecutingAssembly().GetName().Version}",
-            "! Created: " + DateTime.Now.ToString(),
-            "! Author: " + Environment.UserName.ToString(),
-            " ",
-        };
-        List<string> declarations = new List<string>
+
+        private string Name = "procname";
+        private bool conL_J = false;
+        private List<string> comment = new List<string>();
+        private List<string> overrides = new List<string>();
+        private List<string> ljHeader = new List<string>
                 {
-                    "! Declarations",
-                    "VAR confdata cData := [0,-1,-1,0];",
-                    "VAR extjoint eAxis := [9E9,9E9,9E9,9E9,9E9,9E9];",
+                    @"ConfL \Off;",
+                    @"ConfJ \Off;",
+                    "",
+                };
+        private List<string> ljFooter = new List<string>
+                {
+                    " ",
+                    @"ConfL \On;",
+                    @"ConfJ \On;",
                 };
 
-        /// <summary>
-        /// Returns code formated as a RAPID program
-        /// </summary>
-        /// <param name="module">The Rapid module to be packaged as program</param>
-        /// <param name="moduleName">The progarm name</param>
-        /// <returns>A program as list</returns>
-        public Module(Program proc, string modName = "submodule")
-        {
-            var mod = new List<string>();
-            mod.Add($"PROC {modName}()");
-            mod.AddRange(tag);
-            mod.AddRange(proc);
-            mod.Add("ENDPROC");
 
-            this.mudule = mod;
+        public Program(List<string> code = null, List<string> overrides = null, string progName = "procname", bool LJ = false, List<string> comments = null)
+        {
+            if (code != null) this.code = code;
+            this.Name = progName;
+            this.conL_J = LJ;
+            if (overrides != null) { this.overrides = overrides; }
+            if (progName == "main") { this.IsMain = true; }
+            if (comment != null) { this.comment = comment; }
         }
-        public Module(Program proc, List<string> declarations, string modName = "submodule")
+        public void AddOverrides(List<string> overrides)
         {
-            var mod = new List<string>();
-            mod.Add($"PROC {modName}()");
-            mod.AddRange(tag);
-            mod.AddRange(declarations);
-            mod.AddRange(proc);
-            mod.Add("ENDPROC");
-
-            this.mudule = mod;
+            this.overrides.AddRange(overrides);
         }
-        /// <summary>
-        /// Constructs a RAPID program out of multime modules
-        /// </summary>
-        /// <param name="modules">List of modules to be included</param>
-        /// <param name="procName">The program name</param>
-        public Module(List<Program> procs, string modName = "submodule")
-        {
-            var mod = new List<string>();
-            mod.Add($"PROC {modName}()");
-            foreach (Program proc in procs)
-                { mod.AddRange(proc); }
-            mod.Add("ENDPROC");
 
-            this.mudule = mod;
+
+        public List<string> Code()
+        {
+            var prog = new List<string>();
+
+            prog.AddRange(comment);
+            prog.Add($"PROC {Name}()");
+            if (this.overrides != null) { prog.AddRange(overrides); }
+            prog.AddRange(comment);
+            if (conL_J) { prog.AddRange(ljHeader); }
+            prog.AddRange(this.code);
+            if (conL_J) { prog.AddRange(ljFooter); }
+
+            prog.Add("ENDPROC");
+
+            return prog;
         }
-        public Module(List<Program> procs, List<string> declarations, string modName = "submodule")
+        public  List<Program> ToList()
         {
-            var mod = new List<string>();
-            mod.Add($"PROC {modName}()");
-            mod.AddRange(declarations);
-            foreach (Program proc in procs)
-            { mod.AddRange(proc); }
-            mod.Add("ENDPROC");
-
-            this.mudule = mod;
+            return new List<Program> { this };
         }
 
         public void Add(string item)
         {
-            mudule.Add(item);
+            code.Add(item);
         }
         public IEnumerator<string> GetEnumerator()
         {
-            return mudule.GetEnumerator();
+            return code.GetEnumerator();
         }
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
         {
@@ -686,86 +672,154 @@ namespace RAPID
     }
 
     /// <summary>
-    /// RAPID program
+    /// RAPID module
     /// </summary>
-    public class Program: IEnumerable<string>
+    public class Module
     {
-        public List<string> program
-        { get; private set; }
+        public bool IsValid { get; private set; }
 
-            
-        //Commen code blocks
-        List<string> comment = new List<string>
+        private string Name;
+        private List<string> tag = new List<string>
+        {
+            "! ABB Robot Code",
+            $"! Generated with Axis {Assembly.GetExecutingAssembly().GetName().Version}",
+            "! Created: " + DateTime.Now.ToString(),
+            "! Author: " + Environment.UserName.ToString(),
+            " ",
+        };
+        private List<string> declarations = new List<string>
                 {
-                    " ",
-                    "! Main Procedure",
+                    "! Declarations",
+                    "VAR confdata cData := [0,-1,-1,0];",
+                    "VAR extjoint eAxis := [9E9,9E9,9E9,9E9,9E9,9E9];",
                 };
-        List<string> progHeader = new List<string>
+        private List<Program> main = new List<Program>();
+        private List<Program> progs = new List<Program>();
+        private List<string> legaryProgs = new List<string>();
+
+        public List<Program> extraProg = new List<Program>();
+
+        public Module(List<Program> progs = null, List<string> declarations = null, string name = "submodule")
+        {
+            if (progs != null)
+            {
+                foreach (Program prog in progs)
                 {
-                    @"ConfL \Off;",
-                    @"ConfJ \Off;"
-                };
-        List<string> progFooter = new List<string>
+                    if (prog.IsMain)
+                    {
+                        this.AddMain(prog);
+                    }
+                    else
+                    {
+                        if (this.progs == null)
+                        {
+                            this.progs = new List<Program>();
+
+                        }
+                        this.progs.Add(prog);
+                    }
+                }
+            }
+            this.Name = name;
+            if (declarations != null) { this.declarations = declarations; }
+            this.IsValid = this.validate();
+        }
+        public void AddDeclarations(List<string> declaration)
+        {
+            if (this.declarations == null)
+            {
+                this.declarations = declaration;
+            }
+            else
+            {
+                this.declarations.AddRange(declaration);
+            }
+        }
+        public void AddPrograms(List<Program> progs)
+        {
+            if (progs == null)
+            {
+                this.progs = progs;
+            }
+            else
+            {
+                this.progs.AddRange(progs);
+            }
+        }
+        public void AddPrograms(List<string> progs)
+        {
+            legaryProgs.AddRange(progs);
+        }
+        public void AddMain(Program main)
+        {
+            if (this.main == null)
+            {
+                this.main = new List<Program>() { main };
+            }
+            else
+            {
+                this.main.Add(main);
+            }
+            this.IsValid = this.validate();
+        }
+        public void AddOverrides(List<string> overrides)
+        {
+            foreach (Program prog in this.main)
+            {
+                prog.AddOverrides(overrides);
+            }
+        }
+        bool ExtraProg(List<Program> extraProg)
+        {
+            foreach (Program prog in extraProg)
+            {
+                if (prog.IsMain == true)
                 {
-                    " ",
-                    "!",
-                    @"ConfL \On;",
-                    @"ConfJ \On;",
-                };
+                    return false;
+                }
+            }
 
-        /// <summary>
-        /// Wrap code in a RAPID programm
-        /// </summary>
-        /// <param name="code">Code to be wrapped</param>
-        /// <param name="procName">The program name</param>
-        public Program(List<string> code, string progName = "procname")
-        {
-            List<string> prog = new List<string>();
-
-            prog.Add($"PROC {progName}()");
-            prog.AddRange(code);
-            prog.Add("ENDPROC");
-            prog.Add(" ");
-
-            this.program = prog;
-        }
-        public Program(List<string> code, List<string> overrides, string progName = "procname")
-        {
-            List<string> prog = new List<string>();
-            prog.Add($"PROC {progName}()");
-            prog.AddRange(overrides);
-            prog.AddRange(code);
-            prog.Add("ENDPROC");
-
-            this.program = prog;
+            this.extraProg = extraProg;
+            return true;
         }
 
-        /// <summary>
-        /// Creates an empty RAPID program
-        /// </summary>
-        /// <param name="procName">The program name</param>
-        public Program(string procName = "procname")
+        public List<string> Code()
         {
-            program = new List<string> {
-                $"PROC {procName}()" ,
-                "ENDPROC"
-            };
+            List<string> mod = new List<string>();
+            mod.Add($"PROC {Name}()");
+            mod.AddRange(this.tag);
+            mod.AddRange(this.declarations);
+            mod.Add("");
+            mod.Add("!Main Program");
+            foreach (Program prog in main)
+            {
+                mod.AddRange(prog.Code());
+            }
+            if (legaryProgs.Count > 0) { mod.AddRange(legaryProgs); }
+            if (progs.Count > 0)
+            {
+                mod.Add("!Additional progams");
+                foreach (Program prog in progs)
+                {
+                    mod.AddRange(prog.Code());
+                }
+            }
+            mod.Add("ENDMODULE");
+
+            return mod;
         }
 
-        public void Add(string item)
+        private bool validate()
         {
-            program.Add(item);
+            bool v = false;
+            int c = 0;
+            foreach (Program prog in this.main)
+            {
+                if (prog.IsMain == true) { ++c; }
+            }
+            if (c == 1) { return true; }
+            else { return false; }
         }
-        public IEnumerator<string> GetEnumerator()
-        {
-            return program.GetEnumerator();
-        }
-        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
-
-
 
     }
 }

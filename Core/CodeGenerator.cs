@@ -12,6 +12,7 @@ using Grasshopper.Kernel.Types;
 
 using Rhino.Geometry;
 using Axis.Targets;
+using RAPID;
 
 namespace Axis.Core
 {
@@ -71,13 +72,12 @@ namespace Axis.Core
             List<string> strProcedures = new List<string>();
             List<string> strOverrides = new List<string>();
 
-            List<List<string>> procs = new List<List<string>>();
             string smFileName = "Submodule";
             string filePath = ""; // /Axis/LongCode/ or /
             string dirHome = "RemovableDisk1:"; //  HOME: or RemovableDisk1:
 
             // Initialize lists to store the robot export code.
-            List<string> RAPID = new List<string>();
+            List<string> rapidCODE = new List<string>();
             List<string> KRL = new List<string>();
 
             if (!DA.GetDataList("Program", program)) return;
@@ -93,6 +93,9 @@ namespace Axis.Core
                 if (!DA.GetDataList("Overrides", strOverrides)) ;
             if (declarations)
                 if (!DA.GetDataList("Declarations", strDeclarations)) ;
+
+            //New RAPID module
+            Module module = new Module(name: strModName);
 
             // Convert targets to strings.
             foreach (GH_ObjectWrapper command in program)
@@ -195,160 +198,70 @@ namespace Axis.Core
                 } // If the user has requested KUKA code...
                 else
                 {
-                    // Headers
-                    List<string> header = new List<string>() {
-                        "MODULE " + strModName,
-                        "! ABB Robot Code",
-                        "! Generated with Axis 1.0",
-                        "! Created: " + DateTime.Now.ToString(),
-                        "! Author: " + Environment.UserName.ToString(),
-                        " ",
-                    };
-
-                    // Declarations
-                    List<string> declarations = new List<string>
-                    {
-                        "! Declarations",
-                        "VAR confdata cData := [0,-1,-1,0];",
-                        "VAR extjoint eAxis := [9E9,9E9,9E9,9E9,9E9,9E9];",
-                    };
-                    declarations.AddRange(strDeclarations);
-
-                    //Main Proc header
-                    List<string> mainHead = new List<string>
-                    {
-                        " ",
-                        "! Main Procedure",
-                        "PROC main()",
-                        @"ConfL \Off;",
-                        @"ConfJ \Off;"
-                    };
-                    // Machine overrides
-                    if (strOverrides != null) mainHead.AddRange(strOverrides);
-                    mainHead.AddRange(new List<string>
-                    {
-                        " ",
-                        "! Programmed Movement"
-                    });
-
-                    // The main body will be delare further down
-
-
-                    // Close Main Proc
-                    List<string> mainFooter = new List<string>
-                    {
-                        " ",
-                        "!",
-                        @"ConfL \On;",
-                        @"ConfJ \On;",
-                        "ENDPROC",
-                        " "
-                    };
-
-                    // Custom Procs
-                    List<string> customProc = new List<string>
-                    {
-                        "! Custom Procedures"
-                    };
-                    if (strProcedures != null) customProc.AddRange(strProcedures);
-
-                    // Footer
-                    List<string> Footer = new List<string> { "ENDMODULE" }; // Close out the module
-
-
                     //Settings for the main Program
                     int bottomLim = 5000; //ABB limit about 5000
                     int topLim = 70000; //ABB limit about 80.000
-
                     int progLen = strProgram.Count;
-                    if (ignoreLen) this.Message = "No Length Check";
 
-                    // Commands / Main Module Body
-                    List<string> mainBody = new List<string>();
-                    if (progLen < bottomLim) // Short Program
-                    {
-                        mainBody.AddRange(strProgram);
-                    }
                     if (Enumerable.Range(bottomLim, topLim).Contains(progLen) && !ignoreLen)  // Medium length program. Will be cut into submodules
                     {
-                        mainBody.AddRange(new List<string> {
-                            "! Warning: Procedure length exceeds recommend maximum. Program will be split into multiple procedures.",
-                            " "
-                        });
                         AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Procedure length exceeds recommended maximum. Program will be split into multiple procedures.");
                         this.Message = "Large Program";
 
+                        
                         var subs = Util.SplitProgram(strProgram, 5000);
+                        List<Program> progs = new List<Program>();
+                        List<string> strMain = new List<string>();
 
-                        int procCount = 0;
-                        foreach (List<string> sub in subs)
+                        string subName = "SubProg";
+
+                        for (int i = 0; i < subs.Count; ++i)
                         {
-                            string procName = "SubMain" + procCount.ToString();
-
-                            sub.Insert(0, $"PROC {procName}()");
-                            sub.Insert(sub.Count, "ENDPROC");
-
-                            mainBody.Add(procName + ";"); // Add the main call.
-                            procCount++;
+                            progs.Add(new Program(subs[i], progName:subName+i.ToString(),comments:new List<string> {""}));
+                        }
+                        for (int i = 0; i < subs.Count; ++i)
+                        {
+                            strMain.Add(subName + i.ToString()+";");
                         }
 
-                        // Add the procs from the subdivision to the custom procedures
-                        foreach (List<string> sub in subs) { customProc.AddRange(sub); }
+                        var comment = new List<string> {
+                            "! Warning: Procedure length exceeds recommend maximum. Program will be split into multiple procedures.",
+                            " "
+                        };
+                        Program main = new Program(strMain, progName: "main", LJ: true, comments: comment);
+
+                        module.AddMain(main);
+                        module.AddPrograms(progs);
 
                     }
-                    if (progLen > topLim && !ignoreLen) // Long program. Will be split up into seperate files
+                    else if (progLen > topLim && !ignoreLen) // Long program. Will be split up into seperate files
                     {
-                        mainBody.AddRange(new List<string>
-                        {
-                            "! Warning: Procedure length exceeds recommend maximum. Program will be split into multiple procedures.",
-                            "! That will be loaded successively at runtime",
-                            " "
-                        });
                         AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Procedure length exceeds recommended maximum. Program will be split into multiple procedures.");
                         this.Message = "Extra Large Program";
 
-                        List<string> dec = new List<string>
+
+                        var progsStr = Util.SplitProgram(strProgram, 5000);
+
+                        string procname = "progNumber";
+
+                        //
+                        List<Program> external = new List<Program>();
+                        for (int i = 0; i < progsStr.Count; ++i)
                         {
-                            "!Set directory for loading",
-                            "VAR loadsession load1;",
-                            "VAR loadsession load2;",
-                            $"CONST string sDirHome:= \"{dirHome}\"; ",
-                            $"CONST string sFile:= \"{filePath}\";",
-                        };
-                        declarations.AddRange(dec);
-
-                        procs = Util.SplitProgram(strProgram, 5000);
-                        string procname = "procname";
-                        int procCount = 0;
-
-                        //Insert header and footer around the Code
-                        foreach (List<string> proc in procs)
-                        {
-                            string procName = procname + procCount.ToString();
-                            proc.InsertRange(0, new List<string>
-                            {
-                                "MODULE subModule" ,
-                                $"PROC {procName}()"
-                            });
-                            proc.InsertRange(proc.Count(), new List<string>
-                            {
-                                "ENDPROC",
-                                "ENDModule"
-                            });
-
-                            procCount++;
+                            external.Add(new Program(progsStr[i], progName:procname+i.ToString()));
                         }
 
-                        // Write the instructions for the main body
-                        mainBody.AddRange(new List<string> // Load the first pair 
+                        // Write the instructions for the main prog
+                        List<string> strMain = new List<string>();
+                        strMain.AddRange(new List<string> // Load the first pair 
                         {
                             $"StartLoad \\Dynamic, sDirHome \\File:= sFile + \"{smFileName}{0}.mod\", load1;",
                             $"StartLoad \\Dynamic, sDirHome \\File:= sFile + \"{smFileName}{1}.mod\", load2;",
                             ""
                         });
-                        for (int i = 0; i < procCount; i += 2) // Loop through all sub programms
+                        for (int i = 0; i < external.Count(); i += 2) // Loop through all sub programms
                         {
-                            mainBody.AddRange(new List<string>
+                            strMain.AddRange(new List<string>
                             {
                                 "WaitLoad load1;",
                                 $"% \"{procname}{i}\" %;",
@@ -356,13 +269,13 @@ namespace Axis.Core
                                 "",
                             });
 
-                            if (i + 2 < procCount) { mainBody.AddRange(new List<string>
+                            if (i + 2 < external.Count()) { strMain.AddRange(new List<string>
                             {
                                 $"StartLoad \\Dynamic, sDirHome \\File:= sFile + \"{smFileName}{i+2}.mod\", load1;",
                                 //""
                             }); }
 
-                            if (i + 1 < procCount) { mainBody.AddRange(new List<string>
+                            if (i + 1 < external.Count()) { strMain.AddRange(new List<string>
                             {
                                 "",
                                 $"WaitLoad load2;",
@@ -371,32 +284,51 @@ namespace Axis.Core
                                 ""
                             }); }
 
-                            if (i + 3 < procCount) { mainBody.AddRange(new List<string>
+                            if (i + 3 < external.Count()) { strMain.AddRange(new List<string>
                             {
                                 $"StartLoad \\Dynamic, sDirHome \\File:= sFile + \"{smFileName}{i+3}.mod\", load2;",
                                 ""
                             }); }
                         }
+
+                        
+                        List<string> dec = new List<string>
+                        {
+                            "",
+                            "!Set directory for loading",
+                            "VAR loadsession load1;",
+                            "VAR loadsession load2;",
+                            $"CONST string sDirHome:= \"{dirHome}\"; ",
+                            $"CONST string sFile:= \"{filePath}\";",
+                        };
+                        var comment = new List<string>
+                        {
+                            "! Warning: Procedure length exceeds recommend maximum. Program will be split into multiple procedures.",
+                            "! That will be loaded successively at runtime",
+                            " "
+                        };
+                        var main = new Program(strMain, progName: "main", comments:comment,LJ:true);
+                        module.AddMain(main);
+                        module.extraProg = external;
+                        module.AddDeclarations(dec);
                     }
-                    if (ignoreLen) // In case the prgram length should explicetly be ignored
+                    else // In case the prgram length should explicetly be ignored
                     {
-                        mainBody.AddRange(strProgram);
+                        module.AddMain(new Program(strProgram, LJ: true, progName: "main"));
+                        this.Message = "";
                     }
 
+                    if (ignoreLen) this.Message = "No Length Check";
+                    
+                    module.AddPrograms(strProcedures);
 
-                    //Assemble all the sections of the programm
-                    RAPID.AddRange(header);
-                    RAPID.AddRange(declarations);
+                    if (declarations) module.AddDeclarations(strDeclarations);
+                    if (overrides) module.AddOverrides(strOverrides);
 
-                    RAPID.AddRange(mainHead);
-                    RAPID.AddRange(mainBody);
-                    RAPID.AddRange(mainFooter);
-
-                    RAPID.AddRange(customProc);
-                    RAPID.AddRange(Footer);
+                    if (!module.IsValid) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The program/module is invalid"); }
 
 
-                    DA.SetDataList(0, RAPID);
+                    DA.SetDataList(0, module.Code());
                 }
 
                 if (export)
@@ -421,10 +353,10 @@ namespace Axis.Core
                             @"	<Module>" + strModName + @".mod</Module>",
                             @"</Program>",
                         });
-                        File.WriteAllLines($@"{path}\\{strModName}.mod", RAPID);
-                        for (int i = 0; i < procs.Count(); ++i)
+                        File.WriteAllLines($@"{path}\\{strModName}.mod", module.Code());
+                        for (int i = 0; i < module.extraProg.Count(); ++i)
                         {
-                            File.WriteAllLines($@"{path}\{smFileName}{i}.mod", procs[i]);
+                            File.WriteAllLines($@"{path}\{smFileName}{i}.mod", module.extraProg[i].Code());
 
                         }
 
