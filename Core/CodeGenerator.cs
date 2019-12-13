@@ -200,7 +200,7 @@ namespace Axis.Core
                 {
                     //Settings for the main Program
                     int bottomLim = 5000; //ABB limit about 5000
-                    int topLim = 70000; //ABB limit about 80.000
+                    int topLim = 70000 - bottomLim; //ABB limit about 80.000
                     int progLen = strProgram.Count;
 
                     if (Enumerable.Range(bottomLim, topLim).Contains(progLen) && !ignoreLen)  // Medium length program. Will be cut into submodules
