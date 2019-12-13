@@ -56,7 +56,7 @@ namespace Axis.Core
             Manipulator robot = null;
 
             if (!DA.GetData(0, ref robot)) return;
-            DA.GetData(1, ref robTarg);
+            if (!DA.GetData(1, ref robTarg)) return;
 
             List<string> log = new List<string>();
 
@@ -72,6 +72,8 @@ namespace Axis.Core
             double[] radAngles = new double[6];
 
             List<System.Drawing.Color> colors = new List<System.Drawing.Color>();
+
+
 
             if (robTarg.Method == MotionType.AbsoluteJoint) // Forward kinematics
             {
@@ -135,6 +137,7 @@ namespace Axis.Core
                 colors = CheckJointAngles(robot, selectedAngles, out wristSing, out outOfRotation);
             }
 
+            #region Commented out
             /*
             double largestDiff = 0;
             double angularStep = Math.Round(Util.ToRadians(2),4);
@@ -166,6 +169,7 @@ namespace Axis.Core
                 }
             }
             */
+            #endregion
 
             // Handle errors
             if (overheadSing || wristSing || outOfReach || outOfRotation) isValid = false;
