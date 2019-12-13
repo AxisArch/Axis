@@ -227,7 +227,7 @@ namespace Axis.Core
         /// <param name="overheadSing"></param>
         /// <param name="outOfReach"></param>
         /// <returns></returns>
-        public static List<List<double>> TargetInverseKinematics(Manipulator robot, Plane target, out bool overheadSing, out bool outOfReach)
+        public static List<List<double>> TargetInverseKinematics(Manipulator robot, Plane target, out bool overheadSing, out bool outOfReach) //Check why outOfTeach flag is beeing set
         {
             // Validity checks
             bool unreachable = true;
@@ -237,7 +237,12 @@ namespace Axis.Core
             Point3d[] RP = new Point3d[] { robot.AxisPoints[0], robot.AxisPoints[1], robot.AxisPoints[2], robot.AxisPoints[3] };
 
             // Lists of doubles to hold our axis values and our output log.
-            List<double> a1list = new List<double>(), a2list = new List<double>(), a3list = new List<double>(), a4list = new List<double>(), a5list = new List<double>(), a6list = new List<double>();
+            List<double> a1list = new List<double>(), 
+                a2list = new List<double>(), 
+                a3list = new List<double>(), 
+                a4list = new List<double>(), 
+                a5list = new List<double>(), 
+                a6list = new List<double>();
             List<string> info = new List<string>();
 
             // Find the wrist position by moving back along the robot flange the distance of the wrist link.
@@ -246,7 +251,8 @@ namespace Axis.Core
             double angle1 = -1 * Math.Atan2(WristLocation.Y, WristLocation.X);
 
             // Check for overhead singularity and add message to log if needed
-            if (WristLocation.Y < singularityTol && WristLocation.Y > -singularityTol && WristLocation.X < singularityTol && WristLocation.X > -singularityTol)
+            if (WristLocation.Y < singularityTol && WristLocation.Y > -singularityTol &&
+                WristLocation.X < singularityTol && WristLocation.X > -singularityTol)
                 singularity = true;
 
             // Standard cases for axis one.
@@ -294,7 +300,7 @@ namespace Axis.Core
 
                 // Logic to check if the target is unreachable.
                 if (unreachable)
-                    if (Par1 == double.NaN || Par2 == double.NaN)
+                    if (Par1 != double.NaN || Par2 != double.NaN)
                         unreachable = false;
 
                 // Get the points.
