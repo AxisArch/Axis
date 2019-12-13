@@ -285,7 +285,7 @@ namespace Axis.Core
                 // Define the elbow direction and create a plane there.
                 Vector3d ElbowDir = new Vector3d(1, 0, 0);
                 ElbowDir.Transform(Rotation);
-                Plane ElbowPlane = new Plane(P1A, new Vector3d(1, 0, 0), Plane.WorldXY.ZAxis);
+                Plane ElbowPlane = new Plane(P1A, ElbowDir, Plane.WorldXY.ZAxis);
 
                 // Create our spheres for doing the intersections.
                 Sphere Sphere1 = new Sphere(P1A, robot.LowerArmLength);
@@ -306,6 +306,7 @@ namespace Axis.Core
                 // Get the points.
                 Point3d IntersectPt1 = Circ.PointAt(Par1), IntersectPt2 = Circ.PointAt(Par2);
 
+                // ******** Check that this works
                 // Solve IK for the remaining axes using these points.
                 for (int k = 0; k < 2; k++)
                 {
