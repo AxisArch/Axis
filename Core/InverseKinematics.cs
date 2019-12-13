@@ -320,7 +320,7 @@ namespace Axis.Core
 
                     ElbowPlane.ClosestParameter(ElbowPt, out elbowx, out elbowy);
                     ElbowPlane.ClosestParameter(WristLocation, out wristx, out wristy);
-
+                    
                     double angle2 = Math.Atan2(elbowy, elbowx);
                     double angle3 = Math.PI - angle2 + Math.Atan2(wristy - elbowy, wristx - elbowx) - robot.AxisFourOffset;
 
