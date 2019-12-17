@@ -78,7 +78,7 @@ namespace Axis.Core
             if (robTarg.Method == MotionType.AbsoluteJoint) // Forward kinematics
             {
                 colors.Clear();
-                for (int i = 0; i < 5; i++)
+                for (int i = 0; i < 6; i++)
                 {
                     angles = robTarg.JointAngles;
 
