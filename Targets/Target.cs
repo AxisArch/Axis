@@ -9,7 +9,7 @@ using Axis.Core;
 
 namespace Axis.Targets
 {
-    public class Target
+    public class Target : GH_Goo<Target>
     {
         public Point3d Position { get; set; }
         public Plane Plane { get; set; }
@@ -254,9 +254,13 @@ namespace Axis.Targets
         }
 
         public override string ToString() => (Method != null) ? $"Target ({StrMethod})" : $"Target ({Position})";
+
+        public override string TypeName => "Target";
+        public override string TypeDescription => "Robot target";
+        public override bool IsValid => true;
     }
 
-    public class Speed
+    public class Speed : GH_Goo<double>
     {
         public string Name { get; set; }
         public double TranslationSpeed { get; set; }
@@ -279,9 +283,13 @@ namespace Axis.Targets
         }
 
         public override string ToString() => (Name != null) ? $"Speed ({Name})" : $"Speed ({TranslationSpeed:0.0} mm/s)";
+        public override string TypeName => "Speed";
+        public override string TypeDescription => "Movement speed in mm/s";
+        public override bool IsValid => true;
+        public override double Value { get => this.TranslationSpeed; set => this.TranslationSpeed = value; }
     }
 
-    public class Zone
+    public class Zone : GH_Goo<double>
     {
         public string Name { get; set; }
         public double PathRadius { get; set; }
@@ -293,6 +301,9 @@ namespace Axis.Targets
         public bool StopPoint { get; set; }
 
         public static Zone Default { get; }
+        public override string TypeName => "Zone";
+        public override string TypeDescription => "Precision zone in mm";
+        public override double Value { get => this.PathRadius; set => this.PathRadius = value; }
 
         static Zone()
         {
@@ -312,9 +323,11 @@ namespace Axis.Targets
         }
 
         public override string ToString() => (Name != null) ? $"Zone ({Name})" : $"Zone ({PathRadius:0.0} mm)";
+        public override bool IsValid => true;
+        
     }
 
-    public class CSystem
+    public class CSystem : GH_Goo<Plane>
     {
         public string Name { get; set; }
         public Plane CSPlane { get; set; }
@@ -330,11 +343,24 @@ namespace Axis.Targets
             this.Dynamic = dynamicCS;
             this.ExternalAxis = eAxisPlane;
         }
+        public override string ToString()
+        {
+            return $"CSystem at: {CSPlane.ToString()}";
+        }
 
         static CSystem()
         {
             Default = new CSystem("Default", Plane.WorldXY, false, Plane.WorldXY);
         }
+        public override string TypeName => "CSystem";
+        public override string TypeDescription => "Local coordinate system";
+        public override bool IsValid { 
+            get{
+                if(this.CSPlane != null) return true;
+                else return false;
+            } 
+        }
+        public override Plane Value { get => this.CSPlane; set => this.CSPlane = value; }
     }
 
     public class ExternalTarget
