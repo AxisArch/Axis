@@ -4,10 +4,11 @@ using System.Collections.Generic;
 using static System.Math;
 
 using Rhino.Geometry;
+using Grasshopper.Kernel.Types;
 
 namespace Axis.Core
 {
-    public class Manipulator
+    public class Manipulator : GH_Goo<Manipulator>
     {
         public bool Manufacturer { get; set; }
         public List<Point3d> AxisPoints { get; }
@@ -127,9 +128,16 @@ namespace Axis.Core
         public Manipulator()
         {
         }
+        public override string TypeName => "Manipulator";
+        public override string TypeDescription => "Robot movment system";
+        public override string ToString()
+        {
+            return $"Robot";
+        }
+        public override bool IsValid => true;
     }
 
-    public class Tool
+    public class Tool: GH_Goo<Tool>
     {
         public string Name { get; set; }
         public Plane TCP { get; set; }
@@ -218,5 +226,21 @@ namespace Axis.Core
             this.FlangeOffset = fOffset;
             this.relTool = tOffset;
         }
+
+        public override string TypeName => "Tool";
+        public override string TypeDescription => "Robot end effector";
+        public override string ToString()
+        {
+            return $"Tool: {this.Name}";
+        }
+        public override bool IsValid => true;
+
+    }
+    
+    public enum Manufacturer
+    {
+        ABB = 0,
+        Kuka = 1,
+        Universal = 2
     }
 }
