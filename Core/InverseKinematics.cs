@@ -1,17 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Windows.Forms;
 
+using Rhino;
 using Rhino.Geometry;
+using Rhino.Display;
 
 using Grasshopper.Kernel;
+using Grasshopper.Kernel.Parameters;
 
 using Axis.Robot;
 using Axis.Targets;
 
 namespace Axis.Core
 {
-    public class InverseKinematics : GH_Component
+
+    public class InverseKinematics : GH_Component, IGH_VariableParameterComponent
     {
+        List<Mesh> robot = new List<Mesh>();
+        List<System.Drawing.Color> colors = new List<System.Drawing.Color>();
+        List<DisplayMaterial> displayColors = new List<DisplayMaterial>();
+        BoundingBox bBox = new BoundingBox();
+        
+
+
         protected override System.Drawing.Bitmap Icon
         {
             get
@@ -37,18 +50,19 @@ namespace Axis.Core
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddMeshParameter("Meshes", "Meshes", "Transformed robot geometry as list.", GH_ParamAccess.list);
+            //pManager.AddMeshParameter("Meshes", "Meshes", "Transformed robot geometry as list.", GH_ParamAccess.list);
             pManager.AddPlaneParameter("Flange", "Flange", "Robot flange position.", GH_ParamAccess.item);
             pManager.AddNumberParameter("Angles", "Angles", "Axis angles for forward kinematics.", GH_ParamAccess.list);
-            pManager.AddColourParameter("Colour", "Colour", "Preview indication colours.", GH_ParamAccess.list);
+            //pManager.AddColourParameter("Colour", "Colour", "Preview indication colours.", GH_ParamAccess.list);
             pManager.AddTextParameter("Log", "Log", "Message log.", GH_ParamAccess.list);
-            pManager.AddMeshParameter("Tool", "Tool", "Tool mesh as list.", GH_ParamAccess.list);
+            //pManager.AddMeshParameter("Tool", "Tool", "Tool mesh as list.", GH_ParamAccess.list);
         }
 
         // Sticky variables.
         public double[] currPos = { 0, -90, 90, 0, 0, 0 };
         public static int singularityTol = 5;
         protected List<double[]> motionPlan = new List<double[]>();
+        bool robOut = false;
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
@@ -211,13 +225,38 @@ namespace Axis.Core
             //robMesh = Util.ColorMeshes(robMesh, colors);
 
             // Output data
-            DA.SetDataList(0, robMesh);
-            DA.SetData(1, flange);
-            DA.SetDataList(2, selectedAngles);
-            DA.SetDataList(3, colors);
-            DA.SetDataList(4, log);
-            DA.SetDataList(5, toolMeshes);
+            
+            DA.SetData("Flange", flange);
+            DA.SetDataList("Angles", selectedAngles);
+            DA.SetDataList("Log", log);
+            if (robOut) 
+            {
+                DA.SetDataList("Meshes", robMesh);
+                DA.SetDataList("Colour", colors);
+                DA.SetDataList("Tool", toolMeshes);
+            }
+
+
+            // Drawing to Screen
+            this.robot = robMesh;
+            this.colors = colors;
+            List<DisplayMaterial> dM = new List<DisplayMaterial>();
+            Mesh joindMesh = new Mesh();
+
+            foreach (System.Drawing.Color c in colors) 
+            {
+                dM.Add(new DisplayMaterial(c));
+            }
+            foreach (Mesh m in robMesh) 
+            {
+                joindMesh.Append(m);
+            }
+            this.displayColors = dM;
+            this.bBox = joindMesh.GetBoundingBox(false);
+
         }
+
+
 
         /// <summary>
         /// Closed form inverse kinematics for a 6 DOF industrial robot. Returns flags for validity and error types.
@@ -571,5 +610,127 @@ namespace Axis.Core
 
             return meshesOut;
         }
+
+
+        public override BoundingBox ClippingBox => bBox; //base.ClippingBox;
+        public override void DrawViewportWires(IGH_PreviewArgs args)
+        {
+            base.DrawViewportWires(args);
+            /*
+            for (int i = 0; i < robot.Count; ++i)
+            {
+                int cID = i;
+                if (i >= colors.Count) cID = colors.Count - 1;
+                args.Display.DrawMeshWires(robot[i], colors[cID]);
+            }*/
+            
+        }
+        public override void DrawViewportMeshes(IGH_PreviewArgs args)
+        {
+            base.DrawViewportMeshes(args);
+            for (int i = 0; i < robot.Count; ++i)
+            {
+                int cID = i;
+                if (i >= displayColors.Count) cID = displayColors.Count - 1;
+                args.Display.DrawMeshShaded(robot[i], displayColors[cID]);
+            }
+            
+        }
+        public override void BakeGeometry(RhinoDoc doc, List<Guid> obj_ids)
+        {
+            base.BakeGeometry(doc, obj_ids);
+            for (int i = 0; i < robot.Count; i++)
+            {
+                int cID = i;
+                if (i >= colors.Count) cID = colors.Count - 1;
+                var attributes = doc.CreateDefaultAttributes();
+                attributes.ColorSource = Rhino.DocObjects.ObjectColorSource.ColorFromObject;
+                attributes.ObjectColor = colors[cID];
+                obj_ids.Add(doc.Objects.AddMesh(robot[i], attributes));
+            }
+        }
+
+
+
+
+        // Build a list of optional output parameters
+        IGH_Param[] outputParams = new IGH_Param[3]
+        {
+            new Param_Mesh(){  Name = "Meshes", NickName = "Meshes", Description = "Transformed robot geometry as list.", Access = GH_ParamAccess.list},
+            new Param_Colour() { Name = "Colour", NickName = "Colour", Description = "Preview indication colours.", Access = GH_ParamAccess.list },
+            new Param_Mesh() { Name = "Tool", NickName = "Tool", Description = "Tool mesh as list.", Access = GH_ParamAccess.list },
+        };
+
+        // The following functions append menu items and then handle the item clicked event.
+        protected override void AppendAdditionalComponentMenuItems(System.Windows.Forms.ToolStripDropDown menu)
+        {
+            ToolStripMenuItem outputRobot = Menu_AppendItem(menu, "Output the robot geometry", robOut_Click, true, robOut);
+            outputRobot.ToolTipText = "This will provide the robot as geometry";
+        }
+
+        private void robOut_Click(object sender, EventArgs e)
+        {
+            RecordUndoEvent("Output Robot");
+            robOut = !robOut;
+
+            ToggleOutput(0);
+            ToggleOutput(1);
+            ToggleOutput(2);
+
+            ExpireSolution(true);
+        }
+
+
+        // Register the new output parameters to our component.
+        private void ToggleOutput(int index)
+        {
+            IGH_Param parameter = outputParams[index];
+
+            if (Params.Output.Any(x => x.Name == parameter.Name))
+                Params.UnregisterOutputParameter(Params.Output.First(x => x.Name == parameter.Name), true);
+            else
+            {
+                int insertIndex = Params.Output.Count;
+                for (int i = 0; i < Params.Output.Count; i++)
+                {
+                    int otherIndex = Array.FindIndex(outputParams, x => x.Name == Params.Output[i].Name);
+                    if (otherIndex > index)
+                    {
+                        insertIndex = i;
+                        break;
+                    }
+                }
+
+                Params.RegisterOutputParam(parameter, insertIndex);
+            }
+
+            Params.OnParametersChanged();
+            //ExpireSolution(true);
+        }
+
+        // Serialize this instance to a Grasshopper writer object.
+        public override bool Write(GH_IO.Serialization.GH_IWriter writer)
+        {
+            writer.SetBoolean("OutputRobot", this.robOut);
+            return base.Write(writer);
+        }
+
+        // Deserialize this instance from a Grasshopper reader object.
+        public override bool Read(GH_IO.Serialization.GH_IReader reader)
+        {
+            this.robOut = reader.GetBoolean("OutputRobot");
+            return base.Read(reader);
+        }
+
+
+        /// <summary>
+        /// Implement this interface in your component if you want to enable variable parameter UI.
+        /// </summary>
+        bool IGH_VariableParameterComponent.CanInsertParameter(GH_ParameterSide side, int index) => false;
+        bool IGH_VariableParameterComponent.CanRemoveParameter(GH_ParameterSide side, int index) => false;
+        IGH_Param IGH_VariableParameterComponent.CreateParameter(GH_ParameterSide side, int index) => null;
+        bool IGH_VariableParameterComponent.DestroyParameter(GH_ParameterSide side, int index) => false;
+        void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
+
     }
 }
