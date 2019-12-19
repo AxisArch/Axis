@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 
 using Grasshopper.Kernel;
+using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 
 using Axis.Core;
@@ -352,5 +353,93 @@ namespace Axis.Targets
         Joint = 1,
         AbsoluteJoint = 2,
         NoMovement = 3
+    }
+
+    /// <summary>
+    /// Tool path class allowing for time aproximate simulation
+    /// </summary>
+    public class Toolpath : GH_Goo<Toolpath>
+    {
+        public TimeSpan duration { get; private set; }
+
+        double totalSec;
+        List<Target> targets;
+        List<double> targetProgress;
+
+        /// <summary>
+        /// Class initilaisation
+        /// </summary>
+        /// <param name="targets">List of targets the tool path consists of</param>
+        public Toolpath(List<Target> targets)
+        {
+            Times(targets);
+        }
+        /// <summary>
+        /// Internal Class initialisation
+        /// </summary>
+        /// <param name="targets">List of targets ta make up this tool path</param>
+        void Times(List<Target> targets)
+        {
+            double timeTotal = 0;
+
+            List<double> tProgress = new List<double>();
+            tProgress.Add(0);
+
+            for (int i = 0; i < targets.Count - 1; ++i)
+            {
+                double distance = new Line(targets[i].Position, targets[i + 1].Position).Length;
+                double speed = targets[i + 1].Speed.TranslationSpeed;
+                timeTotal += distance / speed;
+                tProgress.Add(timeTotal);
+            }
+
+            this.totalSec = timeTotal;
+            this.duration = new TimeSpan(0, 0, (int)timeTotal);
+            this.targetProgress = tProgress;
+        }
+
+        /// <summary>
+        /// Get the target interger for the current progress
+        /// </summary>
+        /// <param name="timePassed">Time passed since the start of the simulation</param>
+        /// <returns></returns>
+        public int GetProgress(TimeSpan timePassed)
+        {
+            double passedSec = timePassed.TotalSeconds;
+            if (passedSec < this.totalSec)
+            {
+                return this.targetProgress.BinarySearch(passedSec);
+            }
+            else return targets.Count - 1;
+        }
+        /// <summary>
+        /// Get the target for the current progress
+        /// </summary>
+        /// <param name="timePassed">Time since the start of the simulation</param>
+        /// <returns></returns>
+        public Target GetTarget(TimeSpan timePassed)
+        {
+            return this.targets[this.GetProgress(timePassed)];
+        }
+
+        public override string TypeName => "Tool path";
+        public override string TypeDescription => "A collection of targets as a tool path";
+        public override bool IsValid
+        {
+            get
+            {
+                if (this.totalSec != null) return true;
+                else return false;
+            }
+        }
+        public override string ToString()
+        {
+            return $"Toolpath of length: {this.targets.Count}";
+        }
+        public override IGH_Goo Duplicate()
+        {
+            throw new NotImplementedException();
+        }
+
     }
 }
