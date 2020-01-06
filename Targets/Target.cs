@@ -33,7 +33,7 @@ namespace Axis.Targets
 
         public static Target Default { get; }
 
-        public Target(Plane target, MotionType method, Speed speed, Zone zone, Tool tool, CSystem wobj, double extRot, double extLin, bool robot)
+        public Target(Plane target, MotionType method, Speed speed, Zone zone, Tool tool, CSystem wobj, double extRot, double extLin, Manufacturer robot)
         {
             // Adjust plane to comply with robot programming convetions.
             Quaternion realQuat = Util.QuaternionFromPlane(target);
@@ -49,7 +49,7 @@ namespace Axis.Targets
             this.Zone = zone;
             this.ExtRot = extRot;
             this.ExtLin = extLin;
-            
+
 
             // Copy target in case we are using a dynamic CS
             Plane dynamicTarget = new Plane(target);
@@ -95,7 +95,7 @@ namespace Axis.Targets
             string workObject = @"\Wobj:=" + wobj.Name;
             this.CSystem = wobj;
 
-            if (robot == false) // ABB Targets
+            if (robot == Manufacturer.ABB) // ABB Targets
             {
                 string ABBposition = posX.ToString() + ", " + posY.ToString() + ", " + posZ.ToString(); ;
 
@@ -161,8 +161,7 @@ namespace Axis.Targets
                     strABB = movement + robtarget + ", " + strSpeed + ", " + strZone + ", " + tool.Name + " " + workObject + ";";
                 }
             }
-
-            else // KUKA Targets
+            else if(robot == Manufacturer.Kuka) // KUKA Targets
             {
                 string KUKAposition = "X " + posX.ToString() + ", Y " + posY.ToString() + ", Z " + posZ.ToString();
 
@@ -200,7 +199,7 @@ namespace Axis.Targets
             this.StrKUKA = strKUKA;
         }
 
-        public Target(List<double> axisVals, Speed speed, Zone zone, Tool tool, double extRot, double extLin, bool robot)
+        public Target(List<double> axisVals, Speed speed, Zone zone, Tool tool, double extRot, double extLin, Manufacturer robot)
         {
             string strABB = null;
             string strZone = zone.Name;
@@ -258,10 +257,32 @@ namespace Axis.Targets
         public override string TypeName => "Target";
         public override string TypeDescription => "Robot target";
         public override bool IsValid => true;
+        public override int GetHashCode()
+        {
+            var val = Plane.GetHashCode()+Speed.GetHashCode()+ Zone.GetHashCode()+ Tool.GetHashCode()+ CSystem.GetHashCode();
+            return val.GetHashCode();
+        }
+        public override IGH_Goo Duplicate()
+        {
+            //This should technically do a deep copy not a shalow one, like in this case
+            return this;
+        }
+        public override bool CastTo<Q>(ref Q target)
+        {
+
+            if (typeof(Q).IsAssignableFrom(typeof(GH_Plane)) && (this.Plane != null))
+            {
+                object _Plane = this.Plane;
+                target = (Q)_Plane;
+                return true;
+            }
+
+            return false;
+        }
     }
 
     public class Speed : GH_Goo<double>
-    {
+{
         public string Name { get; set; }
         public double TranslationSpeed { get; set; }
         public double RotationSpeed { get; set; }
@@ -287,6 +308,27 @@ namespace Axis.Targets
         public override string TypeDescription => "Movement speed in mm/s";
         public override bool IsValid => true;
         public override double Value { get => this.TranslationSpeed; set => this.TranslationSpeed = value; }
+        public override int GetHashCode()
+        {
+            var val = Name.GetHashCode()+ TranslationSpeed.GetHashCode()+ RotationSpeed.GetHashCode()+ Time.GetHashCode();
+            return val.GetHashCode();
+        }
+        public override IGH_Goo Duplicate()
+        {
+            //This should technically do a deep copy not a shalow one, like in this case
+            return this;
+        }
+        public override bool CastTo<Q>(ref Q target)
+        {
+            if (typeof(Q).IsAssignableFrom(typeof(GH_Number)) && (this.TranslationSpeed != null))
+            {
+                object _number = this.TranslationSpeed;
+                target = (Q)_number;
+                return true;
+            }
+
+            return false;
+        }
     }
 
     public class Zone : GH_Goo<double>
@@ -324,7 +366,28 @@ namespace Axis.Targets
 
         public override string ToString() => (Name != null) ? $"Zone ({Name})" : $"Zone ({PathRadius:0.0} mm)";
         public override bool IsValid => true;
-        
+        public override int GetHashCode()
+        {
+            var val = Name.GetHashCode()+PathRadius.GetHashCode()+ PathOrient.GetHashCode()+ PathExternal.GetHashCode()+ Orientation.GetHashCode()+ LinearExternal.GetHashCode()+RotaryExternal.GetHashCode()+StopPoint.GetHashCode();
+            return val.GetHashCode();
+        }
+        public override IGH_Goo Duplicate()
+        {
+            //This should technically do a deep copy not a shalow one, like in this case
+            return this;
+        }
+        public override bool CastTo<Q>(ref Q target)
+        {
+            if (typeof(Q).IsAssignableFrom(typeof(GH_Number)) && (this.PathRadius != null))
+            {
+                object _number = this.PathRadius;
+                target = (Q)_number;
+                return true;
+            }
+
+            return false;
+        }
+
     }
 
     public class CSystem : GH_Goo<Plane>
@@ -354,13 +417,35 @@ namespace Axis.Targets
         }
         public override string TypeName => "CSystem";
         public override string TypeDescription => "Local coordinate system";
-        public override bool IsValid { 
-            get{
-                if(this.CSPlane != null) return true;
+        public override bool IsValid {
+            get {
+                if (this.CSPlane != null) return true;
                 else return false;
-            } 
+            }
         }
         public override Plane Value { get => this.CSPlane; set => this.CSPlane = value; }
+        public override int GetHashCode()
+        {
+            var val = Name.GetHashCode() + CSPlane.GetHashCode() + Dynamic.GetHashCode() + ExternalAxis.GetHashCode();
+            return val.GetHashCode();
+        }
+        public override IGH_Goo Duplicate()
+        {
+            //This should technically do a deep copy not a shalow one, like in this case
+            return this;
+        }
+        public override bool CastTo<Q>(ref Q target)
+        {
+
+            if (typeof(Q).IsAssignableFrom(typeof(GH_Plane)) && (this.CSPlane != null))
+            {
+                object _Plane = this.CSPlane;
+                target = (Q)_Plane;
+                return true;
+            }
+
+            return false;
+        }
     }
 
     public class ExternalTarget
@@ -465,6 +550,30 @@ namespace Axis.Targets
         public override IGH_Goo Duplicate()
         {
             throw new NotImplementedException();
+        }
+        public override bool CastTo<Q>(ref Q target)
+        {
+
+            if (typeof(Q).IsAssignableFrom(typeof(GH_Curve)))
+            {
+                List<Point3d> points = new List<Point3d>();
+
+                foreach (Target t in this.targets) 
+                {
+                    if (t.Plane.Origin != null) 
+                    {
+                        points.Add(t.Plane.Origin);
+                    }
+                }
+
+                Polyline pLine = new Polyline(points);
+
+                object _pLine = pLine;
+                target = (Q)_pLine;
+                return true;
+            }
+
+            return false;
         }
 
     }

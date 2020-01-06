@@ -12,6 +12,7 @@ using Grasshopper.Kernel.Parameters;
 
 using Axis.Robot;
 using Axis.Targets;
+using Rhino.DocObjects;
 
 namespace Axis.Core
 {
@@ -106,7 +107,7 @@ namespace Axis.Core
                     }
                     selectedAngles.Add(angles[i]);
                 }
-                if (robot.Manufacturer != true) // Adjust for KUKA home position being different to ABB.
+                if (robot.Manufacturer == Manufacturer.ABB) // Adjust for KUKA home position being different to ABB.
                 {
                     radAngles[0] = -angles[0].ToRadians();
                     radAngles[1] = (angles[1] - 90).ToRadians();
@@ -114,7 +115,7 @@ namespace Axis.Core
                     for (int i = 3; i < 6; i++)
                         radAngles[i] = angles[i].ToRadians();
                 }
-                else
+                else if (robot.Manufacturer == Manufacturer.Kuka)
                     for (int i = 0; i < 6; i++)
                         radAngles[i] = angles[i].ToRadians();
             }
@@ -649,7 +650,26 @@ namespace Axis.Core
                 obj_ids.Add(doc.Objects.AddMesh(robot[i], attributes));
             }
         }
-
+        public override void BakeGeometry(RhinoDoc doc, ObjectAttributes att, List<Guid> obj_ids)
+        {
+            base.BakeGeometry(doc, att, obj_ids);
+            for (int i = 0; i < robot.Count; i++)
+            {
+                int cID = i;
+                if (i >= colors.Count) cID = colors.Count - 1;
+                var attributes = doc.CreateDefaultAttributes();
+                if (att != null) attributes = att;
+                attributes.ColorSource = Rhino.DocObjects.ObjectColorSource.ColorFromObject;
+                attributes.ObjectColor = colors[cID];
+                obj_ids.Add(doc.Objects.AddMesh(robot[i], attributes));
+            }
+        }
+        public override void ClearData()
+        {
+            base.ClearData();
+            robot.Clear();
+            bBox = BoundingBox.Empty;
+        }
 
 
 

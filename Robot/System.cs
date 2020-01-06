@@ -10,7 +10,7 @@ namespace Axis.Core
 {
     public class Manipulator : GH_Goo<Manipulator>
     {
-        public bool Manufacturer { get; set; }
+        public Manufacturer Manufacturer { get; set; }
         public List<Point3d> AxisPoints { get; }
         public List<Plane> AxisPlanes { get; }
         public List<Plane> tAxisPlanes { get; }
@@ -31,7 +31,7 @@ namespace Axis.Core
 
         public List<int> Indices { get; set; }
 
-        public Manipulator(bool manufacturer, List<Point3d> axisPoints, List<double> minAngles, List<double> maxAngles, List<Mesh> robMeshes, Plane basePlane, List<int> indices)
+        public Manipulator(Manufacturer manufacturer, List<Point3d> axisPoints, List<double> minAngles, List<double> maxAngles, List<Mesh> robMeshes, Plane basePlane, List<int> indices)
         {
             List<Mesh> tRobMeshes = new List<Mesh>();
 
@@ -135,6 +135,16 @@ namespace Axis.Core
             return $"Robot";
         }
         public override bool IsValid => true;
+        public override int GetHashCode()
+        {
+            var val = Manufacturer.GetHashCode() + AxisPoints.GetHashCode() + RobBasePlane.GetHashCode() + MinAngles.GetHashCode() + MaxAngles.GetHashCode() + Indices.GetHashCode();
+            return base.GetHashCode();
+        }
+        public override IGH_Goo Duplicate()
+        {
+            //This should technically do a deep copy not a shalow one, like in this case
+            return this;
+        }
     }
 
     public class Tool: GH_Goo<Tool>
@@ -234,7 +244,16 @@ namespace Axis.Core
             return $"Tool: {this.Name}";
         }
         public override bool IsValid => true;
-
+        public override int GetHashCode()
+        {
+            var val = Name.GetHashCode() + TCP.GetHashCode() + Weight.GetHashCode() + FlangeOffset.GetHashCode();
+            return base.GetHashCode();
+        }
+        public override IGH_Goo Duplicate()
+        {
+            //This should technically do a deep copy not a shalow one, like in this case
+            return this;
+        }
     }
     
     public enum Manufacturer

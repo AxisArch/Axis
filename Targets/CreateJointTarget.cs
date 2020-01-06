@@ -139,7 +139,14 @@ namespace Axis.Targets
             axisVals.Add(Math.Round(a5, 4));
             axisVals.Add(Math.Round(a6, 4));
 
-            Target jointTarget = new Target(axisVals, speed, zone, tool, rot, lin, manufacturer);
+            //Poor mans temporary fix
+            var rType = Manufacturer.ABB;
+            if (manufacturer)
+            {
+                rType = Manufacturer.Kuka;
+            }
+
+            Target jointTarget = new Target(axisVals, speed, zone, tool, rot, lin, rType);
 
             DA.SetData(0, jointTarget);
         }

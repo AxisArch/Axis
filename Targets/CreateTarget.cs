@@ -214,8 +214,15 @@ namespace Axis
                 if (method == 1) { mType = MotionType.Joint; }
                 else if (method == 2) { mType = MotionType.AbsoluteJoint; }
 
+                //Poor mans temporary fix
+                var rType = Manufacturer.ABB;
+                if (m_manufacturer)
+                {
+                    rType = Manufacturer.Kuka;
+                }
+
                 // Create the robot target.
-                Target robTarg = new Target(planes[i], mType, speed, zone, tool, wobj, extRot, extLin, m_manufacturer);
+                Target robTarg = new Target(planes[i], mType, speed, zone, tool, wobj, extRot, extLin, rType);
                 targets.Add(robTarg);
 
                 if (m_manufacturer == false) // Output the ABB string.
