@@ -484,6 +484,7 @@ namespace Axis.Targets
         public Toolpath(List<Target> targets)
         {
             Times(targets);
+            this.targets = targets;
         }
         /// <summary>
         /// Internal Class initialisation
@@ -519,7 +520,9 @@ namespace Axis.Targets
             double passedSec = timePassed.TotalSeconds;
             if (passedSec < this.totalSec)
             {
-                return this.targetProgress.BinarySearch(passedSec);
+                var val = -this.targetProgress.BinarySearch(passedSec);
+                if (val >= targets.Count) val = targets.Count - 1;
+                return val;
             }
             else return targets.Count - 1;
         }
