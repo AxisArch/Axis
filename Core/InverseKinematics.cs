@@ -109,7 +109,7 @@ namespace Axis.Core
                 }
                 if (robot.Manufacturer == Manufacturer.ABB) // Adjust for KUKA home position being different to ABB.
                 {
-                    radAngles[0] = -angles[0].ToRadians();
+                    radAngles[0] = angles[0].ToRadians();
                     radAngles[1] = (angles[1] - 90).ToRadians();
                     radAngles[2] = (angles[2] + 90).ToRadians();
                     for (int i = 3; i < 6; i++)
@@ -288,7 +288,7 @@ namespace Axis.Core
             // Find the wrist position by moving back along the robot flange the distance of the wrist link.
             Point3d WristLocation = new Point3d(target.PointAt(0, 0, -robot.WristOffset));
 
-            double angle1 = -1 * Math.Atan2(WristLocation.Y, WristLocation.X);
+            double angle1 = Math.Atan2(WristLocation.Y, WristLocation.X);
 
             // Check for overhead singularity and add message to log if needed
             if (WristLocation.Y < singularityTol && WristLocation.Y > -singularityTol &&
@@ -312,7 +312,7 @@ namespace Axis.Core
                 angle1 = a1list[j * 4];
 
                 // Rotate all of our points based on axis one.
-                Transform Rotation = Transform.Rotation(-1 * angle1, Point3d.Origin);
+                Transform Rotation = Transform.Rotation(angle1, Point3d.Origin);
 
                 Point3d P1A = new Point3d(RP[0]);
                 Point3d P2A = new Point3d(RP[1]);
@@ -346,7 +346,6 @@ namespace Axis.Core
                 // Get the points.
                 Point3d IntersectPt1 = Circ.PointAt(Par1), IntersectPt2 = Circ.PointAt(Par2);
 
-                // ******** Check that this works
                 // Solve IK for the remaining axes using these points.
                 for (int k = 0; k < 2; k++)
                 {
@@ -499,7 +498,7 @@ namespace Axis.Core
             List<Mesh> meshesOut = new List<Mesh>();
             meshesOut.Add(meshes[0]);
 
-            Transform Rot1 = Transform.Rotation(-1 * radAngles[0], robBase.ZAxis, robBase.Origin);
+            Transform Rot1 = Transform.Rotation(radAngles[0], robBase.ZAxis, robBase.Origin);
             List<Mesh> Meshes1 = new List<Mesh>();
             List<Plane> Planes1 = new List<Plane>();
             for (int i = 1; i < meshes.Count; i++)
