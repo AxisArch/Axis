@@ -162,10 +162,10 @@ namespace Axis.Core
 
         static Tool()
         {
-            Default = new Tool("DefaultTool", Plane.WorldXY, 1.5, null, false, Vector3d.Zero);
+            Default = new Tool("DefaultTool", Plane.WorldXY, 1.5, null, Manufacturer.ABB, Vector3d.Zero);
         }
 
-        public Tool(string name, Plane TCP, double weight, List<Mesh> mesh, bool type, Vector3d relToolOffset)
+        public Tool(string name, Plane TCP, double weight, List<Mesh> mesh, Manufacturer type, Vector3d relToolOffset)
         {
             string toolName = name;
             string COG = "[0.0,0.0,10.0]";
@@ -207,7 +207,7 @@ namespace Axis.Core
             string declaration;
 
 
-            if (type)
+            if (type == Manufacturer.Kuka)
             {
                 /*
                 List<double> eulers = new List<double>();
@@ -222,11 +222,12 @@ namespace Axis.Core
                 */
                 declaration = "KUKA TOOL DECLARATION";
             }
-            else
+            else if (type == Manufacturer.ABB)
             {
                 // Compose RAPID-formatted declaration.
                 declaration = "PERS tooldata " + toolName + " := [TRUE,[[" + shortenedPosition + "], [" + strQuat + "]], [" + weight.ToString() + "," + COG + "," + userOffset + ";";
             }
+            else throw new Exception("Manufacturer not yet implemented");
 
             this.Name = toolName;
             this.TCP = TCP;

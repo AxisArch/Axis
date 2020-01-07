@@ -28,7 +28,7 @@ namespace Axis.Robot
         }
 
         // Sticky context menu toggles
-        bool manufacturer = false;
+        Manufacturer manufacturer = Manufacturer.ABB;
         bool toolWeight = false;
         bool declaration = false;
         bool relTool = false;
@@ -62,10 +62,7 @@ namespace Axis.Robot
             if (!DA.GetData(1, ref TCP)) return;
             if (!DA.GetDataList(2, mesh) && mesh == null) return;
 
-            if (manufacturer)
-                this.Message = "KUKA";
-            else
-                this.Message = "ABB";
+            this.Message = manufacturer.ToString();
 
             if (toolWeight)
                 if (!DA.GetData("Weight", ref weight)) return;
@@ -104,8 +101,16 @@ namespace Axis.Robot
         // The following functions append menu items and then handle the item clicked event.
         protected override void AppendAdditionalComponentMenuItems(System.Windows.Forms.ToolStripDropDown menu)
         {
-            ToolStripMenuItem kukaOption = Menu_AppendItem(menu, "KUKA Tool", KUKA_Click, true, manufacturer);
-            kukaOption.ToolTipText = "Create a KUKA-formatted tool declaration.";
+            ToolStripMenuItem robotManufacturers = Menu_AppendItem(menu, "Manufacturer");
+            robotManufacturers.ToolTipText = "Select the robot manufacturer";
+            foreach (string name in typeof(Manufacturer).GetEnumNames())
+            {
+                ToolStripMenuItem item = new ToolStripMenuItem(name, null, manufacturer_Click);
+
+                if (name == this.manufacturer.ToString()) item.Checked = true;
+                robotManufacturers.DropDownItems.Add(item);
+            }
+            ToolStripSeparator seperator = Menu_AppendSeparator(menu);
             ToolStripMenuItem weightOption = Menu_AppendItem(menu, "Define Tool Weight", Weight_Click, true, toolWeight);
             weightOption.ToolTipText = "Add an parameter to define the weight of the tool.";
             ToolStripMenuItem declOption = Menu_AppendItem(menu, "Create Declaration", Declaration_Click, true, declaration);
@@ -114,12 +119,14 @@ namespace Axis.Robot
             reltoolOption.ToolTipText = "If checked, the component will allow a tool offset value.";
         }
 
-        private void KUKA_Click(object sender, EventArgs e)
+        private void manufacturer_Click(object sender, EventArgs e)
         {
-            RecordUndoEvent("KukaTool");
-            manufacturer = !manufacturer;
+            RecordUndoEvent("Manufacturer");
+            ToolStripMenuItem currentItem = (ToolStripMenuItem)sender;
+            Canvas.Menu.UncheckOtherMenuItems(currentItem);
+            this.manufacturer = (Manufacturer)currentItem.Owner.Items.IndexOf(currentItem);
+            ExpireSolution(true);
         }
-
         private void Weight_Click(object sender, EventArgs e)
         {
             RecordUndoEvent("Weight");
@@ -223,7 +230,7 @@ namespace Axis.Robot
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
-            writer.SetBoolean("KukaTool", this.manufacturer);
+            writer.SetInt32("Manufacturer", (int)this.manufacturer);
             writer.SetBoolean("Weight", this.toolWeight);
             writer.SetBoolean("Declaration", this.declaration);
             writer.SetBoolean("Relative Tool Offset", this.relTool);
@@ -233,7 +240,7 @@ namespace Axis.Robot
         // Deserialize this instance from a Grasshopper reader object.
         public override bool Read(GH_IO.Serialization.GH_IReader reader)
         {
-            this.manufacturer = reader.GetBoolean("KukaTool");
+            this.manufacturer = (Manufacturer)reader.GetInt32("Manufacturer");
             this.toolWeight = reader.GetBoolean("Weight");
             this.declaration = reader.GetBoolean("Declaration");
             this.relTool = reader.GetBoolean("Relative Tool Offset");
