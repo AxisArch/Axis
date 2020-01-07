@@ -31,7 +31,7 @@ namespace Axis.Targets
             get { return new Guid("8314b5fd-f75c-46db-922d-ee506338b161"); }
         }
 
-        public DefineZone() : base("Zone", "Z", "Define a list of robot interpolation zones.", "Axis", "4. Toolpath")
+        public DefineZone() : base("Zone", "Z", "Define a list of robot interpolation zones.", AxisInfo.Plugin, AxisInfo.TabToolpath)
         {
         }
 

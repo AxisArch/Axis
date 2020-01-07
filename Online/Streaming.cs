@@ -61,7 +61,7 @@ namespace Axis.Online
         Speed speed = new Speed();
         Zone zone = new Zone();
 
-        public Streaming() : base("Live Connection", "Stream", "Stream instructions to a robot controller", "Axis", "9. Online")
+        public Streaming() : base("Live Connection", "Stream", "Stream instructions to a robot controller", AxisInfo.Plugin, AxisInfo.TabOnline)
         {
         }
 

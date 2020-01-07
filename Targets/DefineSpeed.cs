@@ -30,7 +30,7 @@ namespace Axis.Targets
             get { return new Guid("602c07b3-af08-46c8-8d67-4ab2f351024d"); }
         }
 
-        public DefineSpeed() : base("Speed", "S", "Define a list of robot movement speeds.", "Axis", "4. Toolpath")
+        public DefineSpeed() : base("Speed", "S", "Define a list of robot movement speeds.", AxisInfo.Plugin, AxisInfo.TabToolpath)
         {
         }
 

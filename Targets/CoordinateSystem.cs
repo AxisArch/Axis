@@ -30,7 +30,7 @@ namespace Axis.Targets
         Plane eAxis = Plane.WorldXY;
         bool m_outputDeclarations = false;
 
-        public CoordinateSystem() : base("Work Object", "WObj", "Create a new work object or robot base from geometry or controller calibration values.", "Axis", "2. Robot")
+        public CoordinateSystem() : base("Work Object", "WObj", "Create a new work object or robot base from geometry or controller calibration values.", AxisInfo.Plugin, AxisInfo.TabRobot)
         {
         }
 

@@ -48,7 +48,7 @@ namespace Axis.Online
         Plane tcp = new Plane();
 
 
-        public Monitoring() : base("Monitoring  ", "Monitoring", "This will monitor the robots position and IO's", "Axis", "9. Online")
+        public Monitoring() : base("Monitoring  ", "Monitoring", "This will monitor the robots position and IO's", AxisInfo.Plugin, AxisInfo.TabOnline)
         {
         }
 

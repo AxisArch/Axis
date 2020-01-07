@@ -21,7 +21,7 @@ namespace Axis.Geometry
             get { return new Guid("{c834c84f-e010-4a51-a4a6-06b16257538c}"); }
         }
 
-        public QuatToPlane() : base("Quaternion To Plane", "Q-P", "Convert a point and a quaternion to a geometric plane.", "Axis", "5. Geometry")
+        public QuatToPlane() : base("Quaternion To Plane", "Q-P", "Convert a point and a quaternion to a geometric plane.", AxisInfo.Plugin, AxisInfo.TabGeometry)
         {
         }
 

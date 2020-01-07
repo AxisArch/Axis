@@ -21,7 +21,7 @@ namespace Axis.RAPID
             get { return new Guid("{ef081106-87c1-4521-8b0b-d1e296270867}"); }
         }
 
-        public Comment() : base("Comment", "C", "Generates a RAPID comment.", "Axis", "7. RAPID")
+        public Comment() : base("Comment", "C", "Generates a RAPID comment.", AxisInfo.Plugin, AxisInfo.TabCode)
         {
         }
 

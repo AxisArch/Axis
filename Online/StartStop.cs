@@ -40,7 +40,7 @@ namespace Axis.Online
         public StartStop()
           : base("Start/Stop", "Start/Stop",
               "Controll a programm running on a robot controller",
-              "Axis", "9. Online")
+              AxisInfo.Plugin, AxisInfo.TabOnline)
         {
         }
 

@@ -24,7 +24,7 @@ namespace Axis.IO
         // Context menu data items
         bool m_Sync = false;
 
-        public SetDO() : base("Set Digital Output", "Set DO", "Set the value of a digital output.", "Axis", "6. I/O")
+        public SetDO() : base("Set Digital Output", "Set DO", "Set the value of a digital output.", AxisInfo.Plugin, AxisInfo.TabIO)
         {
         }
 

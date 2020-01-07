@@ -21,7 +21,7 @@ namespace Axis.RAPID
             get { return new Guid("{9f7e521f-ea12-4699-b73e-a6201c32eff6}"); }
         }
 
-        public CallProcedure() : base("Call Procedure", "Call", "Call a custom RAPID procedure.", "Axis", "7. RAPID")
+        public CallProcedure() : base("Call Procedure", "Call", "Call a custom RAPID procedure.", AxisInfo.Plugin, AxisInfo.TabCode)
         {
         }
 

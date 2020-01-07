@@ -21,7 +21,7 @@ namespace Axis.RAPID
             get { return new Guid("{56593858-817a-42a0-aa34-3277a5f75c24}"); }
         }
 
-        public SoftMove() : base("SoftMove", "Soft", "Control the ABB SoftMove option.", "Axis", "7. RAPID")
+        public SoftMove() : base("SoftMove", "Soft", "Control the ABB SoftMove option.", AxisInfo.Plugin, AxisInfo.TabCode)
         {
         }
 

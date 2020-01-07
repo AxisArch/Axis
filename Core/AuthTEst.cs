@@ -10,7 +10,7 @@ namespace Axis.Core
 {
     public class AuthTest : GH_Component
     {
-        public AuthTest() : base("Auth Test", "Auth", "Test", "Axis", "1. Core")
+        public AuthTest() : base("Auth Test", "Auth", "Test", AxisInfo.Plugin, AxisInfo.TabCore)
         {
         }
 

@@ -59,7 +59,7 @@ namespace Axis.Online
         public Connect()
           : base("Controller", "Controller",
               "Connect to an ABB controller",
-              "Axis", "9. Online")
+              AxisInfo.Plugin, AxisInfo.TabOnline)
         {
         }
 

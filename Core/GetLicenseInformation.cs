@@ -23,7 +23,7 @@ namespace Axis.Core
             get { return new Guid("c1582c41-3815-4c7b-8965-3272b08450b7"); }
         }
 
-        public GetLicenseInformation() : base("Get License Info", "License", "Generate the information necessary to create a license.", "Axis", "1. Core")
+        public GetLicenseInformation() : base("Get License Info", "License", "Generate the information necessary to create a license.", AxisInfo.Plugin, AxisInfo.TabCore)
         {
         }
 

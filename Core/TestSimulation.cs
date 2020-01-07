@@ -23,7 +23,7 @@ namespace Axis.Core
         public TestSimulation()
           : base("Test Simulation", "TestSim",
               "Description",
-              "Axis", "Test")
+              AxisInfo.Plugin, "Test")
         {
         }
 

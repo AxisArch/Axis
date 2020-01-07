@@ -36,7 +36,7 @@ namespace Axis
         bool extRotary = false;
         bool extLinear = false;
         
-        public CreateTarget() : base("Plane Target", "Target", "Create custom robot targets from planes.", "Axis", "3. Targets")
+        public CreateTarget() : base("Plane Target", "Target", "Create custom robot targets from planes.", AxisInfo.Plugin, AxisInfo.TabTargets)
         {
         }
 

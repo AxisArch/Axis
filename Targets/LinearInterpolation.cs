@@ -22,7 +22,7 @@ namespace Axis.Targets
             get { return new Guid("2c5e04ac-7638-46ac-9871-718eeaeff764"); }
         }
 
-        public LinearInterpolation() : base("Lerp", "Lerp", "Quaternion linear interpolation between two robot targets, based on the Robots plugin (https://github.com/visose/Robots) and Lobster Reloaded by Daniel Piker.", "Axis", "3. Targets")
+        public LinearInterpolation() : base("Lerp", "Lerp", "Quaternion linear interpolation between two robot targets, based on the Robots plugin (https://github.com/visose/Robots) and Lobster Reloaded by Daniel Piker.", AxisInfo.Plugin, AxisInfo.TabTargets)
         {
         }
 

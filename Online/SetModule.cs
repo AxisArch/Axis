@@ -42,7 +42,7 @@ namespace Axis.Online
         public SetModule()
           : base("Set Module", "Set Mod",
               "Set the main module on the robot controller",
-              "Axis", "9. Online")
+              AxisInfo.Plugin, AxisInfo.TabOnline)
         {
         }
 

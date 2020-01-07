@@ -15,7 +15,7 @@ namespace Axis.Core
         public List<string> log = new List<string>();
         public bool loggedIn = false;
 
-        public Login() : base("Login", "Login", "Log in to Axis", "Axis", "1. Core")
+        public Login() : base("Login", "Login", "Log in to Axis", AxisInfo.Plugin, AxisInfo.TabCore)
         {
 
         }

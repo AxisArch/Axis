@@ -39,7 +39,7 @@ namespace Axis.Core
         }
         public override GH_Exposure Exposure => GH_Exposure.primary;
 
-        public InverseKinematics() : base("Inverse Kinematics", "Kinematics", "Inverse and forward kinematics for a 6 degree of freedom robotic arm, based on Lobster Reloaded by Daniel Piker.", "Axis", "1. Core")
+        public InverseKinematics() : base("Inverse Kinematics", "Kinematics", "Inverse and forward kinematics for a 6 degree of freedom robotic arm, based on Lobster Reloaded by Daniel Piker.", AxisInfo.Plugin, AxisInfo.TabCore)
         {
         }
 

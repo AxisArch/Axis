@@ -21,7 +21,7 @@ namespace Axis.Targets
             get { return new Guid("{d290273f-dad9-44af-9bc9-d2e7154abc90}"); }
         }
 
-        public FlipPlane() : base("Flip Plane", "Flip", "Flip a plane around it's Y axis.", "Axis", "3. Targets")
+        public FlipPlane() : base("Flip Plane", "Flip", "Flip a plane around it's Y axis.", AxisInfo.Plugin, AxisInfo.TabTargets)
         {
         }
         

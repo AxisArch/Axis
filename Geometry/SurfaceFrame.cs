@@ -8,7 +8,7 @@ namespace Axis.Geometry
 {
     public class SurfaceFrame : GH_Component
     {
-        public SurfaceFrame() : base("Surface Frame", "Frame", "Reparamaterize a surface and return the frame at U:0.5, V:0.5.", "Axis", "5. Geometry")
+        public SurfaceFrame() : base("Surface Frame", "Frame", "Reparamaterize a surface and return the frame at U:0.5, V:0.5.", AxisInfo.Plugin, AxisInfo.TabGeometry)
         {
         }
 

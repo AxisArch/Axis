@@ -36,7 +36,7 @@ namespace Axis.Core
             get { return new Guid("{26289bd0-15cc-408f-af2d-5a87ea81cb18}"); }
         }
 
-        public Robot() : base("Robot", "Robot", "Create a kinematic model of a custom robot.", "Axis", "2. Robot")
+        public Robot() : base("Robot", "Robot", "Create a kinematic model of a custom robot.", AxisInfo.Plugin, AxisInfo.TabRobot)
         {
         }
 

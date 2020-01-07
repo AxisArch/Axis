@@ -38,7 +38,7 @@ namespace Axis.Core
         }
         public override GH_Exposure Exposure => GH_Exposure.primary;
 
-        public CodeGenerator() : base("Code Generator", "Code", "Generate manufacturer-specific robot code from a toolpath.", "Axis", "1. Core")
+        public CodeGenerator() : base("Code Generator", "Code", "Generate manufacturer-specific robot code from a toolpath.", AxisInfo.Plugin, AxisInfo.TabCore)
         {
         }
 

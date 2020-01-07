@@ -9,7 +9,7 @@ namespace Axis.Core
 {
     public class OffsetWristKinematics : GH_Component
     {
-        public OffsetWristKinematics() : base("UR IK", "UR IK", "Offset wrist kinematics for UR.", "Axis", "1. Core")
+        public OffsetWristKinematics() : base("UR IK", "UR IK", "Offset wrist kinematics for UR.", AxisInfo.Plugin, AxisInfo.TabCore)
         {
         }
 

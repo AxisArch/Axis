@@ -22,7 +22,7 @@ namespace Axis.IO
 
         }
 
-        public GetDI() : base("Get Digital Input", "Get DI", "Get the value of a specific digital input.", "Axis", "6. I/O")
+        public GetDI() : base("Get Digital Input", "Get DI", "Get the value of a specific digital input.", AxisInfo.Plugin, AxisInfo.TabIO)
         {
         }
 

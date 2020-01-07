@@ -21,7 +21,7 @@ namespace Axis.RAPID
             }
         }
 
-        public SetVelocity() : base("Velocity Override", "Velocity Override", "Override all following programmed velocities to a percentage of their value.", "Axis", "7. RAPID")
+        public SetVelocity() : base("Velocity Override", "Velocity Override", "Override all following programmed velocities to a percentage of their value.", AxisInfo.Plugin, AxisInfo.TabCode)
         {
         }
 

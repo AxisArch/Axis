@@ -21,7 +21,7 @@ namespace Axis.RAPID
             get { return new Guid("{06575491-6164-4b5d-82a8-a31d2a5ed75f}"); }
         }
 
-        public Acceleration() : base("Acceleration", "Acc", "Override the robot acceleration and deceleration settings.", "Axis", "7. RAPID")
+        public Acceleration() : base("Acceleration", "Acc", "Override the robot acceleration and deceleration settings.", AxisInfo.Plugin, AxisInfo.TabCode)
         {
         }
 

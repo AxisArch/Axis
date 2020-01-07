@@ -26,7 +26,7 @@ namespace Axis.Core
         }
         public override GH_Exposure Exposure => GH_Exposure.primary;
 
-        public CheckProgram() : base("Check Program", "Check", "Check an entire program for kinematic errors.", "Axis", "1. Core")
+        public CheckProgram() : base("Check Program", "Check", "Check an entire program for kinematic errors.", AxisInfo.Plugin, AxisInfo.TabCore)
         {
         }
 

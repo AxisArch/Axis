@@ -38,7 +38,7 @@ namespace Axis.Core
         }
         public override GH_Exposure Exposure => GH_Exposure.secondary;
 
-        public Simulation() : base("Simulation", "Program", "Simulate a robotic toolpath.", "Axis", "1. Core")
+        public Simulation() : base("Simulation", "Program", "Simulate a robotic toolpath.", AxisInfo.Plugin, AxisInfo.TabCore)
         {
         }
 

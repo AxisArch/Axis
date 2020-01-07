@@ -29,7 +29,7 @@ namespace Axis.Targets
             get { return new Guid("8854333d-79f7-47e0-9b80-03966486b42b"); }
         }
 
-        public CreateJointTarget() : base("Joint Target", "Joint", "Compose an absolute joint target from a list of axis values.", "Axis", "3. Targets")
+        public CreateJointTarget() : base("Joint Target", "Joint", "Compose an absolute joint target from a list of axis values.", AxisInfo.Plugin, AxisInfo.TabTargets)
         {
         }
 

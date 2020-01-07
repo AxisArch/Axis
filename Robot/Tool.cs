@@ -33,7 +33,7 @@ namespace Axis.Robot
         bool declaration = false;
         bool relTool = false;
 
-        public CreateTool() : base("Tool", "Tool", "Define a custom robot tool object.", "Axis", "2. Robot")
+        public CreateTool() : base("Tool", "Tool", "Define a custom robot tool object.", AxisInfo.Plugin, AxisInfo.TabRobot)
         {
         }
 
