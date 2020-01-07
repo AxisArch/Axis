@@ -9,6 +9,9 @@ using Axis.Core;
 
 namespace Axis.Targets
 {
+    /// <summary>
+    /// Robot target used to instruct a movement
+    /// </summary>
     public class Target : GH_Goo<Target>
     {
         public Point3d Position { get; set; }
@@ -27,9 +30,11 @@ namespace Axis.Targets
 
         public string StrABB { get; }
         public string StrKUKA { get; }
+        public string StrRob { get; }
 
         public MotionType Method { get; }
-        public string StrMethod { get; }
+
+        public Manufacturer Manufacturer { get; }
 
         public static Target Default { get; }
 
@@ -107,16 +112,9 @@ namespace Axis.Targets
 
                 string strQuat = w.ToString() + ", " + x.ToString() + ", " + y.ToString() + ", " + z.ToString();
 
-                if (method == MotionType.Linear) // Linear movement method.
-                {
-                    movement = "MoveL";
-                    this.StrMethod = "Linear";
-                }
-                else if (method == MotionType.Joint) // Joint movement method.
-                {
-                    movement = "MoveJ";
-                    this.StrMethod = "Joint";
-                }
+                if (method == MotionType.Linear) movement = "MoveL"; // Linear movement method.
+                else if (method == MotionType.Joint) movement = "MoveJ"; // Joint movement method.
+
 
                 if (speed.Time > 0)
                 {
@@ -182,13 +180,11 @@ namespace Axis.Targets
                 {
                     movement = "LIN";
                     approx = "C_VEL";
-                    this.StrMethod = "Linear";
                 }
                 else if (method == MotionType.Joint) // Joint movement method.
                 {
                     movement = "PTP";
                     approx = "C_PTP";
-                    this.StrMethod = "Joint";
                 }
 
                 // Compile the KUKA robot target string.
@@ -249,11 +245,10 @@ namespace Axis.Targets
             this.ExtLin = extLin;
             this.StrABB = strABB;
             this.Method = MotionType.AbsoluteJoint;
-            this.StrMethod = "Absolute Joint";
+            //this.StrMethod = "Absolute Joint";
         }
 
-        public override string ToString() => (Method != null) ? $"Target ({StrMethod})" : $"Target ({Position})";
-
+        public override string ToString() => (Method != null) ? $"Target ({Method.ToString()})" : $"Target ({Position})";
         public override string TypeName => "Target";
         public override string TypeDescription => "Robot target";
         public override bool IsValid => true;
@@ -272,15 +267,23 @@ namespace Axis.Targets
 
             if (typeof(Q).IsAssignableFrom(typeof(GH_Plane)) && (this.Plane != null))
             {
-                object _Plane = this.Plane;
+                object _Plane = new GH_Plane(this.Plane);
                 target = (Q)_Plane;
+                return true;
+            }
+            if (typeof(Q).IsAssignableFrom(typeof(GH_Point)) && (this.Plane != null))
+            {
+                object _Point = new GH_Point(this.Plane.Origin);
+                target = (Q)_Point;
                 return true;
             }
 
             return false;
         }
     }
-
+    /// <summary>
+    /// Robot Speed type
+    /// </summary>
     public class Speed : GH_Goo<double>
 {
         public string Name { get; set; }
@@ -322,7 +325,7 @@ namespace Axis.Targets
         {
             if (typeof(Q).IsAssignableFrom(typeof(GH_Number)) && (this.TranslationSpeed != null))
             {
-                object _number = this.TranslationSpeed;
+                object _number = new GH_Number(this.TranslationSpeed);
                 target = (Q)_number;
                 return true;
             }
@@ -330,7 +333,9 @@ namespace Axis.Targets
             return false;
         }
     }
-
+    /// <summary>
+    /// Robot movement zone type
+    /// </summary>
     public class Zone : GH_Goo<double>
     {
         public string Name { get; set; }
@@ -380,7 +385,7 @@ namespace Axis.Targets
         {
             if (typeof(Q).IsAssignableFrom(typeof(GH_Number)) && (this.PathRadius != null))
             {
-                object _number = this.PathRadius;
+                object _number = new GH_Number(this.PathRadius);
                 target = (Q)_number;
                 return true;
             }
@@ -389,7 +394,9 @@ namespace Axis.Targets
         }
 
     }
-
+    /// <summary>
+    /// Robot working coordinat system
+    /// </summary>
     public class CSystem : GH_Goo<Plane>
     {
         public string Name { get; set; }
@@ -439,8 +446,14 @@ namespace Axis.Targets
 
             if (typeof(Q).IsAssignableFrom(typeof(GH_Plane)) && (this.CSPlane != null))
             {
-                object _Plane = this.CSPlane;
+                object _Plane = new GH_Plane(this.CSPlane);
                 target = (Q)_Plane;
+                return true;
+            }
+            if (typeof(Q).IsAssignableFrom(typeof(GH_Point)) && (this.CSPlane != null))
+            {
+                object _Point = new GH_Point(this.CSPlane.Origin);
+                target = (Q)_Point;
                 return true;
             }
 
@@ -457,15 +470,6 @@ namespace Axis.Targets
         public double Time { get; set; }
         public Zone Zone { get; set; }
     }
-
-    public enum MotionType
-    {
-        Linear = 0,
-        Joint = 1,
-        AbsoluteJoint = 2,
-        NoMovement = 3
-    }
-
     /// <summary>
     /// Tool path class allowing for time aproximate simulation
     /// </summary>
@@ -561,17 +565,16 @@ namespace Axis.Targets
             {
                 List<Point3d> points = new List<Point3d>();
 
-                foreach (Target t in this.targets) 
+                foreach (Target t in this.targets)
                 {
-                    if (t.Plane.Origin != null) 
+                    if (t.Plane.Origin != null)
                     {
                         points.Add(t.Plane.Origin);
                     }
                 }
 
-                Polyline pLine = new Polyline(points);
-
-                object _pLine = pLine;
+                PolylineCurve pLine = new PolylineCurve(points);
+                object _pLine = new GH_Curve(pLine);
                 target = (Q)_pLine;
                 return true;
             }
@@ -580,4 +583,16 @@ namespace Axis.Targets
         }
 
     }
+    /// <summary>
+    /// List of motion types
+    /// </summary>
+    public enum MotionType
+    {
+        Linear = 0,
+        Joint = 1,
+        AbsoluteJoint = 2,
+        NoMovement = 3
+    }
+
+
 }
