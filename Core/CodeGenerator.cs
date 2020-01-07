@@ -22,7 +22,7 @@ namespace Axis.Core
         bool modName = false;
         bool declarations = false;
         bool overrides = false;
-        bool manufacturer = false;
+        Manufacturer m_Manufacturer = Manufacturer.ABB;
         bool ignoreLen = false;
 
         protected override System.Drawing.Bitmap Icon
@@ -116,7 +116,7 @@ namespace Axis.Core
             // If we have a valid program and we are logged in...
             if (strProgram != null)
             {
-                if (manufacturer)
+                if (m_Manufacturer == Manufacturer.Kuka)
                 {
                     KRL.Add("&ACCESS RVP");
                     KRL.Add("&REL 26");
@@ -189,7 +189,7 @@ namespace Axis.Core
 
                     DA.SetDataList(0, KRL);
                 } // If the user has requested KUKA code...
-                else
+                else if (m_Manufacturer == Manufacturer.ABB)
                 {
                     //Settings for the main Program
                     int bottomLim = 5000; //ABB limit about 5000
@@ -201,7 +201,7 @@ namespace Axis.Core
                         AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Procedure length exceeds recommended maximum. Program will be split into multiple procedures.");
                         this.Message = "Large Program";
 
-                        
+
                         var subs = Util.SplitProgram(strProgram, 5000);
                         List<Program> progs = new List<Program>();
                         List<string> strMain = new List<string>();
@@ -210,11 +210,11 @@ namespace Axis.Core
 
                         for (int i = 0; i < subs.Count; ++i)
                         {
-                            progs.Add(new Program(subs[i], progName:subName+i.ToString(),comments:new List<string> {""}));
+                            progs.Add(new Program(subs[i], progName: subName + i.ToString(), comments: new List<string> { "" }));
                         }
                         for (int i = 0; i < subs.Count; ++i)
                         {
-                            strMain.Add(subName + i.ToString()+";");
+                            strMain.Add(subName + i.ToString() + ";");
                         }
 
                         var comment = new List<string> {
@@ -241,7 +241,7 @@ namespace Axis.Core
                         List<Program> external = new List<Program>();
                         for (int i = 0; i < progsStr.Count; ++i)
                         {
-                            external.Add(new Program(progsStr[i], progName:procname+i.ToString()));
+                            external.Add(new Program(progsStr[i], progName: procname + i.ToString()));
                         }
 
                         // Write the instructions for the main prog
@@ -262,29 +262,38 @@ namespace Axis.Core
                                 "",
                             });
 
-                            if (i + 2 < external.Count()) { strMain.AddRange(new List<string>
+                            if (i + 2 < external.Count())
+                            {
+                                strMain.AddRange(new List<string>
                             {
                                 $"StartLoad \\Dynamic, sDirHome \\File:= sFile + \"{smFileName}{i+2}.mod\", load1;",
                                 //""
-                            }); }
+                            });
+                            }
 
-                            if (i + 1 < external.Count()) { strMain.AddRange(new List<string>
+                            if (i + 1 < external.Count())
+                            {
+                                strMain.AddRange(new List<string>
                             {
                                 "",
                                 $"WaitLoad load2;",
                                 $"% \"{procname}{i+1}\" %;",
                                 $"UnLoad sDirHome \\File:= sFile + \"{smFileName}{i+1}.mod\";",
                                 ""
-                            }); }
+                            });
+                            }
 
-                            if (i + 3 < external.Count()) { strMain.AddRange(new List<string>
+                            if (i + 3 < external.Count())
+                            {
+                                strMain.AddRange(new List<string>
                             {
                                 $"StartLoad \\Dynamic, sDirHome \\File:= sFile + \"{smFileName}{i+3}.mod\", load2;",
                                 ""
-                            }); }
+                            });
+                            }
                         }
 
-                        
+
                         List<string> dec = new List<string>
                         {
                             "",
@@ -300,7 +309,7 @@ namespace Axis.Core
                             "! That will be loaded successively at runtime",
                             " "
                         };
-                        var main = new Program(strMain, progName: "main", comments:comment,LJ:true);
+                        var main = new Program(strMain, progName: "main", comments: comment, LJ: true);
                         module.AddMain(main);
                         module.extraProg = external;
                         module.AddDeclarations(dec);
@@ -312,7 +321,7 @@ namespace Axis.Core
                     }
 
                     if (ignoreLen) this.Message = "No Length Check";
-                    
+
                     module.AddPrograms(strProcedures);
 
                     if (declarations) module.AddDeclarations(strDeclarations);
@@ -322,11 +331,12 @@ namespace Axis.Core
 
 
                     DA.SetDataList(0, module.Code());
-                }
+                } //If 
+                else AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The selected manifacturar has not yet been implemented");
 
                 if (export)
                 {
-                    if (manufacturer)
+                    if (m_Manufacturer == Manufacturer.Kuka)
                     {
                         using (StreamWriter writer = new StreamWriter(path + @"\" + filename + ".src", false))
                         {
@@ -337,7 +347,7 @@ namespace Axis.Core
                         }
                         Util.AutoClosingMessageBox.Show("Export Successful!", "Export", 1300);
                     }
-                    else
+                    else if (m_Manufacturer == Manufacturer.ABB)
                     {
                         File.WriteAllLines($@"{path}\\{filename}.pgf", new List<string>
                         {
@@ -355,6 +365,7 @@ namespace Axis.Core
 
                         Util.AutoClosingMessageBox.Show("Export Successful!", "Export", 1300);
                     }
+                    else return;
                 }
             }
         }
@@ -379,8 +390,15 @@ namespace Axis.Core
 
             ToolStripSeparator seperator = Menu_AppendSeparator(menu);
 
-            ToolStripMenuItem type = Menu_AppendItem(menu, "Generate KRL", type_Click, true, manufacturer);
-            type.ToolTipText = "Switch from creating the RAPID code (ABB robot code) to KRL (KUKA robot code).";
+            ToolStripMenuItem robotManufacturers = Menu_AppendItem(menu, "Manufacturer");
+            robotManufacturers.ToolTipText = "Select the robot manufacturer";
+            foreach (string name in typeof(Manufacturer).GetEnumNames())
+            {
+                ToolStripMenuItem item = new ToolStripMenuItem(name, null, manufacturer_Click);
+
+                if (name == this.m_Manufacturer.ToString()) item.Checked = true;
+                robotManufacturers.DropDownItems.Add(item);
+            }
 
             ToolStripSeparator seperator2 = Menu_AppendSeparator(menu);
 
@@ -439,10 +457,13 @@ namespace Axis.Core
             ExpireSolution(true);
         }
 
-        private void type_Click(object sender, EventArgs e)
+        private void manufacturer_Click(object sender, EventArgs e)
         {
             RecordUndoEvent("Manufacturer");
-            manufacturer = !manufacturer;
+            ToolStripMenuItem currentItem = (ToolStripMenuItem)sender;
+            Canvas.Menu.UncheckOtherMenuItems(currentItem);
+            this.m_Manufacturer = (Manufacturer)currentItem.Owner.Items.IndexOf(currentItem);
+            ExpireSolution(true);
         }
 
         private void ignoreLen_Click(object sender, EventArgs e)
@@ -451,7 +472,10 @@ namespace Axis.Core
             ignoreLen = !ignoreLen;
         }
 
-        // Register the new input parameters to our component.
+        /// <summary>
+        /// Register the new output parameters to our component.
+        /// </summary>
+        /// <param name="index"></param>
         private void AddInput(int index)
         {
             IGH_Param parameter = inputParams[index];
@@ -483,7 +507,7 @@ namespace Axis.Core
             writer.SetBoolean("ModName", this.modName);
             writer.SetBoolean("Declarations", this.declarations);
             writer.SetBoolean("Overrides", this.overrides);
-            writer.SetBoolean("Manufacturer", this.manufacturer);
+            writer.SetInt32("Manufacturer", (int)this.m_Manufacturer);
             writer.SetBoolean("IgnoreLen", this.ignoreLen);
             return base.Write(writer);
         }
@@ -494,7 +518,7 @@ namespace Axis.Core
             this.modName = reader.GetBoolean("ModName");
             this.declarations = reader.GetBoolean("Declarations");
             this.overrides = reader.GetBoolean("Overrides");
-            this.manufacturer = reader.GetBoolean("Manufacturer");
+            this.m_Manufacturer = (Manufacturer)reader.GetInt32("Manufacturer");
             this.ignoreLen = reader.GetBoolean("IgnoreLen");
             return base.Read(reader);
         }
