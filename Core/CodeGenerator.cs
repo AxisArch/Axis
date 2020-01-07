@@ -109,14 +109,7 @@ namespace Axis.Core
                 else
                 {
                     Target targ = command.Value as Target;
-                    if (!manufacturer)
-                    {
-                        strProgram.Add(targ.StrABB);
-                    }
-                    else
-                    {
-                        strProgram.Add(targ.StrKUKA);
-                    }
+                    strProgram.Add(targ.StrRob);
                 }
             }
 

@@ -225,14 +225,7 @@ namespace Axis
                 Target robTarg = new Target(planes[i], mType, speed, zone, tool, wobj, extRot, extLin, rType);
                 targets.Add(robTarg);
 
-                if (m_manufacturer == false) // Output the ABB string.
-                {
-                    code.Add(robTarg.StrABB);
-                }
-                else
-                {
-                    code.Add(robTarg.StrKUKA); // Output the KUKA string.
-                }
+                code.Add(robTarg.StrRob);
             }
 
             DA.SetDataList(0, targets);

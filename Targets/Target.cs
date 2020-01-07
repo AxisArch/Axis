@@ -28,8 +28,8 @@ namespace Axis.Targets
 
         public string WorkObject { get; }
 
-        public string StrABB { get; }
-        public string StrKUKA { get; }
+        //public string StrABB { get; }
+        //public string StrKUKA { get; }
         public string StrRob { get; }
 
         public MotionType Method { get; }
@@ -84,8 +84,7 @@ namespace Axis.Targets
 
             // Declare some strings to store the target information in a manufacturer specific manner.
             string movement = null;
-            string strABB = null;
-            string strKUKA = null;
+            string strRob = null;
             string strZone = zone.Name;
             string strSpeed = null;
             string exLin = "9E9";
@@ -152,11 +151,11 @@ namespace Axis.Targets
                 {
                     //MoveL RelTool ([[416.249, -110.455, 0],[0, 0, 1, 0], cData, eAxis], 0, 0,-120), v50, z1, tool0 \Wobj:=wobj0;
                     string offset = tool.relTool.X.ToString() + ", " + tool.relTool.Y.ToString() + "," + tool.relTool.Z.ToString();
-                    strABB = movement + @" RelTool (" + robtarget + ", " + offset + "), " + strSpeed + ", " + strZone + ", " + tool.Name + " " + workObject + ";";
+                    strRob = movement + @" RelTool (" + robtarget + ", " + offset + "), " + strSpeed + ", " + strZone + ", " + tool.Name + " " + workObject + ";";
                 }
                 else
                 {
-                    strABB = movement + robtarget + ", " + strSpeed + ", " + strZone + ", " + tool.Name + " " + workObject + ";";
+                    strRob = movement + robtarget + ", " + strSpeed + ", " + strZone + ", " + tool.Name + " " + workObject + ";";
                 }
             }
             else if(robot == Manufacturer.Kuka) // KUKA Targets
@@ -188,16 +187,15 @@ namespace Axis.Targets
                 }
 
                 // Compile the KUKA robot target string.
-                strKUKA = movement + " {E6POS: " + KUKAposition + ", " + strEuler + ", " + strExtAxis + "} " + approx;
+                strRob = movement + " {E6POS: " + KUKAposition + ", " + strEuler + ", " + strExtAxis + "} " + approx;
             }
 
-            this.StrABB = strABB;
-            this.StrKUKA = strKUKA;
+            this.StrRob = strRob;
         }
 
         public Target(List<double> axisVals, Speed speed, Zone zone, Tool tool, double extRot, double extLin, Manufacturer robot)
         {
-            string strABB = null;
+            string strRob = null;
             string strZone = zone.Name;
             string jTarg = "[" + axisVals[0].ToString() + ", " + axisVals[1].ToString() + ", " + axisVals[2].ToString() + ", " + axisVals[3].ToString() + ", " + axisVals[4].ToString() + ", " + axisVals[5].ToString() + "]";
 
@@ -237,15 +235,14 @@ namespace Axis.Targets
                 if (extRot != Util.ExAxisTol)
                     rot = Math.Round(extRot, 2).ToString(); // Get the external axis value per target and round it to two decimal places.
 
-                strABB = @"MoveAbsJ [" + jTarg + ", [" + rot + ", " + lin + ", 9E9, 9E9, 9E9, 9E9]" + "], " + strSpeed + ", " + strZone + ", " + tool.Name + ";";
+                strRob = @"MoveAbsJ [" + jTarg + ", [" + rot + ", " + lin + ", 9E9, 9E9, 9E9, 9E9]" + "], " + strSpeed + ", " + strZone + ", " + tool.Name + ";";
             }
-            else { strABB = @"MoveAbsJ [" + jTarg + ", [9E9, 9E9, 9E9, 9E9, 9E9, 9E9]" + "], " + strSpeed + ", " + strZone + ", " + tool.Name + ";"; }
+            else { strRob = @"MoveAbsJ [" + jTarg + ", [9E9, 9E9, 9E9, 9E9, 9E9, 9E9]" + "], " + strSpeed + ", " + strZone + ", " + tool.Name + ";"; }
 
             this.ExtRot = extRot;
             this.ExtLin = extLin;
-            this.StrABB = strABB;
+            this.StrRob = strRob;
             this.Method = MotionType.AbsoluteJoint;
-            //this.StrMethod = "Absolute Joint";
         }
 
         public override string ToString() => (Method != null) ? $"Target ({Method.ToString()})" : $"Target ({Position})";
