@@ -335,7 +335,6 @@
     <Compile Include="Geometry\SurfaceFrame.cs" />
     <Compile Include="IO\GetDI.cs" />
     <Compile Include="IO\SetDO.cs" />
-    <Compile Include="Online\ABBComunication.cs" />
     <Compile Include="Online\AxisController.cs" />
     <Compile Include="Online\Connect.cs" />
     <Compile Include="Online\GetModules.cs" />
@@ -343,7 +342,6 @@
     <Compile Include="Online\SetModule.cs" />
     <Compile Include="Online\StartStop.cs" />
     <Compile Include="Online\Streaming.cs" />
-    <Compile Include="Online\Toolbox.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -544,7 +542,9 @@
     <None Include="Resources\UnknownMotorState.png" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Online\moduleFile.mod" />
+    <Content Include="Online\moduleFile.mod">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -6,11 +6,13 @@ using System.IO;
 using System.Data;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Text;
 using System.Threading.Tasks;
+
 
 using Excel = Microsoft.Office.Interop.Excel;
 
@@ -21,12 +23,19 @@ using Rhino.Geometry;
 using Rhino.Input.Custom;
 using Rhino.DocObjects;
 
+using Grasshopper.Kernel;
+using Grasshopper.Kernel.Special;
+
 using Axis.Targets;
 
 using Newtonsoft.Json;
 
+/// <summary>
+/// Commone Axis specific functions
+/// </summary>
 namespace Axis
 {
+
     public static class Util
     {
         // Public constants across the plugin.
@@ -577,4 +586,359 @@ namespace Axis
             return responseTask.Result;
         }
     }
+
+}
+
+/// <summary>
+/// This namesspcae proviedes fuctions for the modification of RAPID instructions
+/// </summary>
+namespace RAPID
+{
+    /// <summary>
+    /// RAPID program
+    /// </summary>
+    public class Program : IEnumerable<string>
+    {
+        public List<string> code { get; private set; }
+        public bool IsMain { get; private set; }
+
+
+        private string Name = "procname";
+        private bool conL_J = false;
+        private List<string> comment = new List<string>();
+        private List<string> overrides = new List<string>();
+        private List<string> ljHeader = new List<string>
+                {
+                    @"ConfL \Off;",
+                    @"ConfJ \Off;",
+                    "",
+                };
+        private List<string> ljFooter = new List<string>
+                {
+                    " ",
+                    @"ConfL \On;",
+                    @"ConfJ \On;",
+                };
+
+
+        public Program(List<string> code = null, List<string> overrides = null, string progName = "procname", bool LJ = false, List<string> comments = null)
+        {
+            if (code != null) this.code = code;
+            this.Name = progName;
+            this.conL_J = LJ;
+            if (overrides != null) { this.overrides = overrides; }
+            if (progName == "main") { this.IsMain = true; }
+            if (comment != null) { this.comment = comment; }
+        }
+        public void AddOverrides(List<string> overrides)
+        {
+            this.overrides.AddRange(overrides);
+        }
+
+
+        public List<string> Code()
+        {
+            var prog = new List<string>();
+
+            prog.AddRange(comment);
+            prog.Add($"PROC {Name}()");
+            if (this.overrides != null) { prog.AddRange(overrides); }
+            prog.AddRange(comment);
+            if (conL_J) { prog.AddRange(ljHeader); }
+            prog.AddRange(this.code);
+            if (conL_J) { prog.AddRange(ljFooter); }
+
+            prog.Add("ENDPROC");
+
+            return prog;
+        }
+        public  List<Program> ToList()
+        {
+            return new List<Program> { this };
+        }
+
+        public void Add(string item)
+        {
+            code.Add(item);
+        }
+        public IEnumerator<string> GetEnumerator()
+        {
+            return code.GetEnumerator();
+        }
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+    }
+
+    /// <summary>
+    /// RAPID module
+    /// </summary>
+    public class Module
+    {
+        public bool IsValid { get; private set; }
+
+        private string Name;
+        private List<string> tag = new List<string>
+        {
+            "! ABB Robot Code",
+            $"! Generated with Axis {Assembly.GetExecutingAssembly().GetName().Version}",
+            "! Created: " + DateTime.Now.ToString(),
+            "! Author: " + Environment.UserName.ToString(),
+            " ",
+        };
+        private List<string> declarations = new List<string>
+                {
+                    "! Declarations",
+                    "VAR confdata cData := [0,-1,-1,0];",
+                    "VAR extjoint eAxis := [9E9,9E9,9E9,9E9,9E9,9E9];",
+                };
+        private List<Program> main = new List<Program>();
+        private List<Program> progs = new List<Program>();
+        private List<string> legaryProgs = new List<string>();
+
+        public List<Program> extraProg = new List<Program>();
+
+        public Module(List<Program> progs = null, List<string> declarations = null, string name = "submodule")
+        {
+            if (progs != null)
+            {
+                foreach (Program prog in progs)
+                {
+                    if (prog.IsMain)
+                    {
+                        this.AddMain(prog);
+                    }
+                    else
+                    {
+                        if (this.progs == null)
+                        {
+                            this.progs = new List<Program>();
+
+                        }
+                        this.progs.Add(prog);
+                    }
+                }
+            }
+            this.Name = name;
+            if (declarations != null) { this.declarations = declarations; }
+            this.IsValid = this.validate();
+        }
+        public void AddDeclarations(List<string> declaration)
+        {
+            if (this.declarations == null)
+            {
+                this.declarations = declaration;
+            }
+            else
+            {
+                this.declarations.AddRange(declaration);
+            }
+        }
+        public void AddPrograms(List<Program> progs)
+        {
+            if (progs == null)
+            {
+                this.progs = progs;
+            }
+            else
+            {
+                this.progs.AddRange(progs);
+            }
+        }
+        public void AddPrograms(List<string> progs)
+        {
+            legaryProgs.AddRange(progs);
+        }
+        public void AddMain(Program main)
+        {
+            if (this.main == null)
+            {
+                this.main = new List<Program>() { main };
+            }
+            else
+            {
+                this.main.Add(main);
+            }
+            this.IsValid = this.validate();
+        }
+        public void AddOverrides(List<string> overrides)
+        {
+            foreach (Program prog in this.main)
+            {
+                prog.AddOverrides(overrides);
+            }
+        }
+        bool ExtraProg(List<Program> extraProg)
+        {
+            foreach (Program prog in extraProg)
+            {
+                if (prog.IsMain == true)
+                {
+                    return false;
+                }
+            }
+
+            this.extraProg = extraProg;
+            return true;
+        }
+
+        public List<string> Code()
+        {
+            List<string> mod = new List<string>();
+            mod.Add($"PROC {Name}()");
+            mod.AddRange(this.tag);
+            mod.AddRange(this.declarations);
+            mod.Add("");
+            mod.Add("!Main Program");
+            foreach (Program prog in main)
+            {
+                mod.AddRange(prog.Code());
+            }
+            if (legaryProgs.Count > 0) { mod.AddRange(legaryProgs); }
+            if (progs.Count > 0)
+            {
+                mod.Add("!Additional progams");
+                foreach (Program prog in progs)
+                {
+                    mod.AddRange(prog.Code());
+                }
+            }
+            mod.Add("ENDMODULE");
+
+            return mod;
+        }
+
+        private bool validate()
+        {
+            bool v = false;
+            int c = 0;
+            foreach (Program prog in this.main)
+            {
+                if (prog.IsMain == true) { ++c; }
+            }
+            if (c == 1) { return true; }
+            else { return false; }
+        }
+
+    }
+}
+
+/// <summary>
+/// This namespace provides functions for canvas manipulation in Grasshopper
+/// </summary
+namespace Canvas
+{
+    /// <summary>
+    /// This class provides functions for components
+    /// </summary>
+    class Component
+    {
+        static public void SetValueList(GH_Document doc, GH_Component comp, int InputIndex, List<KeyValuePair<string, string>> valuePairs, string name)
+        {
+            if (valuePairs.Count == 0) return;
+            doc = doc;
+            comp = comp;
+            GH_DocumentIO docIO = new GH_DocumentIO();
+            docIO.Document = new GH_Document();
+
+            if (docIO.Document == null) return;
+            doc.MergeDocument(docIO.Document);
+
+            docIO.Document.SelectAll();
+            docIO.Document.ExpireSolution();
+            docIO.Document.MutateAllIds();
+            IEnumerable<IGH_DocumentObject> objs = docIO.Document.Objects;
+            doc.DeselectAll();
+            doc.UndoUtil.RecordAddObjectEvent("Create Accent List", objs);
+            doc.MergeDocument(docIO.Document);
+
+            doc.ScheduleSolution(10, chanegValuelist);
+
+
+            void chanegValuelist(GH_Document document)
+            {
+
+                IList<IGH_Param> sources = comp.Params.Input[InputIndex].Sources;
+                int inputs = sources.Count;
+
+
+                // If nothing has been conected create a new component
+                if (inputs == 0)
+                {
+                    //instantiate  new value list and clear it
+                    GH_ValueList vl = new GH_ValueList();
+                    vl.ListItems.Clear();
+                    vl.NickName = name;
+                    vl.Name = name;
+
+                    //Create values for list and populate it
+                    for (int i = 0; i < valuePairs.Count; ++i)
+                    {
+                        var item = new GH_ValueListItem(valuePairs[i].Key, valuePairs[i].Value);
+                        vl.ListItems.Add(item);
+                    }
+
+                    //Add value list to the document
+                    document.AddObject(vl, false, 1);
+
+                    //get the pivot of the "accent" param
+                    System.Drawing.PointF currPivot = comp.Params.Input[InputIndex].Attributes.Pivot;
+                    //set the pivot of the new object
+                    vl.Attributes.Pivot = new System.Drawing.PointF(currPivot.X - 210, currPivot.Y - 11);
+
+                    // Connect to input
+                    comp.Params.Input[InputIndex].AddSource(vl);
+                }
+
+                // If inputs exist replace the existing ones
+                else
+                {
+                    for (int i = 0; i < inputs; ++i)
+                    {
+                        if (sources[i].Name == "Value List" | sources[i].Name == name)
+                        {
+                            //instantiate  new value list and clear it
+                            GH_ValueList vl = new GH_ValueList();
+                            vl.ListItems.Clear();
+                            vl.NickName = name;
+                            vl.Name = name;
+
+                            //Create values for list and populate it
+                            for (int j = 0; j < valuePairs.Count; ++j)
+                            {
+                                var item = new GH_ValueListItem(valuePairs[j].Key, valuePairs[j].Value);
+                                vl.ListItems.Add(item);
+                            }
+
+                            document.AddObject(vl, false, 1);
+                            //set the pivot of the new object
+                            vl.Attributes.Pivot = sources[i].Attributes.Pivot;
+
+                            var currentSource = sources[i];
+                            comp.Params.Input[InputIndex].RemoveSource(sources[i]);
+
+                            currentSource.IsolateObject();
+                            document.RemoveObject(currentSource, false);
+
+                            //Connect new vl
+                            comp.Params.Input[InputIndex].AddSource(vl);
+                        }
+                        else
+                        {
+                            //Do nothing if it dosent mach any of the above
+                        }
+                    }
+                }
+            }
+        }
+    }
+    /*
+    class DoubelClick : Grasshopper.Kernel.Attributes.GH_ComponentAttributes
+    {
+        override RespondToMouseDoubleClick()
+        {
+
+        }
+    }*/
 }

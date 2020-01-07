@@ -12,6 +12,7 @@ using Grasshopper.Kernel.Types;
 
 using Rhino.Geometry;
 using Axis.Targets;
+using RAPID;
 
 namespace Axis.Core
 {
@@ -71,10 +72,12 @@ namespace Axis.Core
             List<string> strProcedures = new List<string>();
             List<string> strOverrides = new List<string>();
 
-            List<List<string>> procs = new List<List<string>>();
+            string smFileName = "Submodule";
+            string filePath = ""; // /Axis/LongCode/ or /
+            string dirHome = "RemovableDisk1:"; //  HOME: or RemovableDisk1:
 
             // Initialize lists to store the robot export code.
-            List<string> RAPID = new List<string>();
+            List<string> rapidCODE = new List<string>();
             List<string> KRL = new List<string>();
 
             if (!DA.GetDataList("Program", program)) return;
@@ -90,6 +93,9 @@ namespace Axis.Core
                 if (!DA.GetDataList("Overrides", strOverrides)) ;
             if (declarations)
                 if (!DA.GetDataList("Declarations", strDeclarations)) ;
+
+            //New RAPID module
+            Module module = new Module(name: strModName);
 
             // Convert targets to strings.
             foreach (GH_ObjectWrapper command in program)
@@ -192,105 +198,137 @@ namespace Axis.Core
                 } // If the user has requested KUKA code...
                 else
                 {
-                    // Headers
-                    RAPID.Add("MODULE " + strModName);
-                    RAPID.Add("! ABB Robot Code");
-                    RAPID.Add("! Generated with Axis 1.0");
-                    RAPID.Add("! Created: " + DateTime.Now.ToString());
-                    RAPID.Add("! Author: " + Environment.UserName.ToString());
-                    RAPID.Add(" ");
-
-                    // Declarations
-                    RAPID.Add("! Declarations");
-                    RAPID.Add("VAR confdata cData := [0,-1,-1,0];");
-                    RAPID.Add("VAR extjoint eAxis := [9E9,9E9,9E9,9E9,9E9,9E9];");
-
-                    for (int i = 0; i < strDeclarations.Count; i++)
-                    {
-                        RAPID.Add(strDeclarations[i]);
-                    }
-
-                    RAPID.Add(" ");
-
-                    // Open Main Proc
-                    RAPID.Add("! Main Procedure");
-                    RAPID.Add("PROC main()");
-                    RAPID.Add(@"ConfL \Off;");
-                    RAPID.Add(@"ConfJ \Off;");
-
-                    // Machine overrides
-                    if (strOverrides != null) // If we have machine override data, then add it.
-                    {
-                        for (int i = 0; i < strOverrides.Count; i++)
-                        {
-                            RAPID.Add(strOverrides[i]);
-                        }
-                    }
-                    RAPID.Add(" ");
-
-                    // Commands
-                    RAPID.Add("! Programmed Movement");
+                    //Settings for the main Program
+                    int bottomLim = 5000; //ABB limit about 5000
+                    int topLim = 70000 - bottomLim; //ABB limit about 80.000
                     int progLen = strProgram.Count;
-                    if (ignoreLen) this.Message = "No Length Check";
-                    if (progLen > 5000 && !ignoreLen) // Check if the main progran is too long and split into subprocedures if this is the case.
+
+                    if (Enumerable.Range(bottomLim, topLim).Contains(progLen) && !ignoreLen)  // Medium length program. Will be cut into submodules
                     {
-                        RAPID.Add("! Warning: Procedure length exceeds recommend maximum. Program will be split into multiple procedures.");
-                        RAPID.Add(" ");
                         AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Procedure length exceeds recommended maximum. Program will be split into multiple procedures.");
                         this.Message = "Large Program";
 
-                        procs = Util.SplitProgram(strProgram, 5000);
+                        
+                        var subs = Util.SplitProgram(strProgram, 5000);
+                        List<Program> progs = new List<Program>();
+                        List<string> strMain = new List<string>();
 
-                        int procCount = 0;
-                        foreach (List<string> proc in procs)
+                        string subName = "SubProg";
+
+                        for (int i = 0; i < subs.Count; ++i)
                         {
-                            string procName = "SubMain" + procCount.ToString();
-                            proc.Insert(0, "PROC " + procName + "()");
-                            proc.Insert(proc.Count, "ENDPROC");
-                            procCount++;
-
-                            RAPID.Add(procName + ";"); // Add the main call.
+                            progs.Add(new Program(subs[i], progName:subName+i.ToString(),comments:new List<string> {""}));
                         }
+                        for (int i = 0; i < subs.Count; ++i)
+                        {
+                            strMain.Add(subName + i.ToString()+";");
+                        }
+
+                        var comment = new List<string> {
+                            "! Warning: Procedure length exceeds recommend maximum. Program will be split into multiple procedures.",
+                            " "
+                        };
+                        Program main = new Program(strMain, progName: "main", LJ: true, comments: comment);
+
+                        module.AddMain(main);
+                        module.AddPrograms(progs);
+
                     }
-                    else // Continue as normal and add the rest of the program as text.
+                    else if (progLen > topLim && !ignoreLen) // Long program. Will be split up into seperate files
                     {
-                        for (int i = 0; i < strProgram.Count; i++)
+                        AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Procedure length exceeds recommended maximum. Program will be split into multiple procedures.");
+                        this.Message = "Extra Large Program";
+
+
+                        var progsStr = Util.SplitProgram(strProgram, 5000);
+
+                        string procname = "progNumber";
+
+                        //
+                        List<Program> external = new List<Program>();
+                        for (int i = 0; i < progsStr.Count; ++i)
                         {
-                            RAPID.Add(strProgram[i]);
+                            external.Add(new Program(progsStr[i], progName:procname+i.ToString()));
                         }
+
+                        // Write the instructions for the main prog
+                        List<string> strMain = new List<string>();
+                        strMain.AddRange(new List<string> // Load the first pair 
+                        {
+                            $"StartLoad \\Dynamic, sDirHome \\File:= sFile + \"{smFileName}{0}.mod\", load1;",
+                            $"StartLoad \\Dynamic, sDirHome \\File:= sFile + \"{smFileName}{1}.mod\", load2;",
+                            ""
+                        });
+                        for (int i = 0; i < external.Count(); i += 2) // Loop through all sub programms
+                        {
+                            strMain.AddRange(new List<string>
+                            {
+                                "WaitLoad load1;",
+                                $"% \"{procname}{i}\" %;",
+                                $"UnLoad sDirHome \\File:= sFile + \"{smFileName}{i}.mod\";",
+                                "",
+                            });
+
+                            if (i + 2 < external.Count()) { strMain.AddRange(new List<string>
+                            {
+                                $"StartLoad \\Dynamic, sDirHome \\File:= sFile + \"{smFileName}{i+2}.mod\", load1;",
+                                //""
+                            }); }
+
+                            if (i + 1 < external.Count()) { strMain.AddRange(new List<string>
+                            {
+                                "",
+                                $"WaitLoad load2;",
+                                $"% \"{procname}{i+1}\" %;",
+                                $"UnLoad sDirHome \\File:= sFile + \"{smFileName}{i+1}.mod\";",
+                                ""
+                            }); }
+
+                            if (i + 3 < external.Count()) { strMain.AddRange(new List<string>
+                            {
+                                $"StartLoad \\Dynamic, sDirHome \\File:= sFile + \"{smFileName}{i+3}.mod\", load2;",
+                                ""
+                            }); }
+                        }
+
+                        
+                        List<string> dec = new List<string>
+                        {
+                            "",
+                            "!Set directory for loading",
+                            "VAR loadsession load1;",
+                            "VAR loadsession load2;",
+                            $"CONST string sDirHome:= \"{dirHome}\"; ",
+                            $"CONST string sFile:= \"{filePath}\";",
+                        };
+                        var comment = new List<string>
+                        {
+                            "! Warning: Procedure length exceeds recommend maximum. Program will be split into multiple procedures.",
+                            "! That will be loaded successively at runtime",
+                            " "
+                        };
+                        var main = new Program(strMain, progName: "main", comments:comment,LJ:true);
+                        module.AddMain(main);
+                        module.extraProg = external;
+                        module.AddDeclarations(dec);
                     }
-
-
-                    // Close Main Proc
-                    RAPID.Add(" ");
-                    RAPID.Add("!");
-                    RAPID.Add(@"ConfL \On;");
-                    RAPID.Add(@"ConfJ \On;");
-                    RAPID.Add("ENDPROC");
-                    RAPID.Add(" ");
-
-                    // Add the procs from the subdivision of the main module, if relevant.
-                    foreach (List<string> proc in procs)
+                    else // In case the prgram length should explicetly be ignored
                     {
-                        foreach (string line in proc)
-                        {
-                            RAPID.Add(line);
-                        }
+                        module.AddMain(new Program(strProgram, LJ: true, progName: "main"));
+                        this.Message = "";
                     }
 
-                    // Custom Procs
-                    if (strProcedures != null) // If custom RAPID procedures have been specified, add them here.
-                    {
-                        RAPID.Add("! Custom Procedures");
-                        for (int i = 0; i < strProcedures.Count; i++)
-                        {
-                            RAPID.Add(strProcedures[i]);
-                        }
-                    }
+                    if (ignoreLen) this.Message = "No Length Check";
+                    
+                    module.AddPrograms(strProcedures);
 
-                    RAPID.Add("ENDMODULE"); // Close out the module.
+                    if (declarations) module.AddDeclarations(strDeclarations);
+                    if (overrides) module.AddOverrides(strOverrides);
 
-                    DA.SetDataList(0, RAPID);
+                    if (!module.IsValid) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The program/module is invalid"); }
+
+
+                    DA.SetDataList(0, module.Code());
                 }
 
                 if (export)
@@ -308,20 +346,20 @@ namespace Axis.Core
                     }
                     else
                     {
-                        using (StreamWriter module = new StreamWriter(path + @"\" + filename + ".pgf", false))
+                        File.WriteAllLines($@"{path}\\{filename}.pgf", new List<string>
                         {
-                            module.WriteLine(@"<?xml version=""1.0"" encoding=""ISO-8859-1"" ?>");
-                            module.WriteLine(@"<Program>");
-                            module.WriteLine(@"	<Module>" + strModName + @".mod</Module>");
-                            module.WriteLine(@"</Program>");
-                        }
-                        using (StreamWriter mainProc = new StreamWriter(path + @"\" + strModName + ".mod", false))
+                            @"<?xml version=""1.0"" encoding=""ISO-8859-1"" ?>",
+                            @"<Program>",
+                            @"	<Module>" + strModName + @".mod</Module>",
+                            @"</Program>",
+                        });
+                        File.WriteAllLines($@"{path}\\{strModName}.mod", module.Code());
+                        for (int i = 0; i < module.extraProg.Count(); ++i)
                         {
-                            for (int i = 0; i < RAPID.Count; i++)
-                            {
-                                mainProc.WriteLine(RAPID[i]);
-                            }
+                            File.WriteAllLines($@"{path}\{smFileName}{i}.mod", module.extraProg[i].Code());
+
                         }
+
                         Util.AutoClosingMessageBox.Show("Export Successful!", "Export", 1300);
                     }
                 }

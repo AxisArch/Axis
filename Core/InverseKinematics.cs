@@ -56,7 +56,7 @@ namespace Axis.Core
             Manipulator robot = null;
 
             if (!DA.GetData(0, ref robot)) return;
-            DA.GetData(1, ref robTarg);
+            if (!DA.GetData(1, ref robTarg)) return;
 
             List<string> log = new List<string>();
 
@@ -73,10 +73,12 @@ namespace Axis.Core
 
             List<System.Drawing.Color> colors = new List<System.Drawing.Color>();
 
+
+
             if (robTarg.Method == MotionType.AbsoluteJoint) // Forward kinematics
             {
                 colors.Clear();
-                for (int i = 0; i < 5; i++)
+                for (int i = 0; i < 6; i++)
                 {
                     angles = robTarg.JointAngles;
 
@@ -135,6 +137,7 @@ namespace Axis.Core
                 colors = CheckJointAngles(robot, selectedAngles, out wristSing, out outOfRotation);
             }
 
+            #region Commented out
             /*
             double largestDiff = 0;
             double angularStep = Math.Round(Util.ToRadians(2),4);
@@ -166,6 +169,7 @@ namespace Axis.Core
                 }
             }
             */
+            #endregion
 
             // Handle errors
             if (overheadSing || wristSing || outOfReach || outOfRotation) isValid = false;
@@ -223,7 +227,7 @@ namespace Axis.Core
         /// <param name="overheadSing"></param>
         /// <param name="outOfReach"></param>
         /// <returns></returns>
-        public static List<List<double>> TargetInverseKinematics(Manipulator robot, Plane target, out bool overheadSing, out bool outOfReach)
+        public static List<List<double>> TargetInverseKinematics(Manipulator robot, Plane target, out bool overheadSing, out bool outOfReach) //Check why outOfTeach flag is beeing set
         {
             // Validity checks
             bool unreachable = true;
@@ -233,7 +237,12 @@ namespace Axis.Core
             Point3d[] RP = new Point3d[] { robot.AxisPoints[0], robot.AxisPoints[1], robot.AxisPoints[2], robot.AxisPoints[3] };
 
             // Lists of doubles to hold our axis values and our output log.
-            List<double> a1list = new List<double>(), a2list = new List<double>(), a3list = new List<double>(), a4list = new List<double>(), a5list = new List<double>(), a6list = new List<double>();
+            List<double> a1list = new List<double>(), 
+                a2list = new List<double>(), 
+                a3list = new List<double>(), 
+                a4list = new List<double>(), 
+                a5list = new List<double>(), 
+                a6list = new List<double>();
             List<string> info = new List<string>();
 
             // Find the wrist position by moving back along the robot flange the distance of the wrist link.
@@ -242,7 +251,8 @@ namespace Axis.Core
             double angle1 = -1 * Math.Atan2(WristLocation.Y, WristLocation.X);
 
             // Check for overhead singularity and add message to log if needed
-            if (WristLocation.Y < singularityTol && WristLocation.Y > -singularityTol && WristLocation.X < singularityTol && WristLocation.X > -singularityTol)
+            if (WristLocation.Y < singularityTol && WristLocation.Y > -singularityTol &&
+                WristLocation.X < singularityTol && WristLocation.X > -singularityTol)
                 singularity = true;
 
             // Standard cases for axis one.
@@ -275,7 +285,7 @@ namespace Axis.Core
                 // Define the elbow direction and create a plane there.
                 Vector3d ElbowDir = new Vector3d(1, 0, 0);
                 ElbowDir.Transform(Rotation);
-                Plane ElbowPlane = new Plane(P1A, new Vector3d(1, 0, 0), Plane.WorldXY.ZAxis);
+                Plane ElbowPlane = new Plane(P1A, ElbowDir, Plane.WorldXY.ZAxis);
 
                 // Create our spheres for doing the intersections.
                 Sphere Sphere1 = new Sphere(P1A, robot.LowerArmLength);
@@ -290,12 +300,13 @@ namespace Axis.Core
 
                 // Logic to check if the target is unreachable.
                 if (unreachable)
-                    if (Par1 == double.NaN || Par2 == double.NaN)
+                    if (Par1 != double.NaN || Par2 != double.NaN)
                         unreachable = false;
 
                 // Get the points.
                 Point3d IntersectPt1 = Circ.PointAt(Par1), IntersectPt2 = Circ.PointAt(Par2);
 
+                // ******** Check that this works
                 // Solve IK for the remaining axes using these points.
                 for (int k = 0; k < 2; k++)
                 {
@@ -309,7 +320,7 @@ namespace Axis.Core
 
                     ElbowPlane.ClosestParameter(ElbowPt, out elbowx, out elbowy);
                     ElbowPlane.ClosestParameter(WristLocation, out wristx, out wristy);
-
+                    
                     double angle2 = Math.Atan2(elbowy, elbowx);
                     double angle3 = Math.PI - angle2 + Math.Atan2(wristy - elbowy, wristx - elbowx) - robot.AxisFourOffset;
 
