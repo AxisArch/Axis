@@ -79,6 +79,7 @@ namespace Axis.Core
             // Initialize lists to store the robot export code.
             List<string> rapidCODE = new List<string>();
             List<string> KRL = new List<string>();
+            this.Message = m_Manufacturer.ToString();
 
             if (!DA.GetDataList("Program", program)) return;
             if (!DA.GetDataList("Procedures", strProcedures)) return;
@@ -178,7 +179,7 @@ namespace Axis.Core
                         KRL.Add("; Warning: Procedure length exceeds recommend maximum. Advise splitting main proc into sub-procs.");
                         KRL.Add(" ");
                         AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Procedure length exceeds recommend maximum. Advise splitting main proc into sub-procs.");
-                        this.Message = "Large Program";
+                        //this.Message = "Large Program";
                     }
                     for (int i = 0; i < strProgram.Count; i++)
                     {
@@ -199,7 +200,7 @@ namespace Axis.Core
                     if (Enumerable.Range(bottomLim, topLim).Contains(progLen) && !ignoreLen)  // Medium length program. Will be cut into submodules
                     {
                         AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Procedure length exceeds recommended maximum. Program will be split into multiple procedures.");
-                        this.Message = "Large Program";
+                        //this.Message = "Large Program";
 
 
                         var subs = Util.SplitProgram(strProgram, 5000);
@@ -230,7 +231,7 @@ namespace Axis.Core
                     else if (progLen > topLim && !ignoreLen) // Long program. Will be split up into seperate files
                     {
                         AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Procedure length exceeds recommended maximum. Program will be split into multiple procedures.");
-                        this.Message = "Extra Large Program";
+                        //this.Message = "Extra Large Program";
 
 
                         var progsStr = Util.SplitProgram(strProgram, 5000);
@@ -317,10 +318,9 @@ namespace Axis.Core
                     else // In case the prgram length should explicetly be ignored
                     {
                         module.AddMain(new Program(strProgram, LJ: true, progName: "main"));
-                        this.Message = "";
                     }
 
-                    if (ignoreLen) this.Message = "No Length Check";
+                    if (ignoreLen) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Program length is being ignored");
 
                     module.AddPrograms(strProcedures);
 
