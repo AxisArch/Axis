@@ -20,7 +20,7 @@ namespace Axis.Core
     public class Robot : GH_Component, IGH_VariableParameterComponent
     {
         // Sticky context menu toggles
-        bool m_Manufacturer = false;
+        Manufacturer m_Manufacturer = Manufacturer.ABB;
         bool m_Pose = false;
 
         public override GH_Exposure Exposure => GH_Exposure.primary;
@@ -65,6 +65,7 @@ namespace Axis.Core
             List<int> indices = new List<int>();
             List<Mesh> inMeshes = new List<Mesh>();
             Plane inBase = Plane.WorldXY;
+            
 
             if (!DA.GetDataList(0, inPoints)) return;
             if (!DA.GetDataList(1, inMin)) return;
@@ -74,14 +75,7 @@ namespace Axis.Core
             if (!DA.GetData(5, ref inBase)) return;
 
 
-            //Poor mans temporary fix
-            var rType = Manufacturer.ABB;
-            if (m_Manufacturer) 
-            {
-                rType = Manufacturer.Kuka;
-            }
-
-            Manipulator robot = new Manipulator(rType, inPoints, inMin, inMax, inMeshes, inBase, indices);
+            Manipulator robot = new Manipulator(m_Manufacturer, inPoints, inMin, inMax, inMeshes, inBase, indices);
             List<Mesh> startPose = robot.StartPose();
 
             DA.SetData(0, robot);
@@ -101,22 +95,31 @@ namespace Axis.Core
         // The following functions append menu items and then handle the item clicked event.
         protected override void AppendAdditionalComponentMenuItems(System.Windows.Forms.ToolStripDropDown menu)
         {
-            ToolStripMenuItem KukaRobot = Menu_AppendItem(menu, "Create KUKA Robot", kuka_Click, true, m_Manufacturer);
-            KukaRobot.ToolTipText = "Create a KUKA robot. Used to choose the robot language in the post processor.";
+            ToolStripMenuItem robotManufacturers = Menu_AppendItem(menu, "Manufacturer");
+            robotManufacturers.ToolTipText = "Select the robot manufacturer";
+
+            foreach (string name in typeof(Manufacturer).GetEnumNames()) 
+            {
+                ToolStripMenuItem item = new ToolStripMenuItem(name, null, manufacturer_Click);
+
+                if (name == this.m_Manufacturer.ToString()) item.Checked = true;
+                robotManufacturers.DropDownItems.Add(item);
+            }
 
             ToolStripSeparator seperator = Menu_AppendSeparator(menu);
 
             ToolStripMenuItem PoseOut = Menu_AppendItem(menu, "Output Start Pose", pose_Click, true, m_Pose);
             PoseOut.ToolTipText = "Output the starting pose meshes of the robot as defined in the robot object.";
         }
-
-        private void kuka_Click(object sender, EventArgs e)
+        private void manufacturer_Click(object sender, EventArgs e)
         {
-            RecordUndoEvent("KukaRobot");
-            m_Manufacturer = !m_Manufacturer;
+            RecordUndoEvent("Manufacturer");
+            ToolStripMenuItem currentItem = (ToolStripMenuItem)sender;
+            Canvas.Menu.UncheckOtherMenuItems(currentItem);
+            this.m_Manufacturer = (Manufacturer)currentItem.Owner.Items.IndexOf(currentItem);
             ExpireSolution(true);
         }
-
+        
         private void pose_Click(object sender, EventArgs e)
         {
             RecordUndoEvent("Pose");
@@ -133,7 +136,10 @@ namespace Axis.Core
             ExpireSolution(true);
         }
 
-        // Register the new output parameters to our component.
+        /// <summary>
+        /// Register the new output parameters to our component.
+        /// </summary>
+        /// <param name="index"></param>
         private void AddOutput(int index)
         {
             IGH_Param parameter = outputParams[index];
@@ -158,11 +164,16 @@ namespace Axis.Core
             Params.OnParametersChanged();
             ExpireSolution(true);
         }
+        /// <summary>
+        /// Uncheck other dropdown menu items
+        /// </summary>
+        /// <param name="selectedMenuItem"></param>
+        
 
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
-            writer.SetBoolean("KukaRobot", this.m_Manufacturer);
+            writer.SetInt32("Manufacturer", (int)this.m_Manufacturer);
             writer.SetBoolean("StartPose", this.m_Pose);
             return base.Write(writer);
         }
@@ -170,7 +181,7 @@ namespace Axis.Core
         // Deserialize this instance from a Grasshopper reader object.
         public override bool Read(GH_IO.Serialization.GH_IReader reader)
         {
-            this.m_Manufacturer = reader.GetBoolean("KukaRobot");
+            this.m_Manufacturer = (Manufacturer)reader.GetInt32("Manufacturer");
             this.m_Pose = reader.GetBoolean("StartPose");
             return base.Read(reader);
         }
