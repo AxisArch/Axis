@@ -132,7 +132,7 @@ namespace Axis.Core
         public override string TypeDescription => "Robot movment system";
         public override string ToString()
         {
-            return $"Robot";
+            return $"Robot {this.Manufacturer.ToString()}";
         }
         public override bool IsValid => true;
         public override int GetHashCode()

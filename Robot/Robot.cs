@@ -74,6 +74,8 @@ namespace Axis.Core
             if (!DA.GetDataList(4, inMeshes)) return;
             if (!DA.GetData(5, ref inBase)) return;
 
+            this.Message = this.m_Manufacturer.ToString();
+
 
             Manipulator robot = new Manipulator(m_Manufacturer, inPoints, inMin, inMax, inMeshes, inBase, indices);
             List<Mesh> startPose = robot.StartPose();
