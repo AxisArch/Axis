@@ -15,6 +15,7 @@ namespace Axis.Core
 
         DateTime strat = new DateTime();
         Toolpath toolpath;
+        Target cTarget;
 
         /// <summary>
         /// Initializes a new instance of the MyComponent1 class.
@@ -71,7 +72,13 @@ namespace Axis.Core
 
             if (run) 
             {
-                DA.SetData("Target", toolpath.GetTarget(now - strat));
+                Target nTarget = toolpath.GetTarget(now - strat);
+                if (cTarget != nTarget) 
+                {
+                    cTarget = nTarget;
+                }
+                
+                DA.SetData("Target", cTarget);
                 ExpireSolution(true);
             }
             else DA.SetData("Target", targets[0]);
