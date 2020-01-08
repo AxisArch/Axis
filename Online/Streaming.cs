@@ -116,7 +116,7 @@ namespace Axis.Online
             IpcQueue robotQueue = abbController.Ipc.GetQueue("RMQ_T_ROB1");
             if (RobotQueue != robotQueue) // Need to run ones in a while 
             {
-                tasks = abbController.Rapid.GetTasks(););
+                tasks = abbController.Rapid.GetTasks();
                 int queueID = robotQueue.QueueId;
                 string queueName = robotQueue.QueueName;
 
