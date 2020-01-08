@@ -90,7 +90,7 @@ namespace Axis.Core
 
 
 
-            if (robTarg.Method == MotionType.AbsoluteJoint) // Forward kinematics
+            if (robTarg.Method == MotionType.AbsoluteJoint) 
             {
                 colors.Clear();
                 for (int i = 0; i < 6; i++)
@@ -112,14 +112,15 @@ namespace Axis.Core
                     radAngles[0] = angles[0].ToRadians();
                     radAngles[1] = (angles[1] - 90).ToRadians();
                     radAngles[2] = (angles[2] + 90).ToRadians();
-                    for (int i = 3; i < 6; i++)
-                        radAngles[i] = angles[i].ToRadians();
+                    radAngles[3] = -angles[3].ToRadians();
+                    radAngles[4] = angles[4].ToRadians();
+                    radAngles[5] = -angles[5].ToRadians();
                 }
                 else if (robot.Manufacturer == Manufacturer.Kuka)
                     for (int i = 0; i < 6; i++)
                         radAngles[i] = angles[i].ToRadians();
-            }
-            else // Inverse kinematics
+            } // Forward kinematics
+            else 
             {
                 // Transform the robot target from the robot base plane to the XY plane.
                 Plane target = robTarg.Plane;
@@ -150,7 +151,7 @@ namespace Axis.Core
 
                 // Check the joint angles.
                 colors = CheckJointAngles(robot, selectedAngles, out wristSing, out outOfRotation);
-            }
+            } // Inverse kinematics
 
             #region Commented out
             /*
