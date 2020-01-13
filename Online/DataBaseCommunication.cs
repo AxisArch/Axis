@@ -75,7 +75,7 @@ namespace Axis.Online
 
 
                         AxisDB.MongoBDRobot r = (AxisDB.MongoBDRobot)robot;
-                        r.name = "IRB 120";
+                        r.Name = "IRB 120";
 
                         collection.InsertOne(r);
 
@@ -87,8 +87,6 @@ namespace Axis.Online
                         var collection = database.GetCollection<AxisDB.MongoBDTool>("Tools");
 
                         AxisDB.MongoBDTool t = tool;
-                        t.name = "Tool";
-
                         collection.InsertOne(t);
 
                     }
@@ -168,25 +166,26 @@ namespace Axis.Online
             string category = string.Empty;
             string ithem = string.Empty;
 
-            Dictionary<string, string> categorys = new Dictionary<string, string>();
-            Dictionary<string, string> options = new Dictionary<string, string>();
+            List<KeyValuePair<string, string>> categorys = new List<KeyValuePair<string, string>>();
+            List<KeyValuePair<string, string>> options = new List<KeyValuePair<string, string>>();
 
 
             GH_ObjectWrapper data = new GH_ObjectWrapper();
 
             var client = new MongoClient(
                 $"mongodb+srv://{user}:{password}@{server}/test?retryWrites=true&w=majority"
-            ); //"mongodb+srv://<username>:<password>@<cluster-address>/test?w=majority"
+            ); 
             var database = client.GetDatabase("AxisPresets");
 
-            var test = database.ListCollectionsAsync().Result;
+            var test = database.ListCollectionNames();
             List<string> colloectionNames = database.ListCollectionNames().ToList<string>();
             foreach (string s in colloectionNames) 
             {
-                categorys.Add( s, s);
+                categorys.Add(new KeyValuePair<string, string>( s, '"'+s+'"'));
             }
 
-            //Auto populate categorys
+            GH_Document ghDoc = OnPingDocument();
+            if (this.Params.Input[0].SourceCount == 0) Canvas.Component.SetValueList(ghDoc, this, 0, categorys, "Categorys");
 
             if (!DA.GetData("Category", ref category)) return;
 
@@ -196,28 +195,36 @@ namespace Axis.Online
 
             foreach (BsonDocument doc in docs) 
             {
-                string name = doc.GetValue("name").AsString;
-                string id = doc.GetValue("id").AsString;
-                options.Add(name, id);
+                string name = doc.GetValue("Name").AsString;
+                var id = doc.GetValue("_id").AsObjectId.ToString();// valueOf();
+                options.Add(new KeyValuePair<string, string>( name, '"'+id+'"'));
             }
 
-            //Auto add thems value lis
+            if (this.Params.Input[1].SourceCount == 0) Canvas.Component.SetValueList(ghDoc, this, 1, options, "Ithem");
 
-            if (!DA.GetData("Item", ref ithem)) return;
+            if (!DA.GetData( 1, ref ithem)) return;
 
             if (category != null)
             {
                 if (category == "Robots" & ithem != null)
                 {
-                    var collection = database.GetCollection<AxisDB.MongoBDRobot>(ithem);
-                    List<AxisDB.MongoBDRobot> robots = collection.Find(r => r._id == new ObjectId(ithem)).ToListAsync().Result;
+                    var collection = database.GetCollection<AxisDB.MongoBDRobot>("Robots");
+
+                    var filter = Builders<AxisDB.MongoBDRobot>.Filter.Eq("_id", ObjectId.Parse(ithem));
+                    var robots = collection.Find<AxisDB.MongoBDRobot>(filter).ToList();
+
+                    if (robots.Count == 0) {AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Robot not found"); return;}
                     DA.SetData("Data", (Axis.Core.Manipulator)robots[0]);
 
                 }
                 else if (category == "Tools" & ithem != null)
                 {
-                    var collection = database.GetCollection<AxisDB.MongoBDTool>(ithem);
-                    List<AxisDB.MongoBDTool> tools = collection.Find(t => t._id == new ObjectId(ithem)).ToListAsync().Result;
+                    var collection = database.GetCollection<AxisDB.MongoBDTool>("Tools");
+
+                    var filter = Builders<AxisDB.MongoBDTool>.Filter.Eq("_id", ObjectId.Parse(ithem));
+                    var tools = collection.Find<AxisDB.MongoBDTool>(filter).ToList();
+
+                    if (tools.Count() == 0) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Tool not found"); return; }
                     DA.SetData("Data", (Axis.Core.Tool)tools[0]);
                 }
                 return; 
@@ -250,7 +257,7 @@ namespace Axis.Online
         public class MongoBDRobot
     {
         public ObjectId _id { get; set; }
-        public string name { get; set; }
+        public string Name { get; set; }
         public int Manufacturer { get; set; }
         public BsonDocument RobBasePlane { get; set; }
         public BsonDocument AxisPoints { get; set; }
@@ -264,25 +271,39 @@ namespace Axis.Online
         public static implicit operator Axis.Core.Manipulator(MongoBDRobot rob)
         {
 
-            Axis.Core.Manipulator r = new Axis.Core.Manipulator(
-                (Axis.Core.Manufacturer)rob.Manufacturer,
-                UnPackList<Point3d>(rob.AxisPoints),
-                UnPackList<double>(rob.MinAngles),
-                UnPackList<double>(rob.MaxAngles),
-                UnPackList<Mesh>(rob.RobMeshes),
-                UnPack<Plane>(rob.RobBasePlane),
-                UnPackList<int>(rob.Indices)
+                Axis.Core.Manipulator r = new Axis.Core.Manipulator(
+                    (Axis.Core.Manufacturer)rob.Manufacturer,
+                    UnPackList<Point3d>(rob.AxisPoints),
+                    UnPackList<double>(rob.MinAngles),
+                    UnPackList<double>(rob.MaxAngles),
+                    UnPackList<Mesh>(rob.RobMeshes),
+                    new Plane(
+                        new Point3d(
+                            rob.RobBasePlane.GetValue("OriginX").AsDouble, 
+                            rob.RobBasePlane.GetValue("OriginZ").AsDouble, 
+                            rob.RobBasePlane.GetValue("OriginZ").AsDouble), 
+                        new Vector3d(
+                            rob.RobBasePlane.GetValue("XAxis").AsBsonDocument.GetValue("X").AsDouble,
+                            rob.RobBasePlane.GetValue("XAxis").AsBsonDocument.GetValue("Y").AsDouble,
+                            rob.RobBasePlane.GetValue("XAxis").AsBsonDocument.GetValue("Z").AsDouble), 
+                        new Vector3d(
+                            rob.RobBasePlane.GetValue("YAxis").AsBsonDocument.GetValue("Z").AsDouble,
+                            rob.RobBasePlane.GetValue("YAxis").AsBsonDocument.GetValue("Z").AsDouble,
+                            rob.RobBasePlane.GetValue("YAxis").AsBsonDocument.GetValue("Z").AsDouble
+                            )
+                        ),
+                    UnPackList<int>(rob.Indices)
                 );
 
-            r.name = rob.name;
+            r.Name = rob.Name;
             return r;
         }
         public static implicit operator MongoBDRobot(Axis.Core.Manipulator rob)
         {
             MongoBDRobot r = new MongoBDRobot();
-            r.name = rob.name;
+            r.Name = rob.Name;
             r.Manufacturer = (int)rob.Manufacturer;
-            r.RobBasePlane = Pack(rob.RobBasePlane.ToBsonDocument());
+            r.RobBasePlane = rob.RobBasePlane.ToBsonDocument();
             r.AxisPoints = PackList(rob.AxisPoints);
             r.RobMeshes = PackList(rob.RobMeshes);
             r.MinAngles = PackList(rob.MinAngles);
@@ -295,33 +316,54 @@ namespace Axis.Online
         public class MongoBDTool
     {
         public ObjectId _id { get; set; }
-        public string name { get; set; }
-        public int Manufacturer { get; set; }
         public string Name { get; set; }
+        public int Manufacturer { get; set; }
         public BsonDocument TCP { get; set; }
         public double Weight { get; set; }
         public BsonDocument Geometry { get; set; }
-        public BsonDocument FlangeOffset { get; }
-        public bool Type { get; }
-        public BsonDocument relTool { get; }
+        public BsonDocument relTool { get; set; }
 
 
         public MongoBDTool() { }
         public static implicit operator Axis.Core.Tool(MongoBDTool tool)
         {
             Axis.Core.Tool t = new Axis.Core.Tool(
-                tool.name,
-                UnPack< Plane>(tool.TCP),
+                tool.Name,
+                new Plane(
+                    new Point3d(
+                        tool.TCP.GetValue("OriginX").AsDouble,
+                        tool.TCP.GetValue("OriginZ").AsDouble,
+                        tool.TCP.GetValue("OriginZ").AsDouble),
+                    new Vector3d(
+                        tool.TCP.GetValue("XAxis").AsBsonDocument.GetValue("X").AsDouble,
+                        tool.TCP.GetValue("XAxis").AsBsonDocument.GetValue("Y").AsDouble,
+                        tool.TCP.GetValue("XAxis").AsBsonDocument.GetValue("Z").AsDouble),
+                    new Vector3d(
+                        tool.TCP.GetValue("YAxis").AsBsonDocument.GetValue("Z").AsDouble,
+                        tool.TCP.GetValue("YAxis").AsBsonDocument.GetValue("Z").AsDouble,
+                        tool.TCP.GetValue("YAxis").AsBsonDocument.GetValue("Z").AsDouble
+                        )
+                    ),
                 tool.Weight,
                 UnPackList<Mesh>(tool.Geometry),
                 (Axis.Core.Manufacturer)tool.Manufacturer,
-                UnPack<Vector3d>(tool.relTool)
+                new Vector3d(
+                    tool.relTool.GetValue("X").AsDouble,
+                    tool.relTool.GetValue("Y").AsDouble,
+                    tool.relTool.GetValue("Z").AsDouble
+                    )
                 );
             return t;;
         }
         public static implicit operator MongoBDTool(Axis.Core.Tool tool)
         {
             MongoBDTool t = new MongoBDTool();
+                t.Name = tool.Name;
+                t.Manufacturer = (int)tool.Manufacturer;
+                t.TCP = tool.TCP.ToBsonDocument();
+                t.Weight = tool.Weight;
+                t.Geometry = PackList<Mesh>(tool.Geometry);
+                t.relTool = tool.relTool.ToBsonDocument();
             return t;
         }
     }
@@ -383,7 +425,6 @@ namespace Axis.Online
         {
             BsonDocument doc = new BsonDocument();
             doc.Add("type", data.GetType().ToString());
-
 
             if (typeof(System.Runtime.Serialization.ISerializable).IsAssignableFrom(data.GetType()))
             {
