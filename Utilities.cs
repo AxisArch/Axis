@@ -932,6 +932,65 @@ namespace Canvas
                 }
             }
         }
+
+        static public void DisplayPlane(Plane plane, IGH_PreviewArgs args, double sizeLine = 70, double sizeArrow = 30, int thickness = 3) 
+        {
+            args.Display.DrawLineArrow(
+                new Line(plane.Origin, plane.XAxis, sizeLine),
+                Axis.Styles.Pink,
+                thickness,
+                sizeArrow);
+            args.Display.DrawLineArrow( new Line(plane.Origin, plane.YAxis, sizeLine),
+                Axis.Styles.LightBlue,
+                thickness,
+                sizeArrow);
+            args.Display.DrawLineArrow( new Line(plane.Origin, plane.ZAxis, sizeLine),
+                Axis.Styles.LightGrey,
+                thickness,
+                sizeArrow);
+        }
+        static public void DisplayRobotMesh(Axis.Core.Manipulator robot, IGH_PreviewArgs args) 
+        {
+            if (robot.colors.Count == 0) { robot.colors.Add(Axis.Styles.DarkGrey); }
+
+            int cC = robot.colors.Count;
+            int rC = robot.ikMeshes.Count;
+
+            for (int i = 0; i < rC; ++i)
+            {
+                int cID = i;
+                
+                if (i >= rC) cID = cC - 1;
+                args.Display.DrawMeshShaded(robot.ikMeshes[i], new DisplayMaterial(robot.colors[cID]));
+            }
+        }
+        static public void DisplayRobotLines(Axis.Core.Manipulator robot, IGH_PreviewArgs args, int thickness = 3) 
+        {
+            List<Point3d> points = new List<Point3d>();
+            foreach (Plane p in robot.ikPlanes) { points.Add(p.Origin); }
+
+            Polyline pLine = new Polyline(points);
+
+            Line[] lines = pLine.GetSegments();
+
+            // Draw lines
+            for (int i = 0; i < lines.Length; ++i)
+            {
+                int cID = i;
+                if (i >= lines.Length) cID = robot.colors.Count - 1;
+                args.Display.DrawLine(lines[i], robot.colors[cID], thickness);
+            }
+
+            //Draw Sphers
+
+            //Draw Plane
+            DisplayPlane(robot.ikPlanes[0], args);
+        }
+        static public void DisplayTool(Axis.Core.Tool tool, IGH_PreviewArgs args) 
+        {
+
+        }
+
     }
     class Menu 
     {
