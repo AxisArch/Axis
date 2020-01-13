@@ -491,7 +491,7 @@ namespace Axis.Core
         /// <returns></returns>
         public List<Mesh> UpdateRobotMeshes(Manipulator robot, double[] radAngles, out List<Plane> planesOut, out Plane flange)
         {
-            List<Mesh> meshes = robot.IKMeshes;
+            List<Mesh> meshes = robot.ikMeshes;
             List<Plane> aPlanes = robot.tAxisPlanes;
             List<Plane> robPlanes = new List<Plane>();
             Plane robBase = robot.RobBasePlane;
