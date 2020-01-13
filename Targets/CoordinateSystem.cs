@@ -29,6 +29,8 @@ namespace Axis.Targets
         bool m_dynamicCS = false;
         Plane eAxis = Plane.WorldXY;
         bool m_outputDeclarations = false;
+        List<CSystem> m_cSystems = new List<CSystem>();
+        BoundingBox m_bBox = new BoundingBox();
 
         public CoordinateSystem() : base("Work Object", "WObj", "Create a new work object or robot base from geometry or controller calibration values.", AxisInfo.Plugin, AxisInfo.TabRobot)
         {
@@ -88,10 +90,36 @@ namespace Axis.Targets
 
             DA.SetDataList(0, cSystems);
 
+            m_cSystems = cSystems;
+            List<Point3d> points = new List<Point3d>();
+            foreach (CSystem c in m_cSystems) points.Add(c.CSPlane.Origin);
+            m_bBox = new BoundingBox(points);
+
+            
+
             if (m_outputDeclarations)
             {
                 DA.SetDataList("Dec", declarations);
             }
+        }
+
+        public override void DrawViewportWires(IGH_PreviewArgs args)
+        {
+            base.DrawViewportWires(args);
+            foreach (CSystem c in m_cSystems) Canvas.Component.DisplayPlane(c.CSPlane, args);
+        }
+
+        public override void DrawViewportMeshes(IGH_PreviewArgs args)
+        {
+            base.DrawViewportMeshes(args);
+            foreach (CSystem c in m_cSystems) Canvas.Component.DisplayPlane(c.CSPlane, args);
+        }
+
+        public override void ClearData()
+        {
+            base.ClearData();
+            m_cSystems.Clear();
+            m_bBox = BoundingBox.Unset;
         }
 
         // Build a list of optional input parameters

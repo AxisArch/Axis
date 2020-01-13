@@ -31,6 +31,8 @@ namespace Axis
         bool m_manufacturer = false;
         bool m_interpolationTypes = false;
         bool m_outputTarget = false;
+        List<Target> m_targets = new List<Target>();
+        BoundingBox m_bBox = new BoundingBox();
 
         // External axis presence.
         bool extRotary = false;
@@ -230,8 +232,35 @@ namespace Axis
 
             DA.SetDataList(0, targets);
 
+            m_targets = targets;
+
+            List<Point3d> points = new List<Point3d>();
+            foreach (Target t in targets) points.Add(t.Position);
+            m_bBox = new BoundingBox(points);
+
             if (m_outputTarget)
                 DA.SetDataList("Code", code);
+        }
+
+        public override BoundingBox ClippingBox => base.ClippingBox;
+        public override void DrawViewportMeshes(IGH_PreviewArgs args)
+        {
+            base.DrawViewportMeshes(args);
+            foreach (Target target in m_targets) Canvas.Component.DisplayPlane(target.Plane, args);
+        }
+        public override void DrawViewportWires(IGH_PreviewArgs args)
+        {
+
+            base.DrawViewportWires(args);
+            foreach (Target target in m_targets) Canvas.Component.DisplayPlane(target.Plane, args);
+
+        }
+        public override void ClearData()
+        {
+            base.ClearData();
+            m_targets.Clear();
+            m_bBox = BoundingBox.Empty;
+
         }
 
         // Build a list of optional input parameters
