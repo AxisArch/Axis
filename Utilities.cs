@@ -945,17 +945,14 @@ namespace Canvas
                 if (doc == null) return;
                 if (docIO.Document == null) return;
 
-                Canvas.Component.AddObject(docIO, newObject, oldObject, item.Attributes.Pivot);
-                Canvas.Component.MergeDocuments(docIO, doc, "Create Value List");
+                Component.AddObject(docIO, newObject, oldObject, item.Attributes.Pivot);
+                Component.MergeDocuments(docIO, doc, $"Create {newObject.Name}");
 
                 doc.RemoveObject(item, false);
                 oldObject.AddSource(newObject);
             }
         }
 
-
-
-        
         public static GH_ValueList CreateValueList(string name, Dictionary<string, string> valuePairs)
         {
             //initialize object
