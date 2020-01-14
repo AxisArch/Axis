@@ -37,7 +37,7 @@ namespace Axis.Targets
 
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddNumberParameter("TCP", "TCP", "TCP path radius of the zone.", GH_ParamAccess.list, 5);
+            pManager.AddNumberParameter("*TCP", "TCP", "TCP path radius of the zone.", GH_ParamAccess.list, 5);
         }
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
@@ -228,6 +228,42 @@ namespace Axis.Targets
             {
                 DA.SetDataList("Declaration", declarations);
             }
+        }
+
+        protected override void BeforeSolveInstance()
+        {
+            base.BeforeSolveInstance();
+
+            //Subscribe to all event handelers
+            this.Params.ParameterSourcesChanged += OnParameterSourcesChanged;
+        }
+
+        /// <summary>
+        ///  Replace a value list with one that has been pre-populated with possible zones.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
+        private void OnParameterSourcesChanged(Object sender, GH_ParamServerEventArgs e)
+        {
+            int index = e.ParameterIndex;
+            IGH_Param param = e.Parameter;
+
+            //Only add value list to the first input
+            if (index != 0) return;
+
+            //Only change value lists
+            var extractedItems = param.Sources.Where(p => p.Name == "Value List");
+
+            //Set up value list
+            Dictionary<string, string> options = new Dictionary<string, string>();
+            foreach (KeyValuePair<double, Zone> entity in Util.ABBZones())
+            {
+                options.Add(entity.Value.Name, entity.Key.ToString());
+            }
+            Grasshopper.Kernel.Special.GH_ValueList gH_ValueList = Canvas.Component.CreateValueList("Zones", options);
+
+            //The magic
+            Canvas.Component.ChangeObjects(extractedItems, param, gH_ValueList);
         }
 
         // Build a list of optional input and output parameters

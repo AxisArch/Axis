@@ -242,6 +242,45 @@ namespace Axis
                 DA.SetDataList("Code", code);
         }
 
+
+        protected override void BeforeSolveInstance()
+        {
+            base.BeforeSolveInstance();
+
+            //Subscribe to all event handelers
+            this.Params.ParameterSourcesChanged += OnParameterSourcesChanged;
+        }
+
+        /// <summary>
+        ///  Replace a value list with one that has been pre-populated with possible methonds.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
+        private void OnParameterSourcesChanged(Object sender, GH_ParamServerEventArgs e)
+        {
+            int index = e.ParameterIndex;
+            IGH_Param param = e.Parameter;
+
+            //Only add value list to the first input
+            if (param.Name != "Method") return;
+
+            //Only change value lists
+            var extractedItems = param.Sources.Where(p => p.Name == "Value List");
+
+            //Set up value list
+            Dictionary<string, string> options = new Dictionary<string, string>();
+            foreach (int entity in typeof(Manufacturer).GetEnumValues())
+            {
+                Manufacturer m = (Manufacturer)entity;
+
+                options.Add(m.ToString(), entity.ToString());
+            }
+            Grasshopper.Kernel.Special.GH_ValueList gH_ValueList = Canvas.Component.CreateValueList("Mothods", options);
+
+            //The magic
+            Canvas.Component.ChangeObjects(extractedItems, param, gH_ValueList);
+        }
+
         public override BoundingBox ClippingBox => base.ClippingBox;
         public override void DrawViewportMeshes(IGH_PreviewArgs args)
         {
@@ -266,7 +305,7 @@ namespace Axis
         // Build a list of optional input parameters
         IGH_Param[] inputParams = new IGH_Param[3]
         {
-        new Param_Integer() { Name = "Method", NickName = "Method", Description = "A list of target interpolation types [0 = Linear, 1 = Joint]. If one value is supplied it will be applied to all targets.", Access = GH_ParamAccess.list },
+        new Param_Integer() { Name = "*Method", NickName = "Method", Description = "A list of target interpolation types [0 = Linear, 1 = Joint]. If one value is supplied it will be applied to all targets.", Access = GH_ParamAccess.list },
         new Param_Number() { Name = "Rotary", NickName = "Rotary", Description = "A list of external rotary axis positions in degrees. If one value is supplied it will be applied to all targets.", Access = GH_ParamAccess.list },
         new Param_Number() { Name = "Linear", NickName = "Linear", Description = "A list of external linear axis positions in degrees. If one value is supplied it will be applied to all targets.", Access = GH_ParamAccess.list },
         };

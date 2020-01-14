@@ -36,7 +36,7 @@ namespace Axis.Targets
 
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddNumberParameter("Linear", "Linear", "Translational TCP speed in mm/s.", GH_ParamAccess.list, 50);
+            pManager.AddNumberParameter("*Linear", "Linear", "Translational TCP speed in mm/s.", GH_ParamAccess.list, 50);
             Param_Integer param = pManager[0] as Param_Integer;
         }
 
@@ -47,6 +47,7 @@ namespace Axis.Targets
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
+
             List<double> linVals = new List<double>();
             List<double> rotVals = new List<double>();
             List<double> timeVals = new List<double>();
@@ -160,6 +161,43 @@ namespace Axis.Targets
                 DA.SetDataList("Declaration", declarations);
             }
         }
+
+        protected override void BeforeSolveInstance()
+        {
+            base.BeforeSolveInstance();
+
+            //Subscribe to all event handelers
+            this.Params.ParameterSourcesChanged += OnParameterSourcesChanged;
+        }
+
+        /// <summary>
+        ///  Replace a value list with one that has been pre-populated with possible speeds.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
+        private void OnParameterSourcesChanged(Object sender, GH_ParamServerEventArgs e)
+        {
+            int index = e.ParameterIndex;
+            IGH_Param param = e.Parameter;
+
+            //Only add value list to the first input
+            if (index != 0) return;
+
+            //Only change value lists
+            var extractedItems = param.Sources.Where(p => p.Name == "Value List");
+
+            //Set up value list
+            Dictionary<string, string> options = new Dictionary<string, string>();
+            foreach (KeyValuePair<double, Speed> entity in Util.ABBSpeeds())
+            {
+                options.Add(entity.Value.Name, entity.Key.ToString());
+            }
+            Grasshopper.Kernel.Special.GH_ValueList gH_ValueList = Canvas.Component.CreateValueList("Speeds", options);
+
+            //The magic
+            Canvas.Component.ChangeObjects(extractedItems, param, gH_ValueList);
+        }
+
 
         // Build a list of optional input and output parameters
         IGH_Param[] inputParams = new IGH_Param[5]

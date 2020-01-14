@@ -933,6 +933,75 @@ namespace Canvas
             }
         }
 
+        public static void ChangeObjects(IEnumerable<IGH_Param> items, IGH_Param oldObject, IGH_Param newObject ) 
+        {
+            foreach (IGH_Param item in items) 
+            {
+                GH_DocumentIO docIO = new GH_DocumentIO();
+                docIO.Document = new GH_Document();
+
+                //get active GH doc
+                GH_Document doc = item.OnPingDocument();
+                if (doc == null) return;
+                if (docIO.Document == null) return;
+
+                Canvas.Component.AddObject(docIO, newObject, oldObject, item.Attributes.Pivot);
+                Canvas.Component.MergeDocuments(docIO, doc, "Create Value List");
+
+                doc.RemoveObject(item, false);
+                oldObject.AddSource(newObject);
+            }
+        }
+
+
+
+        
+        public static GH_ValueList CreateValueList(string name, Dictionary<string, string> valuePairs)
+        {
+            //initialize object
+            Grasshopper.Kernel.Special.GH_ValueList vl = new Grasshopper.Kernel.Special.GH_ValueList();
+            //clear default contents
+            vl.ListItems.Clear();
+
+            //set component nickname
+            vl.NickName = name;
+            vl.Name = name;
+
+            foreach (KeyValuePair<string , string> entety in valuePairs)
+            {
+                GH_ValueListItem vi = new GH_ValueListItem(entety.Key, entety.Value);
+                vl.ListItems.Add(vi);
+            }
+
+            return vl;
+        }
+
+        // private methods to magee the placement of ne objects
+        static void AddObject(GH_DocumentIO docIO, IGH_Param Object, IGH_Param param, PointF location = new PointF())
+        {
+            // place the object
+            docIO.Document.AddObject(Object, false, 1);
+
+            //get the pivot of the "accent" param
+            System.Drawing.PointF currPivot = param.Attributes.Pivot;
+
+            if (location == new PointF()) Object.Attributes.Pivot = new System.Drawing.PointF(currPivot.X - 120, currPivot.Y - 11);
+            //set the pivot of the new object
+            else Object.Attributes.Pivot = location;
+        }
+        static void MergeDocuments(GH_DocumentIO docIO, GH_Document doc, string name = "Merge")
+        {
+            docIO.Document.SelectAll();
+            docIO.Document.ExpireSolution();
+            docIO.Document.MutateAllIds();
+            IEnumerable<IGH_DocumentObject> objs = docIO.Document.Objects;
+            doc.DeselectAll();
+            doc.UndoUtil.RecordAddObjectEvent(name , objs);
+            doc.MergeDocument(docIO.Document);
+            //doc.ScheduleSolution(10);
+        }
+
+
         static public void DisplayPlane(Plane plane, IGH_PreviewArgs args, double sizeLine = 70, double sizeArrow = 30, int thickness = 3) 
         {
             args.Display.DrawLineArrow(
