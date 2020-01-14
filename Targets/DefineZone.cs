@@ -263,7 +263,7 @@ namespace Axis.Targets
             Grasshopper.Kernel.Special.GH_ValueList gH_ValueList = Canvas.Component.CreateValueList("Zones", options);
 
             //The magic
-            Canvas.Component.ChangeObjects(extractedItems, param, gH_ValueList);
+            Canvas.Component.ChangeObjects(extractedItems, gH_ValueList);
         }
 
         // Build a list of optional input and output parameters

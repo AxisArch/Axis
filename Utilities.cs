@@ -933,10 +933,14 @@ namespace Canvas
             }
         }
 
-        public static void ChangeObjects(IEnumerable<IGH_Param> items, IGH_Param oldObject, IGH_Param newObject ) 
+        public static void ChangeObjects(IEnumerable<IGH_Param> items, IGH_Param newObject ) 
         {
             foreach (IGH_Param item in items) 
             {
+                //get the input it is connected to
+                if (item.Recipients.Count == 0) return;
+                var parrent = item.Recipients[0];
+
                 GH_DocumentIO docIO = new GH_DocumentIO();
                 docIO.Document = new GH_Document();
 
@@ -945,11 +949,11 @@ namespace Canvas
                 if (doc == null) return;
                 if (docIO.Document == null) return;
 
-                Component.AddObject(docIO, newObject, oldObject, item.Attributes.Pivot);
+                Component.AddObject(docIO, newObject, parrent, item.Attributes.Pivot);
                 Component.MergeDocuments(docIO, doc, $"Create {newObject.Name}");
 
                 doc.RemoveObject(item, false);
-                oldObject.AddSource(newObject);
+                parrent.AddSource(newObject);
             }
         }
 

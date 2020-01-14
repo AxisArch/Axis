@@ -276,7 +276,7 @@ namespace Axis
             Grasshopper.Kernel.Special.GH_ValueList gH_ValueList = Canvas.Component.CreateValueList("Mothods", options);
 
             //The magic
-            Canvas.Component.ChangeObjects(extractedItems, param, gH_ValueList);
+            Canvas.Component.ChangeObjects(extractedItems, gH_ValueList);
         }
 
         public override BoundingBox ClippingBox => base.ClippingBox;
