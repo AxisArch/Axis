@@ -23,7 +23,10 @@ namespace Axis.Core
         List<System.Drawing.Color> colors = new List<System.Drawing.Color>();
         List<DisplayMaterial> displayColors = new List<DisplayMaterial>();
         BoundingBox bBox = new BoundingBox();
-        
+
+        Target m_Target = null;
+        Manipulator m_Robot = null;
+        Tool m_Tool = null;
 
 
         protected override System.Drawing.Bitmap Icon
@@ -67,17 +70,19 @@ namespace Axis.Core
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            Target robTarg = null;
-            Manipulator robot = null;
 
-            if (!DA.GetData(0, ref robot)) return;
-            if (!DA.GetData(1, ref robTarg)) return;
+            if (!DA.GetData(0, ref m_Robot)) return;
+            if (!DA.GetData(1, ref m_Target)) return;
+
+            m_Robot.SetPose(m_Target);
+            m_Tool = m_Target.Tool;
+
 
             List<string> log = new List<string>();
 
             // Get the list of kinematic indices from the robot definition, otherwise use default values.
             List<int> indices = new List<int>() { 2, 2, 2, 2, 2, 2 };
-            if (robot.Indices.Count == 6) indices = robot.Indices;
+            if (m_Robot.Indices.Count == 6) indices = m_Robot.Indices;
 
             // Kinematics error flags
             bool isValid = true; bool overheadSing = false; bool wristSing = false; bool outOfReach = false; bool outOfRotation = false;
@@ -90,15 +95,15 @@ namespace Axis.Core
 
 
 
-            if (robTarg.Method == MotionType.AbsoluteJoint) 
+            if (m_Target.Method == MotionType.AbsoluteJoint)
             {
                 colors.Clear();
                 for (int i = 0; i < 6; i++)
                 {
-                    angles = robTarg.JointAngles;
+                    angles = m_Target.JointAngles;
 
                     // Check if the solution value is inside the manufacturer permitted range
-                    if (angles[i] < robot.MaxAngles[i] && angles[i] > robot.MinAngles[i])
+                    if (angles[i] < m_Robot.MaxAngles[i] && angles[i] > m_Robot.MinAngles[i])
                         colors.Add(Styles.DarkGrey);
                     else
                     {
@@ -107,7 +112,7 @@ namespace Axis.Core
                     }
                     selectedAngles.Add(angles[i]);
                 }
-                if (robot.Manufacturer == Manufacturer.ABB) // Adjust for KUKA home position being different to ABB.
+                if (m_Robot.Manufacturer == Manufacturer.ABB) // Adjust for KUKA home position being different to ABB.
                 {
                     radAngles[0] = angles[0].ToRadians();
                     radAngles[1] = (angles[1] - 90).ToRadians();
@@ -116,25 +121,25 @@ namespace Axis.Core
                     radAngles[4] = angles[4].ToRadians();
                     radAngles[5] = -angles[5].ToRadians();
                 }
-                else if (robot.Manufacturer == Manufacturer.Kuka)
+                else if (m_Robot.Manufacturer == Manufacturer.Kuka)
                     for (int i = 0; i < 6; i++)
                         radAngles[i] = angles[i].ToRadians();
             } // Forward kinematics
-            else 
+            else
             {
                 // Transform the robot target from the robot base plane to the XY plane.
-                Plane target = robTarg.Plane;
-                target.Transform(robot.InverseRemap);
+                Plane target = m_Target.Plane;
+                target.Transform(m_Robot.InverseRemap);
 
                 Transform xForm = Transform.PlaneToPlane(Plane.WorldXY, target);
                 Plane tempTarg = Plane.WorldXY;
 
-                tempTarg.Transform(robTarg.Tool.FlangeOffset);
+                tempTarg.Transform(m_Target.Tool.FlangeOffset);
                 tempTarg.Transform(xForm);
                 target = tempTarg;
 
                 // Inverse kinematics
-                List<List<double>> ikAngles = TargetInverseKinematics(robot, target, out overheadSing, out outOfReach);
+                List<List<double>> ikAngles = TargetInverseKinematics(m_Robot, target, out overheadSing, out outOfReach);
 
                 // Select an angle from each list and make the radian version.
                 for (int i = 0; i < ikAngles.Count; i++)
@@ -150,7 +155,7 @@ namespace Axis.Core
                 }
 
                 // Check the joint angles.
-                colors = CheckJointAngles(robot, selectedAngles, out wristSing, out outOfRotation);
+                colors = CheckJointAngles(m_Robot, selectedAngles, out wristSing, out outOfRotation);
             } // Inverse kinematics
 
             #region Commented out
@@ -205,14 +210,14 @@ namespace Axis.Core
             //  Update the position of our robot geometry and store the outputs.
             List<Plane> planesOut = new List<Plane>();
             Plane flange = new Plane();
-            List<Mesh> robMesh = UpdateRobotMeshes(robot, robPos, out planesOut, out flange);
+            List<Mesh> robMesh = UpdateRobotMeshes(m_Robot, robPos, out planesOut, out flange);
 
             // Transform tool per target to robot flange.
             List<Mesh> toolMeshes = new List<Mesh>();
             Transform orientFlange = Transform.PlaneToPlane(Plane.WorldXY, flange);
             try
             {
-                foreach (Mesh m in robTarg.Tool.Geometry)
+                foreach (Mesh m in m_Target.Tool.Geometry)
                 {
                     Mesh tool = m.DuplicateMesh();
                     tool.Transform(orientFlange);
@@ -227,11 +232,13 @@ namespace Axis.Core
             //robMesh = Util.ColorMeshes(robMesh, colors);
 
             // Output data
-            
+
+            if (m_Target.Tool != null) m_Target.Tool.SetPose(flange);
+
             DA.SetData("Flange", flange);
             DA.SetDataList("Angles", selectedAngles);
             DA.SetDataList("Log", log);
-            if (robOut) 
+            if (robOut)
             {
                 DA.SetDataList("Meshes", robMesh);
                 DA.SetDataList("Colour", colors);
@@ -245,16 +252,15 @@ namespace Axis.Core
             List<DisplayMaterial> dM = new List<DisplayMaterial>();
             Mesh joindMesh = new Mesh();
 
-            foreach (System.Drawing.Color c in colors) 
+            foreach (System.Drawing.Color c in colors)
             {
                 dM.Add(new DisplayMaterial(c));
             }
-            foreach (Mesh m in robMesh) 
+            foreach (Mesh m in robMesh)
             {
                 joindMesh.Append(m);
             }
             this.displayColors = dM;
-            this.bBox = joindMesh.GetBoundingBox(false);
 
         }
 
@@ -278,11 +284,11 @@ namespace Axis.Core
             Point3d[] RP = new Point3d[] { robot.AxisPoints[0], robot.AxisPoints[1], robot.AxisPoints[2], robot.AxisPoints[3] };
 
             // Lists of doubles to hold our axis values and our output log.
-            List<double> a1list = new List<double>(), 
-                a2list = new List<double>(), 
-                a3list = new List<double>(), 
-                a4list = new List<double>(), 
-                a5list = new List<double>(), 
+            List<double> a1list = new List<double>(),
+                a2list = new List<double>(),
+                a3list = new List<double>(),
+                a4list = new List<double>(),
+                a5list = new List<double>(),
                 a6list = new List<double>();
             List<string> info = new List<string>();
 
@@ -360,7 +366,7 @@ namespace Axis.Core
 
                     ElbowPlane.ClosestParameter(ElbowPt, out elbowx, out elbowy);
                     ElbowPlane.ClosestParameter(WristLocation, out wristx, out wristy);
-                    
+
                     double angle2 = Math.Atan2(elbowy, elbowx);
                     double angle3 = Math.PI - angle2 + Math.Atan2(wristy - elbowy, wristx - elbowx) - robot.AxisFourOffset;
 
@@ -613,10 +619,32 @@ namespace Axis.Core
         }
 
 
-        public override BoundingBox ClippingBox => bBox; //base.ClippingBox;
+        public override BoundingBox ClippingBox
+        {
+            get
+            {
+                if (m_Robot != null & m_Target != null)
+                {
+                    if (m_Target.Tool != null)
+                        return BoundingBox.Union(m_Robot.GetBoundingBox(), m_Target.Tool.GetBoundingBox());
+                    else return m_Robot.GetBoundingBox();
+                }
+                else if (m_Robot != null) return m_Robot.GetBoundingBox();
+                else if (m_Target != null) 
+                {
+                    if (m_Target.Tool != null) return m_Target.Tool.GetBoundingBox();
+                    else return BoundingBox.Empty;
+                }
+                else return BoundingBox.Empty;
+            }
+        }
         public override void DrawViewportWires(IGH_PreviewArgs args)
         {
             base.DrawViewportWires(args);
+
+            //if (m_Robot != null) Canvas.Component.DisplayRobotLines(m_Robot, args);
+            //if (m_Target != null && m_Target.Tool != null) Canvas.Component.DisplayToolLines(m_Target.Tool, args);
+
             /*
             for (int i = 0; i < robot.Count; ++i)
             {
@@ -624,11 +652,15 @@ namespace Axis.Core
                 if (i >= colors.Count) cID = colors.Count - 1;
                 args.Display.DrawMeshWires(robot[i], colors[cID]);
             }*/
-            
+
         }
         public override void DrawViewportMeshes(IGH_PreviewArgs args)
         {
             base.DrawViewportMeshes(args);
+
+            if (m_Robot != null) Canvas.Component.DisplayRobotMesh(m_Robot, args);
+            if (m_Tool != null && m_Tool.ikGeometry != null) Canvas.Component.DisplayTool(m_Target.Tool, args);
+
             for (int i = 0; i < robot.Count; ++i)
             {
                 int cID = i;
@@ -668,6 +700,8 @@ namespace Axis.Core
         {
             base.ClearData();
             robot.Clear();
+            m_Target = null;
+            m_Robot = null;
             bBox = BoundingBox.Empty;
         }
 

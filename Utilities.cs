@@ -24,6 +24,7 @@ using Rhino.Input.Custom;
 using Rhino.DocObjects;
 
 using Grasshopper.Kernel;
+using Grasshopper.Kernel.Types;
 using Grasshopper.Kernel.Special;
 
 using Axis.Targets;
@@ -597,7 +598,7 @@ namespace RAPID
     /// <summary>
     /// RAPID program
     /// </summary>
-    public class Program : IEnumerable<string>
+    public class Program : GH_Goo<Program>, IEnumerable<string>
     {
         public List<string> code { get; private set; }
         public bool IsMain { get; private set; }
@@ -669,14 +670,26 @@ namespace RAPID
         {
             return GetEnumerator();
         }
+
+        public override string TypeName => "RAPID Proc";
+        public override string TypeDescription => "Represents a RAPID procedure that can be combined to a RAPID module";
+        public override bool IsValid => true;
+        public override string ToString()
+        {
+            return $"RAPID Proc: {Name}";
+        }
+        public override IGH_Goo Duplicate()
+        {
+            return this;
+        }
     }
 
     /// <summary>
     /// RAPID module
     /// </summary>
-    public class Module
+    public class Module : GH_Goo<Module>
     {
-        public bool IsValid { get; private set; }
+        private bool isValid;
 
         private string Name;
         private List<string> tag = new List<string>
@@ -722,7 +735,7 @@ namespace RAPID
             }
             this.Name = name;
             if (declarations != null) { this.declarations = declarations; }
-            this.IsValid = this.validate();
+            this.isValid = this.validate();
         }
         public void AddDeclarations(List<string> declaration)
         {
@@ -760,7 +773,7 @@ namespace RAPID
             {
                 this.main.Add(main);
             }
-            this.IsValid = this.validate();
+            this.isValid = this.validate();
         }
         public void AddOverrides(List<string> overrides)
         {
@@ -819,6 +832,18 @@ namespace RAPID
             }
             if (c == 1) { return true; }
             else { return false; }
+        }
+
+        public override string TypeName => "RAPID Module";
+        public override string TypeDescription => "Represents a RAPID mudule consisting of RAPID procedures";
+        public override bool IsValid => isValid;
+        public override string ToString()
+        {
+            return $"RAPID Module: {Name}";
+        }
+        public override IGH_Goo Duplicate()
+        {
+           return this;
         }
 
     }
@@ -1021,17 +1046,15 @@ namespace Canvas
         }
         static public void DisplayRobotMesh(Axis.Core.Manipulator robot, IGH_PreviewArgs args) 
         {
-            if (robot.colors.Count == 0) { robot.colors.Add(Axis.Styles.DarkGrey); }
-
-            int cC = robot.colors.Count;
+            int cC = robot.ikColors.Count;
             int rC = robot.ikMeshes.Count;
 
             for (int i = 0; i < rC; ++i)
             {
                 int cID = i;
                 
-                if (i >= rC) cID = cC - 1;
-                args.Display.DrawMeshShaded(robot.ikMeshes[i], new DisplayMaterial(robot.colors[cID]));
+                if (i >= cC) cID = cC - 1;
+                args.Display.DrawMeshShaded(robot.ikMeshes[i], new DisplayMaterial(robot.ikColors[cID]));
             }
         }
         static public void DisplayRobotLines(Axis.Core.Manipulator robot, IGH_PreviewArgs args, int thickness = 3) 
@@ -1047,8 +1070,8 @@ namespace Canvas
             for (int i = 0; i < lines.Length; ++i)
             {
                 int cID = i;
-                if (i >= lines.Length) cID = robot.colors.Count - 1;
-                args.Display.DrawLine(lines[i], robot.colors[cID], thickness);
+                if (i >= lines.Length) cID = robot.ikColors.Count - 1;
+                args.Display.DrawLine(lines[i], robot.ikColors[cID], thickness);
             }
 
             //Draw Sphers
@@ -1058,6 +1081,49 @@ namespace Canvas
         }
         static public void DisplayTool(Axis.Core.Tool tool, IGH_PreviewArgs args) 
         {
+            int cC = tool.ikColors.Count;
+            int tC = tool.ikGeometry.Count;
+
+            for (int i = 0; i < tC; ++i)
+            {
+                int cID = i;
+
+                if (i >= cC) cID = cC - 1;
+                args.Display.DrawMeshShaded(tool.ikGeometry[i], new DisplayMaterial(tool.ikColors[cID]));
+            }
+        }
+        static public void DisplayToolLines(Axis.Core.Tool tool, IGH_PreviewArgs args, int thickness = 3)
+        {
+            Line line = new Line(tool.ikBase.Origin, tool.ikTCP.Origin);
+            args.Display.DrawLine(line, tool.ikColors[0], thickness);
+
+            //Draw Plane
+            DisplayPlane(tool.ikTCP, args);
+        }
+        static public void DisplayToolPath(Axis.Targets.Toolpath toolpath, IGH_PreviewArgs args, int thickness = 3, double radius = 2 ) 
+        {
+            List<Line> lines = new List<Line>();
+            List<Color> colors = new List<Color>();
+
+            Dictionary<Line, Color> pairs = lines.Zip(colors, (k, v) => new { k, v })
+              .ToDictionary(x => x.k, x => x.v);
+
+            //Draw line segments
+            foreach (KeyValuePair<Line, Color> pair in pairs)
+            {
+                args.Display.DrawLine(pair.Key, pair.Value, thickness);
+            }
+
+            List<Point3d> points = new List<Point3d>();
+            List<Sphere> spheres = points.Select(p => new Sphere(p, radius)).ToList();
+            
+            //Draw Commants
+            foreach (Sphere sphere in spheres) 
+            {
+                //IF bitmats are to be used
+                //args.Display.DrawSprites();
+                args.Display.DrawSphere(sphere, Axis.Styles.LightOrange);
+            }
 
         }
 
@@ -1087,12 +1153,4 @@ namespace Canvas
             //selectedMenuItem.Owner.Show();
         }
     }
-    /*
-    class DoubelClick : Grasshopper.Kernel.Attributes.GH_ComponentAttributes
-    {
-        override RespondToMouseDoubleClick()
-        {
-
-        }
-    }*/
 }
