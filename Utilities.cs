@@ -556,6 +556,29 @@ namespace Axis
                 meshOut[i].VertexColors.CreateMonotoneMesh(colors[i]);
             return meshOut;
         }
+
+        /// <summary>
+        /// Limit a value to a range
+        /// </summary>
+        /// <param name="value">Value to limit</param>
+        /// <param name="inclusiveMinimum">Minimum value</param>
+        /// <param name="inlusiveMaximum">Maximum value</param>
+        /// <returns>Limited Value</returns>
+        public static T LimitToRange<T>(IComparable<T> value, T inclusiveMinimum, T inlusiveMaximum)
+        {
+
+            if (value.CompareTo(inclusiveMinimum) == 0 | value.CompareTo(inclusiveMinimum) == 1)
+            {
+                if (value.CompareTo(inlusiveMaximum) ==  -1 | value.CompareTo(inlusiveMaximum) == 0)
+                {
+                    return (T)value;
+                }
+
+                return inlusiveMaximum;
+            }
+
+            return inclusiveMinimum;
+        }
     }
 
     /// <summary>
@@ -1000,6 +1023,33 @@ namespace Canvas
             }
 
             return vl;
+        }
+        public static GH_NumberSlider CreateNumbersilder(string name, decimal min, decimal max, int precision = 0, int length = 174) 
+        {
+            var nS = new GH_NumberSlider();
+            nS.ClearData();
+
+            //Naming
+            nS.Name = name;
+            nS.NickName = name;
+
+            nS.Slider.Minimum = min;
+            nS.Slider.Maximum = max;
+ 
+            nS.Slider.DecimalPlaces = Axis.Util.LimitToRange(precision, 0,12);
+
+            if (precision == 0)
+                nS.Slider.Type = Grasshopper.GUI.Base.GH_SliderAccuracy.Integer;
+            else
+                nS.Slider.Type = Grasshopper.GUI.Base.GH_SliderAccuracy.Float;
+
+            nS.CreateAttributes();
+            var bounds = nS.Attributes.Bounds;
+            bounds.Width = length;
+            nS.Attributes.Bounds = bounds;
+
+            nS.SetSliderValue(min);
+            return nS;
         }
 
         // private methods to magee the placement of ne objects

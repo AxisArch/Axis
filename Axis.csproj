@@ -357,7 +357,7 @@
   <ItemGroup>
     <Compile Include="Core\AuthTest.cs" />
     <Compile Include="Core\CheckProgram.cs" />
-    <Compile Include="Core\TestSimulation.cs" />
+    <Compile Include="Core\Simulation.cs" />
     <Compile Include="Core\OffsetWristKinematics.cs" />
     <Compile Include="Core\Login.cs" />
     <Compile Include="Geometry\SurfaceFrame.cs" />
@@ -383,7 +383,7 @@
     </Compile>
     <Compile Include="RAPID\SetVelocity.cs" />
     <Compile Include="Core\InverseKinematics.cs" />
-    <Compile Include="Core\Simulation.cs" />
+    <Compile Include="Depricated_Obsolete\Simulation_200129.cs" />
     <Compile Include="Robot\Tool.cs" />
     <Compile Include="Robot\Robot.cs" />
     <Compile Include="Core\CodeGenerator.cs" />
@@ -571,6 +571,7 @@
     <None Include="Resources\UnknownMotorState.png" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Depricated_Obsolete\REDME.md" />
     <Content Include="Online\moduleFile.mod">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

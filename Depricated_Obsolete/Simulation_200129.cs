@@ -2,25 +2,27 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
+using Axis.Targets;
 
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 
-using Axis.Targets;
-
 namespace Axis.Core
 {
-    
-
-    public class Simulation : GH_Component, IGH_VariableParameterComponent
+    public class Simulation_Obsolete : GH_Component, IGH_VariableParameterComponent
     {
+        /// <summary>
+        /// This Component has been depricated
+        /// </summary>
+        public override bool Obsolete => true;
 
-        DateTime strat = new DateTime();
-        Toolpath toolpath;
-        Target cTarget;
+        internal int n = 0;
 
+        protected static List<double> cAngles = new List<double>();
+        protected static Target cTarg = Target.Default;
+        List<string> log = new List<string>();
 
         bool timeline = false;
         bool showSpeed = false;
@@ -28,120 +30,136 @@ namespace Axis.Core
         bool showMotion = false;
         bool showExternal = false;
 
-
-        public override GH_Exposure Exposure => GH_Exposure.secondary;
-
-        /// <summary>
-        /// Provides an Icon for the component.
-        /// </summary>
         protected override System.Drawing.Bitmap Icon
         {
             get
-            { return Properties.Resources.Play; }
+            {
+                return Properties.Resources.Play;
+            }
         }
-
-        /// <summary>
-        /// Gets the unique ID for this component. Do not change this ID after release.
-        /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("7baedf8e-5efe-4549-b8d5-93a4b9e4a1fd"); }
+            get { return new Guid("0d998b74-4e74-4108-a4e8-c49103160f73"); }
         }
+        public override GH_Exposure Exposure => GH_Exposure.hidden;
 
-        /// <summary>
-        /// Initializes a new instance of the MyComponent1 class.
-        /// </summary>
-        public Simulation() : base("Simulation", "Program", "Simulate a robotic toolpath.", AxisInfo.Plugin, AxisInfo.TabCore)
+        public Simulation_Obsolete() : base("Simulation", "Program", "Simulate a robotic toolpath.", AxisInfo.Plugin, AxisInfo.TabCore)
         {
         }
 
-        /// <summary>
-        /// Registers all the input parameters for this component.
-        /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddGenericParameter("Targets", "Targets", "T", GH_ParamAccess.list);
-            pManager.AddBooleanParameter("Run", "Run", "", GH_ParamAccess.item);
-            pManager.AddBooleanParameter("Reset", "Reset","",GH_ParamAccess.item );
+            pManager.AddGenericParameter("Toolpath", "Toolpath", "Robotic toolpath as a list of robot targets and strings.", GH_ParamAccess.list);
+            pManager.AddBooleanParameter("Begin", "Begin", "Begin the simulation.", GH_ParamAccess.item, false);
+            pManager.AddBooleanParameter("Reset", "Reset", "Reset the simulation to the first command in the list.", GH_ParamAccess.item, false);
         }
 
-        /// <summary>
-        /// Registers all the output parameters for this component.
-        /// </summary>
+
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("Target", "Target", "", GH_ParamAccess.item);
+            pManager.AddGenericParameter("Target", "Target", "Current robot target.", GH_ParamAccess.item);
+            pManager.AddTextParameter("Command", "Command", "Current command.", GH_ParamAccess.item);
         }
 
-
-        /// <summary>
-        /// This is the method that actually does the work.
-        /// </summary>
-        /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            List<Target> targets = new List<Target>();
-            bool run = false;
-            bool rest = false;
+            List<GH_ObjectWrapper> toolpath = new List<GH_ObjectWrapper>();
+            bool begin = false;
+            bool reset = false;
+            double position = 0.000;
+            bool hasToolpath = true;
 
-            DateTime now = DateTime.Now;
+            if (!DA.GetDataList(0, toolpath)) { hasToolpath = false; return; }
+            if (!DA.GetData(1, ref begin)) return;
+            if (!DA.GetData(2, ref reset)) return;
 
-            if (!DA.GetDataList("Targets", targets)) return;
-            if (!DA.GetData("Run", ref run)) return;
-            if (!DA.GetData("Reset", ref rest)) return;
+            if (timeline) { if (!DA.GetData("Timeline", ref position)) return; }
 
-            if ( toolpath== null) toolpath = new Toolpath(targets);
+            int index = 0;
+            double programLength = toolpath.Count - 1;
+            string mode = "Auto | ";
 
-            if (rest)
+            if (begin && hasToolpath) // Add condition !timeline to ensure that the program can only be simulated using the slider.
             {
-                strat = DateTime.Now;
-                toolpath = new Toolpath(targets);
-            }
-
-            if (run) 
-            {
-                Target nTarget = toolpath.GetTarget(now - strat);
-                if (cTarget != nTarget) 
+                if (reset) { n = 0; } // Reset the simulation to the first target.
+                else if (n < programLength)
                 {
-                    cTarget = nTarget;
+                    // Step through the program.
+                    n++;
+                    index = n;
+                    ExpireSolution(true);
                 }
-                
-                DA.SetData("Target", cTarget);
-                ExpireSolution(true);
+                else
+                {
+                    if (toolpath.Count != 0)
+                    {
+                        index = toolpath.Count - 1;
+                    }
+                    else { index = 0; }
+                }
             }
-            else DA.SetData("Target", targets[0]);
+            else // Use the timeline slider to define the previewed program position.
+            {
+                mode = "Manual | ";
+                double remappedIndex = Util.Remap(position, 0.0, 1.0, 0.0, programLength);
+                int roundedIndex = Convert.ToInt32(remappedIndex);
+                index = roundedIndex;
+            }
 
-        }
+            this.Message = mode + "Index: " + (index).ToString();
 
-        protected override void BeforeSolveInstance()
-        {
-            base.BeforeSolveInstance();
+            // Retrieve the current target from the program.
+            GH_ObjectWrapper currTarg = toolpath[index];
 
-            //Subscribe to all event handelers
-            this.Params.ParameterSourcesChanged += OnParameterSourcesChanged; ;
-        }
+            Target targ = Target.Default;
+            MotionType mType = MotionType.Linear;
 
-        /// <summary>
-        ///  Replace a numver slider with one that has the propper values set
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void OnParameterSourcesChanged(Object sender, GH_ParamServerEventArgs e)
-        {
-            int index = e.ParameterIndex;
-            IGH_Param param = e.Parameter;
+            Type cType = currTarg.Value.GetType();
 
-            //Only add value list to the first input
-            if (param.Name !=  "Timeline") return;
+            string command = String.Empty;
+            double speed = 0;
 
-            //Only change value lists
-            var extractedItems = param.Sources.Where(p => p.Name == "Number Slider");
+            List<double> externals = new List<double>();
+            double linExt = 0;
+            double rotExt = 0;
 
-            //Set up the number slider
-            Grasshopper.Kernel.Special.GH_NumberSlider gH_NumberSlider = Canvas.Component.CreateNumbersilder("Timeline",0, 1m, 4, 400);
+            if (cType.Name == "GH_String")
+            {
+                string cmd = currTarg.Value.ToString();
+                log.Add("Command.");
 
-            //The magic
-            Canvas.Component.ChangeObjects(extractedItems, gH_NumberSlider);
+                // If we don't have a target, keep the robot at the last known position.
+                if (cTarg != Target.Default)
+                {
+                    DA.SetData(0, cTarg);
+                }
+                DA.SetData(1, cmd);
+            }
+            else
+            {
+                targ = currTarg.Value as Target; // Cast back to target type
+                cTarg = targ; // Updated last target.
+                DA.SetData(0, targ); // Output current target
+
+                if (showSpeed)
+                {
+                    // Current translational speed
+                    speed = targ.Speed.TranslationSpeed;
+                    DA.SetData("Speed", speed);
+                }
+                if (showExternal)
+                {
+                    // External rotary axis
+                    rotExt = targ.ExtRot;
+                    if (rotExt != Util.ExAxisTol) { externals.Add(rotExt); }
+
+                    // External linear axis
+                    linExt = targ.ExtLin;
+                    if (linExt != Util.ExAxisTol) { externals.Add(linExt); }
+
+                    DA.SetDataList("External", externals);
+                }
+            }
         }
 
         // Build a list of optional input parameters
@@ -324,7 +342,5 @@ namespace Axis.Core
         IGH_Param IGH_VariableParameterComponent.CreateParameter(GH_ParameterSide side, int index) => null;
         bool IGH_VariableParameterComponent.DestroyParameter(GH_ParameterSide side, int index) => false;
         void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
-
-
     }
 }
