@@ -42,6 +42,7 @@ namespace Axis.Core
                     log.Add("Login token valid.");
                     log.Add("Valid to: " + validTo.ToLongDateString() + ", " + validTo.ToShortTimeString());
                 }
+                Default.ValidTo = validTo;
             }
 
             if (loggedIn) this.Message = "Logged In";

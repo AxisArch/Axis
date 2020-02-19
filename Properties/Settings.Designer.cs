@@ -12,7 +12,7 @@ namespace Axis.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "15.9.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "16.0.0.0")]
     internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
         
         private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
@@ -51,11 +51,21 @@ namespace Axis.Properties {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         public global::System.DateTime LastLoggedIn {
             get {
-                try{ return ((global::System.DateTime)(this["LastLoggedIn"])); }
-                catch { return System.DateTime.MinValue; }
+                return ((global::System.DateTime)(this["LastLoggedIn"]));
             }
             set {
                 this["LastLoggedIn"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        public global::System.DateTime ValidTo {
+            get {
+                return ((global::System.DateTime)(this["ValidTo"]));
+            }
+            set {
+                this["ValidTo"] = value;
             }
         }
     }
