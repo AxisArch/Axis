@@ -31,6 +31,15 @@ namespace Axis.Core
 
             log.Add("Axis Version Number: " + Assembly.GetExecutingAssembly().GetName().Version);
 
+            DateTime t0 = DateTime.Now;
+            Auth auth = new Auth();
+            bool isValid = auth.IsValid;
+            if (isValid)
+            {
+                log.Add("Valid token.");
+            }
+            log.Add(DateTime.Now.Subtract(t0).TotalMilliseconds.ToString());
+
             if (Default.LoggedIn)
             {
                 log.Add("Logged in.");
@@ -48,7 +57,6 @@ namespace Axis.Core
             if (loggedIn) this.Message = "Logged In";
             else this.Message = "Error";
 
-
             DA.SetDataList(0, log);
         }
 
@@ -58,7 +66,7 @@ namespace Axis.Core
             {
                 return null;
             }
-        }
+        }`
 
         public override Guid ComponentGuid
         {

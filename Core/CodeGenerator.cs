@@ -25,7 +25,7 @@ namespace Axis.Core
         bool overrides = false;
         Manufacturer m_Manufacturer = Manufacturer.ABB;
         bool ignoreLen = false;
-        bool validLicense = false;
+        bool validToken = false;
 
         protected override System.Drawing.Bitmap Icon
         {
@@ -61,17 +61,12 @@ namespace Axis.Core
 
         protected override void BeforeSolveInstance()
         {
-            if (Default.LoggedIn)
-            {
-                // Check that its still valid.
-                DateTime validTo = Default.LastLoggedIn.AddDays(2);
-                int valid = DateTime.Compare(System.DateTime.Now, validTo);
-                if (valid < 0) { validLicense = true; }
-            }
+            Auth auth = new Auth();
+            validToken = auth.IsValid;
 
-            if (!validLicense)
+            if (!validToken)
             {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Please log in to Axis using the Login component.");
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Please login to Axis with the Login tool.");
             }
         }
 
@@ -112,6 +107,8 @@ namespace Axis.Core
                 if (!DA.GetDataList("Overrides", strOverrides)) ;
             if (declarations)
                 if (!DA.GetDataList("Declarations", strDeclarations)) ;
+
+            if (!validToken) return;
 
             // New RAPID module
             Module module = new Module(name: strModName);

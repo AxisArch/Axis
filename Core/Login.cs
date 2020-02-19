@@ -18,10 +18,10 @@ namespace Axis.Core
         public List<string> log = new List<string>();
         public bool loggedIn = false;
         public bool forceLogout = false;
+        public bool clear = false;
 
         public Login() : base("Login", "Login", "Log in to Axis", AxisInfo.Plugin, AxisInfo.TabCore)
         {
-
         }
 
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
@@ -38,6 +38,12 @@ namespace Axis.Core
         {
             bool run = false;
             if (!DA.GetData(0, ref run)) return;
+
+            if (clear)
+            {
+                ClearToken();
+                log.Add("Cleared token at " + System.DateTime.Now.ToShortDateString());
+            }
 
             // Set up our client to handle the login.
             Auth0ClientOptions clientOptions = new Auth0ClientOptions
@@ -102,17 +108,33 @@ namespace Axis.Core
             DA.SetDataList(0, log);
         }
 
+        public void ClearToken()
+        {
+            Default.LastLoggedIn = new DateTime(2000, 1, 1);
+            Default.LoggedIn = false;
+            Default.Token = null;
+        }
+
         // The following functions append menu items and then handle the item clicked event.
         protected override void AppendAdditionalComponentMenuItems(System.Windows.Forms.ToolStripDropDown menu)
         {
             ToolStripMenuItem fLogout = Menu_AppendItem(menu, "Force Logout", logout_Click);
             fLogout.ToolTipText = "Forceably logout of the Axis domain.";
+            ToolStripMenuItem clear = Menu_AppendItem(menu, "Clear Token", clear_Click);
+            clear.ToolTipText = "Clear authentification token from the PC.";
         }
 
         private void logout_Click(object sender, EventArgs e)
         {
             RecordUndoEvent("Logout");
             forceLogout = true;
+            ExpireSolution(true);
+        }
+
+        private void clear_Click(object sender, EventArgs e)
+        {
+            RecordUndoEvent("Clear");
+            clear = true;
             ExpireSolution(true);
         }
 

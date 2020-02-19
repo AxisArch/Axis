@@ -946,7 +946,7 @@ namespace Canvas
 
                 //get active GH doc
                 GH_Document doc = item.OnPingDocument();
-                if (doc == null) return;```
+                if (doc == null) return;
                 if (docIO.Document == null) return;
 
                 Component.AddObject(docIO, newObject, parrent, item.Attributes.Pivot);
