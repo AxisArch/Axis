@@ -7,13 +7,17 @@ using Rhino.Geometry;
 
 using Auth0.OidcClient;
 using static Axis.Properties.Settings;
+using System.Windows.Forms;
 
 namespace Axis.Core
 {
     public class Login : GH_Component
     {
+        // Sticky variables for the options.
+        bool m_Logout = false;
         public List<string> log = new List<string>();
         public bool loggedIn = false;
+        public bool forceLogout = false;
 
         public Login() : base("Login", "Login", "Log in to Axis", AxisInfo.Plugin, AxisInfo.TabCore)
         {
@@ -53,7 +57,7 @@ namespace Axis.Core
             };
 
             // Handle the logout.
-            if (loggedIn && !run)
+            if ((loggedIn && !run) || forceLogout)
             {
                 client.LogoutAsync();
                 loggedIn = false;
@@ -92,10 +96,26 @@ namespace Axis.Core
                 if (loggedIn) this.Message = "Logged In";
                 else this.Message = "Error";
             }
+
+            forceLogout = false;
             Axis.Properties.Settings.Default.LoggedIn = loggedIn;
             DA.SetDataList(0, log);
         }
-       
+
+        // The following functions append menu items and then handle the item clicked event.
+        protected override void AppendAdditionalComponentMenuItems(System.Windows.Forms.ToolStripDropDown menu)
+        {
+            ToolStripMenuItem fLogout = Menu_AppendItem(menu, "Force Logout", logout_Click);
+            fLogout.ToolTipText = "Forceably logout of the Axis domain.";
+        }
+
+        private void logout_Click(object sender, EventArgs e)
+        {
+            RecordUndoEvent("Logout");
+            forceLogout = true;
+            ExpireSolution(true);
+        }
+
         protected override System.Drawing.Bitmap Icon
         {
             get

@@ -24,8 +24,6 @@ namespace Axis.Core
         List<DisplayMaterial> displayColors = new List<DisplayMaterial>();
         BoundingBox bBox = new BoundingBox();
         
-
-
         protected override System.Drawing.Bitmap Icon
         {
             get
