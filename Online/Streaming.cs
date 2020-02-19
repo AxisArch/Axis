@@ -113,10 +113,10 @@ namespace Axis.Online
                 abbController.Ipc.CreateQueue("RMQ_T_ROB1", 10, Ipc.MaxMessageSize);
 
             // Get RobotQueue
-            if (RobotQueue == null)
+            IpcQueue robotQueue = abbController.Ipc.GetQueue("RMQ_T_ROB1");
+            if (RobotQueue != robotQueue) // Need to run ones in a while 
             {
                 tasks = abbController.Rapid.GetTasks();
-                IpcQueue robotQueue = abbController.Ipc.GetQueue("RMQ_T_ROB1");
                 int queueID = robotQueue.QueueId;
                 string queueName = robotQueue.QueueName;
 
@@ -193,6 +193,7 @@ namespace Axis.Online
                     byte[] data = new UTF8Encoding().GetBytes(content);
 
                     message.SetData(data);
+
 
                     try { RobotQueue.Send(message); }
                     catch (Exception e)

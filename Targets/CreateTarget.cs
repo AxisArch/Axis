@@ -28,9 +28,12 @@ namespace Axis
 
         // Boolean toggle for context menu items.
         bool m_outputCode = false;
-        bool m_manufacturer = false;
         bool m_interpolationTypes = false;
         bool m_outputTarget = false;
+
+        Manufacturer m_Manufacturer = Manufacturer.ABB;
+        List<Target> m_targets = new List<Target>();
+        BoundingBox m_bBox = new BoundingBox();
 
         // External axis presence.
         bool extRotary = false;
@@ -59,6 +62,8 @@ namespace Axis
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
+            this.Message = m_Manufacturer.ToString();
+
             List<Plane> planes = new List<Plane>();
             List<GH_ObjectWrapper> speedsIn = new List<GH_ObjectWrapper>();
             List<GH_ObjectWrapper> zonesIn = new List<GH_ObjectWrapper>();
@@ -80,7 +85,7 @@ namespace Axis
             if (!DA.GetDataList(4, wobjs)) wobjs.Add(CSystem.Default);
 
             // If interpolation types are specified, get them.
-            if (m_interpolationTypes) { if (!DA.GetDataList("Method", methods)) return; }
+            if (m_interpolationTypes) { if (!DA.GetDataList("*Method", methods)) return; }
 
             // If the inputs are present, get the external axis values.
             if (extRotary) { if (!DA.GetDataList("Rotary", eRotVals)) return; }
@@ -214,15 +219,9 @@ namespace Axis
                 if (method == 1) { mType = MotionType.Joint; }
                 else if (method == 2) { mType = MotionType.AbsoluteJoint; }
 
-                //Poor mans temporary fix
-                var rType = Manufacturer.ABB;
-                if (m_manufacturer)
-                {
-                    rType = Manufacturer.Kuka;
-                }
 
                 // Create the robot target.
-                Target robTarg = new Target(planes[i], mType, speed, zone, tool, wobj, extRot, extLin, rType);
+                Target robTarg = new Target(planes[i], mType, speed, zone, tool, wobj, extRot, extLin, m_Manufacturer);
                 targets.Add(robTarg);
 
                 code.Add(robTarg.StrRob);
@@ -230,14 +229,81 @@ namespace Axis
 
             DA.SetDataList(0, targets);
 
+            
+            m_targets = targets;
+
+            List<Point3d> points = new List<Point3d>();
+            foreach (Target t in targets) points.Add(t.Position);
+            m_bBox = new BoundingBox(points);
+
             if (m_outputTarget)
                 DA.SetDataList("Code", code);
+        }
+
+
+        protected override void BeforeSolveInstance()
+        {
+            base.BeforeSolveInstance();
+
+            //Subscribe to all event handelers
+            this.Params.ParameterSourcesChanged += OnParameterSourcesChanged;
+        }
+
+        /// <summary>
+        ///  Replace a value list with one that has been pre-populated with possible methonds.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
+        private void OnParameterSourcesChanged(Object sender, GH_ParamServerEventArgs e)
+        {
+            int index = e.ParameterIndex;
+            IGH_Param param = e.Parameter;
+
+            //Only add value list to the first input
+            if (param.Name != "*Method") return;
+
+            //Only change value lists
+            var extractedItems = param.Sources.Where(p => p.Name == "Value List");
+
+            //Set up value list
+            Dictionary<string, string> options = new Dictionary<string, string>();
+            foreach (int entity in typeof(MotionType).GetEnumValues())
+            {
+                MotionType m = (MotionType)entity;
+
+                options.Add(m.ToString(), entity.ToString());
+            }
+            Grasshopper.Kernel.Special.GH_ValueList gH_ValueList = Canvas.Component.CreateValueList("Mothods", options);
+
+            //The magic
+            Canvas.Component.ChangeObjects(extractedItems, gH_ValueList);
+        }
+
+        public override BoundingBox ClippingBox => base.ClippingBox;
+        public override void DrawViewportMeshes(IGH_PreviewArgs args)
+        {
+            base.DrawViewportMeshes(args);
+            foreach (Target target in m_targets) Canvas.Component.DisplayPlane(target.Plane, args);
+        }
+        public override void DrawViewportWires(IGH_PreviewArgs args)
+        {
+
+            base.DrawViewportWires(args);
+            foreach (Target target in m_targets) Canvas.Component.DisplayPlane(target.Plane, args);
+
+        }
+        public override void ClearData()
+        {
+            base.ClearData();
+            m_targets.Clear();
+            m_bBox = BoundingBox.Empty;
+
         }
 
         // Build a list of optional input parameters
         IGH_Param[] inputParams = new IGH_Param[3]
         {
-        new Param_Integer() { Name = "Method", NickName = "Method", Description = "A list of target interpolation types [0 = Linear, 1 = Joint]. If one value is supplied it will be applied to all targets.", Access = GH_ParamAccess.list },
+        new Param_Integer() { Name = "*Method", NickName = "Method", Description = "A list of target interpolation types [0 = Linear, 1 = Joint]. If one value is supplied it will be applied to all targets.", Access = GH_ParamAccess.list },
         new Param_Number() { Name = "Rotary", NickName = "Rotary", Description = "A list of external rotary axis positions in degrees. If one value is supplied it will be applied to all targets.", Access = GH_ParamAccess.list },
         new Param_Number() { Name = "Linear", NickName = "Linear", Description = "A list of external linear axis positions in degrees. If one value is supplied it will be applied to all targets.", Access = GH_ParamAccess.list },
         };
@@ -256,8 +322,15 @@ namespace Axis
 
             ToolStripSeparator seperator = Menu_AppendSeparator(menu);
 
-            ToolStripMenuItem kukaTarget = Menu_AppendItem(menu, "Create KUKA Targets", kuka_Click, true, m_manufacturer);
-            kukaTarget.ToolTipText = "Create robot targets formatted in KRL for KUKA robots.";
+            ToolStripMenuItem robotManufacturers = Menu_AppendItem(menu, "Manufacturer");
+            robotManufacturers.ToolTipText = "Select the robot manufacturer";
+            foreach (string name in typeof(Manufacturer).GetEnumNames())
+            {
+                ToolStripMenuItem item = new ToolStripMenuItem(name, null, manufacturer_Click);
+
+                if (name == this.m_Manufacturer.ToString()) item.Checked = true;
+                robotManufacturers.DropDownItems.Add(item);
+            }
 
             ToolStripSeparator seperator2 = Menu_AppendSeparator(menu);
 
@@ -270,6 +343,14 @@ namespace Axis
 
             ToolStripMenuItem interpolation = Menu_AppendItem(menu, "Specify Interpolation Types", interpolation_Click, true, m_interpolationTypes);
             interpolation.ToolTipText = "Specify the interpolation type per target. [0 = Linear, 1 = Joint]";
+        }
+        private void manufacturer_Click(object sender, EventArgs e)
+        {
+            RecordUndoEvent("Manufacturer");
+            ToolStripMenuItem currentItem = (ToolStripMenuItem)sender;
+            Canvas.Menu.UncheckOtherMenuItems(currentItem);
+            this.m_Manufacturer = (Manufacturer)currentItem.Owner.Items.IndexOf(currentItem);
+            ExpireSolution(true);
         }
 
         private void outputCode_Click(object sender, EventArgs e)
@@ -288,13 +369,6 @@ namespace Axis
             ExpireSolution(true);
         }
 
-        private void kuka_Click(object sender, EventArgs e)
-        {
-            RecordUndoEvent("KukaTargets");
-            m_manufacturer = !m_manufacturer;
-            ExpireSolution(true);
-        }
-
         private void interpolation_Click(object sender, EventArgs e)
         {
             RecordUndoEvent("InterpolationTypes");
@@ -306,7 +380,7 @@ namespace Axis
             }
             else
             {
-                Params.UnregisterInputParameter(Params.Input.FirstOrDefault(x => x.Name == "Method"), true);
+                Params.UnregisterInputParameter(Params.Input.FirstOrDefault(x => x.Name == "*Method"), true);
             }
             ExpireSolution(true);
         }
@@ -399,7 +473,7 @@ namespace Axis
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
             writer.SetBoolean("OutputCode", this.m_outputCode);
-            writer.SetBoolean("KukaTargets", this.m_manufacturer);
+            writer.SetInt32("Manufacturer", (int)this.m_Manufacturer);
             writer.SetBoolean("RotAxis", this.extRotary);
             writer.SetBoolean("LinAxis", this.extLinear);
             writer.SetBoolean("Method", this.m_interpolationTypes);
@@ -410,7 +484,7 @@ namespace Axis
         public override bool Read(GH_IO.Serialization.GH_IReader reader)
         {
             this.m_outputCode = reader.GetBoolean("OutputCode");
-            this.m_manufacturer = reader.GetBoolean("KukaTargets");
+            this.m_Manufacturer = (Manufacturer)reader.GetInt32("Manufacturer");
             this.extRotary = reader.GetBoolean("RotAxis");
             this.extLinear = reader.GetBoolean("LinAxis");
             this.m_interpolationTypes = reader.GetBoolean("Method");

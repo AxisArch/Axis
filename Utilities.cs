@@ -932,6 +932,135 @@ namespace Canvas
                 }
             }
         }
+
+        public static void ChangeObjects(IEnumerable<IGH_Param> items, IGH_Param newObject ) 
+        {
+            foreach (IGH_Param item in items) 
+            {
+                //get the input it is connected to
+                if (item.Recipients.Count == 0) return;
+                var parrent = item.Recipients[0];
+
+                GH_DocumentIO docIO = new GH_DocumentIO();
+                docIO.Document = new GH_Document();
+
+                //get active GH doc
+                GH_Document doc = item.OnPingDocument();
+                if (doc == null) return;
+                if (docIO.Document == null) return;
+
+                Component.AddObject(docIO, newObject, parrent, item.Attributes.Pivot);
+                Component.MergeDocuments(docIO, doc, $"Create {newObject.Name}");
+
+                doc.RemoveObject(item, false);
+                parrent.AddSource(newObject);
+            }
+        }
+
+        public static GH_ValueList CreateValueList(string name, Dictionary<string, string> valuePairs)
+        {
+            //initialize object
+            Grasshopper.Kernel.Special.GH_ValueList vl = new Grasshopper.Kernel.Special.GH_ValueList();
+            //clear default contents
+            vl.ListItems.Clear();
+
+            //set component nickname
+            vl.NickName = name;
+            vl.Name = name;
+
+            foreach (KeyValuePair<string , string> entety in valuePairs)
+            {
+                GH_ValueListItem vi = new GH_ValueListItem(entety.Key, entety.Value);
+                vl.ListItems.Add(vi);
+            }
+
+            return vl;
+        }
+
+        // private methods to magee the placement of ne objects
+        static void AddObject(GH_DocumentIO docIO, IGH_Param Object, IGH_Param param, PointF location = new PointF())
+        {
+            // place the object
+            docIO.Document.AddObject(Object, false, 1);
+
+            //get the pivot of the "accent" param
+            System.Drawing.PointF currPivot = param.Attributes.Pivot;
+
+            if (location == new PointF()) Object.Attributes.Pivot = new System.Drawing.PointF(currPivot.X - 120, currPivot.Y - 11);
+            //set the pivot of the new object
+            else Object.Attributes.Pivot = location;
+        }
+        static void MergeDocuments(GH_DocumentIO docIO, GH_Document doc, string name = "Merge")
+        {
+            docIO.Document.SelectAll();
+            docIO.Document.ExpireSolution();
+            docIO.Document.MutateAllIds();
+            IEnumerable<IGH_DocumentObject> objs = docIO.Document.Objects;
+            doc.DeselectAll();
+            doc.UndoUtil.RecordAddObjectEvent(name , objs);
+            doc.MergeDocument(docIO.Document);
+            //doc.ScheduleSolution(10);
+        }
+
+
+        static public void DisplayPlane(Plane plane, IGH_PreviewArgs args, double sizeLine = 70, double sizeArrow = 30, int thickness = 3) 
+        {
+            args.Display.DrawLineArrow(
+                new Line(plane.Origin, plane.XAxis, sizeLine),
+                Axis.Styles.Pink,
+                thickness,
+                sizeArrow);
+            args.Display.DrawLineArrow( new Line(plane.Origin, plane.YAxis, sizeLine),
+                Axis.Styles.LightBlue,
+                thickness,
+                sizeArrow);
+            args.Display.DrawLineArrow( new Line(plane.Origin, plane.ZAxis, sizeLine),
+                Axis.Styles.LightGrey,
+                thickness,
+                sizeArrow);
+        }
+        static public void DisplayRobotMesh(Axis.Core.Manipulator robot, IGH_PreviewArgs args) 
+        {
+            if (robot.colors.Count == 0) { robot.colors.Add(Axis.Styles.DarkGrey); }
+
+            int cC = robot.colors.Count;
+            int rC = robot.ikMeshes.Count;
+
+            for (int i = 0; i < rC; ++i)
+            {
+                int cID = i;
+                
+                if (i >= rC) cID = cC - 1;
+                args.Display.DrawMeshShaded(robot.ikMeshes[i], new DisplayMaterial(robot.colors[cID]));
+            }
+        }
+        static public void DisplayRobotLines(Axis.Core.Manipulator robot, IGH_PreviewArgs args, int thickness = 3) 
+        {
+            List<Point3d> points = new List<Point3d>();
+            foreach (Plane p in robot.ikPlanes) { points.Add(p.Origin); }
+
+            Polyline pLine = new Polyline(points);
+
+            Line[] lines = pLine.GetSegments();
+
+            // Draw lines
+            for (int i = 0; i < lines.Length; ++i)
+            {
+                int cID = i;
+                if (i >= lines.Length) cID = robot.colors.Count - 1;
+                args.Display.DrawLine(lines[i], robot.colors[cID], thickness);
+            }
+
+            //Draw Sphers
+
+            //Draw Plane
+            DisplayPlane(robot.ikPlanes[0], args);
+        }
+        static public void DisplayTool(Axis.Core.Tool tool, IGH_PreviewArgs args) 
+        {
+
+        }
+
     }
     class Menu 
     {
