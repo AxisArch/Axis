@@ -402,7 +402,6 @@ namespace Axis
         /// <param name="delim"></param>
         public static void CreateCSV(DataTable table, string path, string name, string delim)
         {
-
             string filePath = string.Concat(path, name, @".csv");
             string delimiter = delim;
 
@@ -590,7 +589,8 @@ namespace Axis
 }
 
 /// <summary>
-/// This namesspcae proviedes fuctions for the modification of RAPID instructions
+/// This namesspcae proviedes fuctions for
+/// the modification of RAPID instructions.
 /// </summary>
 namespace RAPID
 {
@@ -635,7 +635,6 @@ namespace RAPID
             this.overrides.AddRange(overrides);
         }
 
-
         public List<string> Code()
         {
             var prog = new List<string>();
@@ -652,7 +651,7 @@ namespace RAPID
 
             return prog;
         }
-        public  List<Program> ToList()
+        public List<Program> ToList()
         {
             return new List<Program> { this };
         }
@@ -933,9 +932,9 @@ namespace Canvas
             }
         }
 
-        public static void ChangeObjects(IEnumerable<IGH_Param> items, IGH_Param newObject ) 
+        public static void ChangeObjects(IEnumerable<IGH_Param> items, IGH_Param newObject)
         {
-            foreach (IGH_Param item in items) 
+            foreach (IGH_Param item in items)
             {
                 //get the input it is connected to
                 if (item.Recipients.Count == 0) return;
@@ -968,7 +967,7 @@ namespace Canvas
             vl.NickName = name;
             vl.Name = name;
 
-            foreach (KeyValuePair<string , string> entety in valuePairs)
+            foreach (KeyValuePair<string, string> entety in valuePairs)
             {
                 GH_ValueListItem vi = new GH_ValueListItem(entety.Key, entety.Value);
                 vl.ListItems.Add(vi);
@@ -997,29 +996,29 @@ namespace Canvas
             docIO.Document.MutateAllIds();
             IEnumerable<IGH_DocumentObject> objs = docIO.Document.Objects;
             doc.DeselectAll();
-            doc.UndoUtil.RecordAddObjectEvent(name , objs);
+            doc.UndoUtil.RecordAddObjectEvent(name, objs);
             doc.MergeDocument(docIO.Document);
             //doc.ScheduleSolution(10);
         }
 
 
-        static public void DisplayPlane(Plane plane, IGH_PreviewArgs args, double sizeLine = 70, double sizeArrow = 30, int thickness = 3) 
+        static public void DisplayPlane(Plane plane, IGH_PreviewArgs args, double sizeLine = 70, double sizeArrow = 30, int thickness = 3)
         {
             args.Display.DrawLineArrow(
                 new Line(plane.Origin, plane.XAxis, sizeLine),
                 Axis.Styles.Pink,
                 thickness,
                 sizeArrow);
-            args.Display.DrawLineArrow( new Line(plane.Origin, plane.YAxis, sizeLine),
+            args.Display.DrawLineArrow(new Line(plane.Origin, plane.YAxis, sizeLine),
                 Axis.Styles.LightBlue,
                 thickness,
                 sizeArrow);
-            args.Display.DrawLineArrow( new Line(plane.Origin, plane.ZAxis, sizeLine),
+            args.Display.DrawLineArrow(new Line(plane.Origin, plane.ZAxis, sizeLine),
                 Axis.Styles.LightGrey,
                 thickness,
                 sizeArrow);
         }
-        static public void DisplayRobotMesh(Axis.Core.Manipulator robot, IGH_PreviewArgs args) 
+        static public void DisplayRobotMesh(Axis.Core.Manipulator robot, IGH_PreviewArgs args)
         {
             if (robot.colors.Count == 0) { robot.colors.Add(Axis.Styles.DarkGrey); }
 
@@ -1029,12 +1028,12 @@ namespace Canvas
             for (int i = 0; i < rC; ++i)
             {
                 int cID = i;
-                
+
                 if (i >= rC) cID = cC - 1;
                 args.Display.DrawMeshShaded(robot.ikMeshes[i], new DisplayMaterial(robot.colors[cID]));
             }
         }
-        static public void DisplayRobotLines(Axis.Core.Manipulator robot, IGH_PreviewArgs args, int thickness = 3) 
+        static public void DisplayRobotLines(Axis.Core.Manipulator robot, IGH_PreviewArgs args, int thickness = 3)
         {
             List<Point3d> points = new List<Point3d>();
             foreach (Plane p in robot.ikPlanes) { points.Add(p.Origin); }
@@ -1056,13 +1055,13 @@ namespace Canvas
             //Draw Plane
             DisplayPlane(robot.ikPlanes[0], args);
         }
-        static public void DisplayTool(Axis.Core.Tool tool, IGH_PreviewArgs args) 
+        static public void DisplayTool(Axis.Core.Tool tool, IGH_PreviewArgs args)
         {
 
         }
 
     }
-    class Menu 
+    class Menu
     {
         /// <summary>
         /// Uncheck other dropdown menu items

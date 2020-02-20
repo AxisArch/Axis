@@ -8,6 +8,7 @@ using Rhino.Geometry;
 using Axis.Robot;
 using Axis.Targets;
 using Axis.Core;
+using static Axis.Properties.Settings;
 
 namespace Axis.Core
 {
@@ -44,6 +45,20 @@ namespace Axis.Core
             pManager.AddPointParameter("Error", "Errors", "List of program error points.", GH_ParamAccess.list);
         }
 
+        // License token variable.
+        bool validToken = false;
+
+        protected override void BeforeSolveInstance()
+        {
+            Auth auth = new Auth();
+            validToken = auth.IsValid;
+
+            if (!validToken)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Please log in to Axis.");
+            }
+        }
+
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             // Initialize variables to store the incoming data.
@@ -70,6 +85,9 @@ namespace Axis.Core
             if (robot.Indices.Count == 6) indices = robot.Indices;
 
             List<Point3d> errorPositions = new List<Point3d>();
+
+            // Exit if we don't have a valid login token.
+            if (!validToken) { return; }
 
             if (run)
             {

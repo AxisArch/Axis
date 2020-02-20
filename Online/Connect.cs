@@ -17,7 +17,9 @@ using ABB.Robotics.Controllers.Discovery;
 using ABB.Robotics.Controllers.Messaging;
 using ABB.Robotics.Controllers.IOSystemDomain;
 
+using Axis.Core;
 using Axis.Targets;
+using static Axis.Properties.Settings;
 
 namespace Axis.Online
 {
@@ -39,6 +41,7 @@ namespace Axis.Online
         private string command;
         private bool logOption;
         private bool logOptionOut;
+        public bool validToken = false;
 
 
         NetworkScanner scanner = new NetworkScanner();
@@ -55,14 +58,12 @@ namespace Axis.Online
         Grasshopper.Kernel.Special.GH_ValueList vl = new Grasshopper.Kernel.Special.GH_ValueList();
 
 
-
         public Connect()
           : base("Controller", "Controller",
               "Connect to an ABB controller",
               AxisInfo.Plugin, AxisInfo.TabOnline)
         {
         }
-
 
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
@@ -85,6 +86,18 @@ namespace Axis.Online
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
             pManager.AddGenericParameter("Controller", "Controller", "Connection to Robot contoller", GH_ParamAccess.list);
+        }
+
+        protected override void BeforeSolveInstance()
+        {
+            Auth auth = new Auth();
+            validToken = auth.IsValid;
+
+            if (!validToken)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Please log in to Axis.");
+                return;
+            }
         }
 
         protected override void SolveInstance(IGH_DataAccess DA)

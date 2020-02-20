@@ -49,6 +49,10 @@ namespace Axis.Targets
             pManager.AddGenericParameter("Wobj", "Wobj", "Work object coordinate system.", GH_ParamAccess.list);
         }
 
+        /// <summary>
+        /// Create custom coordinate system objects.
+        /// </summary>
+        /// <param name="DA"></param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             List<string> names = new List<string>();
@@ -57,6 +61,7 @@ namespace Axis.Targets
             if (!DA.GetDataList(0, names)) names.Add("WObj0");
             if (!DA.GetDataList(1, planes)) planes.Add(Plane.WorldXY);
 
+            // Dynamic coordinate systems move dependent on external axis values.
             if (m_dynamicCS) { if (!DA.GetData("External Axis", ref eAxis)) return; }
 
             // Declare an empty string to hold our outputs.
@@ -95,14 +100,13 @@ namespace Axis.Targets
             foreach (CSystem c in m_cSystems) points.Add(c.CSPlane.Origin);
             m_bBox = new BoundingBox(points);
 
-            
-
             if (m_outputDeclarations)
             {
                 DA.SetDataList("Dec", declarations);
             }
         }
 
+        // Custom preview options for the component.
         public override void DrawViewportWires(IGH_PreviewArgs args)
         {
             base.DrawViewportWires(args);

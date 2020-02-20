@@ -66,7 +66,7 @@ namespace Axis.Core
 
             if (!validToken)
             {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Please login to Axis with the Login tool.");
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Please log in to Axis.");
             }
         }
 

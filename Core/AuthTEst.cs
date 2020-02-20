@@ -31,6 +31,7 @@ namespace Axis.Core
 
             log.Add("Axis Version Number: " + Assembly.GetExecutingAssembly().GetName().Version);
 
+            // Check the validity of the login token. (Refactored method)
             DateTime t0 = DateTime.Now;
             Auth auth = new Auth();
             bool isValid = auth.IsValid;
@@ -66,7 +67,7 @@ namespace Axis.Core
             {
                 return null;
             }
-        }`
+        }
 
         public override Guid ComponentGuid
         {

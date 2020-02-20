@@ -18,6 +18,7 @@ using ABB.Robotics.Controllers.Discovery;
 using ABB.Robotics.Controllers.Messaging;
 using ABB.Robotics.Controllers.IOSystemDomain;
 
+using Axis.Core;
 using Axis.Targets;
 using static Axis.Properties.Settings;
 
@@ -62,7 +63,7 @@ namespace Axis.Online
         Speed speed = new Speed();
         Zone zone = new Zone();
 
-        bool validLicense = false;
+        bool validToken = false;
 
         public Streaming() : base("Live Connection", "Stream", "Stream instructions to a robot controller", AxisInfo.Plugin, AxisInfo.TabOnline)
         {
@@ -81,19 +82,18 @@ namespace Axis.Online
         {
         }
 
+        /// <summary>
+        /// Check that we are logged in before continuing.
+        /// </summary>
         protected override void BeforeSolveInstance()
         {
-            if (Default.LoggedIn)
-            {
-                // Check that its still valid.
-                DateTime validTo = Default.LastLoggedIn.AddDays(2);
-                int valid = DateTime.Compare(System.DateTime.Now, validTo);
-                if (valid < 0) { validLicense = true; }
-            }
+            Auth auth = new Auth();
+            validToken = auth.IsValid;
 
-            if (!validLicense)
+            if (!validToken)
             {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Please log in to Axis using the Login component.");
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Please log in to Axis.");
+                return;
             }
         }
 
@@ -116,8 +116,9 @@ namespace Axis.Online
             if (lQOption)
                 if (!DA.GetData("Clear Local Queue", ref lqclear)) ;
 
-            if (!validLicense) return;
-            
+            // Exit if we don't have a valid login token.
+            if (!validToken) { return; }
+
             // Current robot positions and rotations
             double cRobX = 0; double cRobY = 0; double cRobZ = 0;
             double cRobQ1 = 0; double cRobQ2 = 0; double cRobQ3 = 0; double cRobQ4 = 0;
