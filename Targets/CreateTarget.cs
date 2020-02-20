@@ -13,19 +13,6 @@ namespace Axis
 {
     public class CreateTarget : GH_Component, IGH_VariableParameterComponent
     {
-        public override GH_Exposure Exposure => GH_Exposure.primary;
-        protected override System.Drawing.Bitmap Icon
-        {
-            get
-            {
-                return Properties.Resources.Target;
-            }
-        }
-        public override Guid ComponentGuid
-        {
-            get { return new Guid("{c8ae5262-f447-4807-b1ff-10b29b37c984}"); }
-        }
-
         // Boolean toggle for context menu items.
         bool m_outputCode = false;
         bool m_interpolationTypes = false;
@@ -219,17 +206,14 @@ namespace Axis
                 if (method == 1) { mType = MotionType.Joint; }
                 else if (method == 2) { mType = MotionType.AbsoluteJoint; }
 
-
                 // Create the robot target.
                 Target robTarg = new Target(planes[i], mType, speed, zone, tool, wobj, extRot, extLin, m_Manufacturer);
                 targets.Add(robTarg);
 
                 code.Add(robTarg.StrRob);
             }
-
             DA.SetDataList(0, targets);
 
-            
             m_targets = targets;
 
             List<Point3d> points = new List<Point3d>();
@@ -240,12 +224,9 @@ namespace Axis
                 DA.SetDataList("Code", code);
         }
 
-
         protected override void BeforeSolveInstance()
         {
-            base.BeforeSolveInstance();
-
-            //Subscribe to all event handelers
+            // Subscribe to all event handelers
             this.Params.ParameterSourcesChanged += OnParameterSourcesChanged;
         }
 
@@ -297,7 +278,6 @@ namespace Axis
             base.ClearData();
             m_targets.Clear();
             m_bBox = BoundingBox.Empty;
-
         }
 
         // Build a list of optional input parameters
@@ -489,6 +469,19 @@ namespace Axis
             this.extLinear = reader.GetBoolean("LinAxis");
             this.m_interpolationTypes = reader.GetBoolean("Method");
             return base.Read(reader);
+        }
+
+        public override GH_Exposure Exposure => GH_Exposure.primary;
+        protected override System.Drawing.Bitmap Icon
+        {
+            get
+            {
+                return Properties.Resources.Target;
+            }
+        }
+        public override Guid ComponentGuid
+        {
+            get { return new Guid("{c8ae5262-f447-4807-b1ff-10b29b37c984}"); }
         }
 
         /// <summary>
