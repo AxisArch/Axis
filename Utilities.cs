@@ -785,7 +785,7 @@ namespace RAPID
         public List<string> Code()
         {
             List<string> mod = new List<string>();
-            mod.Add($"PROC {Name}()");
+            mod.Add($"MODULE {Name}");
             mod.AddRange(this.tag);
             mod.AddRange(this.declarations);
             mod.Add("");
