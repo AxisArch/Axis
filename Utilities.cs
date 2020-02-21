@@ -603,7 +603,7 @@ namespace RAPID
         public bool IsMain { get; private set; }
 
 
-        private string Name = "procname";
+        private string Name = "ProcName";
         private bool conL_J = false;
         private List<string> comment = new List<string>();
         private List<string> overrides = new List<string>();
@@ -621,7 +621,7 @@ namespace RAPID
                 };
 
 
-        public Program(List<string> code = null, List<string> overrides = null, string progName = "procname", bool LJ = false, List<string> comments = null)
+        public Program(List<string> code = null, List<string> overrides = null, string progName = "ProcName", bool LJ = false, List<string> comments = null)
         {
             if (code != null) this.code = code;
             this.Name = progName;
@@ -682,7 +682,7 @@ namespace RAPID
         {
             "! ABB Robot Code",
             $"! Generated with Axis {Assembly.GetExecutingAssembly().GetName().Version}",
-            "! Created: " + DateTime.Now.ToString(),
+            "! File Created: " + DateTime.Now.ToString(),
             "! Author: " + Environment.UserName.ToString(),
             " ",
         };
@@ -698,7 +698,7 @@ namespace RAPID
 
         public List<Program> extraProg = new List<Program>();
 
-        public Module(List<Program> progs = null, List<string> declarations = null, string name = "submodule")
+        public Module(List<Program> progs = null, List<string> declarations = null, string name = "Submodule")
         {
             if (progs != null)
             {
@@ -789,7 +789,7 @@ namespace RAPID
             mod.AddRange(this.tag);
             mod.AddRange(this.declarations);
             mod.Add("");
-            mod.Add("!Main Program");
+            mod.Add("! Main Program");
             foreach (Program prog in main)
             {
                 mod.AddRange(prog.Code());
@@ -797,7 +797,7 @@ namespace RAPID
             if (legaryProgs.Count > 0) { mod.AddRange(legaryProgs); }
             if (progs.Count > 0)
             {
-                mod.Add("!Additional progams");
+                mod.Add("! Additional Programs");
                 foreach (Program prog in progs)
                 {
                     mod.AddRange(prog.Code());

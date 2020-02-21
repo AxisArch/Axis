@@ -13,7 +13,7 @@ namespace Axis.Core
     public class TestSimulation : GH_Component
     {
 
-        DateTime strat = new DateTime();
+        DateTime start = new DateTime();
         Toolpath toolpath;
         Target cTarget;
 
@@ -66,13 +66,13 @@ namespace Axis.Core
 
             if (rest)
             {
-                strat = DateTime.Now;
+                start = DateTime.Now;
                 toolpath = new Toolpath(targets);
             }
 
             if (run) 
             {
-                Target nTarget = toolpath.GetTarget(now - strat);
+                Target nTarget = toolpath.GetTarget(now - start);
                 if (cTarget != nTarget) 
                 {
                     cTarget = nTarget;

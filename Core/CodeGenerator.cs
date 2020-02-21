@@ -26,6 +26,7 @@ namespace Axis.Core
         Manufacturer m_Manufacturer = Manufacturer.ABB;
         bool ignoreLen = false;
         bool validToken = false;
+        Auth auth = null;
 
         protected override System.Drawing.Bitmap Icon
         {
@@ -59,19 +60,17 @@ namespace Axis.Core
             pManager.AddTextParameter("Code", "Code", "Robot code.", GH_ParamAccess.list);
         }
 
-        protected override void BeforeSolveInstance()
+        protected override void SolveInstance(IGH_DataAccess DA)
         {
-            Auth auth = new Auth();
+            // Validate the login token.
+            auth = new Auth();
             validToken = auth.IsValid;
 
             if (!validToken)
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Please log in to Axis.");
             }
-        }
 
-        protected override void SolveInstance(IGH_DataAccess DA)
-        {
             string strModName = "MainModule";
             string path = Environment.SpecialFolder.Desktop.ToString();
             string filename = "RobotProgram";
