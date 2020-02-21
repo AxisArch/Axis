@@ -26,9 +26,7 @@ namespace Axis.Core
         // Sticky variables for the options.
         bool m_Logout = false;
         public List<string> log = new List<string>();
-        public bool loggedIn = false;
-        public bool forceLogout = false;
-        public bool clear = false;
+        public bool logged_In = false;
         public Auth0Client client = null;
 
         // Set up our client to handle the login.
@@ -37,11 +35,6 @@ namespace Axis.Core
             Domain = "axisarch.eu.auth0.com",
             ClientId = "bDiJKd5tM8eqHsTX01ovqyFvOSBnC4mE",
             Browser = new WebBrowserBrowser("Authenticating...", 400, 640)
-        };
-
-        Dictionary<string, string> extra = new Dictionary<string, string>()
-        {
-            {"response_type", "code"}
         };
 
         public Engine() : base("Axis", "Axis", "Manage the Axis application.", AxisInfo.Plugin, AxisInfo.TabCore)
@@ -65,30 +58,15 @@ namespace Axis.Core
             pManager.AddTextParameter("Log", "Log", "Log", GH_ParamAccess.list);
         }
 
-        protected override void SolveInstance(IGH_DataAccess DA)
+        protected override void BeforeSolveInstance()
         {
-            if (clear)
-            {
-                ClearToken();
-                log.Add("Cleared token at " + System.DateTime.Now.ToShortDateString());
-            }
-
             // Initiate the client
             client = new Auth0Client(clientOptions);
             clientOptions.PostLogoutRedirectUri = clientOptions.RedirectUri;
+        }
 
-            // Handle the logout.
-            if ((loggedIn) || forceLogout)
-            {
-                client.LogoutAsync();
-                loggedIn = false;
-                this.Message = "Logged Out";
-                log.Add("Logged out of Axis at " + System.DateTime.Now.ToShortDateString());
-            }
-
-            forceLogout = false;
-            Axis.Properties.Settings.Default.LoggedIn = loggedIn;
-
+        protected override void SolveInstance(IGH_DataAccess DA)
+        {
             DA.SetDataList(0, log);
         }
 
@@ -96,7 +74,7 @@ namespace Axis.Core
         {
             Default.LastLoggedIn = new DateTime(2000, 1, 1);
             Default.LoggedIn = false;
-            Default.Token = null;
+            Default.Token = String.Empty;
         }
 
         // The following functions append menu items and then handle the item clicked event.
@@ -111,14 +89,22 @@ namespace Axis.Core
         private void logout_Click(object sender, EventArgs e)
         {
             RecordUndoEvent("Logout");
-            forceLogout = true;
+
+            client.LogoutAsync();
+            logged_In = false;
+            Axis.Properties.Settings.Default.LoggedIn = logged_In;
+
+            this.Message = "Logged Out";
+            log.Add("Logged out of Axis at " + System.DateTime.Now.ToShortDateString());
+
             ExpireSolution(true);
         }
 
         private void clear_Click(object sender, EventArgs e)
         {
             RecordUndoEvent("Clear");
-            clear = true;
+            log.Add("Clearing token at " + System.DateTime.Now.ToShortDateString());
+            ClearToken();
             ExpireSolution(true);
         }
 
@@ -148,77 +134,53 @@ namespace Axis.Core
                 {
                     Engine comp = Owner as Engine;
 
+                    // Handle the login click event.
                     if (PathBounds.Contains(e.CanvasLocation))
                     {
                         comp.RecordUndoEvent("Login");
-                        comp.log.Add("Clicked button to log in.");
-                        
-                        // This stuff is happening in the wrong place - needs to be refactored and called. (Static method error).
-                        // Handle the login.
-                        if (!comp.loggedIn)
-                        {
-                            comp.client.LoginAsync(comp.extra).ContinueWith(t =>
-                            {
-                                if (!t.Result.IsError)
-                                {
-                                    Default.Token = t.Result.AccessToken;
-                                    comp.log.Clear();
-                                    comp.log.Add("Logged in to Axis at " + DateTime.Now.ToShortTimeString());
-                                    DateTime validTo = DateTime.Now.AddDays(2);
-                                    comp.log.Add("Login valid to: " + validTo.ToLongDateString() + ", " + validTo.ToShortTimeString());
-                                    comp.Message = "OK";
-                                    comp.loggedIn = true;
-                                }
-                                else
-                                {
-                                    Debug.WriteLine("Error logging in: " + t.Result.Error);
-                                    comp.log.Add(t.Result.ToString());
-                                    comp.log.Add("Error logging in: " + t.Result.Error);
-                                    comp.loggedIn = false;
-                                }
-                                t.Dispose();
-                            });
-
-                            // Update our login time.
-                            Default.LastLoggedIn = DateTime.Now;
-
-                            if (comp.loggedIn) comp.Message = "Logged In";
-                            else comp.Message = "Error";
-                        }
+                        comp.Login();
                         comp.ExpireSolution(true);
-
-                        /*
-                        Eto.Forms.Form dialog = new Eto.Forms.Form();
-                        dialog.Size = new Eto.Drawing.Size(300, 300);
-
-                        StackLayout buttonStack = new StackLayout();
-
-                        Eto.Forms.Button b0 = new Eto.Forms.Button();
-                        buttonStack.Items.Add(b0);
-
-                        // Set the main content and options.
-                        dialog.Content = buttonStack;
-
-                        dialog.BackgroundColor = Eto.Drawing.Colors.SlateGray;
-                        dialog.Maximizable = false;
-                        dialog.Minimizable = false;
-                        dialog.Topmost = true;
-
-                        dialog.Show();
-                        */
-
                         return GH_ObjectResponse.Handled;
                     }
 
+                    // Handle the settings click event.
                     if (SettingsBounds.Contains(e.CanvasLocation))
                     {
                         comp.RecordUndoEvent("SetSettings");
-                        comp.log.Add("Clicked button to open settings dialog.");
+
+                        // This could be extracted to a more general settings class.
+                        ShowSettings();
+
                         comp.ExpireSolution(true);
                         return GH_ObjectResponse.Handled;
                     }
                 }
                 return base.RespondToMouseDown(sender, e);
+            }
+
+            /// <summary>
+            /// Show a general settings dialog.
+            /// </summary>
+            private static void ShowSettings()
+            {
+                // Options dialog.
+                Eto.Forms.Form dialog = new Eto.Forms.Form();
+                dialog.Size = new Eto.Drawing.Size(300, 300);
+
+                StackLayout buttonStack = new StackLayout();
+
+                Eto.Forms.Button b0 = new Eto.Forms.Button();
+                buttonStack.Items.Add(b0);
+
+                // Set the main content and options.
+                dialog.Content = buttonStack;
+
+                dialog.BackgroundColor = Colors.SlateGray;
+                dialog.Maximizable = false;
+                dialog.Minimizable = false;
+                dialog.Topmost = true;
+
+                dialog.Show();
             }
             #endregion
 
@@ -251,6 +213,62 @@ namespace Axis.Core
                 }
             }
             #endregion
+        }
+
+        /// <summary>
+        /// Handle authentification and login in
+        /// response to a component UI click.
+        /// </summary>
+        protected void Login()
+        {
+            // Validate the login token.
+            Auth auth = new Auth();
+
+            // If it's not valid, offer a login.
+            if (!auth.IsValid)
+            {
+                Dictionary<string, string> extra = new Dictionary<string, string>()
+                {
+                    {"response_type", "code"}
+                };
+
+                ClearToken();
+                client.LoginAsync(extra).ContinueWith(t =>
+                {
+                    if (!t.Result.IsError)
+                    {
+                        Default.Token = t.Result.AccessToken;
+                        log.Clear();
+                        log.Add("Logged in to Axis at " + DateTime.Now.ToShortTimeString());
+                        DateTime validTo = DateTime.Now.AddDays(2);
+                        log.Add("Login valid to: " + validTo.ToLongDateString() + ", " + validTo.ToShortTimeString());
+                        Message = "OK";
+                        logged_In = true;
+                    }
+                    else
+                    {
+                        Debug.WriteLine("Error logging in: " + t.Result.Error);
+                        log.Add(t.Result.ToString());
+                        log.Add("Error logging in: " + t.Result.Error);
+                        logged_In = false;
+                    }
+                    t.Dispose();
+                });
+
+                // Update our login time.
+                Default.LastLoggedIn = DateTime.Now;
+                Default.LoggedIn = logged_In;
+            }
+            else
+            {
+                logged_In = true;
+                log.Add("Already logged in.");
+            }
+
+            if (logged_In) Message = "Logged In";
+            else Message = "Error";
+
+            ExpireSolution(true);
         }
 
         protected override System.Drawing.Bitmap Icon
