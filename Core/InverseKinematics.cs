@@ -45,6 +45,7 @@ namespace Axis.Core
         {
             pManager.AddGenericParameter("Robot", "Robot", "Robot object to use for inverse kinematics. You can define this using the robot creator tool.", GH_ParamAccess.item);
             pManager.AddGenericParameter("Target", "Target", "Robotic target for inverse kinematics. Use the simulation component to select a specific target from a toolpath for preview of the kinematic solution.", GH_ParamAccess.item);
+            pManager[0].Optional = true;
         }
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
@@ -68,8 +69,13 @@ namespace Axis.Core
             Target robTarg = null;
             Manipulator robot = null;
 
-            if (!DA.GetData(0, ref robot)) return;
+            if (!DA.GetData(0, ref robot))
+            {
+                robot = Manipulator.Default;
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No robot system defined, using default");
+            }
             if (!DA.GetData(1, ref robTarg)) return;
+
 
             List<string> log = new List<string>();
 

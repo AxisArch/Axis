@@ -35,18 +35,56 @@ namespace Axis.Core
         public List<int> Indices { get; set; }
 
         public static Manipulator Default { get; }
+        public static Manipulator IRB122 { get 
+            {
+                // Deserialize the list of robot meshes
+                List<Mesh> robMeshes;
+                System.Runtime.Serialization.Formatters.Binary.BinaryFormatter deserializer = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
+
+                using (System.IO.MemoryStream ms = new System.IO.MemoryStream(Axis.Robot.RobotSystems.IRB120mesh))
+                {
+                    System.Runtime.Serialization.IFormatter br = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
+                    robMeshes = (List<Mesh>)br.Deserialize(ms);
+                }
+
+                Manufacturer manufacturer = Manufacturer.ABB;
+                List<Point3d> axisPoints = new List<Point3d> { new Point3d(0, 0, 290), new Point3d(0, 0, 560), new Point3d(302, 0, 630), new Point3d(374, 0, 630) };
+                List<double> minAngles = new List<double> { -165, -110, -110, -160, -120, -400 };
+                List<double> maxAngles = new List<double> { 165, 110, 70, 160, 120, 400 };
+                Plane basePlane = Plane.WorldXY;
+                List<int> indices = new List<int> {2, 2, 2, 2, 2, 2,};
+
+                return new Manipulator(manufacturer, axisPoints, minAngles, maxAngles, robMeshes, basePlane, indices);
+            }
+        }
+        public static Manipulator IRB6620
+        {
+            get
+            {
+                // Deserialize the list of robot meshes
+                List<Mesh> robMeshes;
+                System.Runtime.Serialization.Formatters.Binary.BinaryFormatter deserializer = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
+
+                using (System.IO.MemoryStream ms = new System.IO.MemoryStream(Axis.Robot.RobotSystems.IRB6620mesh))
+                {
+                    System.Runtime.Serialization.IFormatter br = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
+                    robMeshes = (List<Mesh>)br.Deserialize(ms);
+                }
+
+                Manufacturer manufacturer = Manufacturer.ABB;
+                List<Point3d> axisPoints = new List<Point3d> { new Point3d(320, 0, 680), new Point3d(320, 0, 1655), new Point3d(1207, 0, 1855), new Point3d(1407, 0, 1855) };
+                List<double> minAngles = new List<double> { -170, -65, -180, -300, -130, -300 };
+                List<double> maxAngles = new List<double> { 170, 140, 70, 300, 130, 300 };
+                Plane basePlane = Plane.WorldXY;
+                List<int> indices = new List<int> { 2, 2, 2, 2, 2, 2, };
+
+                return new Manipulator(manufacturer, axisPoints, minAngles, maxAngles, robMeshes, basePlane, indices);
+            }
+        }
         static Manipulator()
         {
-            Manufacturer manufacturer = Manufacturer.ABB;
-            List<Point3d> axisPoints = new List<Point3d> { new Point3d ( 0, 0, 290 ), new Point3d (0, 0, 560), new Point3d (302, 0, 630), new Point3d (374, 0, 630) };
-            List<double> minAngles = new List<double> { -165, -110, -110, -160, -120, -400};
-            List<double> maxAngles = new List<double> { 165, 110, 70, 160, 120, 400};
-            List<Mesh> robMeshes = new List<Mesh> { };
-            Plane basePlane = Plane.WorldXY;
-            List<int> indices = new List<int> { };
 
-            Default = new Manipulator(manufacturer, axisPoints, minAngles, maxAngles, robMeshes, basePlane, indices);
- 
+            Default = IRB122;
         }
         public Manipulator(Manufacturer manufacturer, List<Point3d> axisPoints, List<double> minAngles, List<double> maxAngles, List<Mesh> robMeshes, Plane basePlane, List<int> indices)
         {
