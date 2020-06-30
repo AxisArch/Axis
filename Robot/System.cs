@@ -34,7 +34,20 @@ namespace Axis.Core
         public List<double> MaxAngles { get; set; }
         public List<int> Indices { get; set; }
 
+        public static Manipulator Default { get; }
+        static Manipulator()
+        {
+            Manufacturer manufacturer = Manufacturer.ABB;
+            List<Point3d> axisPoints = new List<Point3d> { new Point3d ( 0, 0, 290 ), new Point3d (0, 0, 560), new Point3d (302, 0, 630), new Point3d (374, 0, 630) };
+            List<double> minAngles = new List<double> { -165, -110, -110, -160, -120, -400};
+            List<double> maxAngles = new List<double> { 165, 110, 70, 160, 120, 400};
+            List<Mesh> robMeshes = new List<Mesh> { };
+            Plane basePlane = Plane.WorldXY;
+            List<int> indices = new List<int> { };
 
+            Default = new Manipulator(manufacturer, axisPoints, minAngles, maxAngles, robMeshes, basePlane, indices);
+ 
+        }
         public Manipulator(Manufacturer manufacturer, List<Point3d> axisPoints, List<double> minAngles, List<double> maxAngles, List<Mesh> robMeshes, Plane basePlane, List<int> indices)
         {
             List<Mesh> tRobMeshes = new List<Mesh>();
