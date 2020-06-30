@@ -579,6 +579,62 @@ namespace Axis
 
             return inclusiveMinimum;
         }
+
+        /// <summary>
+        /// Convert List to GH_Structure - Extention method
+        /// </summary>
+        /// <typeparam name="T">Target type, has to inherit from IGH_Goo</typeparam>
+        /// <typeparam name="Q">Source type, can be IGH_Goo or Rhino CommonObject</typeparam>
+        /// <param name="list">List to be converted</param>
+        /// <returns>GH_Structure containing list</returns>
+        public static Grasshopper.Kernel.Data.GH_Structure<T> ToGHStructure<T, Q>(this List<Q> list) where T : IGH_Goo
+        {
+            Grasshopper.Kernel.Data.GH_Structure<T> gh_Struc = new Grasshopper.Kernel.Data.GH_Structure<T>();
+
+            if (typeof(Rhino.Runtime.CommonObject).IsAssignableFrom(typeof(Q)))
+            {
+                foreach (object item in list)
+                {
+                    var g_Obj = GH_Convert.ToGoo(item);
+                    gh_Struc.Append((T)g_Obj);
+                }
+            }
+            else if (typeof(IGH_Goo).IsAssignableFrom(typeof(Q)))
+            {
+                foreach (object obj in list)
+                {
+                    var g_Obj = obj as IGH_Goo;
+                    gh_Struc.Append((T)g_Obj);
+                }
+            }
+            else return null;
+
+            return gh_Struc;
+        }
+
+        /// <summary>
+        /// Extract Geometry from chunk
+        /// </summary>
+        /// <typeparam name="T">Target type</typeparam>
+        /// <typeparam name="Q">Source type</typeparam>
+        /// <param name="chunk">The serialised cung that contains the data</param>
+        /// <returns>Target object</returns>
+        public static T Extract<T, Q>(this GH_IO.Serialization.GH_IReader chunk, Delegate conversion ) 
+            //where T : Rhino.Geometry.GeometryBase
+            where Q : IGH_Goo
+        {
+            if (chunk != null)
+            {
+                Q GH_Obj = default;
+                GH_Obj.Read(chunk);
+                T Obj = default;
+
+                //conversion.DynamicInvoke(GH_Obj, ref Obj, GH_Conversion.Both);
+
+                return (T)Obj;
+            }
+            else throw  new  Exception("Empty varible when desirialising");
+        }
     }
 
     /// <summary>

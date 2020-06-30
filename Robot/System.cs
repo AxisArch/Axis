@@ -4,7 +4,12 @@ using System.Collections.Generic;
 using static System.Math;
 
 using Rhino.Geometry;
+
+using Grasshopper.Kernel;
+using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Types;
+using GH_IO.Serialization;
+using Axis;
 
 namespace Axis.Core
 {
@@ -635,7 +640,7 @@ namespace Axis.Core
         }
     }
 
-    public class Tool: GH_Goo<Tool>
+    public class Tool: IGH_Goo
     {
         public string Name { get; set; }
         public Plane TCP { get; set; }
@@ -717,7 +722,7 @@ namespace Axis.Core
             else if (type == Manufacturer.ABB)
             {
                 // Compose RAPID-formatted declaration.
-                declaration = "PERS tooldata " + toolName + " := [TRUE,[[" + shortenedPosition + "], [" + strQuat + "]], [" + weight.ToString() + "," + COG + "," + userOffset + ";";
+                declaration = $"PERS tooldata {toolName} := [TRUE,[[{shortenedPosition}], [{strQuat}]], [{weight.ToString()},{COG},{userOffset};";
             }
             else throw new Exception("Manufacturer not yet implemented");
 
@@ -745,22 +750,67 @@ namespace Axis.Core
             }
         }
 
-        public override string TypeName => "Tool";
-        public override string TypeDescription => "Robot end effector";
+        public string TypeName => "Tool";
+        public string TypeDescription => "Robot end effector";
         public override string ToString()
         {
             return $"Tool: {this.Name}";
         }
-        public override bool IsValid => true;
+        public  bool IsValid => true;
+        public string IsValidWhyNot { get { return ""; } }
         public override int GetHashCode()
         {
             var val = Name.GetHashCode() + TCP.GetHashCode() + Weight.GetHashCode() + FlangeOffset.GetHashCode();
             return base.GetHashCode();
         }
-        public override IGH_Goo Duplicate()
+        public IGH_Goo Duplicate()
         {
             return new Tool(this.Name, this.TCP, this.Weight, this.Geometry, this.Manufacturer, this.relTool);
         }
+        public bool CastFrom(object o) => false;
+        public bool CastTo<T>(out T target) {target = default; return false; }
+        public object ScriptVariable() => null;
+        public IGH_GooProxy EmitProxy() => null;
+
+        public bool Write(GH_IWriter writer)
+        {
+            try
+            {
+                GH_Structure<GH_Mesh> gh_Meshes = this.Geometry.ToGHStructure<GH_Mesh, Mesh>();
+                GH_Plane gH_TCP = new GH_Plane(this.TCP);
+                GH_Transform gh_FalangeOffset = new GH_Transform(this.FlangeOffset);
+                GH_Vector gH_relTool = new GH_Vector(this.relTool);
+
+
+                writer.SetString("Name", this.Name);
+                gH_TCP.Write(writer.CreateChunk("TCP"));
+                writer.SetDouble("Weight", this.Weight);
+                gh_Meshes.Write(writer.CreateChunk("Geometry"));
+                writer.SetString("Declaration", this.Declaration);
+                gh_FalangeOffset.Write(writer.CreateChunk("FlangeOffset"));
+                writer.SetInt32("Manufacturer", (int)this.Manufacturer);
+                gH_relTool.Write(writer.CreateChunk("RelTool"));
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public bool Read(GH_IReader reader)
+        {
+
+            var chunk = reader.FindChunk("TCP");
+            Plane tcp = new Plane();
+            //this.TCP = chunk.Extract<Plane, GH_Plane>(GH_Convert.ToPlane);
+
+            return true;
+
+        }
+
+
         public BoundingBox GetBoundingBox()
         {
             if (this.ikGeometry == null) return BoundingBox.Empty;
@@ -793,8 +843,10 @@ namespace Axis.Core
 
             this.ikGeometry = toolMeshes;
         }
+
+
     }
-    
+
     public enum Manufacturer
     {
         ABB = 0,
