@@ -18,7 +18,9 @@ using ABB.Robotics.Controllers.Discovery;
 using ABB.Robotics.Controllers.Messaging;
 using ABB.Robotics.Controllers.IOSystemDomain;
 
+using Axis.Core;
 using Axis.Targets;
+using static Axis.Properties.Settings;
 
 namespace Axis.Online
 {
@@ -61,6 +63,8 @@ namespace Axis.Online
         Speed speed = new Speed();
         Zone zone = new Zone();
 
+        bool validToken = false;
+
         public Streaming() : base("Live Connection", "Stream", "Stream instructions to a robot controller", AxisInfo.Plugin, AxisInfo.TabOnline)
         {
         }
@@ -76,6 +80,21 @@ namespace Axis.Online
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
+        }
+
+        /// <summary>
+        /// Check that we are logged in before continuing.
+        /// </summary>
+        protected override void BeforeSolveInstance()
+        {
+            Auth auth = new Auth();
+            validToken = auth.IsValid;
+
+            if (!validToken)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Please log in to Axis.");
+                return;
+            }
         }
 
         protected override void SolveInstance(IGH_DataAccess DA)
@@ -96,7 +115,10 @@ namespace Axis.Online
                 if (!DA.GetData("Clear", ref clear)) ;
             if (lQOption)
                 if (!DA.GetData("Clear Local Queue", ref lqclear)) ;
-            
+
+            // Exit if we don't have a valid login token.
+            if (!validToken) { return; }
+
             // Current robot positions and rotations
             double cRobX = 0; double cRobY = 0; double cRobZ = 0;
             double cRobQ1 = 0; double cRobQ2 = 0; double cRobQ3 = 0; double cRobQ4 = 0;

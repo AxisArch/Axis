@@ -35,16 +35,11 @@ namespace Axis.Targets
 
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddNumberParameter("A1", "A1", "Axis value for axis one.", GH_ParamAccess.item, 0);
-            pManager.AddNumberParameter("A2", "A2", "Axis value for axis two.", GH_ParamAccess.item, 0);
-            pManager.AddNumberParameter("A3", "A3", "Axis value for axis three.", GH_ParamAccess.item, 0);
-            pManager.AddNumberParameter("A4", "A4", "Axis value for axis four.", GH_ParamAccess.item, 0);
-            pManager.AddNumberParameter("A5", "A5", "Axis value for axis five.", GH_ParamAccess.item, 0);
-            pManager.AddNumberParameter("A6", "A6", "Axis value for axis six.", GH_ParamAccess.item, 0);
+            pManager.AddNumberParameter("Angles", "Angles", "Axis values for each axis as a list.", GH_ParamAccess.list, new List<double> { 0, 0, 0, 0, 0, 0 });
             pManager.AddGenericParameter("Tool", "Tool", "Tool to use for operation.", GH_ParamAccess.item);
             pManager.AddGenericParameter("Speed", "Speed", "Speed to use for the movement.", GH_ParamAccess.item);
             pManager.AddGenericParameter("Zone", "Zone", "Zone to use for the movement.", GH_ParamAccess.item);
-            for (int i = 0; i < 9; i++)
+            for (int i = 0; i < 4; i++)
                 pManager[i].Optional = true;
         }
 
@@ -55,8 +50,9 @@ namespace Axis.Targets
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            double a1 = 0; double a2 = 0; double a3 = 0; double a4 = 0; double a5 = 0; double a6 = 0; double rot = 0;
+            List<double> angles = new List<double>();
             double lin = 0;
+            double rot = 0;
             Tool tool = Tool.Default;
             GH_ObjectWrapper speedIn = new GH_ObjectWrapper();
             GH_ObjectWrapper zoneIn = new GH_ObjectWrapper();
@@ -65,15 +61,10 @@ namespace Axis.Targets
             bool hasSpeed = true;
             bool hasZone = true;
 
-            if (!DA.GetData(0, ref a1)) a1 = 0;
-            if (!DA.GetData(1, ref a2)) a2 = 0;
-            if (!DA.GetData(2, ref a3)) a3 = 0;
-            if (!DA.GetData(3, ref a4)) a4 = 0;
-            if (!DA.GetData(4, ref a5)) a5 = 0;
-            if (!DA.GetData(5, ref a6)) a6 = 0;
-            if (!DA.GetData(6, ref tool)) hasTool = false;
-            if (!DA.GetData(7, ref speedIn)) hasSpeed = false;
-            if (!DA.GetData(8, ref zoneIn)) hasZone = false;
+            if (!DA.GetDataList(0, angles)) angles = new List<double> { 0, 0, 0, 0, 0, 0 };
+            if (!DA.GetData(1, ref tool)) hasTool = false;
+            if (!DA.GetData(2, ref speedIn)) hasSpeed = false;
+            if (!DA.GetData(3, ref zoneIn)) hasZone = false;
 
             Speed speed = Speed.Default;
             Zone zone = Zone.Default;
@@ -131,14 +122,6 @@ namespace Axis.Targets
             if (useRotary) { if (!DA.GetData("Rotary", ref rot)) return; }
             if (useLinear) { if (!DA.GetData("Linear", ref lin)) return; }
 
-            List<double> axisVals = new List<double>();
-            axisVals.Add(Math.Round(a1, 4));
-            axisVals.Add(Math.Round(a2, 4));
-            axisVals.Add(Math.Round(a3, 4));
-            axisVals.Add(Math.Round(a4, 4));
-            axisVals.Add(Math.Round(a5, 4));
-            axisVals.Add(Math.Round(a6, 4));
-
             //Poor mans temporary fix
             var rType = Manufacturer.ABB;
             if (manufacturer)
@@ -146,7 +129,7 @@ namespace Axis.Targets
                 rType = Manufacturer.Kuka;
             }
 
-            Target jointTarget = new Target(axisVals, speed, zone, tool, rot, lin, rType);
+            Target jointTarget = new Target(angles, speed, zone, tool, rot, lin, rType);
 
             DA.SetData(0, jointTarget);
         }

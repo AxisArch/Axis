@@ -12,6 +12,7 @@ using Grasshopper.Kernel.Types;
 
 using Rhino.Geometry;
 using Axis.Targets;
+using static Axis.Properties.Settings;
 using RAPID;
 
 namespace Axis.Core
@@ -24,6 +25,8 @@ namespace Axis.Core
         bool overrides = false;
         Manufacturer m_Manufacturer = Manufacturer.ABB;
         bool ignoreLen = false;
+        bool validToken = false;
+        Auth auth = null;
 
         protected override System.Drawing.Bitmap Icon
         {
@@ -59,6 +62,15 @@ namespace Axis.Core
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
+            // Validate the login token.
+            auth = new Auth();
+            validToken = auth.IsValid;
+
+            if (!validToken)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Please log in to Axis.");
+            }
+
             string strModName = "MainModule";
             string path = Environment.SpecialFolder.Desktop.ToString();
             string filename = "RobotProgram";
@@ -95,7 +107,9 @@ namespace Axis.Core
             if (declarations)
                 if (!DA.GetDataList("Declarations", strDeclarations)) ;
 
-            //New RAPID module
+            if (!validToken) return;
+
+            // New RAPID module
             Module module = new Module(name: strModName);
 
             // Convert targets to strings.
@@ -189,7 +203,8 @@ namespace Axis.Core
                     KRL.Add("END");
 
                     DA.SetDataList(0, KRL);
-                } // If the user has requested KUKA code...
+                }
+                // If the user has requested KUKA code...
                 else if (m_Manufacturer == Manufacturer.ABB)
                 {
                     //Settings for the main Program

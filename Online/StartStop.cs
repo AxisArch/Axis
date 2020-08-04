@@ -5,11 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 
-
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Grasshopper.Kernel.Parameters;
-
 
 using Rhino.Geometry;
 
@@ -26,7 +24,7 @@ namespace Axis.Online
 {
     public class StartStop : GH_Component, IGH_VariableParameterComponent
     {
-        //Optionable Log
+        // Optionable Log
         private bool logOption = false;
         private bool logOptionOut = false;
         private List<string> log = new List<string>();
@@ -44,7 +42,6 @@ namespace Axis.Online
         {
         }
 
-
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddGenericParameter("Controller", "Controller", "Recives the output from a controller module", GH_ParamAccess.list);
@@ -52,7 +49,6 @@ namespace Axis.Online
             pManager.AddBooleanParameter("Begin", "Begin", "Start the default task on the controller.", GH_ParamAccess.item, false);
             pManager.AddBooleanParameter("Stop", "Stop", "Stop the default task on the controller.", GH_ParamAccess.item, false);
         }
-
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
@@ -74,8 +70,9 @@ namespace Axis.Online
             {
                 if (!DA.GetData("Clear", ref clear)) ;
             }
+
             // Check for input
-            if (controllers.Count == 0) { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No active contoller conected"); }
+            if (controllers.Count == 0) { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No active contoller connected."); }
 
             // Body of the code  
             for (int i = 0; i < controllers.Count; i++)
@@ -86,18 +83,16 @@ namespace Axis.Online
                 {
                     abbController = myAxisController;
                 }
-                else { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No active controller connected"); return; }
+                else { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No active controller connected."); return; }
 
                 tasks = abbController.Rapid.GetTasks();
 
-                // Check motor state and set icon
+                // Check motor state and set icon.
                 if (motorState != abbController.State)
                 {
                     motorState = abbController.State;
                     DestroyIconCache();
                 }
-
-
 
                 if (resetPP && abbController != null)
                 {
@@ -106,9 +101,9 @@ namespace Axis.Online
                         // Reset program pointer to main.
                         try
                         {
-                            tasks[0].ResetProgramPointer();                            
+                            tasks[0].ResetProgramPointer();
                         }
-                        catch (Exception){log.Add("Opperation not allowed in current state");}
+                        catch (Exception) { log.Add("Opperation not allowed in current state"); }
 
                     }
                 }
@@ -178,7 +173,7 @@ namespace Axis.Online
                 log.Add("Log cleared.");
             }
 
-            //Output log
+            // Output log
             if (logOptionOut)
             {
                 Status = log;
@@ -195,14 +190,14 @@ namespace Axis.Online
         // Build a list of optional output parameters
         IGH_Param[] outputParams = new IGH_Param[1]
         {
-        new Param_String() { Name = "Log", NickName = "Log", Description = "Log checking the connection status"},
+        new Param_String() { Name = "Log", NickName = "Log", Description = "Connection status log."},
         };
 
         // The following functions append menu items and then handle the item clicked event.
         protected override void AppendAdditionalComponentMenuItems(System.Windows.Forms.ToolStripDropDown menu)
         {
-            ToolStripMenuItem log = Menu_AppendItem(menu, "Log", log_Click, true, logOption);
-            log.ToolTipText = "Activate the log output";
+            ToolStripMenuItem log = Menu_AppendItem(menu, "Show Log", log_Click, true, logOption);
+            log.ToolTipText = "Activate the log output.";
 
             //ToolStripSeparator seperator = Menu_AppendSeparator(menu);
         }

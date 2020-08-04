@@ -50,6 +50,7 @@ namespace Axis.Core
         {
             pManager.AddGenericParameter("Robot", "Robot", "Robot object to use for inverse kinematics. You can define this using the robot creator tool.", GH_ParamAccess.item);
             pManager.AddGenericParameter("Target", "Target", "Robotic target for inverse kinematics. Use the simulation component to select a specific target from a toolpath for preview of the kinematic solution.", GH_ParamAccess.item);
+            pManager[0].Optional = true;
         }
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
@@ -71,12 +72,16 @@ namespace Axis.Core
         protected override void SolveInstance(IGH_DataAccess DA)
         {
 
-            if (!DA.GetData(0, ref m_Robot)) return;
+            if (!DA.GetData(0, ref m_Robot))
+            {
+                robot = Manipulator.Default;
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No robot system defined, using default");
+            }
             if (!DA.GetData(1, ref m_Target)) return;
+
 
             m_Robot.SetPose(m_Target);
             m_Tool = m_Target.Tool;
-
 
             List<string> log = new List<string>();
 
@@ -630,7 +635,7 @@ namespace Axis.Core
                     else return m_Robot.GetBoundingBox();
                 }
                 else if (m_Robot != null) return m_Robot.GetBoundingBox();
-                else if (m_Target != null) 
+                else if (m_Target != null)
                 {
                     if (m_Target.Tool != null) return m_Target.Tool.GetBoundingBox();
                     else return BoundingBox.Empty;
@@ -667,7 +672,7 @@ namespace Axis.Core
                 if (i >= displayColors.Count) cID = displayColors.Count - 1;
                 args.Display.DrawMeshShaded(robot[i], displayColors[cID]);
             }
-            
+
         }
         public override void BakeGeometry(RhinoDoc doc, List<Guid> obj_ids)
         {
