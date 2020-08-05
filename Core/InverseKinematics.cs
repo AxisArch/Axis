@@ -74,7 +74,7 @@ namespace Axis.Core
 
             if (!DA.GetData(0, ref m_Robot))
             {
-                robot = Manipulator.Default;
+                m_Robot = Manipulator.Default;
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No robot system defined, using default");
             }
             if (!DA.GetData(1, ref m_Target)) return;
