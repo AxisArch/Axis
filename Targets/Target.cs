@@ -6,6 +6,7 @@ using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 
 using Axis.Core;
+using GH_IO.Serialization;
 
 namespace Axis.Targets
 {
@@ -14,23 +15,138 @@ namespace Axis.Targets
     /// </summary>
     public class Target : GH_Goo<Target>
     {
-        public Point3d Position { get; set; }
-        public Plane Plane { get; set; }
+
+        public Plane Plane { get; set; } // Position in World Coordinates
+
+
+        public Plane TargetPlane; // Position in local coordinates
         public Quaternion Quaternion { get; set; }
         public List<double> JointAngles { get; set; }
+
+
         public Speed Speed { get; }
         public Zone Zone { get; }
+
         public Tool Tool { get; }
         public CSystem CSystem { get; set; }
 
-        public double ExtRot { get; set; }
-        public double ExtLin { get; set; }
+        public ExtVal ExtRot { get; set; }
+        public ExtVal ExtLin { get; set; }
 
-        public string WorkObject { get; }
 
-        //public string StrABB { get; }
-        //public string StrKUKA { get; }
-        public string StrRob { get; }
+        public string StrRob
+        { get
+            {
+                string robtarget = string.Empty;
+                Plane plane =  Plane.WorldXY;
+                Point3d position = Point3d.Origin;
+                Quaternion quat = Quaternion.I;
+
+
+                if (this.Method == MotionType.Linear | this.Method == MotionType.Joint) 
+                {
+                    // Offset with the CSystem to get the right program code.
+                    Transform xForm = Transform.PlaneToPlane(this.CSystem.CSPlane, Plane.WorldXY);
+
+                    plane = new Plane(this.TargetPlane);
+                    plane.Transform(xForm);
+
+                    position = this.TargetPlane.Origin;
+                    quat = Util.QuaternionFromPlane(this.TargetPlane);
+
+                    robtarget = $"[[{position.CodeStrFor(this.Manufacturer)}],[{quat.CodeStrFor(this.Manufacturer)}],cData,[{this.ExtRot.CodeStrFor(this.Manufacturer)},{this.ExtLin.CodeStrFor(this.Manufacturer)},9E9,9E9,9E9,9E9]]";
+
+                }
+
+
+                switch (this.Manufacturer)
+                {
+                    #region ABB
+                    case Manufacturer.ABB:
+                        switch (this.Method)
+                        {
+
+                            #region Linear movement
+                            case MotionType.Linear:
+
+
+                                if (this.Tool.relTool != Vector3d.Zero)
+                                {
+                                    //MoveL RelTool ([[416.249, -110.455, 0],[0, 0, 1, 0], cData, eAxis], 0, 0,-120), v50, z1, tool0 \Wobj:=wobj0;
+                                    string offset = $"[{this.Tool.relTool.X.ToString()}, {this.Tool.relTool.Y.ToString()}, {this.Tool.relTool.Z.ToString()}]";
+                                    return $"MoveL RelTool ({robtarget},{offset}),{this.Speed.CodeStrFor(this.Manufacturer)},{this.Zone.CodeStrFor(this.Manufacturer)},{this.Tool.CodeStrFor(this.Manufacturer)} {this.CSystem.CodeStrFor(this.Manufacturer)};";
+                                }
+                                else
+                                {
+                                    return $"MoveL {robtarget}, {this.Speed.CodeStrFor(this.Manufacturer)}, {this.Zone.CodeStrFor(this.Manufacturer)}, {this.Tool.CodeStrFor(this.Manufacturer)} {this.CSystem.CodeStrFor(this.Manufacturer)};";
+                                }
+
+                            #endregion
+                            #region Joint movment
+                            case MotionType.Joint:
+
+                                if (this.Tool.relTool != Vector3d.Zero)
+                                {
+                                    string offset = $"[{this.Tool.relTool.X.ToString()}, {this.Tool.relTool.Y.ToString()}, {this.Tool.relTool.Z.ToString()}]";
+                                    return $"MoveJ RelTool ({robtarget},{offset}),{this.Speed.CodeStrFor(this.Manufacturer)},{this.Zone.CodeStrFor(this.Manufacturer)},{this.Tool.CodeStrFor(this.Manufacturer)} {this.CSystem.CodeStrFor(this.Manufacturer)};";
+                                }
+                                else
+                                {
+                                    return $"MoveJ {robtarget}, {this.Speed.CodeStrFor(this.Manufacturer)}, {this.Zone.CodeStrFor(this.Manufacturer)}, {this.Tool.CodeStrFor(this.Manufacturer)} {this.CSystem.CodeStrFor(this.Manufacturer)};";
+                                }
+                            #endregion
+                            #region Absolute movment
+                            case MotionType.AbsoluteJoint:
+                                string jTarg = $"[{this.JointAngles[0].ToString()},{this.JointAngles[1].ToString()},{this.JointAngles[2].ToString()},{this.JointAngles[3].ToString()},{this.JointAngles[4].ToString()},{this.JointAngles[5].ToString()}]";
+                                return $"MoveAbsJ [{jTarg},[{this.ExtRot.CodeStrFor(this.Manufacturer)},{this.ExtLin.CodeStrFor(this.Manufacturer)},9E9,9E9,9E9,9E9]], {this.Speed.CodeStrFor(this.Manufacturer)}, {this.Zone.CodeStrFor(this.Manufacturer)}, {this.Tool.CodeStrFor(this.Manufacturer)};";
+                            #endregion
+
+                            case MotionType.NoMovement:
+                                return "! No Movement";
+                        }
+                        throw new Exception($"{this.Method.ToString()} not implemented for ABB");
+                    #endregion
+                    #region Kuka
+                    case Manufacturer.Kuka:
+
+                        string KUKAposition = position.CodeStrFor(this.Manufacturer);
+
+
+                        List<double> eulers = Util.QuaternionToEuler(quat);
+
+                        double E1 = eulers[0] * 180 / Math.PI;
+                        E1 = Math.Round(E1, 3);
+                        double E2 = eulers[1] * 180 / Math.PI;
+                        E2 = Math.Round(E2, 3);
+                        double E3 = eulers[2] * 180 / Math.PI;
+                        E3 = Math.Round(E3, 3);
+
+                        string strEuler = "A " + E3.ToString() + ", B " + E2.ToString() + ", C " + E1.ToString();
+                        string strExtAxis = "E1 0, E2 0, E3 0, E4 0"; // Default values for the external axis.
+
+                        switch (this.Method)
+                        {
+
+                            #region Linear movement
+                            case MotionType.Linear:
+                                return $"LIN  {{E6POS:  {KUKAposition}, {strEuler}, {strExtAxis}}} C_VEL";
+
+                            #endregion
+                            case MotionType.Joint:
+                                return $"PTP  {{E6POS:  {KUKAposition}, {strEuler}, {strExtAxis}}} C_PTP";
+
+                            case MotionType.NoMovement:
+                                return "! No Movement";
+                        }
+                        throw new Exception($"{this.Method.ToString()} not implemented for Kuka");
+                        #endregion
+                }
+                throw new Exception($"The target string repersentation for {this.Manufacturer.ToString()} is not implemented");
+
+            }
+        }
+        public Point3d Position { get =>  this.TargetPlane.Origin; }
+
 
         public MotionType Method { get; }
 
@@ -44,18 +160,22 @@ namespace Axis.Targets
             Quaternion realQuat = Util.QuaternionFromPlane(target);
 
             // Set publicly accessible property values based on the manufacturer data.
+            this.TargetPlane = target;
             this.Quaternion = realQuat;
             this.ExtRot = extRot;
             this.ExtLin = extLin;
-            this.WorkObject = wobj.Name;
             this.Method = method;
             this.Tool = tool;
             this.Speed = speed;
             this.Zone = zone;
             this.ExtRot = extRot;
             this.ExtLin = extLin;
+            this.CSystem = wobj;
 
 
+            //Old Code
+            #region
+            /*
             // Copy target in case we are using a dynamic CS
             Plane dynamicTarget = new Plane(target);
             if (wobj.Dynamic)
@@ -99,105 +219,14 @@ namespace Axis.Targets
             string workObject = @"\Wobj:=" + wobj.Name;
             this.CSystem = wobj;
 
-            if (robot == Manufacturer.ABB) // ABB Targets
-            {
-                string ABBposition = posX.ToString() + ", " + posY.ToString() + ", " + posZ.ToString(); ;
+            //this.StrRob = strRob;
+            */
 
-                double A = quat.A, B = quat.B, C = quat.C, D = quat.D;
-                double w = Math.Round(A, 6);
-                double x = Math.Round(B, 6);
-                double y = Math.Round(C, 6);
-                double z = Math.Round(D, 6);
-
-                string strQuat = w.ToString() + ", " + x.ToString() + ", " + y.ToString() + ", " + z.ToString();
-
-                if (method == MotionType.Linear) movement = "MoveL"; // Linear movement method.
-                else if (method == MotionType.Joint) movement = "MoveJ"; // Joint movement method.
-
-
-                if (speed.Time > 0)
-                {
-                    if (speed != null)
-                        strSpeed = speed.Name + @"\T:=" + speed.Time.ToString();
-                    else
-                    {
-                        // If we dont have speed data to begin with, then replace it with a default value.
-                        strSpeed = @"v200\T:=" + speed.Time.ToString();
-                    }
-                }
-                else
-                {
-                    if (speed.Name != null)
-                        strSpeed = speed.Name;
-                }
-
-                //Creating Point
-                string robtarget = "";
-                if (extRot != Util.ExAxisTol || extLin != Util.ExAxisTol) // If the external axis value is present... (otherwise 0.00001 is passed as a default value).
-                {
-                    if (extLin != Util.ExAxisTol)
-                    {
-                        exLin = Math.Round(extLin, 4).ToString();
-                    }
-                    if (extRot != Util.ExAxisTol)
-                    {
-                        exRot = Math.Round(extRot, 2).ToString(); // Get the external axis value per target and round it to two decimal places.
-                    }
-                    robtarget = @" [[" + ABBposition + "],[" + strQuat + "]," + " cData, " + "[" + exRot + ", " + exLin + ", 9E9, 9E9, 9E9, 9E9]" + "]";
-                }
-                else { robtarget = @" [[" + ABBposition + "],[" + strQuat + "]," + " cData, eAxis]"; }
-
-                if (tool.relTool != Vector3d.Zero)
-                {
-                    //MoveL RelTool ([[416.249, -110.455, 0],[0, 0, 1, 0], cData, eAxis], 0, 0,-120), v50, z1, tool0 \Wobj:=wobj0;
-                    string offset = tool.relTool.X.ToString() + ", " + tool.relTool.Y.ToString() + "," + tool.relTool.Z.ToString();
-                    strRob = movement + @" RelTool (" + robtarget + ", " + offset + "), " + strSpeed + ", " + strZone + ", " + tool.Name + " " + workObject + ";";
-                }
-                else
-                {
-                    strRob = movement + robtarget + ", " + strSpeed + ", " + strZone + ", " + tool.Name + " " + workObject + ";";
-                }
-            }
-            else if(robot == Manufacturer.Kuka) // KUKA Targets
-            {
-                string KUKAposition = "X " + posX.ToString() + ", Y " + posY.ToString() + ", Z " + posZ.ToString();
-
-                List<double> eulers = Util.QuaternionToEuler(quat);
-
-                double E1 = eulers[0] * 180 / Math.PI;
-                E1 = Math.Round(E1, 3);
-                double E2 = eulers[1] * 180 / Math.PI;
-                E2 = Math.Round(E2, 3);
-                double E3 = eulers[2] * 180 / Math.PI;
-                E3 = Math.Round(E3, 3);
-
-                string strEuler = "A " + E3.ToString() + ", B " + E2.ToString() + ", C " + E1.ToString();
-                string strExtAxis = "E1 0, E2 0, E3 0, E4 0"; // Default values for the external axis.
-                string approx = ""; // Declare an empty approximation method value.
-
-                if (method == MotionType.Linear) // Linear movement method.
-                {
-                    movement = "LIN";
-                    approx = "C_VEL";
-                }
-                else if (method == MotionType.Joint) // Joint movement method.
-                {
-                    movement = "PTP";
-                    approx = "C_PTP";
-                }
-
-                // Compile the KUKA robot target string.
-                strRob = movement + " {E6POS: " + KUKAposition + ", " + strEuler + ", " + strExtAxis + "} " + approx;
-            }
-
-            this.StrRob = strRob;
+            #endregion
         }
 
         public Target(List<double> axisVals, Speed speed, Zone zone, Tool tool, double extRot, double extLin, Manufacturer robot)
         {
-            string strRob = null;
-            string strZone = zone.Name;
-            string jTarg = "[" + axisVals[0].ToString() + ", " + axisVals[1].ToString() + ", " + axisVals[2].ToString() + ", " + axisVals[3].ToString() + ", " + axisVals[4].ToString() + ", " + axisVals[5].ToString() + "]";
 
             this.JointAngles = axisVals;
             this.Tool = tool;
@@ -206,44 +235,10 @@ namespace Axis.Targets
             this.ExtRot = extRot;
             this.ExtLin = extLin;
 
-            string strSpeed = null;
-
-            if (speed.Time > 0)
-            {
-                if (speed != null)
-                    strSpeed = speed.Name + @"\T:=" + speed.Time.ToString();
-                else
-                    strSpeed = @"v200\T:=" + speed.Time.ToString();
-            }
-            else
-            {
-                if (speed.Name != null)
-                    strSpeed = speed.Name;
-            }
-
-            // ******** CTool() instead of Tool0?
-            string toolName = "tool0";
-            if (tool.Name != "DefaultTool")
-                toolName = tool.Name;
-
-            // External axis values
-            string lin = "9E9"; string rot = "9E9";
-            if (extRot != Util.ExAxisTol || extLin != Util.ExAxisTol) // If the external axis value is present... (otherwise 0.00001 is passed as a default value).
-            {
-                if (extLin != Util.ExAxisTol)
-                    lin = Math.Round(extLin, 4).ToString();
-                if (extRot != Util.ExAxisTol)
-                    rot = Math.Round(extRot, 2).ToString(); // Get the external axis value per target and round it to two decimal places.
-
-                strRob = @"MoveAbsJ [" + jTarg + ", [" + rot + ", " + lin + ", 9E9, 9E9, 9E9, 9E9]" + "], " + strSpeed + ", " + strZone + ", " + tool.Name + ";";
-            }
-            else { strRob = @"MoveAbsJ [" + jTarg + ", [9E9, 9E9, 9E9, 9E9, 9E9, 9E9]" + "], " + strSpeed + ", " + strZone + ", " + tool.Name + ";"; }
-
-            this.ExtRot = extRot;
-            this.ExtLin = extLin;
-            this.StrRob = strRob;
             this.Method = MotionType.AbsoluteJoint;
+            this.Manufacturer = robot;
         }
+
 
         public override string ToString() => (Method != null) ? $"Target ({Method.ToString()})" : $"Target ({Position})";
         public override string TypeName => "Target";
@@ -251,7 +246,7 @@ namespace Axis.Targets
         public override bool IsValid => true;
         public override int GetHashCode()
         {
-            var val = Plane.GetHashCode()+Speed.GetHashCode()+ Zone.GetHashCode()+ Tool.GetHashCode()+ CSystem.GetHashCode();
+            var val = Plane.GetHashCode() + Speed.GetHashCode() + Zone.GetHashCode() + Tool.GetHashCode() + CSystem.GetHashCode();
             return val.GetHashCode();
         }
         public override IGH_Goo Duplicate()
@@ -277,6 +272,140 @@ namespace Axis.Targets
 
             return false;
         }
+
+
+        public override bool Write(GH_IWriter writer)
+        {
+            return base.Write(writer);
+        }
+        public override bool Read(GH_IReader reader)
+        {
+            return base.Read(reader);
+        }
+    }
+
+    /// <summary>
+    /// Class handlining the conversion for different types to the spesific manufacturere string representation
+    /// </summary>
+    static class StrringConvertiosn
+    {
+        public static string CodeStrFor(this Speed speed, Manufacturer manufacturer)
+        {
+            switch (manufacturer)
+            {
+                case Manufacturer.ABB:
+
+                    string strSpeed = null;
+
+                    if (speed.Time > 0)
+                    {
+                        if (speed != null)
+                            strSpeed = speed.Name + @"\T:=" + speed.Time.ToString();
+                        else
+                            strSpeed = @"v200\T:=" + speed.Time.ToString();
+                    }
+                    else
+                    {
+                        if (speed.Name != null)
+                            strSpeed = speed.Name;
+                    }
+
+                    return strSpeed;
+            }
+
+            throw new Exception($"String representation of speeds not implemented for {manufacturer.ToString()}");
+        }
+        public static string CodeStrFor(this Zone zone, Manufacturer manufacturer)
+        {
+            switch (manufacturer)
+            {
+                case Manufacturer.ABB:
+                    return zone.Name;
+            }
+            throw new Exception($"String representation of zones not implemented for {manufacturer.ToString()}");
+        }
+        public static string CodeStrFor(this Tool tool, Manufacturer manufacturer)
+        {
+            switch (manufacturer)
+            {
+                case Manufacturer.ABB:
+                    // ******** CTool() instead of Tool0?
+                    string toolName = "tool0";
+                    if (tool.Name != "DefaultTool")
+                        toolName = tool.Name;
+                    return toolName;
+            }
+            throw new Exception($"String representation of tools not implemented for {manufacturer.ToString()}");
+        }
+        public static string CodeStrFor(this CSystem cSystem, Manufacturer manufacturer)
+        {
+            switch (manufacturer)
+            {
+                case Manufacturer.ABB:
+                    return $"\\WObj:={cSystem.Name}";
+            }
+            throw new Exception($"Linear external axis string not implemented for {manufacturer.ToString()}");
+        }
+        public static string CodeStrFor(this ExtVal eVal, Manufacturer manufacturer)
+        {
+            switch (manufacturer)
+            {
+                case Manufacturer.ABB:
+                    string str = "9E9";
+                    if (eVal != Util.ExAxisTol) // If the external axis value is present... (otherwise 0.00001 is passed as a default value).
+                        str = Math.Round(eVal, 4).ToString(); // Get the external axis value per target and round it to two decimal places.                            
+                    return str;
+            }
+            throw new Exception($"External axis string not implemented for {manufacturer.ToString()}");
+        }
+        public static string CodeStrFor(this Quaternion quat, Manufacturer manufacturer)
+        {
+            switch (Manufacturer.ABB)
+            {
+                case Manufacturer.ABB:
+                    double A = quat.A, B = quat.B, C = quat.C, D = quat.D;
+
+                    double w = Math.Round(A, 6);
+                    double x = Math.Round(B, 6);
+                    double y = Math.Round(C, 6);
+                    double z = Math.Round(D, 6);
+
+
+                    return $"{w.ToString()},{x.ToString()},{y.ToString()},{z.ToString()}";
+            }
+            throw new Exception($"Quaternion string not implemented for {manufacturer.ToString()}");
+        }
+        public static string CodeStrFor(this Point3d position, Manufacturer manufacturer)
+        {
+            double posX = Math.Round(position.X, 3);
+            double posY = Math.Round(position.Y, 3);
+            double posZ = Math.Round(position.Z, 3);
+
+            switch (manufacturer)
+            {
+                case Manufacturer.ABB:
+                    return $"{posX.ToString()},{posY.ToString()},{posZ.ToString()}";
+                case Manufacturer.Kuka:
+                    return $"X {posX.ToString()}, Y {posY.ToString()}, Z {posZ.ToString()}";
+            }
+            throw new Exception($"Point3d string not implemented for {manufacturer.ToString()}");
+        }
+
+    }
+
+
+    /// <summary>
+    /// Type wrapper for a double representing the external axis value
+    /// </summary>
+    public class ExtVal
+    {
+        private double val;
+
+        ExtVal(double d) => this.val = d;
+
+        public static implicit operator double(ExtVal eV) => eV.val;
+        public static implicit operator ExtVal(double d) => new ExtVal(d);
+
     }
     /// <summary>
     /// Robot Speed type
@@ -457,7 +586,6 @@ namespace Axis.Targets
             return false;
         }
     }
-
     public class ExternalTarget
     {
         // MoveExtJ [\Conc] ToJointPos [\ID] [\UseEOffs] Speed [\T] Zone [\Inpos]
@@ -580,6 +708,8 @@ namespace Axis.Targets
         }
 
     }
+
+
     /// <summary>
     /// List of motion types
     /// </summary>
@@ -590,6 +720,5 @@ namespace Axis.Targets
         AbsoluteJoint = 2,
         NoMovement = 3
     }
-
 
 }
