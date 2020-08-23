@@ -63,9 +63,9 @@ namespace Axis.Core
                 Plane[] axisPlanes = new Plane[6] { 
                     new Plane(new Point3d(0, 0, 0), new Vector3d(1,0,0) , new Vector3d(0,1,0)),
                     new Plane(new Point3d(0, 0, 290), new Vector3d(0,0,1), new Vector3d(1,0,0)),
-                    new Plane(new Point3d(0, 0, 560), new Vector3d(0,0,1), new Vector3d(1,0,0)),
+                    new Plane(new Point3d(0, 0, 560), new Vector3d(1,0,0), new Vector3d(0,0,-1)),
                     new Plane(new Point3d(150, 0, 630), new Vector3d(0,0,-1), new Vector3d(0,1,0)),
-                    new Plane(new Point3d(302, 0, 630), new Vector3d(0,0,1), new Vector3d(1,0,0)),
+                    new Plane(new Point3d(302, 0, 630), new Vector3d(1,0,0), new Vector3d(0,0,-1)),
                     new Plane(new Point3d(374, 0, 630), new Vector3d(0,0,-1), new Vector3d(0,1,0)),
                 };
                 List<double> minAngles = new List<double> { -165, -110, -110, -160, -120, -400 };
@@ -105,9 +105,9 @@ namespace Axis.Core
                     {
                         new Plane(new Point3d(0, 0, 0), new Vector3d(1,0,0) , new Vector3d(0,1,0)),
                         new Plane(new Point3d(320, 0, 680), new Vector3d(0,0,1), new Vector3d(1,0,0)),
-                        new Plane(new Point3d(320, 0, 1655), new Vector3d(0,0,1), new Vector3d(1,0,0)),
+                        new Plane(new Point3d(320, 0, 1655), new Vector3d(1,0,0), new Vector3d(0,0,-1)),
                         new Plane(new Point3d(502, 0, 1855), new Vector3d(0,0,-1), new Vector3d(0,1,0)),
-                        new Plane(new Point3d(1207, 0, 1855), new Vector3d(0,0,1), new Vector3d(1,0,0)),
+                        new Plane(new Point3d(1207, 0, 1855), new Vector3d(1,0,0), new Vector3d(0,0,-1)),
                         new Plane(new Point3d(1407, 0, 1855), new Vector3d(0,0,-1), new Vector3d(0,1,0)),
                         };
                 List<double> minAngles = new List<double> { -170, -65, -180, -300, -130, -300 };
