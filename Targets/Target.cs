@@ -13,9 +13,9 @@ namespace Axis.Targets
     /// <summary>
     /// Robot target used to instruct a movement
     /// </summary>
-    public class Target : GH_Goo<Target>
+    public class Target : IGH_GeometricGoo
     {
-
+        #region Class Fields
         public Plane Plane { get; set; } // Position in World Coordinates
 
 
@@ -32,7 +32,8 @@ namespace Axis.Targets
 
         public ExtVal ExtRot { get; set; }
         public ExtVal ExtLin { get; set; }
-
+        #endregion
+        public Manufacturer Manufacturer { get; }
 
         public string StrRob
         { get
@@ -46,7 +47,7 @@ namespace Axis.Targets
                 if (this.Method == MotionType.Linear | this.Method == MotionType.Joint) 
                 {
                     // Offset with the CSystem to get the right program code.
-                    Transform xForm = Transform.PlaneToPlane(this.CSystem.CSPlane, Plane.WorldXY);
+                    Transform xForm = Rhino.Geometry.Transform.PlaneToPlane(this.CSystem.CSPlane, Plane.WorldXY);
 
                     plane = new Plane(this.TargetPlane);
                     plane.Transform(xForm);
@@ -146,21 +147,25 @@ namespace Axis.Targets
             }
         }
         public Point3d Position { get =>  this.TargetPlane.Origin; }
-
-
         public MotionType Method { get; }
 
-        public Manufacturer Manufacturer { get; }
 
-        public static Target Default { get; }
-
+        #region Constructors and defaults
+        public static Target Default { get => new Target(new List<double> { 0, 0, 0, 0, 0, 0 }, Speed.Default, Zone.Default, Tool.Default, 0, 0, Manufacturer.ABB); }
         public Target(Plane target, MotionType method, Speed speed, Zone zone, Tool tool, CSystem wobj, double extRot, double extLin, Manufacturer robot)
         {
             // Adjust plane to comply with robot programming convetions.
             Quaternion realQuat = Util.QuaternionFromPlane(target);
 
             // Set publicly accessible property values based on the manufacturer data.
-            this.TargetPlane = target;
+            this.Plane = target;
+
+            //Transform Plane To Location in CSystem
+            var tP = target.Clone();
+            Rhino.Geometry.Transform xform = Rhino.Geometry.Transform.PlaneToPlane(wobj.CSPlane, Plane.WorldXY);
+            tP.Transform(xform);
+
+            this.TargetPlane = tP;
             this.Quaternion = realQuat;
             this.ExtRot = extRot;
             this.ExtLin = extLin;
@@ -172,62 +177,9 @@ namespace Axis.Targets
             this.ExtLin = extLin;
             this.CSystem = wobj;
 
-
-            //Old Code
-            #region
-            /*
-            // Copy target in case we are using a dynamic CS
-            Plane dynamicTarget = new Plane(target);
-            if (wobj.Dynamic)
-            {
-                Transform rot = Transform.Rotation(extRot.ToRadians(), wobj.ExternalAxis.Normal, wobj.ExternalAxis.Origin);
-                if (dynamicTarget.Transform(rot))
-                    this.Plane = dynamicTarget;
-            }
-            else
-                this.Plane = target;
-
-            // Offset with the CSystem to get the right program code.
-            Transform xForm = Transform.PlaneToPlane(wobj.CSPlane, Plane.WorldXY);
-
-            Plane plane = new Plane(target);
-            plane.Transform(xForm);
-
-            Quaternion quat = Util.QuaternionFromPlane(plane);
-
-            Point3d position = plane.Origin;
-            double posX = Math.Round(position.X, 3);
-            double posY = Math.Round(position.Y, 3);
-            double posZ = Math.Round(position.Z, 3);
-
-            this.Position = position;
-
-            // Declare some strings to store the target information in a manufacturer specific manner.
-            string movement = null;
-            string strRob = null;
-            string strZone = zone.Name;
-            string strSpeed = null;
-            string exLin = "9E9";
-            string exRot = "9E9";
-
-            // Tool
-            string toolName = String.Empty;
-            if (tool.Name != "DefaultTool")
-                toolName = tool.Name;
-
-            // Work object
-            string workObject = @"\Wobj:=" + wobj.Name;
-            this.CSystem = wobj;
-
-            //this.StrRob = strRob;
-            */
-
-            #endregion
         }
-
         public Target(List<double> axisVals, Speed speed, Zone zone, Tool tool, double extRot, double extLin, Manufacturer robot)
         {
-
             this.JointAngles = axisVals;
             this.Tool = tool;
             this.Speed = speed;
@@ -238,25 +190,35 @@ namespace Axis.Targets
             this.Method = MotionType.AbsoluteJoint;
             this.Manufacturer = robot;
         }
+        #endregion
 
 
-        public override string ToString() => (Method != null) ? $"Target ({Method.ToString()})" : $"Target ({Position})";
-        public override string TypeName => "Target";
-        public override string TypeDescription => "Robot target";
-        public override bool IsValid => true;
-        public override int GetHashCode()
-        {
-            var val = Plane.GetHashCode() + Speed.GetHashCode() + Zone.GetHashCode() + Tool.GetHashCode() + CSystem.GetHashCode();
-            return val.GetHashCode();
-        }
-        public override IGH_Goo Duplicate()
-        {
-            //This should technically do a deep copy not a shalow one, like in this case
-            return this;
-        }
-        public override bool CastTo<Q>(ref Q target)
-        {
+        #region Interface implementation
 
+        //IGH_GeometricGoo
+        public BoundingBox Boundingbox { get => throw new NotImplementedException(); } //Cached boundingbox
+        public Guid ReferenceID { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public bool IsReferencedGeometry { get => throw new NotImplementedException(); }
+        public bool IsGeometryLoaded { get => throw new NotImplementedException(); }
+
+        public void ClearCaches() => throw new NotImplementedException();
+        public IGH_GeometricGoo DuplicateGeometry() => throw new NotImplementedException();
+        public BoundingBox GetBoundingBox(Transform xform) => throw new NotImplementedException();
+        public bool LoadGeometry() => throw new NotImplementedException();
+        public bool LoadGeometry(Rhino.RhinoDoc doc) => throw new NotImplementedException();
+        public IGH_GeometricGoo Morph(SpaceMorph xmorph) => throw new NotImplementedException();
+        public IGH_GeometricGoo Transform(Transform xform) => throw new NotImplementedException();
+
+
+        // IGH_Goo
+        public bool IsValid => true;
+        public string IsValidWhyNot => throw new NotImplementedException();
+        public string TypeName => "Target";
+        public string TypeDescription => "Robot target";
+
+        public bool CastFrom(object source) => throw new NotImplementedException();
+        public bool CastTo<Q>(out Q target)
+        {
             if (typeof(Q).IsAssignableFrom(typeof(GH_Plane)) && (this.Plane != null))
             {
                 object _Plane = new GH_Plane(this.Plane);
@@ -269,19 +231,20 @@ namespace Axis.Targets
                 target = (Q)_Point;
                 return true;
             }
-
+            target = default(Q);
             return false;
         }
+        public IGH_Goo Duplicate() => throw new NotImplementedException();
+        public IGH_GooProxy EmitProxy() => throw new NotImplementedException();
+        public object ScriptVariable() => throw new NotImplementedException();
+        public override string ToString() => (Method != null) ? $"Target ({Method.ToString()})" : $"Target ({Position})";
 
 
-        public override bool Write(GH_IWriter writer)
-        {
-            return base.Write(writer);
-        }
-        public override bool Read(GH_IReader reader)
-        {
-            return base.Read(reader);
-        }
+        //GH_ISerializable
+        public bool Read(GH_IReader reader) => throw new NotImplementedException();
+        public bool Write(GH_IWriter writer) => throw new NotImplementedException();
+
+        #endregion
     }
 
     /// <summary>
@@ -407,16 +370,21 @@ namespace Axis.Targets
         public static implicit operator ExtVal(double d) => new ExtVal(d);
 
     }
+
+
     /// <summary>
     /// Robot Speed type
     /// </summary>
-    public class Speed : GH_Goo<double>
+    public class Speed : IGH_Goo
 {
+        #region Class fileds
         public string Name { get; set; }
         public double TranslationSpeed { get; set; }
         public double RotationSpeed { get; set; }
         public double Time { get; set; } = 0;
+        #endregion
 
+        #region Constructor and defauls
         public static Speed Default { get; }
 
         static Speed()
@@ -431,23 +399,32 @@ namespace Axis.Targets
             this.RotationSpeed = rotSpeed;
             this.Time = time;
         }
+        #endregion
 
-        public override string ToString() => (Name != null) ? $"Speed ({Name})" : $"Speed ({TranslationSpeed:0.0} mm/s)";
-        public override string TypeName => "Speed";
-        public override string TypeDescription => "Movement speed in mm/s";
-        public override bool IsValid => true;
-        public override double Value { get => this.TranslationSpeed; set => this.TranslationSpeed = value; }
-        public override int GetHashCode()
-        {
-            var val = Name.GetHashCode()+ TranslationSpeed.GetHashCode()+ RotationSpeed.GetHashCode()+ Time.GetHashCode();
-            return val.GetHashCode();
-        }
-        public override IGH_Goo Duplicate()
-        {
-            //This should technically do a deep copy not a shalow one, like in this case
-            return this;
-        }
-        public override bool CastTo<Q>(ref Q target)
+        #region Interface implementation
+        //IGH_GeometricGoo
+        public BoundingBox Boundingbox { get => throw new NotImplementedException(); }
+        public Guid ReferenceID { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public bool IsReferencedGeometry { get => throw new NotImplementedException(); }
+        public bool IsGeometryLoaded { get => throw new NotImplementedException(); }
+
+        public void ClearCaches() => throw new NotImplementedException();
+        public IGH_GeometricGoo DuplicateGeometry() => throw new NotImplementedException();
+        public BoundingBox GetBoundingBox(Transform xform) => throw new NotImplementedException();
+        public bool LoadGeometry() => throw new NotImplementedException();
+        public bool LoadGeometry(Rhino.RhinoDoc doc) => throw new NotImplementedException();
+        public IGH_GeometricGoo Morph(SpaceMorph xmorph) => throw new NotImplementedException();
+        public IGH_GeometricGoo Transform(Transform xform) => throw new NotImplementedException();
+
+
+        // IGH_Goo
+        public bool IsValid => throw new NotImplementedException();
+        public string IsValidWhyNot => throw new NotImplementedException();
+        public  string TypeName => "Speed";
+        public  string TypeDescription => "Movement speed in mm/s";
+
+        public bool CastFrom(object source) => throw new NotImplementedException();
+        public bool CastTo<Q>(out Q target)
         {
             if (typeof(Q).IsAssignableFrom(typeof(GH_Number)) && (this.TranslationSpeed != null))
             {
@@ -455,15 +432,29 @@ namespace Axis.Targets
                 target = (Q)_number;
                 return true;
             }
-
+            target = (Q)default;
             return false;
         }
+        public IGH_Goo Duplicate() => throw new NotImplementedException();
+        public IGH_GooProxy EmitProxy() => throw new NotImplementedException();
+        public object ScriptVariable() => throw new NotImplementedException();
+        public  override string ToString() => (Name != null) ? $"Speed ({Name})" : $"Speed ({TranslationSpeed:0.0} mm/s)";
+
+
+
+        //GH_ISerializable
+        public bool Read(GH_IReader reader) => throw new NotImplementedException();
+        public bool Write(GH_IWriter writer) => throw new NotImplementedException();
+        #endregion
     }
+
+
     /// <summary>
     /// Robot movement zone type
     /// </summary>
-    public class Zone : GH_Goo<double>
+    public class Zone : IGH_Goo
     {
+        #region Class Fields
         public string Name { get; set; }
         public double PathRadius { get; set; }
         public double PathOrient { get; set; }
@@ -472,17 +463,10 @@ namespace Axis.Targets
         public double LinearExternal { get; set; }
         public double RotaryExternal { get; set; }
         public bool StopPoint { get; set; }
+        #endregion
 
+        #region Constructor and defaults
         public static Zone Default { get; }
-        public override string TypeName => "Zone";
-        public override string TypeDescription => "Precision zone in mm";
-        public override double Value { get => this.PathRadius; set => this.PathRadius = value; }
-
-        static Zone()
-        {
-            Default = new Zone(false, 5, 25, 25, 15, 35, 5, "DefaultZone");
-        }
-
         public Zone(bool stop = false, double pathRadius = 5, double pathOrient = 8, double pathExternal = 8, double orientation = 0.8, double linExternal = 8, double rotExternal = 0.8, string name = null)
         {
             this.Name = name;
@@ -494,20 +478,37 @@ namespace Axis.Targets
             this.RotaryExternal = rotExternal;
             this.StopPoint = stop;
         }
+        static Zone()
+        {
+            Default = new Zone(false, 5, 25, 25, 15, 35, 5, "DefaultZone");
+        }
+        #endregion
 
-        public override string ToString() => (Name != null) ? $"Zone ({Name})" : $"Zone ({PathRadius:0.0} mm)";
-        public override bool IsValid => true;
-        public override int GetHashCode()
-        {
-            var val = Name.GetHashCode()+PathRadius.GetHashCode()+ PathOrient.GetHashCode()+ PathExternal.GetHashCode()+ Orientation.GetHashCode()+ LinearExternal.GetHashCode()+RotaryExternal.GetHashCode()+StopPoint.GetHashCode();
-            return val.GetHashCode();
-        }
-        public override IGH_Goo Duplicate()
-        {
-            //This should technically do a deep copy not a shalow one, like in this case
-            return this;
-        }
-        public override bool CastTo<Q>(ref Q target)
+        #region Interface implementation
+
+        //IGH_GeometricGoo
+        public BoundingBox Boundingbox { get => throw new NotImplementedException(); }
+        public Guid ReferenceID { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public bool IsReferencedGeometry { get => throw new NotImplementedException(); }
+        public bool IsGeometryLoaded { get => throw new NotImplementedException(); }
+
+        public void ClearCaches() => throw new NotImplementedException();
+        public IGH_GeometricGoo DuplicateGeometry() => throw new NotImplementedException();
+        public BoundingBox GetBoundingBox(Transform xform) => throw new NotImplementedException();
+        public bool LoadGeometry() => throw new NotImplementedException();
+        public bool LoadGeometry(Rhino.RhinoDoc doc) => throw new NotImplementedException();
+        public IGH_GeometricGoo Morph(SpaceMorph xmorph) => throw new NotImplementedException();
+        public IGH_GeometricGoo Transform(Transform xform) => throw new NotImplementedException();
+
+
+        // IGH_Goo
+        public bool IsValid => throw new NotImplementedException();
+        public string IsValidWhyNot => throw new NotImplementedException();
+        public string TypeName => "Zone";
+        public string TypeDescription => "Precision zone in mm";
+
+        public bool CastFrom(object source) => throw new NotImplementedException();
+        public bool CastTo<Q>(out Q target)
         {
             if (typeof(Q).IsAssignableFrom(typeof(GH_Number)) && (this.PathRadius != null))
             {
@@ -515,23 +516,38 @@ namespace Axis.Targets
                 target = (Q)_number;
                 return true;
             }
-
+            target = default(Q);
             return false;
         }
+        public IGH_Goo Duplicate() => throw new NotImplementedException();
+        public IGH_GooProxy EmitProxy() => throw new NotImplementedException();
+        public object ScriptVariable() => throw new NotImplementedException();
+        public override string ToString() => (Name != null) ? $"Zone ({Name})" : $"Zone ({PathRadius:0.0} mm)";
+
+
+
+        //GH_ISerializable
+        public bool Read(GH_IReader reader) => throw new NotImplementedException();
+        public bool Write(GH_IWriter writer) => throw new NotImplementedException();
+        #endregion
 
     }
+
+
     /// <summary>
     /// Robot working coordinat system
     /// </summary>
-    public class CSystem : GH_Goo<Plane>
+    public class CSystem : IGH_Goo
     {
+        #region Class Fields
         public string Name { get; set; }
         public Plane CSPlane { get; set; }
         public bool Dynamic { get; set; }
         public Plane ExternalAxis { get; set; }
+        #endregion
 
+        #region Constructor and defaults
         public static CSystem Default { get; set; }
-
         public CSystem(string name, Plane csPlane, bool dynamicCS, Plane eAxisPlane)
         {
             this.Name = name;
@@ -539,35 +555,44 @@ namespace Axis.Targets
             this.Dynamic = dynamicCS;
             this.ExternalAxis = eAxisPlane;
         }
-        public override string ToString()
-        {
-            return $"CSystem at: {CSPlane.ToString()}";
-        }
-
         static CSystem()
         {
             Default = new CSystem("Default", Plane.WorldXY, false, Plane.WorldXY);
         }
-        public override string TypeName => "CSystem";
-        public override string TypeDescription => "Local coordinate system";
-        public override bool IsValid {
-            get {
+        #endregion
+
+        #region Interface implementation
+
+        //IGH_GeometricGoo
+        public BoundingBox Boundingbox { get => throw new NotImplementedException(); }
+        public Guid ReferenceID { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public bool IsReferencedGeometry { get => throw new NotImplementedException(); }
+        public bool IsGeometryLoaded { get => throw new NotImplementedException(); }
+
+        public void ClearCaches() => throw new NotImplementedException();
+        public IGH_GeometricGoo DuplicateGeometry() => throw new NotImplementedException();
+        public BoundingBox GetBoundingBox(Transform xform) => throw new NotImplementedException();
+        public bool LoadGeometry() => throw new NotImplementedException();
+        public bool LoadGeometry(Rhino.RhinoDoc doc) => throw new NotImplementedException();
+        public IGH_GeometricGoo Morph(SpaceMorph xmorph) => throw new NotImplementedException();
+        public IGH_GeometricGoo Transform(Transform xform) => throw new NotImplementedException();
+
+
+        // IGH_Goo
+        public bool IsValid
+        {
+            get
+            {
                 if (this.CSPlane != null) return true;
                 else return false;
             }
         }
-        public override Plane Value { get => this.CSPlane; set => this.CSPlane = value; }
-        public override int GetHashCode()
-        {
-            var val = Name.GetHashCode() + CSPlane.GetHashCode() + Dynamic.GetHashCode() + ExternalAxis.GetHashCode();
-            return val.GetHashCode();
-        }
-        public override IGH_Goo Duplicate()
-        {
-            //This should technically do a deep copy not a shalow one, like in this case
-            return this;
-        }
-        public override bool CastTo<Q>(ref Q target)
+        public string IsValidWhyNot => throw new NotImplementedException();
+        public string TypeName => "CSystem";
+        public string TypeDescription => "Local coordinate system";
+
+        public bool CastFrom(object source) => throw new NotImplementedException();
+        public bool CastTo<Q>(out Q target)
         {
 
             if (typeof(Q).IsAssignableFrom(typeof(GH_Plane)) && (this.CSPlane != null))
@@ -582,10 +607,25 @@ namespace Axis.Targets
                 target = (Q)_Point;
                 return true;
             }
-
+            target = default(Q);
             return false;
         }
+        public IGH_Goo Duplicate() => throw new NotImplementedException();
+        public IGH_GooProxy EmitProxy() => throw new NotImplementedException();
+        public object ScriptVariable() => throw new NotImplementedException();
+        public  override string ToString() => $"CSystem at: {CSPlane.ToString()}";
+        
+
+
+
+        //GH_ISerializable
+        public bool Read(GH_IReader reader) => throw new NotImplementedException();
+        public bool Write(GH_IWriter writer) => throw new NotImplementedException();
+        #endregion
+
     }
+
+
     public class ExternalTarget
     {
         // MoveExtJ [\Conc] ToJointPos [\ID] [\UseEOffs] Speed [\T] Zone [\Inpos]
@@ -595,17 +635,22 @@ namespace Axis.Targets
         public double Time { get; set; }
         public Zone Zone { get; set; }
     }
+
+
     /// <summary>
     /// Tool path class allowing for time aproximate simulation
     /// </summary>
-    public class Toolpath : GH_Goo<Toolpath>
+    public class Toolpath : IGH_Goo
     {
+        #region Class Fields
         public TimeSpan duration { get; private set; }
 
         double totalSec;
         List<Target> targets;
         List<double> targetProgress;
+        #endregion
 
+        #region Constructor
         /// <summary>
         /// Class initilaisation
         /// </summary>
@@ -615,30 +660,10 @@ namespace Axis.Targets
             Times(targets);
             this.targets = targets;
         }
-        /// <summary>
-        /// Internal Class initialisation
-        /// </summary>
-        /// <param name="targets">List of targets ta make up this tool path</param>
-        void Times(List<Target> targets)
-        {
-            double timeTotal = 0;
+        #endregion
 
-            List<double> tProgress = new List<double>();
-            tProgress.Add(0);
-
-            for (int i = 0; i < targets.Count - 1; ++i)
-            {
-                double distance = new Line(targets[i].Position, targets[i + 1].Position).Length;
-                double speed = targets[i + 1].Speed.TranslationSpeed;
-                timeTotal += distance / speed;
-                tProgress.Add(timeTotal);
-            }
-
-            this.totalSec = timeTotal;
-            this.duration = new TimeSpan(0, 0, (int)timeTotal);
-            this.targetProgress = tProgress;
-        }
-
+        #region Methods
+        // Public
         /// <summary>
         /// Get the target interger for the current progress
         /// </summary>
@@ -665,9 +690,52 @@ namespace Axis.Targets
             return this.targets[this.GetProgress(timePassed)];
         }
 
-        public override string TypeName => "Tool path";
-        public override string TypeDescription => "A collection of targets as a tool path";
-        public override bool IsValid
+
+        // Private 
+        /// <summary>
+        /// Internal Class initialisation
+        /// </summary>
+        /// <param name="targets">List of targets ta make up this tool path</param>
+        void Times(List<Target> targets)
+        {
+            double timeTotal = 0;
+
+            List<double> tProgress = new List<double>();
+            tProgress.Add(0);
+
+            for (int i = 0; i < targets.Count - 1; ++i)
+            {
+                double distance = new Line(targets[i].Position, targets[i + 1].Position).Length;
+                double speed = targets[i + 1].Speed.TranslationSpeed;
+                timeTotal += distance / speed;
+                tProgress.Add(timeTotal);
+            }
+
+            this.totalSec = timeTotal;
+            this.duration = new TimeSpan(0, 0, (int)timeTotal);
+            this.targetProgress = tProgress;
+        }
+        #endregion
+
+        #region Interface implementation
+
+        //IGH_GeometricGoo
+        public BoundingBox Boundingbox { get => throw new NotImplementedException(); }
+        public Guid ReferenceID { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public bool IsReferencedGeometry { get => throw new NotImplementedException(); }
+        public bool IsGeometryLoaded { get => throw new NotImplementedException(); }
+
+        public void ClearCaches() => throw new NotImplementedException();
+        public IGH_GeometricGoo DuplicateGeometry() => throw new NotImplementedException();
+        public BoundingBox GetBoundingBox(Transform xform) => throw new NotImplementedException();
+        public bool LoadGeometry() => throw new NotImplementedException();
+        public bool LoadGeometry(Rhino.RhinoDoc doc) => throw new NotImplementedException();
+        public IGH_GeometricGoo Morph(SpaceMorph xmorph) => throw new NotImplementedException();
+        public IGH_GeometricGoo Transform(Transform xform) => throw new NotImplementedException();
+
+
+        // IGH_Goo
+        public bool IsValid
         {
             get
             {
@@ -675,15 +743,12 @@ namespace Axis.Targets
                 else return false;
             }
         }
-        public override string ToString()
-        {
-            return $"Toolpath of length: {this.targets.Count}";
-        }
-        public override IGH_Goo Duplicate()
-        {
-            throw new NotImplementedException();
-        }
-        public override bool CastTo<Q>(ref Q target)
+        public string IsValidWhyNot => throw new NotImplementedException();
+        public  string TypeName => "Tool path";
+        public string TypeDescription => "A collection of targets as a tool path";
+
+        public bool CastFrom(object source) => throw new NotImplementedException();
+        public bool CastTo<Q>(out Q target)
         {
 
             if (typeof(Q).IsAssignableFrom(typeof(GH_Curve)))
@@ -703,10 +768,20 @@ namespace Axis.Targets
                 target = (Q)_pLine;
                 return true;
             }
-
+            target = default(Q);
             return false;
         }
+        public IGH_Goo Duplicate() => throw new NotImplementedException();
+        public IGH_GooProxy EmitProxy() => throw new NotImplementedException();
+        public object ScriptVariable() => throw new NotImplementedException();
+        public override string ToString() => $"Toolpath of length: {this.targets.Count}";
 
+
+
+        //GH_ISerializable
+        public bool Read(GH_IReader reader) => throw new NotImplementedException();
+        public bool Write(GH_IWriter writer) => throw new NotImplementedException();
+        #endregion
     }
 
 

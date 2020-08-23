@@ -10,46 +10,44 @@ using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Types;
 using GH_IO.Serialization;
 using Axis;
+using Microsoft.Office.Interop.Excel;
+using System.Linq;
+using GH_IO;
+using System.Runtime.CompilerServices;
+using System.Security.Cryptography.X509Certificates;
+using System.Runtime.InteropServices.WindowsRuntime;
+using System.Security.Policy;
 
 namespace Axis.Core
 {
-    public class Manipulator : GH_Goo<Manipulator>
+    public class Manipulator : IGH_GeometricGoo
     {
-        public Manufacturer Manufacturer { get; set; }
-        public string Name { get; set; }
-        public List<Point3d> AxisPoints { get; }
-        public List<Plane> AxisPlanes { get; }
-        public List<Plane> tAxisPlanes { get; }
-        public List<Mesh> RobMeshes { get; }
-        public Plane RobBasePlane { get; set; }
+        #region Main Class variables
+        public string Name = "Wall-E"; // This variable can hold the model number
+        public Manufacturer Manufacturer { get; private set; }
+        public Plane RobBasePlane { get; private set; }
+        public List<Plane> AxisPlanes { get; private set; }
+        public List<double> MinAngles { get; private set; }
+        public List<double> MaxAngles { get; private set; }
+        public List<int> Indices { get; private set; }
+        public List<Mesh> RobMeshes { get; private set; }
+        #endregion
 
-        public double WristOffset { get; set; }
-        public double LowerArmLength { get; set; }
-        public double UpperArmLength { get; set; }
-        public double AxisFourOffset { get; set; }
+        #region Propperties
+        public ManipulatorPose CurrentPose { get; private set; }
+        public double WristOffsetLength { get => this.AxisPlanes[5].Origin.DistanceTo(this.AxisPlanes[4].Origin); }
+        public double LowerArmLength { get => this.AxisPlanes[1].Origin.DistanceTo(this.AxisPlanes[2].Origin); }
+        public double UpperArmLength { get => this.AxisPlanes[2].Origin.DistanceTo(this.AxisPlanes[4].Origin); }
+        public double AxisFourOffsetAngle { get => Math.Atan2(this.AxisPlanes[4].Origin.Z - this.AxisPlanes[2].Origin.Z, this.AxisPlanes[4].Origin.X - this.AxisPlanes[2].Origin.X); }  // =>0.22177 for IRB 6620
 
-        public List<Mesh> ikMeshes { get; private set; }
-        public List<double> ikAngles { get; private set; }
-        public List<Plane> ikPlanes { get; private set; }
-        public Plane ikFlange { get; private set; }
-        private List<Color> colors;
-        public bool overHeadSig { get; private set; }
-        public bool outOfReach { get; private set; }
-        public bool wristSing { get; private set; }
-        public bool outOfRoation { get; private set; }
 
-        public int singularityTol = 5;
+    public Plane Flange { get => this.AxisPlanes[5].Clone(); }
+        public Transform[] ResetTransform { get; set; }
+        #endregion
 
-        
-        public Transform Remap { get; }
-        public Transform InverseRemap { get; }
-
-        public List<double> MinAngles { get; set; }
-        public List<double> MaxAngles { get; set; }
-        public List<int> Indices { get; set; }
-
+        #region Constructors and defaults
         public static Manipulator Default { get; }
-        public static Manipulator IRB122 { get 
+        public static Manipulator IRB122 { get
             {
                 // Deserialize the list of robot meshes
                 List<Mesh> robMeshes;
@@ -62,13 +60,30 @@ namespace Axis.Core
                 }
 
                 Manufacturer manufacturer = Manufacturer.ABB;
-                List<Point3d> axisPoints = new List<Point3d> { new Point3d(0, 0, 290), new Point3d(0, 0, 560), new Point3d(302, 0, 630), new Point3d(374, 0, 630) };
+                Plane[] axisPlanes = new Plane[6] { 
+                    new Plane(new Point3d(0, 0, 0), new Vector3d(1,0,0) , new Vector3d(0,1,0)),
+                    new Plane(new Point3d(0, 0, 290), new Vector3d(0,0,1), new Vector3d(1,0,0)),
+                    new Plane(new Point3d(0, 0, 560), new Vector3d(0,0,1), new Vector3d(1,0,0)),
+                    new Plane(new Point3d(150, 0, 630), new Vector3d(0,0,-1), new Vector3d(0,1,0)),
+                    new Plane(new Point3d(302, 0, 630), new Vector3d(0,0,1), new Vector3d(1,0,0)),
+                    new Plane(new Point3d(374, 0, 630), new Vector3d(0,0,-1), new Vector3d(0,1,0)),
+                };
                 List<double> minAngles = new List<double> { -165, -110, -110, -160, -120, -400 };
                 List<double> maxAngles = new List<double> { 165, 110, 70, 160, 120, 400 };
                 Plane basePlane = Plane.WorldXY;
-                List<int> indices = new List<int> {2, 2, 2, 2, 2, 2,};
+                List<int> indices = new List<int> { 2, 2, 2, 2, 2, 2, };
 
-                return new Manipulator(manufacturer, axisPoints, minAngles, maxAngles, robMeshes, basePlane, indices);
+                return new Manipulator(manufacturer, axisPlanes, minAngles, maxAngles, robMeshes, basePlane, indices);
+
+                //Manipulator manipulator;
+                //
+                //using (System.IO.MemoryStream ms = new System.IO.MemoryStream(Axis.Robot.RobotSystems.IRB120))
+                //{
+                //    System.Runtime.Serialization.IFormatter br = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
+                //    manipulator = (Manipulator)br.Deserialize(ms);
+                //}
+                //
+                //return manipulator;
             }
         }
         public static Manipulator IRB6620
@@ -86,633 +101,967 @@ namespace Axis.Core
                 }
 
                 Manufacturer manufacturer = Manufacturer.ABB;
-                List<Point3d> axisPoints = new List<Point3d> { new Point3d(320, 0, 680), new Point3d(320, 0, 1655), new Point3d(1207, 0, 1855), new Point3d(1407, 0, 1855) };
+                Plane[] axisPlanes = new Plane[6] 
+                    {
+                        new Plane(new Point3d(0, 0, 0), new Vector3d(1,0,0) , new Vector3d(0,1,0)),
+                        new Plane(new Point3d(320, 0, 680), new Vector3d(0,0,1), new Vector3d(1,0,0)),
+                        new Plane(new Point3d(320, 0, 1655), new Vector3d(0,0,1), new Vector3d(1,0,0)),
+                        new Plane(new Point3d(502, 0, 1855), new Vector3d(0,0,-1), new Vector3d(0,1,0)),
+                        new Plane(new Point3d(1207, 0, 1855), new Vector3d(0,0,1), new Vector3d(1,0,0)),
+                        new Plane(new Point3d(1407, 0, 1855), new Vector3d(0,0,-1), new Vector3d(0,1,0)),
+                        };
                 List<double> minAngles = new List<double> { -170, -65, -180, -300, -130, -300 };
                 List<double> maxAngles = new List<double> { 170, 140, 70, 300, 130, 300 };
                 Plane basePlane = Plane.WorldXY;
                 List<int> indices = new List<int> { 2, 2, 2, 2, 2, 2, };
 
-                return new Manipulator(manufacturer, axisPoints, minAngles, maxAngles, robMeshes, basePlane, indices);
+                return new Manipulator(manufacturer, axisPlanes, minAngles, maxAngles, robMeshes, basePlane, indices);
+
+
+                //Manipulator manipulator;
+                //
+                //using (System.IO.MemoryStream ms = new System.IO.MemoryStream(Axis.Robot.RobotSystems.IRB6620))
+                //{
+                //    System.Runtime.Serialization.IFormatter br = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
+                //    manipulator = (Manipulator)br.Deserialize(ms);
+                //}
+                //
+                //return manipulator;
+
             }
         }
         static Manipulator()
         {
-
             Default = IRB122;
         }
-        public Manipulator(Manufacturer manufacturer, List<Point3d> axisPoints, List<double> minAngles, List<double> maxAngles, List<Mesh> robMeshes, Plane basePlane, List<int> indices)
+        public Manipulator(Manufacturer manufacturer, Plane[] axisPlanes, List<double> minAngles, List<double> maxAngles, List<Mesh> robMeshes, Plane basePlane, List<int> indices)
         {
-            List<Mesh> tRobMeshes = new List<Mesh>();
+            this.Manufacturer = manufacturer;
 
-            this.AxisPoints = axisPoints;
-            this.Indices = indices;
+            this.AxisPlanes = axisPlanes.ToList();
 
-            // Shorter notation of axis points.
-            Point3d p1 = axisPoints[0];
-            Point3d p2 = axisPoints[1];
-            Point3d p3 = axisPoints[2];
-            Point3d p4 = axisPoints[3];
-
-            // Figure out kinematic distances for use in the IK.
-            double wristOffset = p4.X - p3.X;
-            double lowerArmLength = p1.DistanceTo(p2);
-            double upperArmLength = p2.DistanceTo(p3);
-            double axisFourOffsetAngle = Math.Atan2(p3.Z - p2.Z, p3.X - p2.X);
-
-            this.WristOffset = wristOffset;
-            this.LowerArmLength = lowerArmLength;
-            this.UpperArmLength = upperArmLength;
-            this.AxisFourOffset = axisFourOffsetAngle;
             this.MinAngles = minAngles;
             this.MaxAngles = maxAngles;
 
-            // Create axis planes in relation to robot joint points.
-            List<Plane> axisPlanes = new List<Plane>();
-            List<Plane> tAxisPlanes = new List<Plane>();
-
-            Plane AP1 = Plane.WorldZX;
-            AP1.Origin = p1;
-            axisPlanes.Add(AP1);
-            Plane AP2 = Plane.WorldZX;
-            AP2.Origin = p2;
-            axisPlanes.Add(AP2);
-            Plane AP3 = Plane.WorldYZ;
-            AP3.Origin = p3;
-            axisPlanes.Add(AP3);
-            Plane AP4 = Plane.WorldZX;
-            AP4.Origin = p3;
-            axisPlanes.Add(AP4);
-            Plane AP5 = Plane.WorldYZ;
-            AP5.Origin = p3;
-            axisPlanes.Add(AP5);
-            Plane AP6 = new Plane(Plane.WorldXY.Origin, -Plane.WorldXY.ZAxis, Plane.WorldXY.YAxis);
-            AP6.Origin = p4;
-            axisPlanes.Add(AP6);
-
-            // Robot base plane transformations.
-            Transform remap = Transform.PlaneToPlane(Plane.WorldXY, basePlane);
-            Transform inverseRemap = Transform.PlaneToPlane(basePlane, Plane.WorldXY);
-            this.Remap = remap;
-            this.InverseRemap = inverseRemap;
-
-            // Transform the axis planes to the new robot location.
-            for (int i = 0; i < axisPlanes.Count; i++)
-            {
-                Plane tempPlane = new Plane(axisPlanes[i]);
-                tempPlane.Transform(remap);
-                tAxisPlanes.Add(tempPlane);
-            }
-
-            // Then transform all of these meshes based on the input base plane.
-            List<Mesh> ikMeshes = new List<Mesh>();
-            for (int i = 0; i < robMeshes.Count; i++)
-            {
-                Mesh mesh = new Mesh();
-                mesh = robMeshes[i].DuplicateMesh();
-                mesh.Transform(remap);
-                tRobMeshes.Add(mesh);
-
-                // Duplicate and add the temporary mesh to the inverse kinematics mesh list.
-                Mesh ikMesh = new Mesh();
-                ikMesh = mesh.DuplicateMesh();
-                ikMeshes.Add(ikMesh);
-            }
-
-            this.Manufacturer = manufacturer;
-            this.RobMeshes = tRobMeshes;
+            this.RobMeshes = robMeshes;
             this.RobBasePlane = basePlane;
 
-            // Indepent lists of information for the inverse kinematics.
-            this.ikMeshes = ikMeshes;
-            this.tAxisPlanes = tAxisPlanes;
-        }
+            this.Indices = indices;
 
-        public List<Mesh> StartPose()
+
+            // Transformation
+            Rhino.Geometry.Transform Remap = Rhino.Geometry.Transform.PlaneToPlane(AxisPlanes[0], this.RobBasePlane);
+
+            // Transform the axis planes to the new robot location.
+            //List<Plane> tempPlanes = this.AxisPlanes.Select(p => p.Clone()).ToList();
+            //tempPlanes.ForEach(p => p.Transform(Remap));
+
+            Plane[] tempPlanes = this.AxisPlanes.Select(plane => plane.Clone()).ToArray();
+            for (int i = 0; i < tempPlanes.Length; ++i) tempPlanes[i].Transform(Remap);
+            this.AxisPlanes = tempPlanes.ToList();
+
+
+            // Then transform all of these meshes based on the input base plane.
+            List<Mesh> tempMesh = this.RobMeshes.Select(m => m.DuplicateMesh()).ToList();
+            tempMesh.ForEach(m => m.Transform(Remap));
+            this.RobMeshes = tempMesh;
+
+            this.SetPose();
+
+        }
+        #endregion
+
+        #region Methods
+        //Public
+        public void SetPose()
         {
-            List<Mesh> robMeshes = RobMeshes;
-
-            return robMeshes;
-        }
-        public void SetPose(Targets.Target target) 
+            this.SetPose(Targets.Target.Default);
+        } //Default Pose
+        public void SetPose(Targets.Target target)
         {
-            //Signals
-            bool overHeadSig = false;
-            bool outOfReach = false;
-            bool wristSing = false;
-            bool outOfRoation = false;
-
-            //Geometry and location
-            List<Plane> planes = new List<Plane>();
-            Plane flange = new Plane();
-            List<Mesh> mesches = new List<Mesh>();
-            List<Color> colors = new List<Color>();
-            List<double> angles = new List<double>();
-
-            //Invers and farward kinematics devided by manufacturar
-            double[] radAngles = new double[6];
-            if (this.Manufacturer == Manufacturer.ABB)
-            {
-                if (target.Method == Targets.MotionType.Linear | target.Method == Targets.MotionType.Joint)
-                {
-                    var anglesSet = TargetInverseKinematics(target.Plane, out overHeadSig, out outOfReach);
-
-                    for (int i = 0; i < angles.Count; i++)
-                    {
-                        double sel = anglesSet[i][this.Indices[i]];
-                        radAngles[i] = sel.ToRadians();
-
-                        // Correction for setup
-                        if (i == 1) sel += 90;
-                        if (i == 2) sel -= 90;
-
-                        angles.Add(sel);
-                    }
-
-                    colors = CheckJointAngles(angles, out wristSing, out outOfRoation);
-                }
-                else if (target.Method == Targets.MotionType.AbsoluteJoint)
-                {
-                    
-
-                    for (int i = 0; i < 6; i++)
-                    {
-                        angles = target.JointAngles;
-
-                        // Check if the solution value is inside the manufacturer permitted range
-                        if (angles[i] < this.MaxAngles[i] && angles[i] > this.MinAngles[i])
-                            colors.Add(Styles.DarkGrey);
-                        else
-                        {
-                            colors.Add(Styles.Pink);
-                            outOfRoation = true;
-                        }
-                        angles.Add(angles[i]);
-                    }
-                     //ABB Spesific
-                        radAngles[0] = angles[0].ToRadians();
-                        radAngles[1] = (angles[1] - 90).ToRadians();
-                        radAngles[2] = (angles[2] + 90).ToRadians();
-                        radAngles[3] = -angles[3].ToRadians();
-                        radAngles[4] = angles[4].ToRadians();
-                        radAngles[5] = -angles[5].ToRadians();
-                    
-                }
-                
-            }
-            else if (this.Manufacturer == Manufacturer.Kuka)
-            {
-                if (target.Method == Targets.MotionType.AbsoluteJoint) 
-                {
-                    for (int i = 0; i < 6; i++)
-                    {
-                        angles = target.JointAngles;
-
-                        // Check if the solution value is inside the manufacturer permitted range
-                        if (angles[i] < this.MaxAngles[i] && angles[i] > this.MinAngles[i])
-                            colors.Add(Styles.DarkGrey);
-                        else
-                        {
-                            colors.Add(Styles.Pink);
-                            outOfRoation = true;
-                        }
-                        angles.Add(angles[i]);
-                    }
-                        for (int i = 0; i < 6; i++)
-                            radAngles[i] = angles[i].ToRadians();
-                }
-            }
-            //Space for other manufacturars
-            else throw new Exception($"This movment: {target.Method.ToString()} has not jet been implemented for {this.Manufacturer.ToString()}");
-            mesches = UpdateRobotMeshes(radAngles, out planes, out flange);
-
-            //Setting the signal
-            this.overHeadSig =  overHeadSig;
-            this.outOfReach = outOfReach;
-            this.wristSing = wristSing;
-            this.outOfRoation = outOfRoation;
-
-            //Setting Geometry
-            this.ikFlange = flange;
-            this.ikMeshes = mesches;
-            this.ikPlanes = planes;
+            this.CurrentPose = new Manipulator.ManipulatorPose(this, target);
         }
-        public Manipulator()
+        public void SetPose(ManipulatorPose pose, bool validetyCheck = false)
         {
-        }
-        public List<Color> ikColors 
-        { 
-            get 
+            if (validetyCheck)
             {
-                if (this.colors == null) return new List<Color>() { Axis.Styles.DarkGrey };
-                else return this.colors;
+                if (pose.IsValid)
+                {
+                    this.CurrentPose = pose;
+                }
+                else if (pose.JointStates != null) this.CurrentPose.JointStates = pose.JointStates;
             } 
-            set 
-            {
-                if (value != null | value.Count != 0)
-                    this.colors = value;
-            } 
+            else this.CurrentPose = pose; ;
         }
-        public override string TypeName => "Manipulator";
-        public override string TypeDescription => "Robot movment system";
+        public void UpdatePose() 
+        {
+            this.RobMeshes.Zip<Mesh, Transform, bool>(this.CurrentPose.GetPose(), (mesh, xform) => mesh.Transform(xform));
+            this.ResetTransform = this.CurrentPose.Reverse;
+        }
+        #endregion
+
+        #region Interface variables 
+
+        //IGH_GeometricGoo
+        public BoundingBox Boundingbox => throw new NotImplementedException();
+        public Guid ReferenceID { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public bool IsReferencedGeometry { get => false; }
+        public bool IsGeometryLoaded { get => throw new NotImplementedException(); }
+
+        public void ClearCaches() => throw new NotImplementedException();
+        public IGH_GeometricGoo DuplicateGeometry()
+        {
+            var robot = new Manipulator(this.Manufacturer, this.AxisPlanes.ToArray(), this.MinAngles, this.MaxAngles, this.RobMeshes.Select(m => m.DuplicateMesh()).ToList(), this.RobBasePlane, this.Indices);
+            if (this.Name == string.Empty) robot.Name = this.Name;
+            return robot;
+        }
+        public BoundingBox GetBoundingBox(Transform xform) => throw new NotImplementedException();
+        public bool LoadGeometry() => throw new NotImplementedException();
+        public bool LoadGeometry(Rhino.RhinoDoc doc) => throw new NotImplementedException();
+        public IGH_GeometricGoo Morph(SpaceMorph xmorph) => throw new NotImplementedException();
+        public IGH_GeometricGoo Transform(Transform xform) => throw new NotImplementedException();
+
+
+        //IGH_Goo
+        public bool IsValid
+        { get {
+                if (this.CurrentPose != null) return this.CurrentPose.IsValid;
+                else return false;
+            } }
+        public string IsValidWhyNot => "Since no or no valid poes has been set the is no representation possible for this robot";
+        public string TypeName => "Manipulator";
+        public string TypeDescription => "Robot movment system";
+
+        public bool CastFrom(object source) => throw new NotImplementedException();
+        public bool CastTo<T>(out T target) => throw new NotImplementedException();
+        public IGH_Goo Duplicate()
+        {
+            Manipulator robot = new Manipulator(this.Manufacturer, this.AxisPlanes.ToArray(), this.MinAngles, this.MaxAngles, this.RobMeshes, this.RobBasePlane, this.Indices);
+            if (this.Name != null) robot.Name = this.Name;
+            return robot;
+        }
+        public IGH_GooProxy EmitProxy() => throw new NotImplementedException();
+        public object ScriptVariable() => this;
         public override string ToString()
         {
             return $"Robot {this.Manufacturer.ToString()}";
         }
-        public override bool IsValid => true;
-        public override int GetHashCode()
-        {
-            var val = Manufacturer.GetHashCode() + AxisPoints.GetHashCode() + RobBasePlane.GetHashCode() + MinAngles.GetHashCode() + MaxAngles.GetHashCode() + Indices.GetHashCode();
-            return base.GetHashCode();
-        }
-        public override IGH_Goo Duplicate()
-        {
-            return new Manipulator(this.Manufacturer, this.AxisPoints, this.MinAngles, this.MaxAngles, this.RobMeshes, this.RobBasePlane, this. Indices);
-        }
-        public BoundingBox GetBoundingBox()
-        {
-            if (this.ikMeshes == null) return BoundingBox.Empty;
 
-            Mesh joinedMesh = new Mesh();
-            foreach (Mesh m in this.ikMeshes)
+        //GH_ISerializable
+        public bool Read(GH_IReader reader)
+        {
+
+            this.Name = reader.GetString("Name");
+            this.Manufacturer = (Manufacturer)reader.GetInt32("Manufacturer");
+
+            Plane bPlane = new Plane();
+            GH_Convert.ToPlane(reader.GetPlane("RobBasePlane"), ref bPlane, GH_Conversion.Both);
+            this.RobBasePlane = bPlane;
+
+            for (int i = 0; i < 4; ++i)
             {
-                joinedMesh.Append(m);
+                Plane plane = new Plane();
+                GH_Convert.ToPlane(reader.GetPlane("AxisPlanes", i), ref plane, GH_Conversion.Both);
+                this.AxisPlanes.Add(plane);
             }
-            return joinedMesh.GetBoundingBox(false);
+            for (int i = 0; i < 6; ++i)
+            {
+                this.MinAngles.Add(reader.GetDouble("MinAngles", i));
+            }
+            for (int i = 0; i < 6; ++i)
+            {
+                this.MaxAngles.Add(reader.GetDouble("MaxAngles", i));
+            }
+            for (int i = 0; i < 6; ++i)
+            {
+                this.Indices.Add(reader.GetInt32("Indices", i));
+            }
+            for (int i = 0; i < 6; ++i)
+            {
+                Mesh mesh = new Mesh();
+                GH_Convert.ToMesh(reader.GetByteArray("RobMeshes", i), ref mesh, GH_Conversion.Both);
+                this.RobMeshes.Add(mesh);
+            }
+
+
+            //return base.Read(reader);
+            return true;
+
         }
+        public bool Write(GH_IWriter writer)
+        {
+
+            GH_Plane gH_RobBasePlane = new GH_Plane(this.RobBasePlane);
+
+            writer.SetString("Name", this.Name);
+            writer.SetInt32("Manufacturer", (int)this.Manufacturer);
+            gH_RobBasePlane.Write(writer.CreateChunk("RobBasePlane"));
+
+            for (int i = 0; i < this.AxisPlanes.Count; ++i)
+            {
+                GH_IO.Types.GH_Plane plane = new GH_IO.Types.GH_Plane(
+                    this.AxisPlanes[i].OriginX,
+                    this.AxisPlanes[i].OriginY,
+                    this.AxisPlanes[i].OriginZ,
+                    this.AxisPlanes[i].XAxis.X,
+                    this.AxisPlanes[i].XAxis.Y,
+                    this.AxisPlanes[i].XAxis.Z,
+                    this.AxisPlanes[i].YAxis.X,
+                    this.AxisPlanes[i].YAxis.Y,
+                    this.AxisPlanes[i].YAxis.Z
+                    );
+                writer.SetPlane("AxisPlanes", i, plane);
+            }
+            for (int i = 0; i < this.MinAngles.Count; ++i)
+            {
+                writer.SetDouble("MinAngles", i, this.MinAngles[i]);
+            }
+            for (int i = 0; i < this.MinAngles.Count; ++i)
+            {
+                writer.SetDouble("MaxAngles", i, this.MaxAngles[i]);
+            }
+            for (int i = 0; i < this.Indices.Count; ++i)
+            {
+                writer.SetInt32("Indices", i, this.Indices[i]);
+            }
+            for (int i = 0; i < this.RobMeshes.Count; ++i)
+            {
+                GH_Mesh mesh = new GH_Mesh(this.RobMeshes[i]);
+                mesh.Write(writer.CreateChunk("RobMeshes", i));
+            }
+
+
+            return true;
+
+        }
+        #endregion
 
 
         /// <summary>
-        /// Closed form inverse kinematics for a 6 DOF industrial robot. Returns flags for validity and error types.
+        /// Class to hold the values describing the tansformation of a tool
         /// </summary>
-        /// <param name="target"></param>
-        /// <param name="overheadSing"></param>
-        /// <param name="outOfReach"></param>
-        /// <returns></returns>
-        private List<List<double>> TargetInverseKinematics(Plane target, out bool overheadSing, out bool outOfReach)
+        public class ManipulatorPose : IGH_Goo
         {
-            // Validity checks
-            bool unreachable = true;
-            bool singularity = false;
+            #region Class variable
+            //Pose variavles
+            private Manipulator Robot;
+            private Axis.Targets.Target Target;
+            private double[] radAngles;
+            private JointStatesValue[] jointStates;
 
-            // Get axis points from custom robot class.
-            Point3d[] RP = new Point3d[] { this.AxisPoints[0], this.AxisPoints[1], this.AxisPoints[2], this.AxisPoints[3] };
+            //Signals
+            private bool outOfReach = false;
+            private bool outOfRoation = false;
+            private bool overHeadSig = false;
+            private bool wristSing = false;
+            #endregion
 
-            // Lists of doubles to hold our axis values and our output log.
-            List<double> a1list = new List<double>(),
-                a2list = new List<double>(),
-                a3list = new List<double>(),
-                a4list = new List<double>(),
-                a5list = new List<double>(),
-                a6list = new List<double>();
-            List<string> info = new List<string>();
+            #region Propperties
+            public double[] Angles { get => this.radAngles.Select(d => d.ToDegrees()).ToArray(); }
+            public JointStatesValue[] JointStates {
+                get => jointStates;
+                set { jointStates = value; }
+            }
+            public bool OutOfReach { get => outOfReach; }
+            public bool OutOfRoation { get => outOfRoation; }
+            public bool OverHeadSig { get => overHeadSig; }
+            public bool WristSing { get => wristSing; }
 
-            // Find the wrist position by moving back along the robot flange the distance of the wrist link.
-            Point3d WristLocation = new Point3d(target.PointAt(0, 0, -this.WristOffset));
 
-            double angle1 = Math.Atan2(WristLocation.Y, WristLocation.X);
+            // Mesh Transformations
+            public Transform[] Reverse;
+            private Transform[] Forward;
 
-            // Check for overhead singularity and add message to log if needed
-            if (WristLocation.Y < this.singularityTol && WristLocation.Y > -this.singularityTol &&
-                WristLocation.X < this.singularityTol && WristLocation.X > -this.singularityTol)
-                singularity = true;
-
-            // Standard cases for axis one.
-            if (angle1 > Math.PI) angle1 -= 2 * Math.PI;
-            for (int j = 0; j < 4; j++)
-                a1list.Add(angle1);
-
-            // Other cases for axis one.
-            angle1 += Math.PI;
-            if (angle1 > Math.PI) angle1 -= 2 * Math.PI;
-            for (int j = 0; j < 4; j++)
-                a1list.Add(1 * angle1);
-
-            // Generate four sets of values for each option of axis one
-            for (int j = 0; j < 2; j++)
+            // Mesh Colours
+            public Color[] Colors { get => (this.jointStates != null) ? this.jointStates.Select(state => GetColour(state)).ToArray() : null; }
+            private static Dictionary<JointStatesValue, Color> JointColours = new Dictionary<JointStatesValue, Color>()
             {
-                angle1 = a1list[j * 4];
+                { JointStatesValue.Normal, Axis.Styles.DarkGrey },
+                { JointStatesValue.OutOfReach, Axis.Styles.Pink },
+                { JointStatesValue.OutOfRotation, Axis.Styles.Pink },
+                { JointStatesValue.WristSing, Axis.Styles.Blue },
+                { JointStatesValue.OverHeadSing, Axis.Styles.Blue },
 
-                // Rotate all of our points based on axis one.
-                Transform Rotation = Transform.Rotation(angle1, Point3d.Origin);
+            };
 
-                Point3d P1A = new Point3d(RP[0]);
-                Point3d P2A = new Point3d(RP[1]);
-                Point3d P3A = new Point3d(RP[2]);
 
-                P1A.Transform(Rotation);
-                P2A.Transform(Rotation);
-                P3A.Transform(Rotation);
-
-                // Define the elbow direction and create a plane there.
-                Vector3d ElbowDir = new Vector3d(1, 0, 0);
-                ElbowDir.Transform(Rotation);
-                Plane ElbowPlane = new Plane(P1A, ElbowDir, Plane.WorldXY.ZAxis);
-
-                // Create our spheres for doing the intersections.
-                Sphere Sphere1 = new Sphere(P1A, this.LowerArmLength);
-                Sphere Sphere2 = new Sphere(WristLocation, this.UpperArmLength);
-                Circle Circ = new Circle();
-
-                double Par1 = new double(), Par2 = new double();
-
-                // Do the intersections and store them as pars.
-                Rhino.Geometry.Intersect.Intersection.SphereSphere(Sphere1, Sphere2, out Circ);
-                Rhino.Geometry.Intersect.Intersection.PlaneCircle(ElbowPlane, Circ, out Par1, out Par2);
-
-                // Logic to check if the target is unreachable.
-                if (unreachable)
-                    if (Par1 != double.NaN || Par2 != double.NaN)
-                        unreachable = false;
-
-                // Get the points.
-                Point3d IntersectPt1 = Circ.PointAt(Par1), IntersectPt2 = Circ.PointAt(Par2);
-
-                // Solve IK for the remaining axes using these points.
-                for (int k = 0; k < 2; k++)
+            public Plane[] Planes { get
                 {
-                    Point3d ElbowPt = new Point3d();
+                    Plane[] planes = this.Robot.AxisPlanes.Select(plane => plane.Clone()).ToArray();
+                    for (int i = 0; i < planes.Length; ++i) planes[i].Transform(this.Forward[i]);
+                    return planes;
+                } }
+            public Plane Flange { get
+                {
+                    Plane flange = this.Robot.AxisPlanes[5].Clone();
+                    flange.Transform(Forward[5]);
+                    return flange;
+                } }
+            public Mesh[] Geometry
+            {
+                get
+                {
+                    Mesh[] meshes = this.Robot.RobMeshes.Select(plane => plane.DuplicateMesh()).ToArray();
+                    for (int i = 0; i < meshes.Length - 1; ++i) meshes[i + 1].Transform(this.Forward[i]);
+                    return meshes;
+                }
+            }
+            #endregion
 
-                    if (k == 0) ElbowPt = IntersectPt1;
-                    else ElbowPt = IntersectPt2;
+            #region Constructors
+            public ManipulatorPose(Manipulator robot)
+            {
+                this.Robot = robot;
+            }
+            public ManipulatorPose(Manipulator robot, Targets.Target target)
+            {
+                this.Robot = robot;
+                this.SetPose(target);
+            }
+            #endregion
 
-                    // Parameters in the elbow plane.
-                    double elbowx, elbowy, wristx, wristy;
+            #region  Methods
+            //Public
+            public void SetPose(Targets.Target target)
+            {
+                this.Target = target;
 
-                    ElbowPlane.ClosestParameter(ElbowPt, out elbowx, out elbowy);
-                    ElbowPlane.ClosestParameter(WristLocation, out wristx, out wristy);
+                double[] radAngles = new double[6];
+                double[] degAngles = new double[6];
+                JointStatesValue[] jointStates = new JointStatesValue[6];
 
-                    double angle2 = Math.Atan2(elbowy, elbowx);
-                    double angle3 = Math.PI - angle2 + Math.Atan2(wristy - elbowy, wristx - elbowx) - this.AxisFourOffset;
-
-                    for (int n = 0; n < 2; n++)
-                    {
-                        a2list.Add(-angle2);
-                        double axis3Wrapped = -angle3 + Math.PI;
-                        while (axis3Wrapped >= Math.PI) axis3Wrapped -= 2 * Math.PI;
-                        while (axis3Wrapped < -Math.PI) axis3Wrapped += 2 * Math.PI;
-                        a3list.Add(axis3Wrapped);
-                    }
-
-                    for (int n = 0; n < 2; n++)
-                    {
-                        Vector3d Axis4 = new Vector3d(WristLocation - ElbowPt);
-                        Axis4.Rotate(-this.AxisFourOffset, ElbowPlane.ZAxis);
-                        Vector3d LowerArm = new Vector3d(ElbowPt - P1A);
-                        Plane TempPlane = ElbowPlane;
-                        TempPlane.Rotate(angle2 + angle3, TempPlane.ZAxis);
-
-                        Plane Axis4Plane = new Rhino.Geometry.Plane(WristLocation, TempPlane.ZAxis, -1.0 * TempPlane.YAxis);
-
-                        double axis6x, axis6y;
-                        Axis4Plane.ClosestParameter(target.Origin, out axis6x, out axis6y);
-
-                        double angle4 = Math.Atan2(axis6y, axis6x);
-                        if (n == 1)
+                //Invers and farward kinematics devided by manufacturar
+                switch (this.Robot.Manufacturer)
+                {
+                    case Manufacturer.ABB:
+                        switch (target.Method)
                         {
-                            angle4 += Math.PI;
-                            if (angle4 > Math.PI)
-                                angle4 -= 2 * Math.PI;
+                            case Targets.MotionType.Linear:
+                            case Targets.MotionType.Joint:
+
+                                ////Bring Target to Robot refference
+                                //Rhino.Geometry.Transform reverse = Rhino.Geometry.Transform.PlaneToPlane(this.Robot.AxisPlanes[0], Plane.WorldXY);
+                                //Plane ikPlane = target.Plane.Clone();
+                                //ikPlane.Transform(reverse);
+
+                                //double[,] anglesSet = newTargetInverseKinematics(target, out overHeadSig, out outOfReach);
+                                List<List<double>> anglesSet = TargetInverseKinematics(target.Plane, out overHeadSig, out outOfReach);
+
+                                // Select Solution based on Indecies
+                                //for (int i = 0; i < anglesSet.Length / anglesSet.GetLength(1); ++i) degAngles[i] = anglesSet[i, this.Robot.Indices[i]];
+                                radAngles = anglesSet.Zip<List<double>, int, double>(this.Robot.Indices, (solutions, selIdx) => solutions[selIdx]).ToArray();
+                                degAngles = radAngles.Select(a => a.ToDegrees()).ToArray();
+
+                                jointStates = CheckJointAngles(degAngles, this.Robot, checkSingularity: true);
+
+                                break;
+                            case Targets.MotionType.AbsoluteJoint:
+                                degAngles = target.JointAngles.ToArray();
+                                radAngles = degAngles.Select(a => a.ToRadians()).ToArray();
+
+                                jointStates = CheckJointAngles(degAngles, this.Robot);
+
+                                break;
+                            default:
+                                throw new Exception($"This movment: {target.Method.ToString()} has not jet been implemented for {this.Robot.Manufacturer.ToString()}"); ;
+                        } break;
+                    case Manufacturer.Kuka:
+                        switch (target.Method)
+                        {
+                            case Targets.MotionType.AbsoluteJoint:
+
+                                degAngles = target.JointAngles.ToArray();
+                                jointStates = CheckJointAngles(degAngles, this.Robot);
+
+                                radAngles = degAngles.Select(value => value.ToRadians()).ToArray();
+                                break;
+                            default:
+                                throw new Exception($"This movment: {target.Method.ToString()} has not jet been implemented for {this.Robot.Manufacturer.ToString()}");
+                        } break;
+                }
+
+                SetSignals(jointStates, out this.outOfReach, out this.outOfRoation, out this.wristSing, out this.overHeadSig);
+
+
+                this.radAngles = radAngles;
+
+                this.Forward = ForwardKinematics(radAngles, this.Robot);
+
+            }
+            public Transform[] GetPose()
+            {
+                if (this.Forward == null) throw new Exception("Unable to transfromation for empty pose please first call SetPost");
+
+                // Set Transform in relation to current position
+                this.Forward = this.Forward.Zip(this.Robot.ResetTransform, (forward, reverse) => reverse * forward).ToArray();
+
+                // Update inverse of current position
+                this.Forward.Select((xform, idx) => xform.TryGetInverse(out this.Reverse[idx]));
+
+                return this.Forward;
+            }
+
+
+            //Private
+            /// <summary>
+            /// Closed form inverse kinematics for a 6 DOF industrial robot. Returns flags for validity and error types.
+            /// </summary>
+            /// <param name="target"></param>
+            /// <param name="overheadSing"></param>
+            /// <param name="outOfReach"></param>
+            /// <returns></returns>
+            private List<List<double>> TargetInverseKinematics(Plane target, out bool overheadSing, out bool outOfReach, double singularityTol = 5)
+            {
+
+                //////////////////////////////////////////////////////////////
+                //// Setup of the vartiables needed for Iverse Kinematics ////
+                //////////////////////////////////////////////////////////////
+
+                //Setting up Planes 
+                Plane P0 = this.Robot.AxisPlanes[0].Clone();
+                Plane P1 = this.Robot.AxisPlanes[1].Clone();
+                Plane P2 = this.Robot.AxisPlanes[2].Clone();
+                Plane P3 = this.Robot.AxisPlanes[3].Clone();
+                Plane P4 = this.Robot.AxisPlanes[4].Clone();
+                Plane P5 = this.Robot.AxisPlanes[5].Clone();
+                Plane flange = target.Clone();
+
+
+                // Setting Up Lengths
+                double wristOffsetLength = this.Robot.WristOffsetLength;
+                double lowerArmLength = this.Robot.LowerArmLength;
+                double upperArmLength = this.Robot.UpperArmLength;
+                double axisFourOffsetAngle = this.Robot.AxisFourOffsetAngle;
+
+
+
+
+                //////////////////////////////////////////////////////////////
+                //// Everything past this should be locals to the Function////
+                //////////////////////////////////////////////////////////////
+
+                double UnWrap(double value) 
+                {
+                    while (value >= Math.PI) value -= 2 * Math.PI;
+                    while (value < -Math.PI) value += 2 * Math.PI;
+
+                    return value;
+                }
+                double AngleOnPlane(Plane plane, Point3d point)
+                {
+                    double outX, outY;
+                    plane.ClosestParameter(point, out outX, out outY);
+
+                    return Math.Atan2(outY, outX);
+                }
+
+
+                // Validity checks
+                bool unreachable = true;
+                bool singularity = false;
+
+
+                // Lists of doubles to hold our axis values and our output log.
+                List<double> a1list = new List<double>(),
+                    a2list = new List<double>(),
+                    a3list = new List<double>(),
+                    a4list = new List<double>(),
+                    a5list = new List<double>(),
+                    a6list = new List<double>();
+
+
+
+                // Find the wrist position by moving back along the robot flange the distance of the wrist link.
+                Point3d WristLocation = new Point3d(flange.PointAt(0, 0, -wristOffsetLength));
+
+                // Check for overhead singularity and add message to log if needed
+                bool checkForOverheadSingularity(Point3d wristLocation, Point3d bPlane) 
+                {
+                    if ( (bPlane.Y - WristLocation.Y) < singularityTol && (bPlane.Y - WristLocation.Y) > -singularityTol &&
+                         (bPlane.X - WristLocation.X) < singularityTol && (bPlane.X - WristLocation.X) > -singularityTol)
+                        return true;
+                    else return false;
+                }
+                singularity = checkForOverheadSingularity(WristLocation, P0.Origin);
+                
+                
+
+
+
+                double angle1 = AngleOnPlane(P0, WristLocation);
+
+
+                // Standard cases for axis one.
+                if (angle1 > Math.PI) angle1 -= 2 * Math.PI;
+                for (int j = 0; j < 4; j++)
+                    a1list.Add(angle1);
+
+                // Other cases for axis one.
+                angle1 += Math.PI;
+                if (angle1 > Math.PI) angle1 -= 2 * Math.PI;
+                for (int j = 0; j < 4; j++)
+                    a1list.Add(1 * angle1);
+
+
+
+
+                // Generate four sets of values for each option of axis one
+                for (int j = 0; j < 2; j++)
+                {
+                    angle1 = a1list[j * 4];
+
+                    // Rotate all of our points based on axis one.
+                    Transform Rotation1 = Rhino.Geometry.Transform.Rotation(angle1, P0.ZAxis, P0.Origin);
+
+                    Plane P1A = new Plane(P1); P1A.Transform(Rotation1);
+                    Plane P2A = new Plane(P2); P2A.Transform(Rotation1);
+                    Plane P3A = new Plane(P3); P3A.Transform(Rotation1);
+                    Plane P4A = new Plane(P4); P4A.Transform(Rotation1);
+                    Plane P5A = new Plane(P5); P5A.Transform(Rotation1);
+
+
+
+
+                    // Create our spheres for doing the intersections.
+                    Sphere Sphere1 = new Sphere(P1A, lowerArmLength);
+                    Sphere Sphere2 = new Sphere(WristLocation, upperArmLength);
+                    Circle Circ = new Circle();
+
+                    double Par1 = new double(), Par2 = new double();
+
+                    // Do the intersections and store them as pars.
+                    Rhino.Geometry.Intersect.Intersection.SphereSphere(Sphere1, Sphere2, out Circ);
+                    Rhino.Geometry.Intersect.Intersection.PlaneCircle(P1A, Circ, out Par1, out Par2);
+
+                    // Logic to check if the target is unreachable.
+                    if (unreachable)
+                        if (Par1 != double.NaN || Par2 != double.NaN)
+                            unreachable = false;
+
+
+                    // Get the points.
+                    Point3d IntersectPt1 = Circ.PointAt(Par1), IntersectPt2 = Circ.PointAt(Par2);
+
+
+
+
+
+                    // Solve IK for the remaining axes using these points.
+                    for (int k = 0; k < 2; k++)
+                    {
+                        Point3d ElbowPt = new Point3d();
+
+                        if (k == 0) ElbowPt = IntersectPt1;
+                        else ElbowPt = IntersectPt2;
+
+
+
+                        double angle2 = AngleOnPlane(P1A, ElbowPt);
+
+                        Transform Rotation2 = Rhino.Geometry.Transform.Rotation(angle2, P1A.ZAxis, P1A.Origin);
+                        Plane P2B = P2A.Clone(); P2B.Transform(Rotation2);
+                        Plane P3B = P3A.Clone(); P3B.Transform(Rotation2);
+                        Plane P4B = P4A.Clone(); P4B.Transform(Rotation2);
+                        Plane P5B = P5A.Clone(); P5B.Transform(Rotation2);
+
+
+
+                        double angle3 = AngleOnPlane(P2B, WristLocation) + axisFourOffsetAngle;
+
+
+                        // Add Twice to list
+                        for (int n = 0; n < 2; n++)
+                        {
+                            a2list.Add(angle2);
+                            a3list.Add(UnWrap(angle3));
                         }
 
-                        double Axis4AngleWrapped = angle4 + Math.PI / 2;
-                        while (Axis4AngleWrapped >= Math.PI) Axis4AngleWrapped -= 2 * Math.PI;
-                        while (Axis4AngleWrapped < -Math.PI) Axis4AngleWrapped += 2 * Math.PI;
-                        a4list.Add(Axis4AngleWrapped);
 
-                        Plane ikAxis5Plane = new Rhino.Geometry.Plane(Axis4Plane);
-                        ikAxis5Plane.Rotate(angle4, Axis4Plane.ZAxis);
-                        ikAxis5Plane = new Rhino.Geometry.Plane(WristLocation, -ikAxis5Plane.ZAxis, ikAxis5Plane.XAxis);
+                        for (int n = 0; n < 2; n++)
+                        {
 
-                        ikAxis5Plane.ClosestParameter(target.Origin, out axis6x, out axis6y);
-                        double angle5 = Math.Atan2(axis6y, axis6x);
-                        a5list.Add(angle5);
 
-                        Plane ikAxis6Plane = new Rhino.Geometry.Plane(ikAxis5Plane);
-                        ikAxis6Plane.Rotate(angle5, ikAxis5Plane.ZAxis);
-                        ikAxis6Plane = new Rhino.Geometry.Plane(WristLocation, -ikAxis6Plane.YAxis, ikAxis6Plane.ZAxis);
+                            Transform Rotation3 = Rhino.Geometry.Transform.Rotation(angle3, P2B.ZAxis, P2B.Origin);
+                            Plane P3C = P3B.Clone(); P3C.Transform(Rotation3);
+                            Plane P4C = P4B.Clone(); P4C.Transform(Rotation3);
+                            Plane P5C = P5B.Clone(); P5C.Transform(Rotation3);
 
-                        double endx, endy;
-                        ikAxis6Plane.ClosestParameter(target.PointAt(1, 0), out endx, out endy);
 
-                        double angle6 = (Math.Atan2(endy, endx));
-                        a6list.Add(angle6);
+
+                            double angle4 = AngleOnPlane(P3C, flange.Origin);
+                            if (n == 1) angle4 += Math.PI;
+                            a4list.Add(UnWrap(angle4));
+
+
+                            Transform Rotation4 = Rhino.Geometry.Transform.Rotation(angle4, P3C.ZAxis, P3C.Origin);
+                            Plane P4D = P4C.Clone(); P4D.Transform(Rotation4);
+                            Plane P5D = P5C.Clone(); P5D.Transform(Rotation4);
+
+
+
+
+
+
+                            double angle5 = AngleOnPlane(P4D, flange.Origin);
+                            a5list.Add(angle5);
+
+
+                            Transform Rotation5 = Rhino.Geometry.Transform.Rotation(angle5, P4D.ZAxis, P4D.Origin);
+
+                            Plane P5E = P5D.Clone(); P5E.Transform(Rotation5);
+
+
+
+                            double angle6 = AngleOnPlane(P5E, flange.PointAt(1, 0));
+                            a6list.Add(angle6);
+
+                        }
                     }
                 }
+
+
+                //////////////////////////////////////////////////////////////////////
+                ////// Cleaning up and preping returning the angles //////////////////
+                //////////////////////////////////////////////////////////////////////
+
+
+                // Compile our list of all axis angle value lists.
+                List<List<double>> angles = new List<List<double>>();
+                angles.Add(a1list); angles.Add(a2list); angles.Add(a3list); angles.Add(a4list); angles.Add(a5list); angles.Add(a6list);
+
+
+                // Update validity based on flags
+                outOfReach = unreachable;
+                overheadSing = singularity;
+
+                return angles; // Return the angles.
             }
-
-            // Compile our list of all axis angle value lists.
-            List<List<double>> angles = new List<List<double>>();
-            angles.Add(a1list); angles.Add(a2list); angles.Add(a3list); angles.Add(a4list); angles.Add(a5list); angles.Add(a6list);
-
-            // Convert all angles to degrees.
-            foreach (List<double> aList in angles)
-                for (int k = 0; k < 8; k++)
-                    aList[k] = Util.ToDegrees(aList[k]);
-
-            // Update validity based on flags
-            outOfReach = unreachable;
-            overheadSing = singularity;
-
-            return angles; // Return the angles.
-        }
-        /// <summary>
-        /// Check joint angle values against the robot model data. Outputs flags for joint error and wrist singularity. Returns a list of colors.
-        /// </summary>
-        /// <param name="robot"></param>
-        /// <param name="selectedAngles"></param>
-        /// <param name="wristSing"></param>
-        /// <param name="outOfRotation"></param>
-        /// <returns></returns>
-        private List<System.Drawing.Color> CheckJointAngles(List<double> selectedAngles, out bool wristSing, out bool outOfRotation)
-        {
-            // Colours
-            List<System.Drawing.Color> colors = new List<System.Drawing.Color>();
-            colors.Add(Styles.DarkGrey); // Add robot base.
-
-            bool rotationError = false; bool singularity = false;
-
-            for (int i = 0; i < 6; i++)
+            private static Rhino.Geometry.Transform[] ForwardKinematics(double[] radAngles, Manipulator robot)
             {
-                // Check if the solution value is inside the manufacturer permitted range.
-                if (selectedAngles[i] < this.MaxAngles[i] && selectedAngles[i] > this.MinAngles[i])
-                    colors.Add(Styles.DarkGrey);
-                else
+                // Create an array of identety matrices
+                Transform[] transforms = new Transform[radAngles.Length];
+                transforms = transforms.Select(value => value = Rhino.Geometry.Transform.Identity).ToArray();
+                
+
+                void UpdateRotat(double angle, int level)
                 {
-                    colors.Add(Styles.Pink);
-                    rotationError = true;
+                    var range = Enumerable.Range(level, transforms.Length - level);
+                    if (range.Count() == 0) return;
+
+                    foreach (int i in range) transforms[i] = (transforms[i] * Rhino.Geometry.Transform.Rotation(angle, robot.AxisPlanes[level].ZAxis, robot.AxisPlanes[level].Origin));
                 }
-                try
+                for (int i = 0; i < radAngles.Length; ++i) UpdateRotat(radAngles[i], i);
+
+                return transforms;
+            }
+            private double[,] AttemptTargetInverseKinematics(Axis.Targets.Target target, out bool overheadSing, out bool outOfReach, double singularityTol = 5) 
+            {
+                // Validity checks
+                bool unreachable = false;
+                bool singularity = false;
+
+
+                Plane FlangeFromTargetAndToo(Axis.Targets.Target t) 
                 {
-                    // Check for singularity and replace the preview color.
-                    if (selectedAngles[4] > -this.singularityTol && selectedAngles[4] < this.singularityTol)
+                    Transform toolCompensation = Rhino.Geometry.Transform.PlaneToPlane(t.Tool.TCP, Plane.WorldXY);
+                    Plane flange = t.Plane.Clone();
+                    flange.Transform(toolCompensation);
+                    return flange;
+                }
+                Plane Flange = FlangeFromTargetAndToo(target);
+
+
+                /// Konstruct K points
+                Plane K0 = this.Robot.RobBasePlane.Clone();
+                Plane K1 = this.Robot.AxisPlanes[1].Clone();
+                Plane K2 = this.Robot.AxisPlanes[2].Clone();
+                Plane K3 = this.Robot.AxisPlanes[3].Clone();
+                Plane K4 = this.Robot.AxisPlanes[4].Clone();
+
+                //Move K4 in rlation to the flange
+                //K4.Transform(Rhino.Geometry.Transform.Translation(this.Robot.WristOffset));
+
+                void UpdateValuesIn2DMatrix(double[,] table, double[] value, int row) 
+                {
+                    for (int i = 0; i < value.Length; ++i)
                     {
-                        colors[5] = (Styles.Blue);
-                        singularity = true;
+                        //Make sure always the smalles possible rotation is used
+                        while (value[i] >= Math.PI) value[i] -= 2 * Math.PI;
+                        while (value[i] < -Math.PI) value[i] += 2 * Math.PI;
+
+
+                        var dim = table.GetLength(2); //Get the dimention of the matrix
+                        foreach (int j in Enumerable.Range(
+                            dim / value.Length * i,
+                            dim / value.Length + (i * dim / value.Length) )) table[row, j] = value[i]; // It might be nessesary to flip row/j
                     }
                 }
-                catch { }
-            }
-            colors.Add(Styles.DarkGrey); // Hardcoded tool color
+                void FillOutMatrix(double[,] matrix, IList<double[]> lists) 
+                {
+                    for (int i = 0; i < lists.Count(); ++i)
+                    {
+                        UpdateValuesIn2DMatrix(matrix, lists[i], i);
+                    }
+                }
 
-            outOfRotation = rotationError;
-            wristSing = singularity;
+                double[] AnglesOnPlane(Plane k0, Point3d k4) 
+                {
+                    double U; double V;
+                    k0.ClosestParameter(k4, out U, out V);
+                    var value = Math.Atan2(U, V);
+                    return new double[] { value, value + Math.PI };
+                }
+                List<Plane> Rotations(IList<double> ang, Plane planeOfRotation, Plane geo)
+                {
+                    List<Plane> list = new List<Plane>();
+                    for (int i = 0; i < ang.Count(); ++i) 
+                    { 
+                        Transform rot = Rhino.Geometry.Transform.Rotation(ang[i], planeOfRotation.ZAxis, planeOfRotation.Origin);
+                        Plane geoClone = geo.Clone();
+                        geoClone.Transform(rot);
+                        list.Add(geoClone);
+                    }
+                    return list;
+                }
+                Tuple<double[], double[], Vector3d[], Vector3d[]> 
+                    AnglesForASetOfPointsT( IList<Plane> startPlanes, IList<Plane> targetPlane,  double armLength1 , double armLength2) 
+                {
+                    List<double> angleSet1 = new List<double>();
+                    List<double> angleSet2 = new List<double>();
+                    List<Vector3d> vectorSet1 = new List<Vector3d>();
+                    List<Vector3d> vectorSet2 = new List<Vector3d>();
 
-            return colors;
-        }
-        /// <summary>
-        /// Update robot mesh geometry based on axis values. Returns a list of mesh geometry.
-        /// </summary>
-        /// <param name="robot"></param>
-        /// <param name="radAngles"></param>
-        /// <param name="robPlanes"></param>
-        /// <param name="flange"></param>
-        /// <returns></returns>
-        private List<Mesh> UpdateRobotMeshes(double[] radAngles, out List<Plane> planesOut, out Plane flange)
-        {
-            List<Mesh> meshes = this.RobMeshes;
-            List<Plane> aPlanes = this.tAxisPlanes;
-            List<Plane> robPlanes = new List<Plane>();
-            Plane robBase = this.RobBasePlane;
+                    int k = 0;
+                    for (int i = 0; i < startPlanes.Count(); ++i)
+                    {
+                        for (int j = 0; i < targetPlane.Count(); ++i) 
+                        {
+                            // Spheres
+                            Sphere Sphere1 = new Sphere(startPlanes[i], this.Robot.LowerArmLength);
+                            Sphere Sphere2 = new Sphere(targetPlane[j], this.Robot.UpperArmLength);
+                            Circle Circ = new Circle();
 
-            List<Mesh> meshesOut = new List<Mesh>();
-            meshesOut.Add(meshes[0]);
+                            double Par1 = new double();
+                            double Par2 = new double();
 
-            Transform Rot1 = Transform.Rotation(radAngles[0], robBase.ZAxis, robBase.Origin);
-            List<Mesh> Meshes1 = new List<Mesh>();
-            List<Plane> Planes1 = new List<Plane>();
-            for (int i = 1; i < meshes.Count; i++)
-            {
-                Mesh temp = meshes[i].DuplicateMesh();
-                temp.Transform(Rot1);
-                Meshes1.Add(temp);
-            }
-            for (int i = 0; i < 6; i++)
-            {
-                Plane temp = new Plane(aPlanes[i]);
-                temp.Transform(Rot1);
-                Planes1.Add(temp);
-            }
-            meshesOut.Add(Meshes1[0]);
+                            Rhino.Geometry.Intersect.Intersection.SphereSphere(Sphere1, Sphere2, out Circ);
+                            Rhino.Geometry.Intersect.Intersection.PlaneCircle(startPlanes[i], Circ, out Par1, out Par2);
 
-            Transform Rot2 = Transform.Rotation(radAngles[1] + Math.PI / 2, Planes1[0].ZAxis, Planes1[0].Origin);
-            List<Mesh> Meshes2 = new List<Mesh>();
-            List<Plane> Planes2 = new List<Plane>();
-            for (int i = 1; i < Meshes1.Count; i++)
-            {
-                Mesh temp = Meshes1[i].DuplicateMesh();
-                temp.Transform(Rot2);
-                Meshes2.Add(temp);
-            }
-            for (int i = 0; i < Planes1.Count; i++)
-            {
-                Plane temp = new Plane(Planes1[i]);
-                temp.Transform(Rot2);
-                Planes2.Add(temp);
-            }
-            robPlanes.Add(Planes1[0]);
-            meshesOut.Add(Meshes2[0]);
+                            Point3d IntersectPt1 = Circ.PointAt(Par1);
+                            Point3d IntersectPt2 = Circ.PointAt(Par2);
 
-            Transform Rot3 = Transform.Rotation(radAngles[2] - Math.PI / 2, Planes2[1].ZAxis, Planes2[1].Origin);
-            List<Mesh> Meshes3 = new List<Mesh>();
-            List<Plane> Planes3 = new List<Plane>();
-            for (int i = 1; i < Meshes2.Count; i++)
-            {
-                Mesh temp = Meshes2[i].DuplicateMesh();
-                temp.Transform(Rot3);
-                Meshes3.Add(temp);
-            }
-            for (int i = 0; i < Planes2.Count; i++)
-            {
-                Plane temp = new Plane(Planes2[i]);
-                temp.Transform(Rot3);
-                Planes3.Add(temp);
-            }
-            robPlanes.Add(Planes2[1]);
-            meshesOut.Add(Meshes3[0]);
+                            foreach (Point3d pt in new List<Point3d> { IntersectPt1, IntersectPt2 })
+                            {
+                                var val = AnglesOnPlane(startPlanes[i], pt);
+                                foreach (double a in val) angleSet1.Add(a);
+                                vectorSet1.Add(new Vector3d(pt - startPlanes[i].Origin));
+                                vectorSet2.Add(new Vector3d(pt - targetPlane[j].Origin));
 
-            Transform Rot4 = Transform.Rotation(radAngles[3] * -1.0, Planes3[2].ZAxis, Planes3[2].Origin);
-            List<Mesh> Meshes4 = new List<Mesh>();
-            List<Plane> Planes4 = new List<Plane>();
-            for (int i = 1; i < Meshes3.Count; i++)
-            {
-                Mesh temp = Meshes3[i].DuplicateMesh();
-                temp.Transform(Rot4);
-                Meshes4.Add(temp);
-            }
-            for (int i = 0; i < Planes3.Count; i++)
-            {
-                Plane temp = new Plane(Planes3[i]);
-                temp.Transform(Rot4);
-                Planes4.Add(temp);
-            }
-            robPlanes.Add(Planes3[2]);
-            meshesOut.Add(Meshes4[0]);
+                                Plane K3A = startPlanes[i].Clone();
 
-            Transform Rot5 = Transform.Rotation(radAngles[4], Planes4[3].ZAxis, Planes4[3].Origin);
-            List<Mesh> Meshes5 = new List<Mesh>();
-            List<Plane> Planes5 = new List<Plane>();
-            for (int i = 1; i < Meshes4.Count; i++)
-            {
-                Mesh temp = Meshes4[i].DuplicateMesh();
-                temp.Transform(Rot5);
-                Meshes5.Add(temp);
-            }
-            for (int i = 0; i < Planes4.Count; i++)
-            {
-                Plane temp = new Plane(Planes4[i]);
-                temp.Transform(Rot5);
-                Planes5.Add(temp);
-            }
-            robPlanes.Add(Planes4[3]);
-            meshesOut.Add(Meshes5[0]);
+                                //K3A.Translate(this.Robot.AxisFourOffset);
+                                val = AnglesOnPlane(startPlanes[i], pt);
+                                foreach (double a in val) angleSet2.Add(a);
+                                vectorSet2.Add(new Vector3d(pt - targetPlane[j].Origin));
+                            }
+                        }
 
-            Transform Rot6 = Transform.Rotation(-1.0 * radAngles[5], Planes5[4].ZAxis, Planes5[4].Origin);
-            List<Mesh> Meshes6 = new List<Mesh>();
-            List<Plane> Planes6 = new List<Plane>();
-            for (int i = 1; i < Meshes5.Count; i++)
-            {
-                Mesh temp = Meshes5[i].DuplicateMesh();
-                temp.Transform(Rot6);
-                Meshes6.Add(temp);
-            }
-            for (int i = 0; i < Planes5.Count; i++)
-            {
-                Plane temp = new Plane(Planes5[i]);
-                temp.Transform(Rot6);
-                Planes6.Add(temp);
-            }
-            robPlanes.Add(Planes5[4]);
-            meshesOut.Add(Meshes6[0]);
+                    }
+                    return new Tuple<double[], double[], Vector3d[], Vector3d[]>(angleSet1.ToArray(), angleSet2.ToArray(), vectorSet1.ToArray(), vectorSet2.ToArray());
+                }
+                double[] Angeles(IList<Vector3d> vec1, IList<Vector3d> vec2) 
+                {
+                    List<double> set = new List<double>();
+                    for (int i = 0; i< vec1.Count(); ++i)
+                    {
+                        for (int j = 0; j < vec1.Count(); ++j) 
+                        {
+                            var result = Vector3d.VectorAngle(vec1[i], vec2[j]);
+                            set.Add(result);
+                            result += result * Math.PI;
+                            set.Add(result);
+                        }
+                    }
+                    return set.ToArray();
+                }
 
-            flange = Planes6[Planes6.Count - 1];
-            planesOut = robPlanes;
 
-            return meshesOut;
+
+                // Initiate Values
+                //double[] angles3 = new double[8];
+                //double[] angles4 = new double[8]; // Positive negative value pairs
+                //double[] angles5 = new double[8];
+
+                // Axis 1 angele value pair
+                //double[] angles0 = AnglesOnPlane(K0, K4.Origin);
+                /*
+                for (int i = 0; i < angles0.Count(); ++i)
+                {
+                    Transform rot = Rhino.Geometry.Transform.Rotation(angles0[i], K0.ZAxis, K0.Origin);
+                    Plane K1A = K1.Clone();
+                    K1A.Transform(rot);
+                }
+                */
+                //Rotate K1 around K0
+                //List<Plane> K1As = Rotations(angles0, K0, K1);
+
+                //Rotation of K1 towards K4
+                //var results = AnglesForASetOfPointsT(K1As, new Plane[1]{ K4}, this.Robot.LowerArm.Length, this.Robot.UpperArm.Length);
+
+                //double[] angles1 = results.Item1;
+                //double[] angles2 = results.Item2;
+                //Vector3d[] vectors2 = results.Item4;
+
+                //angles3 = Angeles(vectors2, new Vector3d[1] { K4.Normal });
+
+
+                // Fill in all values in the Matrix 
+                // It might be nessesary to flip the array
+                double[,] angles = new double[6, 8]; 
+                //List<double[]> setOfangles = new List<double[]> { angles0, angles1, angles2, angles3, angles4, angles5 };
+                //FillOutMatrix(angles, setOfangles);
+
+                outOfReach = unreachable;
+                overheadSing = singularity;
+                return angles;
+
+            }
+            /// <summary>
+            /// Check joint angle values against the robot model data. 
+            /// </summary>
+            /// <param name="angeles"></param>
+            /// <param name="robot"></param>
+            /// <param name="checkSingularity"></param>
+            /// <param name="singularityTol"></param>
+            /// <returns>Returns a list of JointStates</returns>
+            private static JointStatesValue[] CheckJointAngles(double[] angeles, Manipulator robot, bool checkSingularity = false, double singularityTol = 5)
+            {
+                // Check for out of rotation
+                JointStatesValue[] states = new JointStatesValue[angeles.Length];
+                for (int i = 0; i < angeles.Length; ++i)
+                {
+                    if (angeles[i] < robot.MaxAngles[i] && angeles[i] > robot.MinAngles[i]) states[i] = JointStatesValue.Normal;
+                    else states[i] = JointStatesValue.OutOfRotation;
+                }
+
+                // Check for Wrist Singularity
+                if (checkSingularity && angeles[4] > -singularityTol && angeles[4] < singularityTol)
+                {
+                    //states[5] = JointStatesValue.Singularity;
+                }
+
+                return states;
+            }
+            /// <summary>
+            /// Updates the coresponding signals in the class
+            /// </summary>
+            /// <param name="states"></param>
+            /// <param name="OverHeadSig"></param>
+            /// <param name="OutOfReach"></param>
+            /// <param name="WristSing"></param>
+            /// <param name="OutOfRoation"></param>
+            private static void SetSignals(JointStatesValue[] states, out bool OverHeadSig, out bool OutOfReach, out bool WristSing, out bool OutOfRoation)
+            {
+                bool overHeadSig = false;
+                bool outOfReach = false;
+                bool wristSing = false;
+                bool outOfRoation = false;
+
+                void Update(JointStatesValue state)
+                {
+                    switch (state)
+                    {
+                        case JointStatesValue.Normal:
+                            break;
+                        case JointStatesValue.OutOfRotation:
+                            outOfRoation = true;
+                            break;
+                        case JointStatesValue.Singularity:
+                            wristSing = true;
+                            break;
+                    }
+                }
+                states.ToList().ForEach(state => Update(state));
+
+                OverHeadSig = overHeadSig;
+                OutOfReach = outOfReach;
+                WristSing = wristSing;
+                OutOfRoation = outOfRoation;
+            }
+            /// <summary>
+            /// Retives the coresponding colour for a given JointState
+            /// </summary>
+            /// <param name="state"></param>
+            /// <returns>Colour</returns>
+            private static Color GetColour(JointStatesValue state)
+            {
+                Color color = new Color();
+                JointColours.TryGetValue(state, out color);
+                return color;
+            }
+            #endregion
+
+            #region Interface Variables
+            public bool IsValid => (!outOfReach && !outOfRoation && !overHeadSig && !wristSing && (Forward != null));
+            public string IsValidWhyNot => "Pose does not have a valid solution";
+            public string TypeName => "Robot Pose";
+            public string TypeDescription => "This describes a robots position at a given moment";
+            
+            public bool CastFrom(object source) => throw new NotImplementedException();
+            public  bool CastTo<T>(out T target) => throw new NotImplementedException();
+            public IGH_Goo Duplicate()
+            {
+                if (this.Target == null) return new ManipulatorPose(this.Robot);
+                else return new ManipulatorPose(this.Robot, this.Target);
+            }
+            public IGH_GooProxy EmitProxy() => throw new NotImplementedException();
+            public object ScriptVariable() => this;
+            public override string ToString() => $"Position for {this.Robot.Name} [{string.Join(";", this.radAngles.Select(a => a.ToDegrees()).ToArray())}]";
+
+
+            public bool Read(GH_IReader reader) => throw new NotImplementedException();
+            public bool Write(GH_IWriter writer) => throw new NotImplementedException();
+            #endregion
+
+
+            /// <summary>
+            /// A list of different joint states
+            /// </summary>
+            public enum JointStatesValue
+            {
+                Normal = 0,
+                OutOfReach = 1,
+                OutOfRotation = 2,
+                Singularity = 3,
+                WristSing = 4,
+                OverHeadSing = 5,
+            }
+
         }
     }
 
-    public class Tool: IGH_Goo
+    /// <summary>
+    /// Class represeing an endefector for a robotic manipulator
+    /// </summary>
+    public class Tool: IGH_GeometricGoo
     {
+        #region Main Class variables
         public string Name { get; set; }
         public Plane TCP { get; set; }
         public double Weight { get; set; }
         public List<Mesh> Geometry { get; }
-        public List<Mesh> ikGeometry { get; private set; }
-        public Plane ikTCP { get; private set; }
-        public Plane ikBase { get; private set; }
-        private List<Color> colors;
-        public string Declaration { get; }
         public Transform FlangeOffset { get; }
         public Manufacturer Manufacturer { get; }
         public Vector3d relTool { get; }
+        public string Declaration { get; }
+        #endregion
 
+        #region Constructor and Default
         public static Tool Default { get; }
-
         static Tool()
         {
             Default = new Tool("DefaultTool", Plane.WorldXY, 1.5, null, Manufacturer.ABB, Vector3d.Zero);
         }
-
         public Tool(string name, Plane TCP, double weight, List<Mesh> mesh, Manufacturer type, Vector3d relToolOffset)
         {
             string toolName = name;
@@ -750,7 +1099,7 @@ namespace Axis.Core
             string strQuat = w.ToString() + "," + x.ToString() + "," + y.ToString() + "," + z.ToString();
 
             // Compute the tool TCP offset from the flange.
-            Transform fOffset = Transform.PlaneToPlane(TCP, Plane.WorldXY);
+            Transform fOffset = Rhino.Geometry.Transform.PlaneToPlane(TCP, Plane.WorldXY);
 
             string declaration;
 
@@ -786,43 +1135,66 @@ namespace Axis.Core
             this.relTool = tOffset;
             this.Manufacturer = type;
         }
+        #endregion
 
-        public List<Color> ikColors
-        {
-            get
-            {
-                if (this.colors == null) return new List<Color>() { Axis.Styles.DarkGrey };
-                else return this.colors;
-            }
-            set
-            {
-                if (value != null | value.Count != 0)
-                    this.colors = value;
-            }
-        }
+        #region Interface Implementation
+        //IGH_GeometricGoo
+        public BoundingBox Boundingbox { get; }
+        public Guid ReferenceID { get; set; }
+        public bool IsReferencedGeometry { get; }
+        public bool IsGeometryLoaded { get; }
+         
+        public void ClearCaches() => throw new NotImplementedException();
+        public IGH_GeometricGoo DuplicateGeometry() => throw new NotImplementedException();
+        public BoundingBox GetBoundingBox(Transform xform) => throw new NotImplementedException();
+        //public BoundingBox GetBoundingBox()
+        //{
+        //    if (this.ikGeometry == null) return BoundingBox.Empty;
+        //
+        //    Mesh joinedMesh = new Mesh();
+        //    foreach (Mesh m in this.ikGeometry)
+        //    {
+        //        joinedMesh.Append(m);
+        //    }
+        //    return joinedMesh.GetBoundingBox(false);
+        //}
+        public bool LoadGeometry() => throw new NotImplementedException();
+        public bool LoadGeometry(Rhino.RhinoDoc doc) => throw new NotImplementedException();
+        public IGH_GeometricGoo Morph(SpaceMorph xmorph) => throw new NotImplementedException();
+        public IGH_GeometricGoo Transform(Transform xform) => throw new NotImplementedException();
 
-        public string TypeName => "Tool";
-        public string TypeDescription => "Robot end effector";
-        public override string ToString()
-        {
-            return $"Tool: {this.Name}";
-        }
+
+        //IGH_Goo
         public  bool IsValid => true;
         public string IsValidWhyNot { get { return ""; } }
-        public override int GetHashCode()
-        {
-            var val = Name.GetHashCode() + TCP.GetHashCode() + Weight.GetHashCode() + FlangeOffset.GetHashCode();
-            return base.GetHashCode();
-        }
+        public string TypeName => "Tool";
+        public string TypeDescription => "Robot end effector";
+
+        public bool CastFrom(object o) => false;
+        public bool CastTo<T>(out T target) {target = default; return false; }
         public IGH_Goo Duplicate()
         {
             return new Tool(this.Name, this.TCP, this.Weight, this.Geometry, this.Manufacturer, this.relTool);
         }
-        public bool CastFrom(object o) => false;
-        public bool CastTo<T>(out T target) {target = default; return false; }
-        public object ScriptVariable() => null;
         public IGH_GooProxy EmitProxy() => null;
+        public object ScriptVariable() => null;
+        public override string ToString()
+        {
+            return $"Tool: {this.Name}";
+        }
 
+
+        //GH_ISerializable
+        public bool Read(GH_IReader reader)
+        {
+
+            var chunk = reader.FindChunk("TCP");
+            Plane tcp = new Plane();
+            //this.TCP = chunk.Extract<Plane, GH_Plane>(GH_Convert.ToPlane);
+
+            return true;
+
+        }
         public bool Write(GH_IWriter writer)
         {
             try
@@ -849,55 +1221,14 @@ namespace Axis.Core
                 return false;
             }
         }
-
-        public bool Read(GH_IReader reader)
-        {
-
-            var chunk = reader.FindChunk("TCP");
-            Plane tcp = new Plane();
-            //this.TCP = chunk.Extract<Plane, GH_Plane>(GH_Convert.ToPlane);
-
-            return true;
-
-        }
-
-
-        public BoundingBox GetBoundingBox()
-        {
-            if (this.ikGeometry == null) return BoundingBox.Empty;
-
-            Mesh joinedMesh = new Mesh();
-            foreach (Mesh m in this.ikGeometry)
-            {
-                joinedMesh.Append(m);
-            }
-            return joinedMesh.GetBoundingBox(false);
-        }
-
-        public void SetPose(Plane flange) 
-        {
-            List<Mesh> toolMeshes = new List<Mesh>();
-            Transform orientFlange = Transform.PlaneToPlane(Plane.WorldXY, flange);
-
-            foreach (Mesh m in this.Geometry)
-            {
-                Mesh tool = m.DuplicateMesh();
-                tool.Transform(orientFlange);
-                toolMeshes.Add(tool);
-            }
-
-            this.ikBase = flange;
-
-            Plane tcp = new Plane(this.TCP);
-            tcp.Transform(orientFlange);
-            this.ikTCP = tcp;
-
-            this.ikGeometry = toolMeshes;
-        }
-
+        #endregion
 
     }
 
+
+    /// <summary>
+    /// List of possible manufactures
+    /// </summary>
     public enum Manufacturer
     {
         ABB = 0,

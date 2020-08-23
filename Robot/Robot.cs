@@ -42,10 +42,10 @@ namespace Axis.Core
 
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddPointParameter("Points", "Points", "Axis intersection points for kinematics. (Upper base, shoulder, elbow and wrist.)", GH_ParamAccess.list);
+            pManager.AddPlaneParameter("Planes", "Planes", "Axis rotation planes for kinematics.", GH_ParamAccess.list);
             pManager.AddNumberParameter("Minimums", "Minimums", "Joint minimum angles, as a list of doubles.", GH_ParamAccess.list);
             pManager.AddNumberParameter("Maximums", "Maximums", "Joint maximum angles, as a list of doubles.", GH_ParamAccess.list);
-            pManager.AddIntegerParameter("Indices", "Indices", "Inverse kinematic solution indices.", GH_ParamAccess.list, new List<int>() { 2, 2, 2, 2, 2, 2 });
+            pManager.AddIntegerParameter("Indices", "Indices", "Inverse kinematic solution indices.", GH_ParamAccess.list);
             pManager.AddMeshParameter("Mesh", "Mesh", "List of robot mesh geometry. [Base + 6 joint meshes]", GH_ParamAccess.list);
             pManager.AddPlaneParameter("Base", "Base", "Optional custom robot base plane. [Default = World XY]", GH_ParamAccess.item, Plane.WorldXY);
             pManager[3].Optional = true;
@@ -59,7 +59,7 @@ namespace Axis.Core
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            List<Point3d> inPoints = new List<Point3d>();
+            List<Plane> inPlanes = new List<Plane>();
             List<double> inMin = new List<double>();
             List<double> inMax = new List<double>();
             List<int> indices = new List<int>();
@@ -67,25 +67,30 @@ namespace Axis.Core
             Plane inBase = Plane.WorldXY;
             
 
-            if (!DA.GetDataList(0, inPoints)) return;
+            if (!DA.GetDataList(0, inPlanes)) return;
             if (!DA.GetDataList(1, inMin)) return;
             if (!DA.GetDataList(2, inMax)) return;
-            if (!DA.GetDataList(3, indices)) indices = new List<int>() { 2, 2, 2, 2, 2, 2 };
+            if (!DA.GetDataList(3, indices)) return; // indices = new List<int>() { 2, 2, 2, 2, 2, 2 };
             if (!DA.GetDataList(4, inMeshes)) return;
             if (!DA.GetData(5, ref inBase)) return;
 
             this.Message = this.m_Manufacturer.ToString();
 
+            // Create axis planes in relation to robot joint points.
+            //List<Plane> axisPlanes = new List<Plane>();
+            //List<Plane> tAxisPlanes = new List<Plane>();
 
-            Manipulator robot = new Manipulator(m_Manufacturer, inPoints, inMin, inMax, inMeshes, inBase, indices);
-            List<Mesh> startPose = robot.StartPose();
+
+
+            Manipulator robot = new Manipulator(m_Manufacturer, inPlanes.ToArray(), inMin, inMax, inMeshes, inBase, indices);
+            //robot.SetPose();
 
             DA.SetData(0, robot);
 
-            if (m_Pose)
-            {
-                DA.SetDataList("Pose", startPose);
-            }
+            //if (m_Pose)
+            //{
+            //    DA.SetDataList("Pose", startPose);
+            //}
         }
 
         // Build a list of optional input and output parameters
