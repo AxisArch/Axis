@@ -244,7 +244,6 @@
     <Compile Include="Online\Connect.cs" />
     <Compile Include="Online\GetModules.cs" />
     <Compile Include="Online\Monitoring.cs" />
-    <Compile Include="Online\DataBaseCommunication.cs" />
     <Compile Include="Online\SetModule.cs" />
     <Compile Include="Online\StartStop.cs" />
     <Compile Include="Online\Streaming.cs" />

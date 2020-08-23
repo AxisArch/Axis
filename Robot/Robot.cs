@@ -70,7 +70,7 @@ namespace Axis.Core
             if (!DA.GetDataList(0, inPlanes)) return;
             if (!DA.GetDataList(1, inMin)) return;
             if (!DA.GetDataList(2, inMax)) return;
-            if (!DA.GetDataList(3, indices)) return; // indices = new List<int>() { 2, 2, 2, 2, 2, 2 };
+            if (!DA.GetDataList(3, indices))  indices = new List<int>() { 0, 0, 0, 0, 0, 0 };
             if (!DA.GetDataList(4, inMeshes)) return;
             if (!DA.GetData(5, ref inBase)) return;
 
