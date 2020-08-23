@@ -65,10 +65,11 @@ namespace Axis.Core
             List<GH_ObjectWrapper> program = new List<GH_ObjectWrapper>();
             Plane target = Plane.WorldXY;
             Manipulator robot = null;
-            List<double> angles = new List<double>();
-            List<Plane> planes = new List<Plane>();
 
-            int singularityTol = 5;
+            //List<double> angles = new List<double>();
+            //List<Plane> planes = new List<Plane>();
+
+            //int singularityTol = 5;
             bool run = false;
             int counter = 0;
 
@@ -81,7 +82,7 @@ namespace Axis.Core
             Point3d errorPos = new Point3d();
 
             // Get the list of kinematic indices from the robot definition, otherwise use default values.
-            List<int> indices = new List<int>() { 2, 2, 2, 2, 2, 2 };
+            List<int> indices = new List<int>() { 0, 0, 0, 0, 0, 0 };
             if (robot.Indices.Count == 6) indices = robot.Indices;
 
             List<Point3d> errorPositions = new List<Point3d>();
@@ -108,55 +109,32 @@ namespace Axis.Core
                     // Transform the robot target from the base plane to the XY plane.
                     target = new Plane(targ.Plane);
                     errorPos = target.Origin;
-                    target.Transform(robot.InverseRemap);
                     
 
-                    Transform xForm = Transform.PlaneToPlane(Plane.WorldXY, target);
-
-                    Plane tempTarg = Plane.WorldXY;
-                    tempTarg.Transform(targ.Tool.FlangeOffset);
-                    tempTarg.Transform(xForm);
-                    target = tempTarg;
-
-                    // Check the movement type.
-                    mType = targ.Method;
 
                     // Kinematics
                     bool overheadSing = false; bool outOfReach = false; bool wristSing = false; bool outOfRotation = false;
                     List<System.Drawing.Color> colors = new List<System.Drawing.Color>();
 
-                    if (mType != MotionType.NoMovement)
+                    if (targ.Method != MotionType.NoMovement)
                     {
-                        if (mType == MotionType.Linear || mType == MotionType.Joint)
+                        if (targ.Method == MotionType.Linear || targ.Method == MotionType.Joint)
                         {
-                            List<List<double>> ikAngles = InverseKinematics.TargetInverseKinematics(robot, target, out overheadSing, out outOfReach);
+                            Axis.Core.Manipulator.ManipulatorPose pose = new Axis.Core.Manipulator.ManipulatorPose(robot, targ);
+
+                            outOfReach = pose.OutOfReach; overheadSing = pose.OverHeadSig; wristSing = pose.WristSing; outOfRotation = pose.OutOfRoation;
+
                             if (overheadSing) log.Add(counter.ToString() + ": Singularity");
                             if (outOfReach) log.Add(counter.ToString() + ": Unreachable");
-
-                            // Select an angle from each list and make the radian version.
-                            List<double> selectedAngles = new List<double>();
-                            for (int i = 0; i < ikAngles.Count; i++)
-                            {
-                                double sel = ikAngles[i][indices[i]];
-
-                                // Correction for setup
-                                if (i == 1) sel += 90;
-                                if (i == 2) sel -= 90;
-
-                                selectedAngles.Add(sel);
-                            }
-
-                            // Check the joint angles.
-                            colors = InverseKinematics.CheckJointAngles(robot, selectedAngles, out wristSing, out outOfRotation);
                             if (wristSing) log.Add(counter.ToString() + ": Wrist Singularity");
                             if (outOfRotation) log.Add(counter.ToString() + ": Joint Error");
-
                             if (overheadSing || outOfReach || wristSing || outOfRotation) errorPositions.Add(errorPos);
                         }
-                        else if (mType == MotionType.AbsoluteJoint)
+                        else if (targ.Method == MotionType.AbsoluteJoint)
                         {
-                            // Check the joint angles.
-                            colors = InverseKinematics.CheckJointAngles(robot, targ.JointAngles, out wristSing, out outOfRotation);
+                            Axis.Core.Manipulator.ManipulatorPose pose = new Axis.Core.Manipulator.ManipulatorPose(robot, targ);
+                            outOfReach = pose.OutOfReach; overheadSing = pose.OverHeadSig; wristSing = pose.WristSing; outOfRotation = pose.OutOfRoation;
+
                             if (wristSing) log.Add(counter.ToString() + ": Wrist Singularity");
                             if (outOfRotation) log.Add(counter.ToString() + ": Joint Error");
                         }
