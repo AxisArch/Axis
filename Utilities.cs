@@ -1132,7 +1132,8 @@ namespace Canvas
             //doc.ScheduleSolution(10);
         }
 
-
+        #region Display Methods
+        
         static public void DisplayPlane(Plane plane, IGH_PreviewArgs args, double sizeLine = 70, double sizeArrow = 30, int thickness = 3)
         {
             args.Display.DrawLineArrow(
@@ -1151,59 +1152,59 @@ namespace Canvas
         }
         static public void DisplayRobotMesh(Axis.Core.Manipulator robot, IGH_PreviewArgs args)
         {
-            int cC = robot.ikColors.Count;
-            int rC = robot.ikMeshes.Count;
-
-            for (int i = 0; i < rC; ++i)
-            {
-                int cID = i;
-
-                if (i >= cC) cID = cC - 1;
-                args.Display.DrawMeshShaded(robot.ikMeshes[i], new DisplayMaterial(robot.ikColors[cID]));
-            }
+            //int cC = robot.ikColors.Count;
+            //int rC = robot.ikMeshes.Count;
+            //
+            //for (int i = 0; i < rC; ++i)
+            //{
+            //    int cID = i;
+            //
+            //    if (i >= cC) cID = cC - 1;
+            //    args.Display.DrawMeshShaded(robot.ikMeshes[i], new DisplayMaterial(robot.ikColors[cID]));
+            //}
         }
         static public void DisplayRobotLines(Axis.Core.Manipulator robot, IGH_PreviewArgs args, int thickness = 3)
         {
-            List<Point3d> points = new List<Point3d>();
-            foreach (Plane p in robot.ikPlanes) { points.Add(p.Origin); }
-
-            Polyline pLine = new Polyline(points);
-
-            Line[] lines = pLine.GetSegments();
-
-            // Draw lines
-            for (int i = 0; i < lines.Length; ++i)
-            {
-                int cID = i;
-                if (i >= lines.Length) cID = robot.ikColors.Count - 1;
-                args.Display.DrawLine(lines[i], robot.ikColors[cID], thickness);
-            }
-
-            //Draw Sphers
-
-            //Draw Plane
-            DisplayPlane(robot.ikPlanes[0], args);
+            //List<Point3d> points = new List<Point3d>();
+            //foreach (Plane p in robot.ikPlanes) { points.Add(p.Origin); }
+            //
+            //Polyline pLine = new Polyline(points);
+            //
+            //Line[] lines = pLine.GetSegments();
+            //
+            //// Draw lines
+            //for (int i = 0; i < lines.Length; ++i)
+            //{
+            //    int cID = i;
+            //    if (i >= lines.Length) cID = robot.ikColors.Count - 1;
+            //    args.Display.DrawLine(lines[i], robot.ikColors[cID], thickness);
+            //}
+            //
+            ////Draw Sphers
+            //
+            ////Draw Plane
+            //DisplayPlane(robot.ikPlanes[0], args);
         }
         static public void DisplayTool(Axis.Core.Tool tool, IGH_PreviewArgs args)
         {
-            int cC = tool.ikColors.Count;
-            int tC = tool.ikGeometry.Count;
-
-            for (int i = 0; i < tC; ++i)
-            {
-                int cID = i;
-
-                if (i >= cC) cID = cC - 1;
-                args.Display.DrawMeshShaded(tool.ikGeometry[i], new DisplayMaterial(tool.ikColors[cID]));
-            }
+            //int cC = tool.ikColors.Count;
+            //int tC = tool.ikGeometry.Count;
+            //
+            //for (int i = 0; i < tC; ++i)
+            //{
+            //    int cID = i;
+            //
+            //    if (i >= cC) cID = cC - 1;
+            //    args.Display.DrawMeshShaded(tool.ikGeometry[i], new DisplayMaterial(tool.ikColors[cID]));
+            //}
         }
         static public void DisplayToolLines(Axis.Core.Tool tool, IGH_PreviewArgs args, int thickness = 3)
         {
-            Line line = new Line(tool.ikBase.Origin, tool.ikTCP.Origin);
-            args.Display.DrawLine(line, tool.ikColors[0], thickness);
-
-            //Draw Plane
-            DisplayPlane(tool.ikTCP, args);
+            //Line line = new Line(tool.ikBase.Origin, tool.ikTCP.Origin);
+            //args.Display.DrawLine(line, tool.ikColors[0], thickness);
+            //
+            ////Draw Plane
+            //DisplayPlane(tool.ikTCP, args);
         }
         static public void DisplayToolPath(Axis.Targets.Toolpath toolpath, IGH_PreviewArgs args, int thickness = 3, double radius = 2 )
         {
@@ -1231,7 +1232,8 @@ namespace Canvas
             }
 
         }
-
+        
+        #endregion
     }
     class Menu
     {
