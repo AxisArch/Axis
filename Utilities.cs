@@ -590,6 +590,8 @@ namespace Axis
         {
             Grasshopper.Kernel.Data.GH_Structure<T> gh_Struc = new Grasshopper.Kernel.Data.GH_Structure<T>();
 
+            if (list == null) return null;
+
             if (typeof(Rhino.Runtime.CommonObject).IsAssignableFrom(typeof(Q)))
             {
                 foreach (object item in list)

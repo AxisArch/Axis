@@ -54,7 +54,8 @@ namespace Axis.Core
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("Robot", "Robot", "Custom robot data type.", GH_ParamAccess.item);
+            IGH_Param robot = new Axis.Params.Param_Manipulator();
+            pManager.AddParameter(robot, "Robot", "Robot", "Custom robot data type.", GH_ParamAccess.item);
         }
 
         protected override void SolveInstance(IGH_DataAccess DA)

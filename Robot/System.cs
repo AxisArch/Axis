@@ -18,7 +18,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Security.Policy;
 
-namespace Axis.Core
+namespace Axis.Core 
 {
     public class Manipulator : IGH_GeometricGoo
     {
@@ -47,7 +47,7 @@ namespace Axis.Core
 
         #region Constructors and defaults
         public static Manipulator Default { get; }
-        public static Manipulator IRB122 { get
+        public static Manipulator IRB120 { get
             {
                 // Deserialize the list of robot meshes
                 List<Mesh> robMeshes;
@@ -71,9 +71,11 @@ namespace Axis.Core
                 List<double> minAngles = new List<double> { -165, -110, -110, -160, -120, -400 };
                 List<double> maxAngles = new List<double> { 165, 110, 70, 160, 120, 400 };
                 Plane basePlane = Plane.WorldXY;
-                List<int> indices = new List<int> { 2, 2, 2, 2, 2, 2, };
+                List<int> indices = new List<int> { 0, 0, 0, 0, 0, 0, };
 
-                return new Manipulator(manufacturer, axisPlanes, minAngles, maxAngles, robMeshes, basePlane, indices);
+                var robot = new Manipulator(manufacturer, axisPlanes, minAngles, maxAngles, robMeshes, basePlane, indices);
+                robot.Name = "IRB 120";
+                return robot;
 
                 //Manipulator manipulator;
                 //
@@ -113,10 +115,11 @@ namespace Axis.Core
                 List<double> minAngles = new List<double> { -170, -65, -180, -300, -130, -300 };
                 List<double> maxAngles = new List<double> { 170, 140, 70, 300, 130, 300 };
                 Plane basePlane = Plane.WorldXY;
-                List<int> indices = new List<int> { 2, 2, 2, 2, 2, 2, };
+                List<int> indices = new List<int> { 0, 0, 0, 0, 0, 0, };
 
-                return new Manipulator(manufacturer, axisPlanes, minAngles, maxAngles, robMeshes, basePlane, indices);
-
+                var robot = new Manipulator(manufacturer, axisPlanes, minAngles, maxAngles, robMeshes, basePlane, indices);
+                robot.Name = "IRB 6620";
+                return robot;
 
                 //Manipulator manipulator;
                 //
@@ -132,7 +135,7 @@ namespace Axis.Core
         }
         static Manipulator()
         {
-            Default = IRB122;
+            Default = IRB120;
         }
         public Manipulator(Manufacturer manufacturer, Plane[] axisPlanes, List<double> minAngles, List<double> maxAngles, List<Mesh> robMeshes, Plane basePlane, List<int> indices)
         {
@@ -169,6 +172,7 @@ namespace Axis.Core
             this.SetPose();
 
         }
+
         #endregion
 
         #region Methods
@@ -200,19 +204,20 @@ namespace Axis.Core
         }
         #endregion
 
+        
         #region Interface variables 
-
+        
         //IGH_GeometricGoo
         public BoundingBox Boundingbox => throw new NotImplementedException();
         public Guid ReferenceID { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
         public bool IsReferencedGeometry { get => false; }
         public bool IsGeometryLoaded { get => throw new NotImplementedException(); }
 
-        public void ClearCaches() => throw new NotImplementedException();
+        public void ClearCaches() { }// => throw new NotImplementedException();
         public IGH_GeometricGoo DuplicateGeometry()
         {
-            var robot = new Manipulator(this.Manufacturer, this.AxisPlanes.ToArray(), this.MinAngles, this.MaxAngles, this.RobMeshes.Select(m => m.DuplicateMesh()).ToList(), this.RobBasePlane, this.Indices);
-            if (this.Name == string.Empty) robot.Name = this.Name;
+            var robot = new Manipulator(this.Manufacturer, this.AxisPlanes.ToArray(), this.MinAngles, this.MaxAngles, this.RobMeshes.Select(m => m.DuplicateMesh()).ToList(), this.RobBasePlane.Clone(), this.Indices);
+            if (this.Name != string.Empty) robot.Name = this.Name;
             return robot;
         }
         public BoundingBox GetBoundingBox(Transform xform) => throw new NotImplementedException();
@@ -232,25 +237,41 @@ namespace Axis.Core
         public string TypeName => "Manipulator";
         public string TypeDescription => "Robot movment system";
 
-        public bool CastFrom(object source) => throw new NotImplementedException();
+        public bool CastFrom(object source) 
+        {
+            if (source.GetType() == typeof(Manipulator))
+            {
+                Manipulator manipulator = source as Manipulator;
+                this.Name = manipulator.Name;
+                this.Manufacturer = manipulator.Manufacturer;
+                this.AxisPlanes = manipulator.AxisPlanes;
+                this.MinAngles = manipulator.MinAngles;
+                this.MaxAngles = manipulator.MaxAngles;
+                this.RobMeshes = manipulator.RobMeshes;
+                this.RobBasePlane = manipulator.RobBasePlane;
+                this.Indices = manipulator.Indices;
+            }
+
+            return false;
+        }
         public bool CastTo<T>(out T target) => throw new NotImplementedException();
         public IGH_Goo Duplicate()
         {
-            Manipulator robot = new Manipulator(this.Manufacturer, this.AxisPlanes.ToArray(), this.MinAngles, this.MaxAngles, this.RobMeshes, this.RobBasePlane, this.Indices);
-            if (this.Name != null) robot.Name = this.Name;
+            Manipulator robot = new Manipulator(this.Manufacturer, this.AxisPlanes.ToArray(), this.MinAngles, this.MaxAngles, this.RobMeshes.Select(m => m.DuplicateMesh()).ToList(), this.RobBasePlane.Clone(), this.Indices);
+            if (this.Name != string.Empty) robot.Name = this.Name;
             return robot;
         }
-        public IGH_GooProxy EmitProxy() => throw new NotImplementedException();
+        public IGH_GooProxy EmitProxy() => null;
         public object ScriptVariable() => this;
         public override string ToString()
         {
-            return $"Robot {this.Manufacturer.ToString()}";
+            if (this.Name != string.Empty) return $"Robot {this.Manufacturer.ToString()}  \'{this.Name}\'";
+            else return $"Robot {this.Manufacturer.ToString()}";
         }
 
         //GH_ISerializable
         public bool Read(GH_IReader reader)
         {
-
             this.Name = reader.GetString("Name");
             this.Manufacturer = (Manufacturer)reader.GetInt32("Manufacturer");
 
@@ -258,7 +279,7 @@ namespace Axis.Core
             GH_Convert.ToPlane(reader.GetPlane("RobBasePlane"), ref bPlane, GH_Conversion.Both);
             this.RobBasePlane = bPlane;
 
-            for (int i = 0; i < 4; ++i)
+            for (int i = 0; i < 6; ++i)
             {
                 Plane plane = new Plane();
                 GH_Convert.ToPlane(reader.GetPlane("AxisPlanes", i), ref plane, GH_Conversion.Both);
@@ -283,14 +304,11 @@ namespace Axis.Core
                 this.RobMeshes.Add(mesh);
             }
 
-
-            //return base.Read(reader);
             return true;
 
         }
         public bool Write(GH_IWriter writer)
         {
-
             GH_Plane gH_RobBasePlane = new GH_Plane(this.RobBasePlane);
 
             writer.SetString("Name", this.Name);
@@ -330,12 +348,13 @@ namespace Axis.Core
                 mesh.Write(writer.CreateChunk("RobMeshes", i));
             }
 
-
+            writer.AddComment("This should be the manipulator");
             return true;
 
         }
+        
         #endregion
-
+        
 
         /// <summary>
         /// Class to hold the values describing the tansformation of a tool

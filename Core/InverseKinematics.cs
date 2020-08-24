@@ -45,7 +45,8 @@ namespace Axis.Core
 
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddGenericParameter("Robot", "Robot", "Robot object to use for inverse kinematics. You can define this using the robot creator tool.", GH_ParamAccess.item);
+            IGH_Param Robot = new Axis.Params.Param_Manipulator();
+            pManager.AddParameter(Robot, "Robot", "Robot", "Robot object to use for inverse kinematics. You can define this using the robot creator tool.", GH_ParamAccess.item);
             pManager.AddGenericParameter("Target", "Target", "Robotic target for inverse kinematics. Use the simulation component to select a specific target from a toolpath for preview of the kinematic solution.", GH_ParamAccess.item);
             pManager[0].Optional = true;
         }
