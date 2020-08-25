@@ -219,9 +219,10 @@ namespace Axis
             List<Point3d> points = new List<Point3d>();
             foreach (Target t in targets) points.Add(t.Position);
             m_bBox = new BoundingBox(points);
-
+            /*
             if (m_outputTarget)
                 DA.SetDataList("Code", code);
+            */
         }
 
         protected override void BeforeSolveInstance()
