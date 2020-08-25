@@ -12,11 +12,7 @@ using GH_IO.Serialization;
 using Axis;
 using Microsoft.Office.Interop.Excel;
 using System.Linq;
-using GH_IO;
-using System.Runtime.CompilerServices;
-using System.Security.Cryptography.X509Certificates;
-using System.Runtime.InteropServices.WindowsRuntime;
-using System.Security.Policy;
+
 
 namespace Axis.Core 
 {
@@ -24,6 +20,7 @@ namespace Axis.Core
     {
         #region Main Class variables
         public string Name = "Wall-E"; // This variable can hold the model number
+        private Guid id = Guid.Empty;
         public Manufacturer Manufacturer { get; private set; }
         public Plane RobBasePlane { get; private set; }
         public List<Plane> AxisPlanes { get; private set; }
@@ -42,7 +39,19 @@ namespace Axis.Core
 
 
         public Plane Flange { get => this.AxisPlanes[5].Clone(); }
-        public Transform[] ResetTransform { get; set; }
+        private Transform[] resetTransform = null;
+        public Transform[] ResetTransform { get 
+            {
+                // Check if Transform already has been applied
+                if (this.resetTransform != null) return resetTransform;
+
+                var rT = new Transform[this.RobMeshes.Count-1]; // <--- Probalbly change this to the number of meshes
+                for (int i = 0; i < this.RobMeshes.Count -1; ++i) rT[i] = Rhino.Geometry.Transform.Identity;
+                resetTransform = rT;
+                return rT;
+
+            } set => resetTransform = value; 
+        }
         #endregion
 
         #region Constructors and defaults
@@ -60,7 +69,7 @@ namespace Axis.Core
                 }
 
                 Manufacturer manufacturer = Manufacturer.ABB;
-                Plane[] axisPlanes = new Plane[6] { 
+                Plane[] axisPlanes = new Plane[6] {
                     new Plane(new Point3d(0, 0, 0), new Vector3d(1,0,0) , new Vector3d(0,1,0)),
                     new Plane(new Point3d(0, 0, 290), new Vector3d(0,0,1), new Vector3d(1,0,0)),
                     new Plane(new Point3d(0, 0, 560), new Vector3d(1,0,0), new Vector3d(0,0,-1)),
@@ -103,7 +112,7 @@ namespace Axis.Core
                 }
 
                 Manufacturer manufacturer = Manufacturer.ABB;
-                Plane[] axisPlanes = new Plane[6] 
+                Plane[] axisPlanes = new Plane[6]
                     {
                         new Plane(new Point3d(0, 0, 0), new Vector3d(1,0,0) , new Vector3d(0,1,0)),
                         new Plane(new Point3d(320, 0, 680), new Vector3d(0,0,1), new Vector3d(1,0,0)),
@@ -133,7 +142,7 @@ namespace Axis.Core
 
             }
         }
-        public Manipulator() {}
+        public Manipulator() { }
         public Manipulator(Manufacturer manufacturer, Plane[] axisPlanes, List<double> minAngles, List<double> maxAngles, List<Mesh> robMeshes, Plane basePlane, List<int> indices)
         {
             this.Manufacturer = manufacturer;
@@ -184,25 +193,37 @@ namespace Axis.Core
             {
                 if (pose.IsValid)
                 {
+                    pose.UpdateRobot(this); // <-- this oen should not have been nessesary if the class had been propperly persistant.
                     this.CurrentPose = pose;
                 }
                 else if (pose.JointStates != null) this.CurrentPose.JointStates = pose.JointStates;
-            } 
+            }
             else this.CurrentPose = pose; ;
         }
-        public void UpdatePose() 
+        public void UpdatePose()
         {
-            this.RobMeshes.Zip<Mesh, Transform, bool>(this.CurrentPose.GetPose(), (mesh, xform) => mesh.Transform(xform));
+
+            var xform = this.CurrentPose.GetPose().ToList();
+            for (int i = 0; i < this.RobMeshes.Count - 1; ++i) this.RobMeshes[i + 1].Transform(xform[i]);
             this.ResetTransform = this.CurrentPose.Reverse;
         }
         #endregion
 
-        
+
         #region Interface variables 
-        
+
         //IGH_GeometricGoo
-        public BoundingBox Boundingbox => throw new NotImplementedException();
-        public Guid ReferenceID { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public BoundingBox Boundingbox { get; private set; }
+        public Guid ReferenceID { 
+            get
+            {
+                if (id != Guid.Empty) return id;
+                id = System.Guid.NewGuid();
+                return id;
+            } set 
+            {
+                if (typeof(Guid) == value.GetType()) id = value;
+            } }
         public bool IsReferencedGeometry { get => false; }
         public bool IsGeometryLoaded { get => throw new NotImplementedException(); }
 
@@ -224,7 +245,14 @@ namespace Axis.Core
             if (this.Name != string.Empty) robot.Name = this.Name;
             return robot;
         }
-        public BoundingBox GetBoundingBox(Transform xform) => throw new NotImplementedException();
+        public BoundingBox GetBoundingBox(Transform xform) 
+        {
+            BoundingBox box = BoundingBox.Empty;
+            this.RobMeshes.ForEach(m => m.Transform(xform));
+            this.RobMeshes.ForEach(m => box.Union(m.GetBoundingBox(false)));
+            this.Boundingbox = box;
+            return box;
+        }
         public bool LoadGeometry() => throw new NotImplementedException();
         public bool LoadGeometry(Rhino.RhinoDoc doc) => throw new NotImplementedException();
         public IGH_GeometricGoo Morph(SpaceMorph xmorph) => throw new NotImplementedException();
@@ -259,6 +287,7 @@ namespace Axis.Core
         {
             Manipulator robot = new Manipulator(this.Manufacturer, this.AxisPlanes.ToArray(), this.MinAngles, this.MaxAngles, this.RobMeshes.Select(m => m.DuplicateMesh()).ToList(), this.RobBasePlane.Clone(), this.Indices);
             if (this.Name != string.Empty) robot.Name = this.Name;
+            robot.ReferenceID = this.ReferenceID;
             return robot;
         }
         public IGH_GooProxy EmitProxy() => null;
@@ -415,7 +444,7 @@ namespace Axis.Core
             return true;
         }
         #endregion
-        
+
 
         /// <summary>
         /// Class to hold the values describing the tansformation of a tool
@@ -449,8 +478,17 @@ namespace Axis.Core
 
 
             // Mesh Transformations
-            public Transform[] Reverse;
             private Transform[] Forward;
+            private Transform[] reverse = null;
+            public Transform[] Reverse {
+                get
+                {
+                    if (reverse != null) return reverse;
+                    GetPose();
+                    return reverse; //<-- Not sure if this code is ever gonna be called.
+                }
+                set => reverse = value;
+            }
 
             // Mesh Colours
             public Color[] Colors { get => (this.jointStates != null) ? this.jointStates.Select(state => GetColour(state)).ToArray() : null; }
@@ -468,7 +506,7 @@ namespace Axis.Core
             public Plane[] Planes { get
                 {
                     Plane[] planes = this.Robot.AxisPlanes.Select(plane => plane.Clone()).ToArray();
-                    for (int i = 0; i < planes.Length; ++i) planes[i].Transform(this.Forward[i]);
+                    for (int i = 0; i < planes.Length; ++i) planes[i].Transform(this.Robot.ResetTransform[i] * this.Forward[i]);
                     return planes;
                 } }
             public Plane Flange { get
@@ -482,7 +520,7 @@ namespace Axis.Core
                 get
                 {
                     Mesh[] meshes = this.Robot.RobMeshes.Select(plane => plane.DuplicateMesh()).ToArray();
-                    for (int i = 0; i < meshes.Length - 1; ++i) meshes[i + 1].Transform(this.Forward[i]);
+                    for (int i = 0; i < meshes.Length - 1; ++i) meshes[i + 1].Transform(this.Robot.ResetTransform[i] * this.Forward[i]);
                     return meshes;
                 }
             }
@@ -561,13 +599,16 @@ namespace Axis.Core
                 }
 
                 SetSignals(jointStates, out this.outOfReach, out this.outOfRoation, out this.wristSing, out this.overHeadSig);
-
+                this.JointStates = jointStates;
 
                 this.radAngles = radAngles;
 
                 this.Forward = ForwardKinematics(radAngles, this.Robot);
 
+                this.IsValid = (!outOfReach && !outOfRoation && !overHeadSig && !wristSing) ? true : false;
+
             }
+            public void UpdateRobot(Manipulator robot) => this.Robot = robot;
             public Transform[] GetPose()
             {
                 if (this.Forward == null) throw new Exception("Unable to transfromation for empty pose please first call SetPost");
@@ -576,7 +617,15 @@ namespace Axis.Core
                 this.Forward = this.Forward.Zip(this.Robot.ResetTransform, (forward, reverse) => reverse * forward).ToArray();
 
                 // Update inverse of current position
-                this.Forward.Select((xform, idx) => xform.TryGetInverse(out this.Reverse[idx]));
+
+                Rhino.Geometry.Transform[] rXform = new Transform[this.Forward.Length];
+                for (int i = 0; i < this.Forward.Length; ++i)
+                {
+                    rXform[i] = Rhino.Geometry.Transform.Identity;
+                    var sucsess = this.Forward[i].TryGetInverse(out rXform[i]);
+                }
+                //var sucsess = this.Forward.Select((xform, idx) => xform.TryGetInverse(out rXform[idx]));
+                this.Reverse = rXform;
 
                 return this.Forward;
             }
@@ -620,7 +669,7 @@ namespace Axis.Core
                 //// Everything past this should be locals to the Function////
                 //////////////////////////////////////////////////////////////
 
-                double UnWrap(double value) 
+                double UnWrap(double value)
                 {
                     while (value >= Math.PI) value -= 2 * Math.PI;
                     while (value < -Math.PI) value += 2 * Math.PI;
@@ -655,16 +704,16 @@ namespace Axis.Core
                 Point3d WristLocation = new Point3d(flange.PointAt(0, 0, -wristOffsetLength));
 
                 // Check for overhead singularity and add message to log if needed
-                bool checkForOverheadSingularity(Point3d wristLocation, Point3d bPlane) 
+                bool checkForOverheadSingularity(Point3d wristLocation, Point3d bPlane)
                 {
-                    if ( (bPlane.Y - WristLocation.Y) < singularityTol && (bPlane.Y - WristLocation.Y) > -singularityTol &&
+                    if ((bPlane.Y - WristLocation.Y) < singularityTol && (bPlane.Y - WristLocation.Y) > -singularityTol &&
                          (bPlane.X - WristLocation.X) < singularityTol && (bPlane.X - WristLocation.X) > -singularityTol)
                         return true;
                     else return false;
                 }
                 singularity = checkForOverheadSingularity(WristLocation, P0.Origin);
-                
-                
+
+
 
 
 
@@ -821,7 +870,7 @@ namespace Axis.Core
                 // Create an array of identety matrices
                 Transform[] transforms = new Transform[radAngles.Length];
                 transforms = transforms.Select(value => value = Rhino.Geometry.Transform.Identity).ToArray();
-                
+
 
                 void UpdateRotat(double angle, int level)
                 {
@@ -834,14 +883,14 @@ namespace Axis.Core
 
                 return transforms;
             }
-            private double[,] AttemptTargetInverseKinematics(Axis.Targets.Target target, out bool overheadSing, out bool outOfReach, double singularityTol = 5) 
+            private double[,] AttemptTargetInverseKinematics(Axis.Targets.Target target, out bool overheadSing, out bool outOfReach, double singularityTol = 5)
             {
                 // Validity checks
                 bool unreachable = false;
                 bool singularity = false;
 
 
-                Plane FlangeFromTargetAndToo(Axis.Targets.Target t) 
+                Plane FlangeFromTargetAndToo(Axis.Targets.Target t)
                 {
                     Transform toolCompensation = Rhino.Geometry.Transform.PlaneToPlane(t.Tool.TCP, Plane.WorldXY);
                     Plane flange = t.Plane.Clone();
@@ -861,7 +910,7 @@ namespace Axis.Core
                 //Move K4 in rlation to the flange
                 //K4.Transform(Rhino.Geometry.Transform.Translation(this.Robot.WristOffset));
 
-                void UpdateValuesIn2DMatrix(double[,] table, double[] value, int row) 
+                void UpdateValuesIn2DMatrix(double[,] table, double[] value, int row)
                 {
                     for (int i = 0; i < value.Length; ++i)
                     {
@@ -873,10 +922,10 @@ namespace Axis.Core
                         var dim = table.GetLength(2); //Get the dimention of the matrix
                         foreach (int j in Enumerable.Range(
                             dim / value.Length * i,
-                            dim / value.Length + (i * dim / value.Length) )) table[row, j] = value[i]; // It might be nessesary to flip row/j
+                            dim / value.Length + (i * dim / value.Length))) table[row, j] = value[i]; // It might be nessesary to flip row/j
                     }
                 }
-                void FillOutMatrix(double[,] matrix, IList<double[]> lists) 
+                void FillOutMatrix(double[,] matrix, IList<double[]> lists)
                 {
                     for (int i = 0; i < lists.Count(); ++i)
                     {
@@ -884,7 +933,7 @@ namespace Axis.Core
                     }
                 }
 
-                double[] AnglesOnPlane(Plane k0, Point3d k4) 
+                double[] AnglesOnPlane(Plane k0, Point3d k4)
                 {
                     double U; double V;
                     k0.ClosestParameter(k4, out U, out V);
@@ -894,8 +943,8 @@ namespace Axis.Core
                 List<Plane> Rotations(IList<double> ang, Plane planeOfRotation, Plane geo)
                 {
                     List<Plane> list = new List<Plane>();
-                    for (int i = 0; i < ang.Count(); ++i) 
-                    { 
+                    for (int i = 0; i < ang.Count(); ++i)
+                    {
                         Transform rot = Rhino.Geometry.Transform.Rotation(ang[i], planeOfRotation.ZAxis, planeOfRotation.Origin);
                         Plane geoClone = geo.Clone();
                         geoClone.Transform(rot);
@@ -903,8 +952,8 @@ namespace Axis.Core
                     }
                     return list;
                 }
-                Tuple<double[], double[], Vector3d[], Vector3d[]> 
-                    AnglesForASetOfPointsT( IList<Plane> startPlanes, IList<Plane> targetPlane,  double armLength1 , double armLength2) 
+                Tuple<double[], double[], Vector3d[], Vector3d[]>
+                    AnglesForASetOfPointsT(IList<Plane> startPlanes, IList<Plane> targetPlane, double armLength1, double armLength2)
                 {
                     List<double> angleSet1 = new List<double>();
                     List<double> angleSet2 = new List<double>();
@@ -914,7 +963,7 @@ namespace Axis.Core
                     int k = 0;
                     for (int i = 0; i < startPlanes.Count(); ++i)
                     {
-                        for (int j = 0; i < targetPlane.Count(); ++i) 
+                        for (int j = 0; i < targetPlane.Count(); ++i)
                         {
                             // Spheres
                             Sphere Sphere1 = new Sphere(startPlanes[i], this.Robot.LowerArmLength);
@@ -949,12 +998,12 @@ namespace Axis.Core
                     }
                     return new Tuple<double[], double[], Vector3d[], Vector3d[]>(angleSet1.ToArray(), angleSet2.ToArray(), vectorSet1.ToArray(), vectorSet2.ToArray());
                 }
-                double[] Angeles(IList<Vector3d> vec1, IList<Vector3d> vec2) 
+                double[] Angeles(IList<Vector3d> vec1, IList<Vector3d> vec2)
                 {
                     List<double> set = new List<double>();
-                    for (int i = 0; i< vec1.Count(); ++i)
+                    for (int i = 0; i < vec1.Count(); ++i)
                     {
-                        for (int j = 0; j < vec1.Count(); ++j) 
+                        for (int j = 0; j < vec1.Count(); ++j)
                         {
                             var result = Vector3d.VectorAngle(vec1[i], vec2[j]);
                             set.Add(result);
@@ -997,7 +1046,7 @@ namespace Axis.Core
 
                 // Fill in all values in the Matrix 
                 // It might be nessesary to flip the array
-                double[,] angles = new double[6, 8]; 
+                double[,] angles = new double[6, 8];
                 //List<double[]> setOfangles = new List<double[]> { angles0, angles1, angles2, angles3, angles4, angles5 };
                 //FillOutMatrix(angles, setOfangles);
 
@@ -1082,7 +1131,7 @@ namespace Axis.Core
             #endregion
 
             #region Interface Variables
-            public bool IsValid => (!outOfReach && !outOfRoation && !overHeadSig && !wristSing && (Forward != null));
+            public bool IsValid { get; private set; } = false;
             public string IsValidWhyNot => "Pose does not have a valid solution";
             public string TypeName => "Robot Pose";
             public string TypeDescription => "This describes a robots position at a given moment";
@@ -1096,7 +1145,7 @@ namespace Axis.Core
             }
             public IGH_GooProxy EmitProxy() => throw new NotImplementedException();
             public object ScriptVariable() => this;
-            public override string ToString() => $"Position for {this.Robot.Name} [{string.Join(";", this.radAngles.Select(a => a.ToDegrees()).ToArray())}]";
+            public override string ToString() => $"Position for {this.Robot.Name} [{string.Join(";", this.radAngles.Select(a => a.ToDegrees().ToString("0.00")).ToArray())}]";
 
 
             public bool Read(GH_IReader reader) => throw new NotImplementedException();
@@ -1226,7 +1275,12 @@ namespace Axis.Core
          
         public void ClearCaches() => throw new NotImplementedException();
         public IGH_GeometricGoo DuplicateGeometry() => throw new NotImplementedException();
-        public BoundingBox GetBoundingBox(Transform xform) => throw new NotImplementedException();
+        public BoundingBox GetBoundingBox(Transform xform) 
+        {
+            BoundingBox box = BoundingBox.Empty;
+
+            return box;
+        }
         //public BoundingBox GetBoundingBox()
         //{
         //    if (this.ikGeometry == null) return BoundingBox.Empty;
@@ -1258,10 +1312,7 @@ namespace Axis.Core
         }
         public IGH_GooProxy EmitProxy() => null;
         public object ScriptVariable() => null;
-        public override string ToString()
-        {
-            return $"Tool: {this.Name}";
-        }
+        public override string ToString() => $"Tool: {this.Name}";
 
 
         //GH_ISerializable
