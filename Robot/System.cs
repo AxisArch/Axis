@@ -38,15 +38,15 @@ namespace Axis.Core
         public double WristOffsetLength { get => this.AxisPlanes[5].Origin.DistanceTo(this.AxisPlanes[4].Origin); }
         public double LowerArmLength { get => this.AxisPlanes[1].Origin.DistanceTo(this.AxisPlanes[2].Origin); }
         public double UpperArmLength { get => this.AxisPlanes[2].Origin.DistanceTo(this.AxisPlanes[4].Origin); }
-        public double AxisFourOffsetAngle { get => Math.Atan2(this.AxisPlanes[4].Origin.Z - this.AxisPlanes[2].Origin.Z, this.AxisPlanes[4].Origin.X - this.AxisPlanes[2].Origin.X); }  // =>0.22177 for IRB 6620
+        public double AxisFourOffsetAngle { get => Math.Atan2(this.AxisPlanes[4].Origin.Z - this.AxisPlanes[2].Origin.Z, this.AxisPlanes[4].Origin.X - this.AxisPlanes[2].Origin.X); }  // =>0.22177 for IRB 6620 //This currently limitting the robot to be in a XZ configuration
 
 
-    public Plane Flange { get => this.AxisPlanes[5].Clone(); }
+        public Plane Flange { get => this.AxisPlanes[5].Clone(); }
         public Transform[] ResetTransform { get; set; }
         #endregion
 
         #region Constructors and defaults
-        public static Manipulator Default { get; }
+        public static Manipulator Default { get => IRB120; }
         public static Manipulator IRB120 { get
             {
                 // Deserialize the list of robot meshes
@@ -133,10 +133,7 @@ namespace Axis.Core
 
             }
         }
-        static Manipulator()
-        {
-            Default = IRB120;
-        }
+        public Manipulator() {}
         public Manipulator(Manufacturer manufacturer, Plane[] axisPlanes, List<double> minAngles, List<double> maxAngles, List<Mesh> robMeshes, Plane basePlane, List<int> indices)
         {
             this.Manufacturer = manufacturer;
@@ -155,11 +152,8 @@ namespace Axis.Core
             // Transformation
             Rhino.Geometry.Transform Remap = Rhino.Geometry.Transform.PlaneToPlane(AxisPlanes[0], this.RobBasePlane);
 
-            // Transform the axis planes to the new robot location.
-            //List<Plane> tempPlanes = this.AxisPlanes.Select(p => p.Clone()).ToList();
-            //tempPlanes.ForEach(p => p.Transform(Remap));
-
             Plane[] tempPlanes = this.AxisPlanes.Select(plane => plane.Clone()).ToArray();
+            //tempPlanes.ForEach(p => p.Transform(Remap));
             for (int i = 0; i < tempPlanes.Length; ++i) tempPlanes[i].Transform(Remap);
             this.AxisPlanes = tempPlanes.ToList();
 
@@ -172,7 +166,6 @@ namespace Axis.Core
             this.SetPose();
 
         }
-
         #endregion
 
         #region Methods
@@ -213,7 +206,18 @@ namespace Axis.Core
         public bool IsReferencedGeometry { get => false; }
         public bool IsGeometryLoaded { get => throw new NotImplementedException(); }
 
-        public void ClearCaches() { }// => throw new NotImplementedException();
+        public void ClearCaches() 
+        {
+            this.Name = null;
+            this.Manufacturer = 0;
+            this.RobBasePlane = Plane.Unset;
+            this.AxisPlanes = null;
+            this.MinAngles = null;
+            this.MaxAngles = null;
+            this.Indices = null;
+            this.RobMeshes = null;
+            this.CurrentPose = null;
+        }
         public IGH_GeometricGoo DuplicateGeometry()
         {
             var robot = new Manipulator(this.Manufacturer, this.AxisPlanes.ToArray(), this.MinAngles, this.MaxAngles, this.RobMeshes.Select(m => m.DuplicateMesh()).ToList(), this.RobBasePlane.Clone(), this.Indices);
@@ -228,12 +232,8 @@ namespace Axis.Core
 
 
         //IGH_Goo
-        public bool IsValid
-        { get {
-                if (this.CurrentPose != null) return this.CurrentPose.IsValid;
-                else return false;
-            } }
-        public string IsValidWhyNot => "Since no or no valid poes has been set the is no representation possible for this robot";
+        public bool IsValid { get => (this.CurrentPose != null)? this.CurrentPose.IsValid : false; }
+        public string IsValidWhyNot => "Since no or no valid poes has been set there is no representation possible for this robot";
         public string TypeName => "Manipulator";
         public string TypeDescription => "Robot movment system";
 
@@ -272,48 +272,111 @@ namespace Axis.Core
         //GH_ISerializable
         public bool Read(GH_IReader reader)
         {
-            this.Name = reader.GetString("Name");
+            this.Name = reader.GetString("RobotName");
             this.Manufacturer = (Manufacturer)reader.GetInt32("Manufacturer");
 
             Plane bPlane = new Plane();
-            GH_Convert.ToPlane(reader.GetPlane("RobBasePlane"), ref bPlane, GH_Conversion.Both);
+            if (reader.ItemExists("RobBasePlane")) 
+            {
+                GH_IO.Types.GH_Plane ghPlane = reader.GetPlane("RobBasePlane");
+                bPlane = new Plane(
+                    new Point3d(
+                        ghPlane.Origin.x,
+                        ghPlane.Origin.y,
+                        ghPlane.Origin.z), 
+                    new Vector3d(
+                        ghPlane.XAxis.x,
+                        ghPlane.XAxis.y,
+                        ghPlane.XAxis.z),
+                    new Vector3d(
+                        ghPlane.YAxis.x,
+                        ghPlane.YAxis.y,
+                        ghPlane.YAxis.z)
+                    );
+            }
             this.RobBasePlane = bPlane;
 
+            List<Plane> axisPlanes = new List<Plane>();
             for (int i = 0; i < 6; ++i)
             {
-                Plane plane = new Plane();
-                GH_Convert.ToPlane(reader.GetPlane("AxisPlanes", i), ref plane, GH_Conversion.Both);
-                this.AxisPlanes.Add(plane);
+                GH_IO.Types.GH_Plane ghPlane = reader.GetPlane("AxisPlanes", i);
+                Plane plane = new Plane(
+                    new Point3d(
+                        ghPlane.Origin.x,
+                        ghPlane.Origin.y,
+                        ghPlane.Origin.z),
+                    new Vector3d(
+                        ghPlane.XAxis.x,
+                        ghPlane.XAxis.y,
+                        ghPlane.XAxis.z),
+                    new Vector3d(
+                        ghPlane.YAxis.x,
+                        ghPlane.YAxis.y,
+                        ghPlane.YAxis.z)
+                    );
+                axisPlanes.Add(plane);
             }
-            for (int i = 0; i < 6; ++i)
-            {
-                this.MinAngles.Add(reader.GetDouble("MinAngles", i));
-            }
-            for (int i = 0; i < 6; ++i)
-            {
-                this.MaxAngles.Add(reader.GetDouble("MaxAngles", i));
-            }
-            for (int i = 0; i < 6; ++i)
-            {
-                this.Indices.Add(reader.GetInt32("Indices", i));
-            }
-            for (int i = 0; i < 6; ++i)
-            {
-                Mesh mesh = new Mesh();
-                GH_Convert.ToMesh(reader.GetByteArray("RobMeshes", i), ref mesh, GH_Conversion.Both);
-                this.RobMeshes.Add(mesh);
-            }
+            this.AxisPlanes = axisPlanes;
 
+            List<double> minAngles = new List<double>();
+            for (int i = 0; i < 6; ++i)
+            {
+                minAngles.Add(reader.GetDouble("MinAngles", i));
+            }
+            this.MinAngles = minAngles;
+
+            List<double> maxAngles = new List<double>();
+            for (int i = 0; i < 6; ++i)
+            {
+                maxAngles.Add(reader.GetDouble("MaxAngles", i));
+            }
+            this.MaxAngles = maxAngles;
+
+
+            List<int> indices = new List<int>();
+            for (int i = 0; i < 6; ++i)
+            {
+                indices.Add(reader.GetInt32("Indices", i));
+            }
+            this.Indices = indices;
+
+            List<Mesh> robMeshes = new List<Mesh>();
+            for (int i = 0; i < 7; ++i)
+            {
+                if (reader.ChunkExists("RobMeshes",i)) 
+                {
+                    Mesh mesh = new Mesh();
+                    GH_Mesh gh_mesh = new GH_Mesh();
+                    var cunckMesh = reader.FindChunk("RobMeshes", i);
+                    gh_mesh.Read(cunckMesh);
+                    bool sucsess = GH_Convert.ToMesh(gh_mesh, ref mesh, GH_Conversion.Both);
+                    robMeshes.Add(mesh);
+                }
+            }
+            this.RobMeshes = robMeshes;
+
+            this.SetPose();
             return true;
 
         }
         public bool Write(GH_IWriter writer)
         {
-            GH_Plane gH_RobBasePlane = new GH_Plane(this.RobBasePlane);
+            GH_IO.Types.GH_Plane gH_RobBasePlane = new GH_IO.Types.GH_Plane(
+                this.RobBasePlane.Origin.X,
+                this.RobBasePlane.Origin.Y,
+                this.RobBasePlane.Origin.Z,
+                this.RobBasePlane.XAxis.X,
+                this.RobBasePlane.XAxis.Y,
+                this.RobBasePlane.XAxis.Z,
+                this.RobBasePlane.YAxis.X,
+                this.RobBasePlane.YAxis.Y,
+                this.RobBasePlane.YAxis.Z
+                );
 
-            writer.SetString("Name", this.Name);
+            writer.SetString("RobotName", this.Name);
             writer.SetInt32("Manufacturer", (int)this.Manufacturer);
-            gH_RobBasePlane.Write(writer.CreateChunk("RobBasePlane"));
+            writer.SetPlane("RobBasePlane", gH_RobBasePlane);
+
 
             for (int i = 0; i < this.AxisPlanes.Count; ++i)
             {
@@ -344,15 +407,13 @@ namespace Axis.Core
             }
             for (int i = 0; i < this.RobMeshes.Count; ++i)
             {
+                byte[] meshes;
                 GH_Mesh mesh = new GH_Mesh(this.RobMeshes[i]);
                 mesh.Write(writer.CreateChunk("RobMeshes", i));
             }
 
-            writer.AddComment("This should be the manipulator");
             return true;
-
         }
-        
         #endregion
         
 
@@ -1243,6 +1304,7 @@ namespace Axis.Core
         #endregion
 
     }
+
 
 
     /// <summary>

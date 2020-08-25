@@ -45,7 +45,7 @@ namespace Axis.Core
             pManager.AddPlaneParameter("Planes", "Planes", "Axis rotation planes for kinematics.", GH_ParamAccess.list);
             pManager.AddNumberParameter("Minimums", "Minimums", "Joint minimum angles, as a list of doubles.", GH_ParamAccess.list);
             pManager.AddNumberParameter("Maximums", "Maximums", "Joint maximum angles, as a list of doubles.", GH_ParamAccess.list);
-            pManager.AddIntegerParameter("Indices", "Indices", "Inverse kinematic solution indices.", GH_ParamAccess.list);
+            pManager.AddIntegerParameter("Indices", "Indices", "Inverse kinematic solution indices.", GH_ParamAccess.list, new List<int>() { 0, 0, 0, 0, 0, 0 });
             pManager.AddMeshParameter("Mesh", "Mesh", "List of robot mesh geometry. [Base + 6 joint meshes]", GH_ParamAccess.list);
             pManager.AddPlaneParameter("Base", "Base", "Optional custom robot base plane. [Default = World XY]", GH_ParamAccess.item, Plane.WorldXY);
             pManager[3].Optional = true;
@@ -71,7 +71,7 @@ namespace Axis.Core
             if (!DA.GetDataList(0, inPlanes)) return;
             if (!DA.GetDataList(1, inMin)) return;
             if (!DA.GetDataList(2, inMax)) return;
-            if (!DA.GetDataList(3, indices))  indices = new List<int>() { 0, 0, 0, 0, 0, 0 };
+            if (!DA.GetDataList(3, indices)) return;
             if (!DA.GetDataList(4, inMeshes)) return;
             if (!DA.GetData(5, ref inBase)) return;
 

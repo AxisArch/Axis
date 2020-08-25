@@ -1,36 +1,32 @@
-﻿using System;
+﻿using Axis.Core;
+using Grasshopper.Kernel;
+using Grasshopper.Kernel.Data;
+using Grasshopper.Kernel.Types;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-//using Rhino.Geometry;
-
-using Axis.Params;
-using Axis.Core;
-using GH_IO.Serialization;
-
-using Grasshopper.Kernel;
-using Grasshopper.Kernel.Data;
-using Grasshopper.Kernel.Types;
-
 namespace Axis.Params
 {
-    public class Param_Manipulator : GH_PersistentParam<Manipulator>
+    public class Param_Tool : GH_PersistentParam<Tool>
     {
         public override GH_Exposure Exposure => GH_Exposure.hidden; // <--- Make it hidden when it is working.
-        public Param_Manipulator()
-          : base("Axis Robot", "Axis Robot", "This parampeter will store Axis Robots and their data.", Axis.AxisInfo.Plugin, Axis.AxisInfo.TabCore)
+
+        public Param_Tool()
+          : base("Axis Tool", "Axis Tool", "This parampeter will store Axis Tools and their data.", Axis.AxisInfo.Plugin, Axis.AxisInfo.TabCore)
         { }
 
         public override Guid ComponentGuid => new Guid("17C49BD4-7A54-4471-961A-B5E0E971F7F4");
 
-        protected override Manipulator InstantiateT()
+        protected override Tool InstantiateT()
         {
-            return Manipulator.Default;
+            return Tool.Default;
         }
-        protected override GH_GetterResult Prompt_Singular(ref Manipulator value)
+
+        protected override GH_GetterResult Prompt_Singular(ref Tool value)
         {
             Rhino.Input.Custom.GetPoint gpC = new Rhino.Input.Custom.GetPoint();
             gpC.SetCommandPrompt("Set default Robot center point");
@@ -44,7 +40,7 @@ namespace Axis.Params
             switch (go.Get())
             {
                 case Rhino.Input.GetResult.Option:
-                    if (go.Option().EnglishName == "True") { value = Manipulator.Default; }
+                    if (go.Option().EnglishName == "True") { value = Tool.Default; }
                     return GH_GetterResult.success;
 
                 case Rhino.Input.GetResult.Nothing:
@@ -56,21 +52,23 @@ namespace Axis.Params
 
             return GH_GetterResult.cancel;
         }
-        protected override GH_GetterResult Prompt_Plural(ref List<Manipulator> values)
+
+        protected override GH_GetterResult Prompt_Plural(ref List<Tool> values)
         {
             return GH_GetterResult.cancel;
         }
+
         public override void AppendAdditionalMenuItems(ToolStripDropDown menu)
         {
             //Menu_AppendItem(menu, "Set the default value", SetDefaultHandler, SourceCount == 0);
             base.AppendAdditionalMenuItems(menu);
         }
+
         private void SetDefaultHandler(object sender, EventArgs e)
         {
             PersistentData.Clear();
-            PersistentData.Append(Manipulator.Default, new GH_Path(0));
+            PersistentData.Append(Tool.Default, new GH_Path(0));
             ExpireSolution(true);
         }
-
     }
 }

@@ -64,6 +64,7 @@ namespace Axis.Core
             Manipulator manipulator = null;
             if (!DA.GetData(0, ref manipulator))
             {
+                return;
                 manipulator = Manipulator.Default;
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No robot system defined, using default");
             }  //Set Robot 
