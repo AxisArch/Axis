@@ -1,4 +1,5 @@
 ﻿using Axis.Core;
+using Axis.Targets;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Types;
@@ -11,22 +12,22 @@ using System.Windows.Forms;
 
 namespace Axis.Params
 {
-    public class Param_Tool : GH_PersistentParam<Tool>
+    public class Param_Target : GH_PersistentParam<Target>
     {
         public override GH_Exposure Exposure => GH_Exposure.hidden; // <--- Make it hidden when it is working.
 
-        public Param_Tool()
-          : base("Axis Tool", "Axis Tool", "This parampeter will store Axis Tools and their data.", Axis.AxisInfo.Plugin, Axis.AxisInfo.TabCore)
+        public Param_Target()
+          : base("Axis Target", "Axis Target", "This parampeter will store Axis Targets and their data.", Axis.AxisInfo.Plugin, Axis.AxisInfo.TabCore)
         { }
 
-        public override Guid ComponentGuid => new Guid("E55644AF-9D59-486D-A698-637062C7734D");
+        public override Guid ComponentGuid => new Guid("03DE08A2-D283-4E6D-98D4-07BF9606F34A");
 
-        protected override Tool InstantiateT()
+        protected override Target InstantiateT()
         {
-            return Tool.Default;
+            return Target.Default;
         }
 
-        protected override GH_GetterResult Prompt_Singular(ref Tool value)
+        protected override GH_GetterResult Prompt_Singular(ref Target value)
         {
             Rhino.Input.Custom.GetPoint gpC = new Rhino.Input.Custom.GetPoint();
             gpC.SetCommandPrompt("Set default Robot center point");
@@ -40,7 +41,7 @@ namespace Axis.Params
             switch (go.Get())
             {
                 case Rhino.Input.GetResult.Option:
-                    if (go.Option().EnglishName == "True") { value = Tool.Default; }
+                    if (go.Option().EnglishName == "True") { value = Target.Default; }
                     return GH_GetterResult.success;
 
                 case Rhino.Input.GetResult.Nothing:
@@ -53,7 +54,7 @@ namespace Axis.Params
             return GH_GetterResult.cancel;
         }
 
-        protected override GH_GetterResult Prompt_Plural(ref List<Tool> values)
+        protected override GH_GetterResult Prompt_Plural(ref List<Target> values)
         {
             return GH_GetterResult.cancel;
         }
@@ -67,7 +68,7 @@ namespace Axis.Params
         private void SetDefaultHandler(object sender, EventArgs e)
         {
             PersistentData.Clear();
-            PersistentData.Append(Tool.Default, new GH_Path(0));
+            PersistentData.Append(Target.Default, new GH_Path(0));
             ExpireSolution(true);
         }
     }

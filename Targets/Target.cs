@@ -198,7 +198,7 @@ namespace Axis.Targets
         //IGH_GeometricGoo
         public BoundingBox Boundingbox { get => throw new NotImplementedException(); } //Cached boundingbox
         public Guid ReferenceID { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public bool IsReferencedGeometry { get => throw new NotImplementedException(); }
+        public bool IsReferencedGeometry { get => false; }
         public bool IsGeometryLoaded { get => throw new NotImplementedException(); }
 
         public void ClearCaches() => throw new NotImplementedException();

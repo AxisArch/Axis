@@ -1152,19 +1152,6 @@ namespace Canvas
                 thickness,
                 sizeArrow);
         }
-        static public void DisplayRobotMesh(Axis.Core.Manipulator robot, IGH_PreviewArgs args)
-        {
-            //int cC = robot.ikColors.Count;
-            //int rC = robot.ikMeshes.Count;
-            //
-            //for (int i = 0; i < rC; ++i)
-            //{
-            //    int cID = i;
-            //
-            //    if (i >= cC) cID = cC - 1;
-            //    args.Display.DrawMeshShaded(robot.ikMeshes[i], new DisplayMaterial(robot.ikColors[cID]));
-            //}
-        }
         static public void DisplayRobotLines(Axis.Core.Manipulator robot, IGH_PreviewArgs args, int thickness = 3)
         {
             //List<Point3d> points = new List<Point3d>();
