@@ -36,7 +36,8 @@ namespace Axis.Targets
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddNumberParameter("Angles", "Angles", "Axis values for each axis as a list.", GH_ParamAccess.list, new List<double> { 0, 0, 0, 0, 0, 0 });
-            pManager.AddGenericParameter("Tool", "Tool", "Tool to use for operation.", GH_ParamAccess.item);
+            IGH_Param tool = new Axis.Params.Param_Tool();
+            pManager.AddParameter(tool, "Tool", "Tool", "Tool to use for operation.", GH_ParamAccess.item);
             pManager.AddGenericParameter("Speed", "Speed", "Speed to use for the movement.", GH_ParamAccess.item);
             pManager.AddGenericParameter("Zone", "Zone", "Zone to use for the movement.", GH_ParamAccess.item);
             for (int i = 0; i < 4; i++)

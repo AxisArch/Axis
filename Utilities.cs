@@ -612,30 +612,37 @@ namespace Axis
 
             return gh_Struc;
         }
-
         /// <summary>
-        /// Extract Geometry from chunk
+        /// Convert a GH_Structure back to a list
         /// </summary>
-        /// <typeparam name="T">Target type</typeparam>
-        /// <typeparam name="Q">Source type</typeparam>
-        /// <param name="chunk">The serialised cung that contains the data</param>
-        /// <returns>Target object</returns>
-        public static T Extract<T, Q>(this GH_IO.Serialization.GH_IReader chunk, Delegate conversion )
-            //where T : Rhino.Geometry.GeometryBase
-            where Q : IGH_Goo
+        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="Q"></typeparam>
+        /// <param name="gh_struct"></param>
+        /// <returns></returns>
+        public static List<T> ToList<T, Q>(this Grasshopper.Kernel.Data.GH_Structure<Q> gh_struct )  where T : Rhino.Runtime.CommonObject where Q : IGH_Goo
         {
-            if (chunk != null)
+            if (gh_struct == null) return null;
+            var list = new List<T>();
+            for (int i = 0; i < gh_struct.Branches.Count; ++i)
             {
-                Q GH_Obj = default;
-                GH_Obj.Read(chunk);
-                T Obj = default;
+                for(int j = 0; j< gh_struct[i].Count; ++j) 
+                {
+                    var data = gh_struct[i][j];
+                    //if (data == typeof(T))
+                    //{
+                        var temp = data as T;
+                        list.Add(temp);
+                    //}
+                    //else if () { }
 
-                //conversion.DynamicInvoke(GH_Obj, ref Obj, GH_Conversion.Both);
-
-                return (T)Obj;
+                    //var data = GH_Convert.ByteArrayToCommonObject<T>(byteArray as byte[]);
+                    //list.Add((T)gh_struct[i][j]);
+                }
+;
             }
-            else throw  new  Exception("Empty varible when desirialising");
+            return list;
         }
+        
     }
 
     /// <summary>
