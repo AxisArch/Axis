@@ -37,11 +37,14 @@ namespace Axis
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddPlaneParameter("Plane", "Plane", "Target TCP location as plane.", GH_ParamAccess.list);
-            pManager.AddGenericParameter("Speed", "Speed", "List of speed objects per plane.", GH_ParamAccess.list);
-            pManager.AddGenericParameter("Zone", "Zone", "Approximation zone per target, in mm.", GH_ParamAccess.list);
+            IGH_Param speed = new Axis.Params.SpeedParam();
+            pManager.AddParameter(speed, "Speed", "Speed", "List of speed objects per plane.", GH_ParamAccess.list);
+            IGH_Param zone = new Axis.Params.ZoneParam();
+            pManager.AddParameter(zone, "Zone", "Zone", "Approximation zone per target, in mm.", GH_ParamAccess.list);
             IGH_Param tool = new Axis.Params.ToolParam();
             pManager.AddParameter(tool, "Tool", "Tool", "Tool to use for operation.", GH_ParamAccess.list);
-            pManager.AddGenericParameter("Wobj", "Wobj", "Wobj to use for operation.", GH_ParamAccess.list);
+            IGH_Param csystem = new Axis.Params.CSystemParam();
+            pManager.AddParameter(csystem, "Wobj", "Wobj", "Wobj to use for operation.", GH_ParamAccess.list);
 
             for (int i = 0; i < 5; i++)
                 pManager[i].Optional = true;
@@ -49,7 +52,8 @@ namespace Axis
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("Targets", "Targets", "Robot targets.", GH_ParamAccess.list);
+            IGH_Param target = new Axis.Params.TargetParam();
+            pManager.AddParameter(target,"Targets", "Targets", "Robot targets.", GH_ParamAccess.list);
         }
         #endregion
 

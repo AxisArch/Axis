@@ -29,15 +29,18 @@ namespace Axis.Targets
             pManager.AddNumberParameter("Angles", "Angles", "Axis values for each axis as a list.", GH_ParamAccess.list, new List<double> { 0, 0, 0, 0, 0, 0 });
             IGH_Param tool = new Axis.Params.ToolParam();
             pManager.AddParameter(tool, "Tool", "Tool", "Tool to use for operation.", GH_ParamAccess.item);
-            pManager.AddGenericParameter("Speed", "Speed", "Speed to use for the movement.", GH_ParamAccess.item);
-            pManager.AddGenericParameter("Zone", "Zone", "Zone to use for the movement.", GH_ParamAccess.item);
+            IGH_Param speed = new Axis.Params.SpeedParam();
+            pManager.AddParameter(speed, "Speed", "Speed", "Speed to use for the movement.", GH_ParamAccess.item);
+            IGH_Param zone = new Axis.Params.ZoneParam();
+            pManager.AddParameter(zone, "Zone", "Zone", "Zone to use for the movement.", GH_ParamAccess.item);
             for (int i = 0; i < 4; i++)
                 pManager[i].Optional = true;
         }
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("Target", "Target", "Robot joint target.", GH_ParamAccess.item);
+            IGH_Param target = new Axis.Params.TargetParam();
+            pManager.AddParameter(target, "Target", "Target", "Robot joint target.", GH_ParamAccess.item);
         }
         #endregion
 

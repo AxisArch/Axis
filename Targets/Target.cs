@@ -703,6 +703,7 @@ namespace Axis.Targets
         List<double> targetProgress;
 
         #region Constructor
+        public Toolpath() { }
         /// <summary>
         /// Toolpath constructor.
         /// </summary>

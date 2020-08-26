@@ -30,11 +30,11 @@ namespace Axis.Params
         protected override GH_GetterResult Prompt_Singular(ref Toolpath value)
         {
             Rhino.Input.Custom.GetPoint gpC = new Rhino.Input.Custom.GetPoint();
-            gpC.SetCommandPrompt("Set default tool center point.");
+            gpC.SetCommandPrompt("Set default toolpath center point.");
             gpC.AcceptNothing(true);
 
             Rhino.Input.Custom.GetOption go = new Rhino.Input.Custom.GetOption();
-            go.SetCommandPrompt("Set default tool.");
+            go.SetCommandPrompt("Set default toolpath.");
             go.AcceptNothing(true);
             go.AddOption("True");
 

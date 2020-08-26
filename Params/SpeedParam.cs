@@ -30,11 +30,11 @@ namespace Axis.Params
         protected override GH_GetterResult Prompt_Singular(ref Speed value)
         {
             Rhino.Input.Custom.GetPoint gpC = new Rhino.Input.Custom.GetPoint();
-            gpC.SetCommandPrompt("Set default target center point.");
+            gpC.SetCommandPrompt("Set default speed.");
             gpC.AcceptNothing(true);
 
             Rhino.Input.Custom.GetOption go = new Rhino.Input.Custom.GetOption();
-            go.SetCommandPrompt("Set default target.");
+            go.SetCommandPrompt("Set default speed.");
             go.AcceptNothing(true);
             go.AddOption("True");
 

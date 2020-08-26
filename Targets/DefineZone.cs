@@ -34,7 +34,8 @@ namespace Axis.Targets
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("Zone", "Zone", "List of zone objects.", GH_ParamAccess.list);
+            IGH_Param zone = new Axis.Params.ZoneParam();
+            pManager.AddParameter(zone, "Zone", "Zone", "List of zone objects.", GH_ParamAccess.list);
         }
         #endregion
 

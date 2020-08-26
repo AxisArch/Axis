@@ -34,14 +34,16 @@ namespace Axis.Core
         #region IO
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddGenericParameter("Targets", "Targets", "T", GH_ParamAccess.list);
+            IGH_Param target = new Axis.Params.TargetParam();
+            pManager.AddParameter(target, "Targets", "Targets", "T", GH_ParamAccess.list);
             pManager.AddBooleanParameter("Run", "Run", "", GH_ParamAccess.item);
             pManager.AddBooleanParameter("Reset", "Reset","",GH_ParamAccess.item );
         }
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("Target", "Target", "", GH_ParamAccess.item);
+            IGH_Param target = new Axis.Params.TargetParam();
+            pManager.AddParameter(target, "Target", "Target", "", GH_ParamAccess.item);
         }
         #endregion
 
