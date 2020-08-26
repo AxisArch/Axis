@@ -18,7 +18,7 @@ namespace Axis.Core
     /// <summary>
     /// Create custom industrial robot configurations.
     /// </summary>
-    public class Manipulator : IGH_GeometricGoo, Axis_Displayable
+    public class Manipulator : IGH_GeometricGoo, Axis_Displayable<Mesh>
     {
         public string Name = "Wall-E"; // This variable can hold the model number
         private Guid id = Guid.Empty;
@@ -1206,7 +1206,7 @@ namespace Axis.Core
     /// <summary>
     /// Class represeing an endefector for a robotic manipulator
     /// </summary>
-    public class Tool: IGH_GeometricGoo, Axis_Displayable
+    public class Tool: IGH_GeometricGoo, Axis_Displayable<Mesh>
     {
         public string Name { get; private set; }
         private Guid ID { get; set; }
@@ -1441,11 +1441,12 @@ namespace Axis.Core
     /// Interface ensuring types have the right propperies to be displayed inside the other componets
     /// This should help enforce consistency throughout the plugin.
     /// </summary>
-    interface Axis_Displayable: IGH_GeometricGoo
+    interface Axis_Displayable<T>: IGH_GeometricGoo where T: Rhino.Runtime.CommonObject 
     {
-        Mesh[] Geometries { get; }
+        T[] Geometries { get; }
         Color[] Colors { get; }
     }
+
     /// <summary>
     /// List of manufacturers.
     /// </summary>
