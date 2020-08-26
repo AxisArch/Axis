@@ -17,7 +17,7 @@ namespace Axis.Params
         public override GH_Exposure Exposure => GH_Exposure.hidden; // <--- Make it hidden when it is working.
 
         public TargetParam()
-          : base("Axis Target", "Axis Target", "This parampeter will store Axis Targets and their data.", Axis.AxisInfo.Plugin, Axis.AxisInfo.TabCore)
+          : base("Target", "Target", "Axis target type.", Axis.AxisInfo.Plugin, Axis.AxisInfo.TabCore)
         { }
 
         public override Guid ComponentGuid => new Guid("03DE08A2-D283-4E6D-98D4-07BF9606F34A");
@@ -30,11 +30,11 @@ namespace Axis.Params
         protected override GH_GetterResult Prompt_Singular(ref Target value)
         {
             Rhino.Input.Custom.GetPoint gpC = new Rhino.Input.Custom.GetPoint();
-            gpC.SetCommandPrompt("Set default Robot center point");
+            gpC.SetCommandPrompt("Set default target center point.");
             gpC.AcceptNothing(true);
 
             Rhino.Input.Custom.GetOption go = new Rhino.Input.Custom.GetOption();
-            go.SetCommandPrompt("Set default Robot");
+            go.SetCommandPrompt("Set default target.");
             go.AcceptNothing(true);
             go.AddOption("True");
 
