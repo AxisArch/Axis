@@ -793,7 +793,7 @@ namespace RAPID
                 };
         private List<Program> main = new List<Program>();
         private List<Program> progs = new List<Program>();
-        private List<string> legaryProgs = new List<string>();
+        private List<string> legacyProgs = new List<string>();
 
         public List<Program> extraProg = new List<Program>();
 
@@ -846,7 +846,7 @@ namespace RAPID
         }
         public void AddPrograms(List<string> progs)
         {
-            legaryProgs.AddRange(progs);
+            legacyProgs.AddRange(progs);
         }
         public void AddMain(Program main)
         {
@@ -893,7 +893,7 @@ namespace RAPID
             {
                 mod.AddRange(prog.Code());
             }
-            if (legaryProgs.Count > 0) { mod.AddRange(legaryProgs); }
+            if (legacyProgs.Count > 0) { mod.AddRange(legacyProgs); }
             if (progs.Count > 0)
             {
                 mod.Add("! Additional Programs");
