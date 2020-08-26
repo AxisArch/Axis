@@ -25,23 +25,11 @@ namespace Axis.Core
         Manufacturer m_Manufacturer = Manufacturer.ABB;
         bool m_Pose = false;
 
-        public override GH_Exposure Exposure => GH_Exposure.primary;
-        protected override System.Drawing.Bitmap Icon
-        {
-            get
-            {
-                return Properties.Resources.Robot;
-            }
-        }
-        public override Guid ComponentGuid
-        {
-            get { return new Guid("{26289bd0-15cc-408f-af2d-5a87ea81cb18}"); }
-        }
-
         public Robot() : base("Robot", "Robot", "Create a kinematic model of a custom robot.", AxisInfo.Plugin, AxisInfo.TabRobot)
         {
         }
 
+        #region IO
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddPlaneParameter("Planes", "Planes", "Axis rotation planes for kinematics.", GH_ParamAccess.list);
@@ -59,6 +47,7 @@ namespace Axis.Core
             IGH_Param robot = new Axis.Params.RobotParam();
             pManager.AddParameter(robot, "Robot", "Robot", "Custom robot data type.", GH_ParamAccess.item);
         }
+        #endregion
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
@@ -69,7 +58,6 @@ namespace Axis.Core
             List<Mesh> inMeshes = new List<Mesh>();
             Plane inBase = Plane.WorldXY;
             
-
             if (!DA.GetDataList(0, inPlanes)) return;
             if (!DA.GetDataList(1, inMin)) return;
             if (!DA.GetDataList(2, inMax)) return;
@@ -83,8 +71,6 @@ namespace Axis.Core
             //List<Plane> axisPlanes = new List<Plane>();
             //List<Plane> tAxisPlanes = new List<Plane>();
 
-
-
             Manipulator robot = new Manipulator(m_Manufacturer, inPlanes.ToArray(), inMin, inMax, inMeshes, inBase, indices);
             //robot.SetPose();
 
@@ -96,6 +82,7 @@ namespace Axis.Core
             //}
         }
 
+        #region UI
         // Build a list of optional input and output parameters
         IGH_Param[] outputParams = new IGH_Param[1]
         {
@@ -174,12 +161,9 @@ namespace Axis.Core
             Params.OnParametersChanged();
             ExpireSolution(true);
         }
-        /// <summary>
-        /// Uncheck other dropdown menu items
-        /// </summary>
-        /// <param name="selectedMenuItem"></param>
-        
+        #endregion
 
+        #region Serialization
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
@@ -195,7 +179,9 @@ namespace Axis.Core
             this.m_Pose = reader.GetBoolean("StartPose");
             return base.Read(reader);
         }
+        #endregion
 
+        #region Component Settings
         /// <summary>
         /// Implement this interface in your component if you want to enable variable parameter UI.
         /// </summary>
@@ -204,5 +190,19 @@ namespace Axis.Core
         IGH_Param IGH_VariableParameterComponent.CreateParameter(GH_ParameterSide side, int index) => null;
         bool IGH_VariableParameterComponent.DestroyParameter(GH_ParameterSide side, int index) => false;
         void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
+
+        public override GH_Exposure Exposure => GH_Exposure.primary;
+        protected override System.Drawing.Bitmap Icon
+        {
+            get
+            {
+                return Properties.Resources.Robot;
+            }
+        }
+        public override Guid ComponentGuid
+        {
+            get { return new Guid("{26289bd0-15cc-408f-af2d-5a87ea81cb18}"); }
+        }
+        #endregion
     }
 }

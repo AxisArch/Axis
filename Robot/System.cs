@@ -489,21 +489,16 @@ namespace Axis.Core
         /// </summary>
         public class ManipulatorPose : IGH_Goo
         {
-            #region Class variable
-            //Pose variavles
             private Manipulator Robot;
             private Axis.Targets.Target Target;
             private double[] radAngles;
             private JointStatesValue[] jointStates;
 
-            //Signals
             private bool outOfReach = false;
             private bool outOfRoation = false;
             private bool overHeadSig = false;
             private bool wristSing = false;
-            #endregion
 
-            #region Propperties
             public double[] Angles { get => this.radAngles.Select(d => d.ToDegrees()).ToArray(); }
             public JointStatesValue[] JointStates {
                 get => jointStates;
@@ -514,8 +509,7 @@ namespace Axis.Core
             public bool OverHeadSig { get => overHeadSig; }
             public bool WristSing { get => wristSing; }
 
-
-            // Mesh Transformations
+            // Mesh transformations
             private Transform[] Forward;
             private Transform[] reverse = null;
             public Transform[] Reverse {
@@ -528,7 +522,7 @@ namespace Axis.Core
                 set => reverse = value;
             }
 
-            // Mesh Colours
+            // Mesh colours
             public Color[] Colors { get => (this.jointStates != null) ? this.jointStates.Select(state => GetColour(state)).ToArray() : null; }
             private static Dictionary<JointStatesValue, Color> JointColours = new Dictionary<JointStatesValue, Color>()
             {
@@ -540,19 +534,20 @@ namespace Axis.Core
 
             };
 
-
             public Plane[] Planes { get
                 {
                     Plane[] planes = this.Robot.AxisPlanes.Select(plane => plane.Clone()).ToArray();
                     for (int i = 0; i < planes.Length; ++i) planes[i].Transform(this.Robot.ResetTransform[i] * this.Forward[i]);
                     return planes;
                 } }
+
             public Plane Flange { get
                 {
                     Plane flange = this.Robot.AxisPlanes[5].Clone();
                     flange.Transform(Forward[5]);
                     return flange;
                 } }
+
             public Mesh[] Geometry
             {
                 get
@@ -562,7 +557,6 @@ namespace Axis.Core
                     return meshes;
                 }
             }
-            #endregion
 
             #region Constructors
             public ManipulatorPose(Manipulator robot)
@@ -1168,7 +1162,7 @@ namespace Axis.Core
             }
             #endregion
 
-            #region Interface Variables
+            #region Interfaces
             public bool IsValid { get; private set; } = false;
             public string IsValidWhyNot => "Pose does not have a valid solution";
             public string TypeName => "Robot Pose";

@@ -13,7 +13,6 @@ using System.Windows.Forms;
 using System.Text;
 using System.Threading.Tasks;
 
-
 using Excel = Microsoft.Office.Interop.Excel;
 
 using Rhino;
@@ -31,12 +30,11 @@ using Axis.Targets;
 
 using Newtonsoft.Json;
 
-/// <summary>
-/// Commone Axis specific functions
-/// </summary>
 namespace Axis
 {
-
+    /// <summary>
+    /// Utility class for generic functions.
+    /// </summary>
     public static class Util
     {
         // Public constants across the plugin.

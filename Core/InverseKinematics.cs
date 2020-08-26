@@ -67,7 +67,6 @@ namespace Axis.Core
 
             Manipulator.ManipulatorPose pose = new Manipulator.ManipulatorPose(m_Robot, m_Target);
 
-            #region Handle Errors
             // Handle errors
             List<string> log = new List<string>();
             if (pose.OverHeadSig) log.Add("Close to overhead singularity.");
@@ -78,7 +77,6 @@ namespace Axis.Core
             if (m_Pose != null) m_Robot.SetPose(m_Pose, checkValidity: true);
             m_Robot.SetPose(pose, checkValidity: true);
             if (m_Robot.CurrentPose.IsValid) m_Pose = m_Robot.CurrentPose;
-            #endregion
 
             Plane flange = (m_Robot.CurrentPose.IsValid)? m_Robot.CurrentPose.Flange: Plane.Unset;
             double[] selectedAngles = m_Robot.CurrentPose.Angles;
@@ -92,7 +90,6 @@ namespace Axis.Core
             // Update and display data
             m_Robot.UpdatePose();
             m_Robot.GetBoundingBox(Transform.Identity);
-
         }
 
         public override void ClearData()
