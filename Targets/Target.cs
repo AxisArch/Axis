@@ -11,18 +11,16 @@ using GH_IO.Serialization;
 namespace Axis.Targets
 {
     /// <summary>
-    /// Robot target used to instruct a movement
+    /// Construct a robot target position.
     /// </summary>
     public class Target : IGH_GeometricGoo
     {
         #region Class Fields
         public Plane Plane { get; set; } // Position in World Coordinates
 
-
         public Plane TargetPlane; // Position in local coordinates
         public Quaternion Quaternion { get; set; }
         public List<double> JointAngles { get; set; }
-
 
         public Speed Speed { get; }
         public Zone Zone { get; }
@@ -67,14 +65,14 @@ namespace Axis.Targets
                         switch (this.Method)
                         {
 
-                            #region Linear movement
+                            #region Linear
                             case MotionType.Linear:
 
 
-                                if (this.Tool.relTool != Vector3d.Zero)
+                                if (this.Tool.RelTool != Vector3d.Zero)
                                 {
                                     //MoveL RelTool ([[416.249, -110.455, 0],[0, 0, 1, 0], cData, eAxis], 0, 0,-120), v50, z1, tool0 \Wobj:=wobj0;
-                                    string offset = $"[{this.Tool.relTool.X.ToString()}, {this.Tool.relTool.Y.ToString()}, {this.Tool.relTool.Z.ToString()}]";
+                                    string offset = $"[{this.Tool.RelTool.X.ToString()}, {this.Tool.RelTool.Y.ToString()}, {this.Tool.RelTool.Z.ToString()}]";
                                     return $"MoveL RelTool ({robtarget},{offset}),{this.Speed.CodeStrFor(this.Manufacturer)},{this.Zone.CodeStrFor(this.Manufacturer)},{this.Tool.CodeStrFor(this.Manufacturer)} {this.CSystem.CodeStrFor(this.Manufacturer)};";
                                 }
                                 else
@@ -83,12 +81,13 @@ namespace Axis.Targets
                                 }
 
                             #endregion
-                            #region Joint movment
+
+                            #region Joint
                             case MotionType.Joint:
 
-                                if (this.Tool.relTool != Vector3d.Zero)
+                                if (this.Tool.RelTool != Vector3d.Zero)
                                 {
-                                    string offset = $"[{this.Tool.relTool.X.ToString()}, {this.Tool.relTool.Y.ToString()}, {this.Tool.relTool.Z.ToString()}]";
+                                    string offset = $"[{this.Tool.RelTool.X.ToString()}, {this.Tool.RelTool.Y.ToString()}, {this.Tool.RelTool.Z.ToString()}]";
                                     return $"MoveJ RelTool ({robtarget},{offset}),{this.Speed.CodeStrFor(this.Manufacturer)},{this.Zone.CodeStrFor(this.Manufacturer)},{this.Tool.CodeStrFor(this.Manufacturer)} {this.CSystem.CodeStrFor(this.Manufacturer)};";
                                 }
                                 else
@@ -96,7 +95,8 @@ namespace Axis.Targets
                                     return $"MoveJ {robtarget}, {this.Speed.CodeStrFor(this.Manufacturer)}, {this.Zone.CodeStrFor(this.Manufacturer)}, {this.Tool.CodeStrFor(this.Manufacturer)} {this.CSystem.CodeStrFor(this.Manufacturer)};";
                                 }
                             #endregion
-                            #region Absolute movment
+
+                            #region Absolute
                             case MotionType.AbsoluteJoint:
                                 string jTarg = $"[{this.JointAngles[0].ToString()},{this.JointAngles[1].ToString()},{this.JointAngles[2].ToString()},{this.JointAngles[3].ToString()},{this.JointAngles[4].ToString()},{this.JointAngles[5].ToString()}]";
                                 return $"MoveAbsJ [{jTarg},[{this.ExtRot.CodeStrFor(this.Manufacturer)},{this.ExtLin.CodeStrFor(this.Manufacturer)},9E9,9E9,9E9,9E9]], {this.Speed.CodeStrFor(this.Manufacturer)}, {this.Zone.CodeStrFor(this.Manufacturer)}, {this.Tool.CodeStrFor(this.Manufacturer)};";
@@ -107,11 +107,11 @@ namespace Axis.Targets
                         }
                         throw new Exception($"{this.Method.ToString()} not implemented for ABB");
                     #endregion
+
                     #region Kuka
                     case Manufacturer.Kuka:
 
                         string KUKAposition = position.CodeStrFor(this.Manufacturer);
-
 
                         List<double> eulers = Util.QuaternionToEuler(quat);
 
@@ -128,11 +128,12 @@ namespace Axis.Targets
                         switch (this.Method)
                         {
 
-                            #region Linear movement
+                            #region Linear
                             case MotionType.Linear:
                                 return $"LIN  {{E6POS:  {KUKAposition}, {strEuler}, {strExtAxis}}} C_VEL";
 
                             #endregion
+
                             case MotionType.Joint:
                                 return $"PTP  {{E6POS:  {KUKAposition}, {strEuler}, {strExtAxis}}} C_PTP";
 
@@ -149,9 +150,25 @@ namespace Axis.Targets
         public Point3d Position { get =>  this.TargetPlane.Origin; }
         public MotionType Method { get; }
 
+        #region Constructors
 
-        #region Constructors and defaults
+        /// <summary>
+        /// Default target object.
+        /// </summary>
         public static Target Default { get => new Target(new List<double> { 0, 0, 0, 0, 0, 0 }, Speed.Default, Zone.Default, Tool.Default, 0, 0, Manufacturer.ABB); }
+        
+        /// <summary>
+        /// Default target constructor from a plane.
+        /// </summary>
+        /// <param name="target"></param>
+        /// <param name="method"></param>
+        /// <param name="speed"></param>
+        /// <param name="zone"></param>
+        /// <param name="tool"></param>
+        /// <param name="wobj"></param>
+        /// <param name="extRot"></param>
+        /// <param name="extLin"></param>
+        /// <param name="robot"></param>
         public Target(Plane target, MotionType method, Speed speed, Zone zone, Tool tool, CSystem wobj, double extRot, double extLin, Manufacturer robot)
         {
             // Adjust plane to comply with robot programming convetions.
@@ -178,6 +195,17 @@ namespace Axis.Targets
             this.CSystem = wobj;
 
         }
+
+        /// <summary>
+        /// Default target constructor from joint values.
+        /// </summary>
+        /// <param name="axisVals"></param>
+        /// <param name="speed"></param>
+        /// <param name="zone"></param>
+        /// <param name="tool"></param>
+        /// <param name="extRot"></param>
+        /// <param name="extLin"></param>
+        /// <param name="robot"></param>
         public Target(List<double> axisVals, Speed speed, Zone zone, Tool tool, double extRot, double extLin, Manufacturer robot)
         {
             this.JointAngles = axisVals;
@@ -192,8 +220,7 @@ namespace Axis.Targets
         }
         #endregion
 
-
-        #region Interface implementation
+        #region Interfaces
 
         //IGH_GeometricGoo
         public BoundingBox Boundingbox { get => throw new NotImplementedException(); } //Cached boundingbox
@@ -250,7 +277,7 @@ namespace Axis.Targets
     /// <summary>
     /// Class handlining the conversion for different types to the spesific manufacturere string representation
     /// </summary>
-    static class StrringConvertiosn
+    static class StringConversion
     {
         public static string CodeStrFor(this Speed speed, Manufacturer manufacturer)
         {
@@ -356,9 +383,8 @@ namespace Axis.Targets
 
     }
 
-
     /// <summary>
-    /// Type wrapper for a double representing the external axis value
+    /// Type wrapper for a double representing the external axis value.
     /// </summary>
     public class ExtVal
     {
@@ -371,27 +397,38 @@ namespace Axis.Targets
 
     }
 
-
     /// <summary>
     /// Robot Speed type
     /// </summary>
     public class Speed : IGH_Goo
 {
-        #region Class fileds
         public string Name { get; set; }
         public double TranslationSpeed { get; set; }
         public double RotationSpeed { get; set; }
         public double Time { get; set; } = 0;
-        #endregion
 
-        #region Constructor and defauls
+        #region Constructors
+
+        /// <summary>
+        /// Default speed object.
+        /// </summary>
         public static Speed Default { get; }
 
+        /// <summary>
+        /// Default constructor.
+        /// </summary>
         static Speed()
         {
             Default = new Speed(100, 30, "DefaultSpeed");
         }
 
+        /// <summary>
+        /// Standard speed constructor.
+        /// </summary>
+        /// <param name="tcpSpeed"></param>
+        /// <param name="rotSpeed"></param>
+        /// <param name="name"></param>
+        /// <param name="time"></param>
         public Speed(double tcpSpeed = 100, double rotSpeed = 30, string name = null, double time = 0.0)
         {
             this.Name = name;
@@ -401,7 +438,7 @@ namespace Axis.Targets
         }
         #endregion
 
-        #region Interface implementation
+        #region Interfaces
         //IGH_GeometricGoo
         public BoundingBox Boundingbox { get => throw new NotImplementedException(); }
         public Guid ReferenceID { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
@@ -415,7 +452,6 @@ namespace Axis.Targets
         public bool LoadGeometry(Rhino.RhinoDoc doc) => throw new NotImplementedException();
         public IGH_GeometricGoo Morph(SpaceMorph xmorph) => throw new NotImplementedException();
         public IGH_GeometricGoo Transform(Transform xform) => throw new NotImplementedException();
-
 
         // IGH_Goo
         public bool IsValid => throw new NotImplementedException();
@@ -440,21 +476,17 @@ namespace Axis.Targets
         public object ScriptVariable() => throw new NotImplementedException();
         public  override string ToString() => (Name != null) ? $"Speed ({Name})" : $"Speed ({TranslationSpeed:0.0} mm/s)";
 
-
-
         //GH_ISerializable
         public bool Read(GH_IReader reader) => throw new NotImplementedException();
         public bool Write(GH_IWriter writer) => throw new NotImplementedException();
         #endregion
     }
 
-
     /// <summary>
     /// Robot movement zone type
     /// </summary>
     public class Zone : IGH_Goo
     {
-        #region Class Fields
         public string Name { get; set; }
         public double PathRadius { get; set; }
         public double PathOrient { get; set; }
@@ -463,10 +495,33 @@ namespace Axis.Targets
         public double LinearExternal { get; set; }
         public double RotaryExternal { get; set; }
         public bool StopPoint { get; set; }
-        #endregion
 
-        #region Constructor and defaults
+        #region Constructors
+
+        /// <summary>
+        /// Default zone object.
+        /// </summary>
         public static Zone Default { get; }
+
+        /// <summary>
+        /// Default constructor.
+        /// </summary>
+        static Zone()
+        {
+            Default = new Zone(false, 5, 25, 25, 15, 35, 5, "DefaultZone");
+        }
+
+        /// <summary>
+        /// Standard constructor.
+        /// </summary>
+        /// <param name="stop"></param>
+        /// <param name="pathRadius"></param>
+        /// <param name="pathOrient"></param>
+        /// <param name="pathExternal"></param>
+        /// <param name="orientation"></param>
+        /// <param name="linExternal"></param>
+        /// <param name="rotExternal"></param>
+        /// <param name="name"></param>
         public Zone(bool stop = false, double pathRadius = 5, double pathOrient = 8, double pathExternal = 8, double orientation = 0.8, double linExternal = 8, double rotExternal = 0.8, string name = null)
         {
             this.Name = name;
@@ -478,13 +533,9 @@ namespace Axis.Targets
             this.RotaryExternal = rotExternal;
             this.StopPoint = stop;
         }
-        static Zone()
-        {
-            Default = new Zone(false, 5, 25, 25, 15, 35, 5, "DefaultZone");
-        }
         #endregion
 
-        #region Interface implementation
+        #region Interfaces
 
         //IGH_GeometricGoo
         public BoundingBox Boundingbox { get => throw new NotImplementedException(); }
@@ -499,7 +550,6 @@ namespace Axis.Targets
         public bool LoadGeometry(Rhino.RhinoDoc doc) => throw new NotImplementedException();
         public IGH_GeometricGoo Morph(SpaceMorph xmorph) => throw new NotImplementedException();
         public IGH_GeometricGoo Transform(Transform xform) => throw new NotImplementedException();
-
 
         // IGH_Goo
         public bool IsValid => throw new NotImplementedException();
@@ -524,30 +574,43 @@ namespace Axis.Targets
         public object ScriptVariable() => throw new NotImplementedException();
         public override string ToString() => (Name != null) ? $"Zone ({Name})" : $"Zone ({PathRadius:0.0} mm)";
 
-
-
         //GH_ISerializable
         public bool Read(GH_IReader reader) => throw new NotImplementedException();
         public bool Write(GH_IWriter writer) => throw new NotImplementedException();
         #endregion
-
     }
 
-
     /// <summary>
-    /// Robot working coordinat system
+    /// Coordinate system.
     /// </summary>
     public class CSystem : IGH_Goo
     {
-        #region Class Fields
         public string Name { get; set; }
         public Plane CSPlane { get; set; }
         public bool Dynamic { get; set; }
         public Plane ExternalAxis { get; set; }
-        #endregion
 
-        #region Constructor and defaults
+        #region Constructors
+        /// <summary>
+        /// Default coordinate system object.
+        /// </summary>
         public static CSystem Default { get; set; }
+
+        /// <summary>
+        /// Default constructor.
+        /// </summary>
+        static CSystem()
+        {
+            Default = new CSystem("Default", Plane.WorldXY, false, Plane.WorldXY);
+        }
+
+        /// <summary>
+        /// Standard coordinate system constructor.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="csPlane"></param>
+        /// <param name="dynamicCS"></param>
+        /// <param name="eAxisPlane"></param>
         public CSystem(string name, Plane csPlane, bool dynamicCS, Plane eAxisPlane)
         {
             this.Name = name;
@@ -555,13 +618,9 @@ namespace Axis.Targets
             this.Dynamic = dynamicCS;
             this.ExternalAxis = eAxisPlane;
         }
-        static CSystem()
-        {
-            Default = new CSystem("Default", Plane.WorldXY, false, Plane.WorldXY);
-        }
         #endregion
 
-        #region Interface implementation
+        #region Interfaces
 
         //IGH_GeometricGoo
         public BoundingBox Boundingbox { get => throw new NotImplementedException(); }
@@ -576,7 +635,6 @@ namespace Axis.Targets
         public bool LoadGeometry(Rhino.RhinoDoc doc) => throw new NotImplementedException();
         public IGH_GeometricGoo Morph(SpaceMorph xmorph) => throw new NotImplementedException();
         public IGH_GeometricGoo Transform(Transform xform) => throw new NotImplementedException();
-
 
         // IGH_Goo
         public bool IsValid
@@ -614,18 +672,16 @@ namespace Axis.Targets
         public IGH_GooProxy EmitProxy() => throw new NotImplementedException();
         public object ScriptVariable() => throw new NotImplementedException();
         public  override string ToString() => $"CSystem at: {CSPlane.ToString()}";
-        
-
-
 
         //GH_ISerializable
         public bool Read(GH_IReader reader) => throw new NotImplementedException();
         public bool Write(GH_IWriter writer) => throw new NotImplementedException();
         #endregion
-
     }
 
-
+    /// <summary>
+    /// External targets.
+    /// </summary>
     public class ExternalTarget
     {
         // MoveExtJ [\Conc] ToJointPos [\ID] [\UseEOffs] Speed [\T] Zone [\Inpos]
@@ -636,25 +692,21 @@ namespace Axis.Targets
         public Zone Zone { get; set; }
     }
 
-
     /// <summary>
-    /// Tool path class allowing for time aproximate simulation
+    /// Tool path class allowing for approximated time-based simulation.
     /// </summary>
     public class Toolpath : IGH_Goo
     {
-        #region Class Fields
         public TimeSpan duration { get; private set; }
-
         double totalSec;
         List<Target> targets;
         List<double> targetProgress;
-        #endregion
 
         #region Constructor
         /// <summary>
-        /// Class initilaisation
+        /// Toolpath constructor.
         /// </summary>
-        /// <param name="targets">List of targets the tool path consists of</param>
+        /// <param name="targets"></param>
         public Toolpath(List<Target> targets)
         {
             Times(targets);
@@ -663,11 +715,10 @@ namespace Axis.Targets
         #endregion
 
         #region Methods
-        // Public
         /// <summary>
-        /// Get the target interger for the current progress
+        /// Get the target index for the specified time.
         /// </summary>
-        /// <param name="timePassed">Time passed since the start of the simulation</param>
+        /// <param name="timePassed"></param>
         /// <returns></returns>
         public int GetProgress(TimeSpan timePassed)
         {
@@ -680,22 +731,17 @@ namespace Axis.Targets
             }
             else return targets.Count - 1;
         }
+
         /// <summary>
-        /// Get the target for the current progress
+        /// Get the target object for the specified time.
         /// </summary>
-        /// <param name="timePassed">Time since the start of the simulation</param>
+        /// <param name="timePassed"></param>
         /// <returns></returns>
         public Target GetTarget(TimeSpan timePassed)
         {
             return this.targets[this.GetProgress(timePassed)];
         }
 
-
-        // Private 
-        /// <summary>
-        /// Internal Class initialisation
-        /// </summary>
-        /// <param name="targets">List of targets ta make up this tool path</param>
         void Times(List<Target> targets)
         {
             double timeTotal = 0;
@@ -717,8 +763,7 @@ namespace Axis.Targets
         }
         #endregion
 
-        #region Interface implementation
-
+        #region Interfaces
         //IGH_GeometricGoo
         public BoundingBox Boundingbox { get => throw new NotImplementedException(); }
         public Guid ReferenceID { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
@@ -732,7 +777,6 @@ namespace Axis.Targets
         public bool LoadGeometry(Rhino.RhinoDoc doc) => throw new NotImplementedException();
         public IGH_GeometricGoo Morph(SpaceMorph xmorph) => throw new NotImplementedException();
         public IGH_GeometricGoo Transform(Transform xform) => throw new NotImplementedException();
-
 
         // IGH_Goo
         public bool IsValid
@@ -776,14 +820,11 @@ namespace Axis.Targets
         public object ScriptVariable() => throw new NotImplementedException();
         public override string ToString() => $"Toolpath of length: {this.targets.Count}";
 
-
-
         //GH_ISerializable
         public bool Read(GH_IReader reader) => throw new NotImplementedException();
         public bool Write(GH_IWriter writer) => throw new NotImplementedException();
         #endregion
     }
-
 
     /// <summary>
     /// List of motion types

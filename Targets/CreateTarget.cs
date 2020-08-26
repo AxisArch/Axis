@@ -11,6 +11,9 @@ using Axis.Targets;
 
 namespace Axis
 {
+    /// <summary>
+    /// Define robot end effector plane target positions.
+    /// </summary>
     public class CreateTarget : GH_Component, IGH_VariableParameterComponent
     {
         // Boolean toggle for context menu items.
@@ -30,6 +33,7 @@ namespace Axis
         {
         }
 
+        #region IO
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddPlaneParameter("Plane", "Plane", "Target TCP location as plane.", GH_ParamAccess.list);
@@ -46,6 +50,13 @@ namespace Axis
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
             pManager.AddGenericParameter("Targets", "Targets", "Robot targets.", GH_ParamAccess.list);
+        }
+        #endregion
+
+        protected override void BeforeSolveInstance()
+        {
+            // Subscribe to all event handelers
+            this.Params.ParameterSourcesChanged += OnParameterSourcesChanged;
         }
 
         protected override void SolveInstance(IGH_DataAccess DA)
@@ -226,12 +237,7 @@ namespace Axis
             */
         }
 
-        protected override void BeforeSolveInstance()
-        {
-            // Subscribe to all event handelers
-            this.Params.ParameterSourcesChanged += OnParameterSourcesChanged;
-        }
-
+        #region UI
         /// <summary>
         ///  Replace a value list with one that has been pre-populated with possible methonds.
         /// </summary>
@@ -260,26 +266,6 @@ namespace Axis
 
             //The magic
             Canvas.Component.ChangeObjects(extractedItems, gH_ValueList);
-        }
-
-        public override BoundingBox ClippingBox => base.ClippingBox;
-        public override void DrawViewportMeshes(IGH_PreviewArgs args)
-        {
-            base.DrawViewportMeshes(args);
-            foreach (Target target in m_targets) Canvas.Component.DisplayPlane(target.Plane, args);
-        }
-        public override void DrawViewportWires(IGH_PreviewArgs args)
-        {
-
-            base.DrawViewportWires(args);
-            foreach (Target target in m_targets) Canvas.Component.DisplayPlane(target.Plane, args);
-
-        }
-        public override void ClearData()
-        {
-            base.ClearData();
-            m_targets.Clear();
-            m_bBox = BoundingBox.Empty;
         }
 
         // Build a list of optional input parameters
@@ -450,7 +436,32 @@ namespace Axis
             Params.OnParametersChanged();
             ExpireSolution(true);
         }
+        #endregion
 
+        #region Display
+        public override BoundingBox ClippingBox => base.ClippingBox;
+        public override void DrawViewportMeshes(IGH_PreviewArgs args)
+        {
+            base.DrawViewportMeshes(args);
+            foreach (Target target in m_targets) Canvas.Component.DisplayPlane(target.Plane, args);
+        }
+        public override void DrawViewportWires(IGH_PreviewArgs args)
+        {
+
+            base.DrawViewportWires(args);
+            foreach (Target target in m_targets) Canvas.Component.DisplayPlane(target.Plane, args);
+
+        }
+        #
+        public override void ClearData()
+        {
+            base.ClearData();
+            m_targets.Clear();
+            m_bBox = BoundingBox.Empty;
+        }
+        #endregion
+
+        #region Serialization
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
@@ -472,6 +483,17 @@ namespace Axis
             this.m_interpolationTypes = reader.GetBoolean("Method");
             return base.Read(reader);
         }
+        #endregion
+
+        #region Component Settings
+        /// <summary>
+        /// Implement this interface in your component if you want to enable variable parameter UI.
+        /// </summary>
+        bool IGH_VariableParameterComponent.CanInsertParameter(GH_ParameterSide side, int index) => false;
+        bool IGH_VariableParameterComponent.CanRemoveParameter(GH_ParameterSide side, int index) => false;
+        IGH_Param IGH_VariableParameterComponent.CreateParameter(GH_ParameterSide side, int index) => null;
+        bool IGH_VariableParameterComponent.DestroyParameter(GH_ParameterSide side, int index) => false;
+        void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
 
         public override GH_Exposure Exposure => GH_Exposure.primary;
         protected override System.Drawing.Bitmap Icon
@@ -485,14 +507,6 @@ namespace Axis
         {
             get { return new Guid("{c8ae5262-f447-4807-b1ff-10b29b37c984}"); }
         }
-
-        /// <summary>
-        /// Implement this interface in your component if you want to enable variable parameter UI.
-        /// </summary>
-        bool IGH_VariableParameterComponent.CanInsertParameter(GH_ParameterSide side, int index) => false;
-        bool IGH_VariableParameterComponent.CanRemoveParameter(GH_ParameterSide side, int index) => false;
-        IGH_Param IGH_VariableParameterComponent.CreateParameter(GH_ParameterSide side, int index) => null;
-        bool IGH_VariableParameterComponent.DestroyParameter(GH_ParameterSide side, int index) => false;
-        void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
+        #endregion
     }
 }

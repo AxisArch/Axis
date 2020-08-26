@@ -6,26 +6,16 @@ using Rhino.Geometry;
 
 namespace Axis.Targets
 {
+    /// <summary>
+    /// Perform quaternion-based linear interpolation between two robot targets.
+    /// </summary>
     public class LinearInterpolation : GH_Component
     {
-        public override GH_Exposure Exposure => GH_Exposure.secondary;
-        protected override System.Drawing.Bitmap Icon
-        {
-            get
-            {
-                return Axis.Properties.Resources.Lerp;
-            }
-        }
-
-        public override Guid ComponentGuid
-        {
-            get { return new Guid("2c5e04ac-7638-46ac-9871-718eeaeff764"); }
-        }
-
         public LinearInterpolation() : base("Lerp", "Lerp", "Quaternion linear interpolation between two robot targets, based on the Robots plugin (https://github.com/visose/Robots) and Lobster Reloaded by Daniel Piker.", AxisInfo.Plugin, AxisInfo.TabTargets)
         {
         }
 
+        #region IO
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddPlaneParameter("Start", "Start", "First target for linear interpolation.", GH_ParamAccess.list);
@@ -37,6 +27,7 @@ namespace Axis.Targets
         {
             pManager.AddPlaneParameter("Targets", "Targets", "Interpolated planes.", GH_ParamAccess.list);
         }
+        #endregion
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
@@ -76,6 +67,21 @@ namespace Axis.Targets
             DA.SetDataList(0, targets);
         }
 
+        #region Component Settings
+        public override GH_Exposure Exposure => GH_Exposure.secondary;
+        protected override System.Drawing.Bitmap Icon
+        {
+            get
+            {
+                return Axis.Properties.Resources.Lerp;
+            }
+        }
+
+        public override Guid ComponentGuid
+        {
+            get { return new Guid("2c5e04ac-7638-46ac-9871-718eeaeff764"); }
+        }
+        #endregion
     }
 }
  
