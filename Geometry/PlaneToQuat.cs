@@ -9,27 +9,18 @@ using Rhino.Geometry;
 
 namespace Axis.Geometry
 {
+    /// <summary>
+    /// Get the quaternion description of a plane rotation.
+    /// </summary>
     public class PlaneToQuat : GH_Component, IGH_VariableParameterComponent
     {
-        public override GH_Exposure Exposure => GH_Exposure.tertiary;
-        protected override System.Drawing.Bitmap Icon
-        {
-            get
-            {
-                return Axis.Properties.Resources.Robot;
-            }
-        }
-        public override Guid ComponentGuid
-        {
-            get { return new Guid("194c9305-457d-47b1-9a60-8cf3b31ea6a5"); }
-        }
-
         bool originOut = false;
 
         public PlaneToQuat() : base("Plane To Quaternion", "P-Q", "Convert a geometric plane to a quaternion and a point.", AxisInfo.Plugin, AxisInfo.TabGeometry)
         {
         }
 
+        #region IO
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddPlaneParameter("Plane", "Plane", "Output plane.", GH_ParamAccess.item);
@@ -39,6 +30,7 @@ namespace Axis.Geometry
         {
             pManager.AddNumberParameter("Quaternion", "Quat", "Rotation as four-component quaternion string.", GH_ParamAccess.list);
         }
+        #endregion
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
@@ -63,6 +55,7 @@ namespace Axis.Geometry
                 DA.SetData("Origin", origin);
         }
 
+        #region UI
         IGH_Param[] parameters = new IGH_Param[1]
         {
         new Param_Point() { Name = "Origin", NickName = "Origin", Description = "Location of the plane origin as a point." },
@@ -131,7 +124,9 @@ namespace Axis.Geometry
             Params.OnParametersChanged();
             ExpireSolution(true);
         }
+        #endregion
 
+        #region Component Settings
         /// <summary>
         /// Implement this interface in your component if you want to enable variable parameter UI.
         /// </summary>
@@ -143,5 +138,19 @@ namespace Axis.Geometry
         IGH_Param IGH_VariableParameterComponent.CreateParameter(GH_ParameterSide side, int index) => null;
         bool IGH_VariableParameterComponent.DestroyParameter(GH_ParameterSide side, int index) => false;
         void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
+
+        public override GH_Exposure Exposure => GH_Exposure.tertiary;
+        protected override System.Drawing.Bitmap Icon
+        {
+            get
+            {
+                return Axis.Properties.Resources.Robot;
+            }
+        }
+        public override Guid ComponentGuid
+        {
+            get { return new Guid("194c9305-457d-47b1-9a60-8cf3b31ea6a5"); }
+        }
+        #endregion
     }
 }
