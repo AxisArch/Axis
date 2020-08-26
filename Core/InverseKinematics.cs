@@ -37,7 +37,7 @@ namespace Axis.Core
         #region IO
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            IGH_Param Robot = new Axis.Params.Param_Manipulator();
+            IGH_Param Robot = new Axis.Params.RobotParam();
             pManager.AddParameter(Robot, "Robot", "Robot", "Robot object to use for inverse kinematics. You can define this using the robot creator tool.", GH_ParamAccess.item);
             IGH_Param Target = new Axis.Params.TargetParam();
             pManager.AddParameter(Target, "Target", "Target", "Robotic target for inverse kinematics. Use the simulation component to select a specific target from a toolpath for preview of the kinematic solution.", GH_ParamAccess.item);
@@ -75,8 +75,8 @@ namespace Axis.Core
             if (pose.OutOfReach) log.Add("Target out of range.");
             if (pose.OutOfRoation) log.Add("Joint out of range.");
 
-            if (m_Pose != null) m_Robot.SetPose(m_Pose, validetyCheck: true);
-            m_Robot.SetPose(pose, validetyCheck: true);
+            if (m_Pose != null) m_Robot.SetPose(m_Pose, checkValidity: true);
+            m_Robot.SetPose(pose, checkValidity: true);
             if (m_Robot.CurrentPose.IsValid) m_Pose = m_Robot.CurrentPose;
             #endregion
 

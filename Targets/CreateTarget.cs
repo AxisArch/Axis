@@ -452,7 +452,7 @@ namespace Axis
             foreach (Target target in m_targets) Canvas.Component.DisplayPlane(target.Plane, args);
 
         }
-        #
+        
         public override void ClearData()
         {
             base.ClearData();
