@@ -121,7 +121,7 @@ namespace Axis.Core
             if (m_Robot.CurrentPose == null) return;
             if (m_Robot.CurrentPose.Colors == null) return;
 
-            var meshColorPair = m_Robot.RobMeshes.Zip(m_Robot.CurrentPose.Colors, (mesh, color) => new { Mesh = mesh, Color = color });
+            var meshColorPair = m_Robot.Geometries.Zip(m_Robot.Colors, (mesh, color) => new { Mesh = mesh, Color = color });
             foreach (var pair in meshColorPair) args.Display.DrawMeshShaded(pair.Mesh, new DisplayMaterial(pair.Color));
         }
         public override void BakeGeometry(RhinoDoc doc, List<Guid> obj_ids)

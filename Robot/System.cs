@@ -18,7 +18,7 @@ namespace Axis.Core
     /// <summary>
     /// Create custom industrial robot configurations.
     /// </summary>
-    public class Manipulator : IGH_GeometricGoo
+    public class Manipulator : IGH_GeometricGoo, Axis_Displayable
     {
         public string Name = "Wall-E"; // This variable can hold the model number
         private Guid id = Guid.Empty;
@@ -50,6 +50,10 @@ namespace Axis.Core
 
             } set => resetTransform = value; 
         }
+
+        //Used for Axis display pipeline
+        public Color[] Colors { get => CurrentPose.Colors; }
+        public Mesh[] Geometries { get => RobMeshes.ToArray(); }
 
         #region Constructors
         /// <summary>
@@ -1202,13 +1206,22 @@ namespace Axis.Core
     /// <summary>
     /// Class represeing an endefector for a robotic manipulator
     /// </summary>
-    public class Tool: IGH_GeometricGoo
+    public class Tool: IGH_GeometricGoo, Axis_Displayable
     {
         public string Name { get; private set; }
         private Guid ID { get; set; }
         public Plane TCP { get; private set; }
         public double Weight { get; private set; }
-        public List<Mesh> Geometry { get; private set; }
+        public Mesh[] Geometries { get; private set; }
+        public Color[] Colors
+        { 
+            get 
+            {
+                Color[] list = new Color[this.Geometries.Length];
+                for (int i = 0; i < this.Geometries.Length; ++i) list[i] = Axis.Styles.MediumGrey;
+                return list;
+            } 
+        }
         public Manufacturer Manufacturer { get; private set; }
         public Vector3d RelTool { get; private set; }
 
@@ -1303,7 +1316,7 @@ namespace Axis.Core
             this.Name = name;
             this.TCP = TCP;
             this.Weight = weight;
-            this.Geometry = mesh;
+            this.Geometries = mesh.ToArray();
             this.Manufacturer = type;
             this.RelTool = relToolOffset;
         }
@@ -1322,7 +1335,7 @@ namespace Axis.Core
             this.ID = Guid.Empty;
             this.TCP = Plane.Unset;
             this.Weight = double.NaN;
-            this.Geometry = null;
+            this.Geometries = null;
             this.Manufacturer = 0;
             this.RelTool = Vector3d.Unset;
         }
@@ -1332,8 +1345,8 @@ namespace Axis.Core
         public BoundingBox GetBoundingBox(Transform xform) 
         {
             BoundingBox box = BoundingBox.Empty;
-            foreach (Mesh m in this.Geometry) m.Transform(xform);
-            this.Geometry.ForEach(m => box.Union(m.GetBoundingBox(false)));
+            foreach (Mesh m in this.Geometries) m.Transform(xform);
+            foreach (Mesh m in this.Geometries) box.Union(m.GetBoundingBox(false));
             this.Boundingbox = box;
             return box;
         }
@@ -1352,7 +1365,7 @@ namespace Axis.Core
         public bool CastTo<T>(out T target) {target = default; return false; }
         public IGH_Goo Duplicate()
         {
-            return new Tool(this.Name, this.TCP, this.Weight, this.Geometry, this.Manufacturer, this.RelTool);
+            return new Tool(this.Name, this.TCP, this.Weight, this.Geometries.ToList(), this.Manufacturer, this.RelTool);
         }
         public IGH_GooProxy EmitProxy() => null;
         public object ScriptVariable() => null;
@@ -1385,7 +1398,7 @@ namespace Axis.Core
                 {
                     var data = new GH_Structure<GH_Mesh>();
                     data.Read(chunk2);
-                    this.Geometry = data.ToList<Mesh, GH_Mesh>();
+                    this.Geometries = data.ToList<Mesh, GH_Mesh>().ToArray();
                 }
             }
             if (reader.ChunkExists("FlangeOffset")) 
@@ -1413,7 +1426,7 @@ namespace Axis.Core
             GH_Plane gH_TCP = new GH_Plane(this.TCP);
             gH_TCP.Write(writer.CreateChunk("TCP"));
             
-            GH_Structure<GH_Mesh> gh_Meshes = this.Geometry.ToGHStructure<GH_Mesh, Mesh>();
+            GH_Structure<GH_Mesh> gh_Meshes = this.Geometries.ToList().ToGHStructure<GH_Mesh, Mesh>();
             gh_Meshes.Write(writer.CreateChunk("Geometry"));
             
             GH_Vector gH_relTool = new GH_Vector(this.RelTool);
@@ -1424,6 +1437,15 @@ namespace Axis.Core
         #endregion
     }
 
+    /// <summary>
+    /// Interface ensuring types have the right propperies to be displayed inside the other componets
+    /// This should help enforce consistency throughout the plugin.
+    /// </summary>
+    interface Axis_Displayable: IGH_GeometricGoo
+    {
+        Mesh[] Geometries { get; }
+        Color[] Colors { get; }
+    }
     /// <summary>
     /// List of manufacturers.
     /// </summary>
