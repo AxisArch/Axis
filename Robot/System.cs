@@ -1316,7 +1316,7 @@ namespace Axis.Core
             this.Name = name;
             this.TCP = TCP;
             this.Weight = weight;
-            this.Geometries = mesh.ToArray();
+            if (mesh != null) this.Geometries = mesh.ToArray();
             this.Manufacturer = type;
             this.RelTool = relToolOffset;
         }
