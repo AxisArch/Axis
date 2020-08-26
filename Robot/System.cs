@@ -617,7 +617,7 @@ namespace Axis.Core
 
                                 break;
                             default:
-                                throw new Exception($"This movment: {target.Method.ToString()} has not jet been implemented for {this.Robot.Manufacturer.ToString()}"); ;
+                                throw new NotImplementedException($"This movment: {target.Method.ToString()} has not jet been implemented for {this.Robot.Manufacturer.ToString()}"); ;
                         } break;
                     case Manufacturer.Kuka:
                         switch (target.Method)
@@ -630,7 +630,7 @@ namespace Axis.Core
                                 radAngles = degAngles.Select(value => value.ToRadians()).ToArray();
                                 break;
                             default:
-                                throw new Exception($"This movment: {target.Method.ToString()} has not jet been implemented for {this.Robot.Manufacturer.ToString()}");
+                                throw new NotImplementedException($"This movment: {target.Method.ToString()} has not jet been implemented for {this.Robot.Manufacturer.ToString()}");
                         } break;
                 }
 

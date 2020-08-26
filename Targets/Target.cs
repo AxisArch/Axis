@@ -105,7 +105,7 @@ namespace Axis.Targets
                             case MotionType.NoMovement:
                                 return "! No Movement";
                         }
-                        throw new Exception($"{this.Method.ToString()} not implemented for ABB");
+                        throw new NotImplementedException($"{this.Method.ToString()} not implemented for ABB");
                     #endregion
 
                     #region Kuka
@@ -140,10 +140,10 @@ namespace Axis.Targets
                             case MotionType.NoMovement:
                                 return "! No Movement";
                         }
-                        throw new Exception($"{this.Method.ToString()} not implemented for Kuka");
+                        throw new NotImplementedException($"{this.Method.ToString()} not implemented for Kuka");
                         #endregion
                 }
-                throw new Exception($"The target string repersentation for {this.Manufacturer.ToString()} is not implemented");
+                throw new NotImplementedException($"The target string repersentation for {this.Manufacturer.ToString()} is not implemented");
 
             }
         }
@@ -302,8 +302,7 @@ namespace Axis.Targets
 
                     return strSpeed;
             }
-
-            throw new Exception($"String representation of speeds not implemented for {manufacturer.ToString()}");
+            throw new NotImplementedException($"String representation of speeds not implemented for {manufacturer.ToString()}");
         }
         public static string CodeStrFor(this Zone zone, Manufacturer manufacturer)
         {
@@ -312,7 +311,7 @@ namespace Axis.Targets
                 case Manufacturer.ABB:
                     return zone.Name;
             }
-            throw new Exception($"String representation of zones not implemented for {manufacturer.ToString()}");
+            throw new NotImplementedException($"String representation of zones not implemented for {manufacturer.ToString()}");
         }
         public static string CodeStrFor(this Tool tool, Manufacturer manufacturer)
         {
@@ -325,7 +324,7 @@ namespace Axis.Targets
                         toolName = tool.Name;
                     return toolName;
             }
-            throw new Exception($"String representation of tools not implemented for {manufacturer.ToString()}");
+            throw new NotImplementedException($"String representation of tools not implemented for {manufacturer.ToString()}");
         }
         public static string CodeStrFor(this CSystem cSystem, Manufacturer manufacturer)
         {
@@ -334,7 +333,7 @@ namespace Axis.Targets
                 case Manufacturer.ABB:
                     return $"\\WObj:={cSystem.Name}";
             }
-            throw new Exception($"Linear external axis string not implemented for {manufacturer.ToString()}");
+            throw new NotImplementedException($"Linear external axis string not implemented for {manufacturer.ToString()}");
         }
         public static string CodeStrFor(this ExtVal eVal, Manufacturer manufacturer)
         {
@@ -346,7 +345,7 @@ namespace Axis.Targets
                         str = Math.Round(eVal, 4).ToString(); // Get the external axis value per target and round it to two decimal places.                            
                     return str;
             }
-            throw new Exception($"External axis string not implemented for {manufacturer.ToString()}");
+            throw new NotImplementedException($"External axis string not implemented for {manufacturer.ToString()}");
         }
         public static string CodeStrFor(this Quaternion quat, Manufacturer manufacturer)
         {
@@ -363,7 +362,7 @@ namespace Axis.Targets
 
                     return $"{w.ToString()},{x.ToString()},{y.ToString()},{z.ToString()}";
             }
-            throw new Exception($"Quaternion string not implemented for {manufacturer.ToString()}");
+            throw new NotImplementedException($"Quaternion string not implemented for {manufacturer.ToString()}");
         }
         public static string CodeStrFor(this Point3d position, Manufacturer manufacturer)
         {
@@ -378,7 +377,7 @@ namespace Axis.Targets
                 case Manufacturer.Kuka:
                     return $"X {posX.ToString()}, Y {posY.ToString()}, Z {posZ.ToString()}";
             }
-            throw new Exception($"Point3d string not implemented for {manufacturer.ToString()}");
+            throw new NotImplementedException($"Point3d string not implemented for {manufacturer.ToString()}");
         }
 
     }
