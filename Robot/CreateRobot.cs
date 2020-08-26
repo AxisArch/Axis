@@ -19,13 +19,13 @@ namespace Axis.Core
     /// <summary>
     /// Define a custom robot object.
     /// </summary>
-    public class Robot : GH_Component, IGH_VariableParameterComponent
+    public class CreateRobot : GH_Component, IGH_VariableParameterComponent
     {
         // Sticky context menu toggles
         Manufacturer m_Manufacturer = Manufacturer.ABB;
         bool m_Pose = false;
 
-        public Robot() : base("Robot", "Robot", "Create a kinematic model of a custom robot.", AxisInfo.Plugin, AxisInfo.TabRobot)
+        public CreateRobot() : base("Robot", "Robot", "Create a kinematic model of a custom robot.", AxisInfo.Plugin, AxisInfo.TabRobot)
         {
         }
 

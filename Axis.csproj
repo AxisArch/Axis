@@ -274,7 +274,7 @@
     <Compile Include="Core\InverseKinematics.cs" />
     <Compile Include="Deprecated\Simulation_200129.cs" />
     <Compile Include="Robot\Tool.cs" />
-    <Compile Include="Robot\Robot.cs" />
+    <Compile Include="Robot\CreateRobot.cs" />
     <Compile Include="Core\CodeGenerator.cs" />
     <Compile Include="Styles.cs" />
     <Compile Include="Targets\CreateJointTarget.cs" />
