@@ -6,25 +6,16 @@ using Rhino.Geometry;
 
 namespace Axis.RAPID
 {
+    /// <summary>
+    /// Create custom RAPID code to control the acceleration.
+    /// </summary>
     public class Acceleration : GH_Component
     {
-        public override GH_Exposure Exposure => GH_Exposure.primary;
-        protected override System.Drawing.Bitmap Icon
-        {
-            get
-            {
-                return Properties.Resources.RAPID;
-            }
-        }
-        public override Guid ComponentGuid
-        {
-            get { return new Guid("{06575491-6164-4b5d-82a8-a31d2a5ed75f}"); }
-        }
-
         public Acceleration() : base("Acceleration", "Acc", "Override the robot acceleration and deceleration settings.", AxisInfo.Plugin, AxisInfo.TabCode)
         {
         }
 
+        #region IO
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddNumberParameter("Acceleration", "Acc", "Desired robot acceleration value. [As % of default values]", GH_ParamAccess.item, 35);
@@ -37,6 +28,7 @@ namespace Axis.RAPID
         {
             pManager.AddTextParameter("Code", "Code", "RAPID-formatted robot acceleration override settings.", GH_ParamAccess.item);
         }
+        #endregion
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
@@ -50,5 +42,20 @@ namespace Axis.RAPID
 
             DA.SetData(0, strAccSet);
         }
+
+        #region Component Settings
+        public override GH_Exposure Exposure => GH_Exposure.primary;
+        protected override System.Drawing.Bitmap Icon
+        {
+            get
+            {
+                return Properties.Resources.RAPID;
+            }
+        }
+        public override Guid ComponentGuid
+        {
+            get { return new Guid("{06575491-6164-4b5d-82a8-a31d2a5ed75f}"); }
+        }
+        #endregion
     }
 }

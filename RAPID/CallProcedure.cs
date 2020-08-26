@@ -6,25 +6,16 @@ using Rhino.Geometry;
 
 namespace Axis.RAPID
 {
+    /// <summary>
+    /// Create custom RAPID code to call procedures.
+    /// </summary>
     public class CallProcedure : GH_Component
     {
-        public override GH_Exposure Exposure => GH_Exposure.primary;
-        protected override System.Drawing.Bitmap Icon
-        {
-            get
-            {
-                return Properties.Resources.RAPID;
-            }
-        }
-        public override Guid ComponentGuid
-        {
-            get { return new Guid("{9f7e521f-ea12-4699-b73e-a6201c32eff6}"); }
-        }
-
         public CallProcedure() : base("Call Procedure", "Call", "Call a custom RAPID procedure.", AxisInfo.Plugin, AxisInfo.TabCode)
         {
         }
 
+        #region IO
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddTextParameter("Name", "Name", "Name of procedure to call.", GH_ParamAccess.item, "Hello");
@@ -36,8 +27,8 @@ namespace Axis.RAPID
         {
             pManager.AddTextParameter("Code", "Code", "Resultant procedure call.", GH_ParamAccess.list);
         }
+        #endregion
 
-        
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             string strName = null;
@@ -64,6 +55,21 @@ namespace Axis.RAPID
 
             DA.SetDataList(0, strProc);
         }
+
+        #region Component Settings
+        public override GH_Exposure Exposure => GH_Exposure.primary;
+        protected override System.Drawing.Bitmap Icon
+        {
+            get
+            {
+                return Properties.Resources.RAPID;
+            }
+        }
+        public override Guid ComponentGuid
+        {
+            get { return new Guid("{9f7e521f-ea12-4699-b73e-a6201c32eff6}"); }
+        }
+        #endregion
     }
 }
  

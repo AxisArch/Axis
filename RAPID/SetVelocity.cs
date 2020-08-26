@@ -6,25 +6,16 @@ using Rhino.Geometry;
 
 namespace Axis.RAPID
 {
+    /// <summary>
+    /// Create custom RAPID code to set the velocity.
+    /// </summary>
     public class SetVelocity : GH_Component
     {
-        public override GH_Exposure Exposure => GH_Exposure.primary;
-        public override Guid ComponentGuid
-        {
-            get { return new Guid("9ef915c7-893c-4d9d-84cc-4f4919392f97"); }
-        }
-        protected override System.Drawing.Bitmap Icon
-        {
-            get
-            {
-                return Axis.Properties.Resources.RAPID;
-            }
-        }
-
         public SetVelocity() : base("Velocity Override", "Velocity Override", "Override all following programmed velocities to a percentage of their value.", AxisInfo.Plugin, AxisInfo.TabCode)
         {
         }
 
+        #region IO
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddNumberParameter("Override %", "Override %", "Desired robot speed as a percentage of programmed speed.", GH_ParamAccess.item);
@@ -37,6 +28,7 @@ namespace Axis.RAPID
         {
             pManager.AddTextParameter("Velocity Override", "Velocity Override", "RAPID-formatted speed acceleration override settings.", GH_ParamAccess.item);
         }
+        #endregion
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
@@ -50,5 +42,20 @@ namespace Axis.RAPID
 
             DA.SetData(0, strVelSet);
         }
+
+        #region Component Settings
+        public override GH_Exposure Exposure => GH_Exposure.primary;
+        public override Guid ComponentGuid
+        {
+            get { return new Guid("9ef915c7-893c-4d9d-84cc-4f4919392f97"); }
+        }
+        protected override System.Drawing.Bitmap Icon
+        {
+            get
+            {
+                return Axis.Properties.Resources.RAPID;
+            }
+        }
+        #endregion
     }
 }
