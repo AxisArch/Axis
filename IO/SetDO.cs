@@ -7,20 +7,11 @@ using Rhino.Geometry;
 
 namespace Axis.IO
 {
+    /// <summary>
+    /// Set the value of a digital output.
+    /// </summary>
     public class SetDO : GH_Component, IGH_VariableParameterComponent
     {
-        protected override System.Drawing.Bitmap Icon
-        {
-            get
-            {
-                return Properties.Resources.DigitalOut;
-            }
-        }
-        public override Guid ComponentGuid
-        {
-            get { return new Guid("{2230b30e-6aeb-4f55-a54a-b1ec7d8eb410}"); }
-        }
-
         // Context menu data items
         bool m_Sync = false;
 
@@ -28,6 +19,7 @@ namespace Axis.IO
         {
         }
 
+        #region IO
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddTextParameter("Output", "Output", "Name of the digital output to set.", GH_ParamAccess.item, "DO10_1");
@@ -40,6 +32,7 @@ namespace Axis.IO
         {
             pManager.AddTextParameter("Command", "Command", "Rapid formatted SetDO command for signal control.", GH_ParamAccess.item);
         }
+        #endregion
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
@@ -63,6 +56,7 @@ namespace Axis.IO
             DA.SetData(0, strCommand);
         }
 
+        #region UI
         // The following functions append menu items and then handle the item clicked event.
         protected override void AppendAdditionalComponentMenuItems(System.Windows.Forms.ToolStripDropDown menu)
         {
@@ -76,7 +70,9 @@ namespace Axis.IO
             m_Sync = !m_Sync;
             ExpireSolution(true);
         }
+        #endregion
 
+        #region Serialization
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
@@ -90,7 +86,9 @@ namespace Axis.IO
             this.m_Sync = reader.GetBoolean("SyncDO");
             return base.Read(reader);
         }
+        #endregion
 
+        #region Component Settings
         /// <summary>
         /// Implement this interface in your component if you want to enable variable parameter UI.
         /// </summary>
@@ -99,5 +97,18 @@ namespace Axis.IO
         IGH_Param IGH_VariableParameterComponent.CreateParameter(GH_ParameterSide side, int index) => null;
         bool IGH_VariableParameterComponent.DestroyParameter(GH_ParameterSide side, int index) => false;
         void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
+
+        protected override System.Drawing.Bitmap Icon
+        {
+            get
+            {
+                return Properties.Resources.DigitalOut;
+            }
+        }
+        public override Guid ComponentGuid
+        {
+            get { return new Guid("{2230b30e-6aeb-4f55-a54a-b1ec7d8eb410}"); }
+        }
+        #endregion
     }
 }
