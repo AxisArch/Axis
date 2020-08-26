@@ -303,6 +303,7 @@ namespace Axis.Core
         {
             this.Name = reader.GetString("RobotName");
             this.Manufacturer = (Manufacturer)reader.GetInt32("Manufacturer");
+            this.id = reader.GetGuid("GUID");
 
             Plane bPlane = new Plane();
             if (reader.ItemExists("RobBasePlane")) 
@@ -405,6 +406,7 @@ namespace Axis.Core
             writer.SetString("RobotName", this.Name);
             writer.SetInt32("Manufacturer", (int)this.Manufacturer);
             writer.SetPlane("RobBasePlane", gH_RobBasePlane);
+            writer.SetGuid("GUID", id);
 
 
             for (int i = 0; i < this.AxisPlanes.Count; ++i)
@@ -1175,123 +1177,121 @@ namespace Axis.Core
     public class Tool: IGH_GeometricGoo
     {
         #region Main Class variables
-        public string Name { get; set; }
-        public Plane TCP { get; set; }
-        public double Weight { get; set; }
-        public List<Mesh> Geometry { get; }
-        public Transform FlangeOffset { get; }
-        public Manufacturer Manufacturer { get; }
-        public Vector3d relTool { get; }
-        public string Declaration { get; }
+        public string Name { get; private set; }
+        private Guid ID { get; set; }
+        public Plane TCP { get; private set; }
+        public double Weight { get; private set; }
+        public List<Mesh> Geometry { get; private set; }
+        public Manufacturer Manufacturer { get; private set; }
+        public Vector3d relTool { get; private set; }
+        #endregion
+
+        #region Propperties
+        public string Declaration { 
+            get 
+            {
+                string declaration = string.Empty;
+                // Compute the tool TCP offset from the flange.
+
+                switch (this.Manufacturer) 
+                {
+                    case Manufacturer.ABB:
+                        string COG = "[0.0,0.0,10.0]";
+                        string userOffset = "[1,0,0,0],0,0,0]]";
+                        string strPosX, strPosY, strPosZ;
+
+                        // Round each position component to two decimal places.
+                        string Round(double value)
+                        {
+                            string strvalue = string.Empty;
+                            if (value < 0.005 && value > -0.005) { strPosX = "0.00"; }
+                            else { strPosX = value.ToString("#.##"); }
+                            return strvalue;
+                        }  // Specific rounding method
+                        strPosX = Round(TCP.Origin.X);
+                        strPosY = Round(TCP.Origin.Y);
+                        strPosZ = Round(TCP.Origin.Z);
+
+                        // Recompose component parts.
+                        string shortenedPosition = $"{strPosX},{strPosY}{strPosZ}";
+
+
+                        // Quaternien String
+                        Quaternion quat = Util.QuaternionFromPlane(TCP);
+                        double A = quat.A, B = quat.B, C = quat.C, D = quat.D;
+                        double w = Math.Round(A, 6); double x = Math.Round(B, 6); double y = Math.Round(C, 6); double z = Math.Round(D, 6);
+                        string strQuat = $"{w.ToString()},{x.ToString()},{y.ToString()},{z.ToString()}";
+
+                        declaration = $"PERS tooldata {this.Name} := [TRUE,[[{shortenedPosition}], [{strQuat}]], [{this.Weight.ToString()},{COG},{userOffset};";
+                        break;
+                    //case Manufacturer.Kuka:
+                    //    /*
+                    //    List<double> eulers = new List<double>();
+                    //    eulers = Util.QuaternionToEuler(quat);
+                    //
+                    //    double eA = eulers[0];
+                    //    double eB = eulers[1];
+                    //    double eC = eulers[2];
+                    //
+                    //    // Compose KRL-formatted declaration.
+                    //    declaration = "$TOOL = {X " + strPosX + ", Y " + strPosY + ", Z " + strPosZ + ", A " + eA.ToString() + ", B " + eB.ToString() + ", C " + eC.ToString() + "}";
+                    //    */
+                    //    declaration = "KUKA TOOL DECLARATION";
+                    //    break;
+                    default:
+                        throw new NotImplementedException($"{this.Manufacturer} has not yet been implemented.");
+                }
+                return declaration;
+            }
+        }
+        public Transform FlangeOffset { 
+            get 
+            {
+                return Rhino.Geometry.Transform.PlaneToPlane(TCP, Plane.WorldXY);
+            }  
+        }
         #endregion
 
         #region Constructor and Default
-        public static Tool Default { get; }
-        static Tool()
-        {
-            Default = new Tool("DefaultTool", Plane.WorldXY, 1.5, null, Manufacturer.ABB, Vector3d.Zero);
-        }
+        public static Tool Default { get => new Tool("DefaultTool", Plane.WorldXY, 1.5, null, Manufacturer.ABB, Vector3d.Zero); }
+        public Tool(){}
         public Tool(string name, Plane TCP, double weight, List<Mesh> mesh, Manufacturer type, Vector3d relToolOffset)
         {
-            string toolName = name;
-            string COG = "[0.0,0.0,10.0]";
-            string userOffset = "[1,0,0,0],0,0,0]]";
-            bool relT = false;
-            Vector3d tOffset = relToolOffset;
-
-            string strPosX, strPosY, strPosZ;
-
-            // Round each position component to two decimal places.
-            double posX = TCP.Origin.X;
-            if (posX < 0.005 && posX > -0.005) { strPosX = "0.00"; }
-            else { strPosX = posX.ToString("#.##"); }
-
-            double posY = TCP.Origin.Y;
-            if (posY < 0.005 && posY > -0.005) { strPosY = "0.00"; }
-            else { strPosY = posY.ToString("#.##"); }
-
-            double posZ = TCP.Origin.Z;
-            if (posZ < 0.005 && posZ > -0.005) { strPosZ = "0.00"; }
-            else { strPosZ = posZ.ToString("#.##"); }
-
-            // Recompose component parts.
-            string shortenedPosition = strPosX + "," + strPosY + "," + strPosZ;
-
-            Quaternion quat = Util.QuaternionFromPlane(TCP);
-
-            double A = quat.A, B = quat.B, C = quat.C, D = quat.D;
-            double w = Math.Round(A, 6);
-            double x = Math.Round(B, 6);
-            double y = Math.Round(C, 6);
-            double z = Math.Round(D, 6);
-
-            string strQuat = w.ToString() + "," + x.ToString() + "," + y.ToString() + "," + z.ToString();
-
-            // Compute the tool TCP offset from the flange.
-            Transform fOffset = Rhino.Geometry.Transform.PlaneToPlane(TCP, Plane.WorldXY);
-
-            string declaration;
-
-
-            if (type == Manufacturer.Kuka)
-            {
-                /*
-                List<double> eulers = new List<double>();
-                eulers = Util.QuaternionToEuler(quat);
-
-                double eA = eulers[0];
-                double eB = eulers[1];
-                double eC = eulers[2];
-
-                // Compose KRL-formatted declaration.
-                declaration = "$TOOL = {X " + strPosX + ", Y " + strPosY + ", Z " + strPosZ + ", A " + eA.ToString() + ", B " + eB.ToString() + ", C " + eC.ToString() + "}";
-                */
-                declaration = "KUKA TOOL DECLARATION";
-            }
-            else if (type == Manufacturer.ABB)
-            {
-                // Compose RAPID-formatted declaration.
-                declaration = $"PERS tooldata {toolName} := [TRUE,[[{shortenedPosition}], [{strQuat}]], [{weight.ToString()},{COG},{userOffset};";
-            }
-            else throw new Exception("Manufacturer not yet implemented");
-
-            this.Name = toolName;
+            this.Name = name;
             this.TCP = TCP;
             this.Weight = weight;
             this.Geometry = mesh;
-            this.Declaration = declaration;
-            this.FlangeOffset = fOffset;
-            this.relTool = tOffset;
             this.Manufacturer = type;
+            this.relTool = relToolOffset;
         }
         #endregion
 
         #region Interface Implementation
         //IGH_GeometricGoo
-        public BoundingBox Boundingbox { get; }
+        public BoundingBox Boundingbox { get; private set; }
         public Guid ReferenceID { get; set; }
         public bool IsReferencedGeometry { get; }
         public bool IsGeometryLoaded { get; }
-         
-        public void ClearCaches() => throw new NotImplementedException();
+
+        public void ClearCaches() 
+        {
+            this.Name =string.Empty;
+            this.ID = Guid.Empty;
+            this.TCP = Plane.Unset;
+            this.Weight = double.NaN;
+            this.Geometry = null;
+            this.Manufacturer = 0;
+            this.relTool = Vector3d.Unset;
+        }
         public IGH_GeometricGoo DuplicateGeometry() => throw new NotImplementedException();
         public BoundingBox GetBoundingBox(Transform xform) 
         {
             BoundingBox box = BoundingBox.Empty;
-
+            foreach (Mesh m in this.Geometry) m.Transform(xform);
+            this.Geometry.ForEach(m => box.Union(m.GetBoundingBox(false)));
+            this.Boundingbox = box;
             return box;
         }
-        //public BoundingBox GetBoundingBox()
-        //{
-        //    if (this.ikGeometry == null) return BoundingBox.Empty;
-        //
-        //    Mesh joinedMesh = new Mesh();
-        //    foreach (Mesh m in this.ikGeometry)
-        //    {
-        //        joinedMesh.Append(m);
-        //    }
-        //    return joinedMesh.GetBoundingBox(false);
-        //}
         public bool LoadGeometry() => throw new NotImplementedException();
         public bool LoadGeometry(Rhino.RhinoDoc doc) => throw new NotImplementedException();
         public IGH_GeometricGoo Morph(SpaceMorph xmorph) => throw new NotImplementedException();
@@ -1318,45 +1318,73 @@ namespace Axis.Core
         //GH_ISerializable
         public bool Read(GH_IReader reader)
         {
+            if (reader.ItemExists("Name")) this.Name = reader.GetString("Name");
+            if (reader.ItemExists("GUID")) this.ID = reader.GetGuid("GUID");
+            if (reader.ItemExists("Weight")) this.Weight = reader.GetDouble("Weight");
+            if (reader.ItemExists("Manufacturer")) this.Manufacturer = (Manufacturer)reader.GetInt32("Manufacturer");
 
-            var chunk = reader.FindChunk("TCP");
-            Plane tcp = new Plane();
-            //this.TCP = chunk.Extract<Plane, GH_Plane>(GH_Convert.ToPlane);
+
+            if (reader.ChunkExists("TCP"))
+            {
+                var chunk1 = reader.FindChunk("TCP");
+                if (chunk1 != null)
+                {
+                    var data = new GH_Plane();
+                    var plane = new Plane();
+                    data.Read(chunk1);
+                    GH_Convert.ToPlane(data, ref plane, GH_Conversion.Both);
+                    this.TCP = this.TCP;
+                }
+            }
+            if (reader.ChunkExists("Geometry")) 
+            {
+               var chunk2 = reader.FindChunk("Geometry");
+               if (chunk2 != null) 
+                {
+                    var data = new GH_Structure<GH_Mesh>();
+                    data.Read(chunk2);
+                    this.Geometry = data.ToList<Mesh, GH_Mesh>();
+                }
+            }
+            if (reader.ChunkExists("FlangeOffset")) 
+            {
+                var chunk3 = reader.FindChunk("FlangeOffset");
+                if (chunk3 != null)
+                {
+                    var data = new GH_Vector();
+                    var vec = new Vector3d();
+                    data.Read(chunk3);
+                    GH_Convert.ToVector3d(chunk3, ref vec, GH_Conversion.Both);
+                    this.relTool = vec;
+                }
+            }
+            
 
             return true;
 
         }
         public bool Write(GH_IWriter writer)
         {
-            try
-            {
-                GH_Structure<GH_Mesh> gh_Meshes = this.Geometry.ToGHStructure<GH_Mesh, Mesh>();
-                GH_Plane gH_TCP = new GH_Plane(this.TCP);
-                GH_Transform gh_FalangeOffset = new GH_Transform(this.FlangeOffset);
-                GH_Vector gH_relTool = new GH_Vector(this.relTool);
+            writer.SetString("Name", this.Name);
+            writer.SetGuid("GUID", ID);
+            writer.SetDouble("Weight", this.Weight);
+            writer.SetInt32("Manufacturer", (int)this.Manufacturer);
 
+            GH_Plane gH_TCP = new GH_Plane(this.TCP);
+            gH_TCP.Write(writer.CreateChunk("TCP"));
+            
+            GH_Structure<GH_Mesh> gh_Meshes = this.Geometry.ToGHStructure<GH_Mesh, Mesh>();
+            gh_Meshes.Write(writer.CreateChunk("Geometry"));
+            
+            GH_Vector gH_relTool = new GH_Vector(this.relTool);
+            gH_relTool.Write(writer.CreateChunk("RelTool"));
 
-                writer.SetString("Name", this.Name);
-                gH_TCP.Write(writer.CreateChunk("TCP"));
-                writer.SetDouble("Weight", this.Weight);
-                gh_Meshes.Write(writer.CreateChunk("Geometry"));
-                writer.SetString("Declaration", this.Declaration);
-                gh_FalangeOffset.Write(writer.CreateChunk("FlangeOffset"));
-                writer.SetInt32("Manufacturer", (int)this.Manufacturer);
-                gH_relTool.Write(writer.CreateChunk("RelTool"));
-
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
+            return true;
+            
         }
         #endregion
 
     }
-
-
 
     /// <summary>
     /// List of possible manufactures

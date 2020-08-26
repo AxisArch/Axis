@@ -47,7 +47,9 @@ namespace Axis.Robot
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("Tool", "Tool", "Axis tool definition.", GH_ParamAccess.item);
+            IGH_Param tool = new Axis.Params.Param_Tool();
+            pManager.AddParameter(tool, "Tool", "Tool", "Axis tool definition.", GH_ParamAccess.item);
+            //pManager.AddGenericParameter("Tool", "Tool", "Axis tool definition.", GH_ParamAccess.item);
         }
 
         protected override void SolveInstance(IGH_DataAccess DA)
