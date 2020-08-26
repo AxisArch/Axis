@@ -16,6 +16,9 @@ using Axis.Targets;
 
 namespace Axis.Online
 {
+    /// <summary>
+    /// Get all of the available modules from a robot controller.
+    /// </summary>
     public class GetModules : GH_Component
     {
         public GetModules() : base("Get Modules", "Get Mods", "Get all available modules from a robot controller.", AxisInfo.Plugin, AxisInfo.TabOnline)

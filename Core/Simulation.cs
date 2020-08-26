@@ -12,15 +12,14 @@ using Axis.Targets;
 
 namespace Axis.Core
 {
-    
-
+    /// <summary>
+    /// Stepwise simulation of a robotic program.
+    /// </summary>
     public class Simulation : GH_Component, IGH_VariableParameterComponent
     {
-
         DateTime strat = new DateTime();
         Toolpath toolpath;
         Target cTarget;
-
 
         bool timeline = false;
         bool showSpeed = false;
@@ -28,36 +27,11 @@ namespace Axis.Core
         bool showMotion = false;
         bool showExternal = false;
 
-
-        public override GH_Exposure Exposure => GH_Exposure.secondary;
-
-        /// <summary>
-        /// Provides an Icon for the component.
-        /// </summary>
-        protected override System.Drawing.Bitmap Icon
-        {
-            get
-            { return Properties.Resources.Play; }
-        }
-
-        /// <summary>
-        /// Gets the unique ID for this component. Do not change this ID after release.
-        /// </summary>
-        public override Guid ComponentGuid
-        {
-            get { return new Guid("7baedf8e-5efe-4549-b8d5-93a4b9e4a1fd"); }
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the MyComponent1 class.
-        /// </summary>
         public Simulation() : base("Simulation", "Program", "Simulate a robotic toolpath.", AxisInfo.Plugin, AxisInfo.TabCore)
         {
         }
 
-        /// <summary>
-        /// Registers all the input parameters for this component.
-        /// </summary>
+        #region IO
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddGenericParameter("Targets", "Targets", "T", GH_ParamAccess.list);
@@ -65,19 +39,12 @@ namespace Axis.Core
             pManager.AddBooleanParameter("Reset", "Reset","",GH_ParamAccess.item );
         }
 
-        /// <summary>
-        /// Registers all the output parameters for this component.
-        /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
             pManager.AddGenericParameter("Target", "Target", "", GH_ParamAccess.item);
         }
+        #endregion
 
-
-        /// <summary>
-        /// This is the method that actually does the work.
-        /// </summary>
-        /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             List<Target> targets = new List<Target>();
@@ -113,6 +80,7 @@ namespace Axis.Core
 
         }
 
+        #region UI
         protected override void BeforeSolveInstance()
         {
             base.BeforeSolveInstance();
@@ -122,7 +90,7 @@ namespace Axis.Core
         }
 
         /// <summary>
-        ///  Replace a numver slider with one that has the propper values set
+        /// Replace a number slider with one that has the proper values set.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
@@ -293,7 +261,9 @@ namespace Axis.Core
             Params.OnParametersChanged();
             ExpireSolution(true);
         }
+        #endregion
 
+        #region Serialization
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
@@ -315,7 +285,9 @@ namespace Axis.Core
             this.showExternal = reader.GetBoolean("ShowExternal");
             return base.Read(reader);
         }
+        #endregion
 
+        #region Component Settings
         /// <summary>
         /// Implement this interface in your component if you want to enable variable parameter UI.
         /// </summary>
@@ -325,6 +297,19 @@ namespace Axis.Core
         bool IGH_VariableParameterComponent.DestroyParameter(GH_ParameterSide side, int index) => false;
         void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
 
-
+        /// <summary>
+        /// Component settings.
+        /// </summary>
+        public override GH_Exposure Exposure => GH_Exposure.secondary;
+        protected override System.Drawing.Bitmap Icon
+        {
+            get
+            { return Properties.Resources.Play; }
+        }
+        public override Guid ComponentGuid
+        {
+            get { return new Guid("7baedf8e-5efe-4549-b8d5-93a4b9e4a1fd"); }
+        }
+        #endregion
     }
 }

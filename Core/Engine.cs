@@ -21,6 +21,10 @@ using static Axis.Properties.Settings;
 
 namespace Axis.Core
 {
+    /// <summary>
+    /// Core engine class that handles
+    /// login, system settings etc.
+    /// </summary>
     public class Engine : GH_Component
     {
         // Sticky variables for the options.
@@ -49,6 +53,7 @@ namespace Axis.Core
             m_attributes = new CustomAttributes(this);
         }
 
+        #region IO
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
         }
@@ -57,6 +62,7 @@ namespace Axis.Core
         {
             pManager.AddTextParameter("Log", "Log", "Log", GH_ParamAccess.list);
         }
+        #endregion
 
         protected override void BeforeSolveInstance()
         {
@@ -77,6 +83,7 @@ namespace Axis.Core
             Default.Token = String.Empty;
         }
 
+        #region UI
         // The following functions append menu items and then handle the item clicked event.
         protected override void AppendAdditionalComponentMenuItems(System.Windows.Forms.ToolStripDropDown menu)
         {
@@ -107,12 +114,13 @@ namespace Axis.Core
             ClearToken();
             ExpireSolution(true);
         }
+        #endregion
 
         public class CustomAttributes : GH_ComponentAttributes
         {
             public CustomAttributes(Engine owner) : base(owner) { }
 
-            #region Custom layout logic
+            #region Custom Layout Logic
             private System.Drawing.RectangleF PathBounds { get; set; }
             private System.Drawing.RectangleF SettingsBounds { get; set; }
 
@@ -127,7 +135,7 @@ namespace Axis.Core
             }
             #endregion
 
-            #region Custom Mouse handling
+            #region Custom Mouse Handling
             public override GH_ObjectResponse RespondToMouseDown(GH_Canvas sender, GH_CanvasMouseEvent e)
             {
                 if (e.Button == System.Windows.Forms.MouseButtons.Left)
@@ -184,7 +192,7 @@ namespace Axis.Core
             }
             #endregion
 
-            #region Custom Render logic
+            #region Custom Render Logic
             protected override void Render(GH_Canvas canvas, System.Drawing.Graphics graphics, GH_CanvasChannel channel)
             {
                 switch (channel)
@@ -271,6 +279,7 @@ namespace Axis.Core
             ExpireSolution(true);
         }
 
+        #region Component Settings
         protected override System.Drawing.Bitmap Icon
         {
             get
@@ -283,5 +292,6 @@ namespace Axis.Core
         {
             get { return new Guid("54b2cc2c-688d-4972-a234-2c9976d0a9f8"); }
         }
+        #endregion
     }
 }

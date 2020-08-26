@@ -17,6 +17,9 @@ using Grasshopper.Kernel.Types;
 
 namespace Axis.Online
 {
+    /// <summary>
+    /// Custom controller class that uses the ABB Controller type.
+    /// </summary>
     public class AxisController : GH_Goo<AxisController>
     {
         public Controller axisController { get; set; }
@@ -24,7 +27,10 @@ namespace Axis.Online
         public bool axisControllerState { get; }
         public Manufacturer type {get;}
 
-        // Constructors
+        /// <summary>
+        /// Default constructor.
+        /// </summary>
+        /// <param name="controller"></param>
         public AxisController(Controller controller)
         {
             this.axisController = controller;
@@ -32,14 +38,24 @@ namespace Axis.Online
             this.axisControllerState = true;
 
         }
-        public AxisController(Controller controller, string model, bool conected)
+
+        /// <summary>
+        /// Constructor with name and status specified.
+        /// </summary>
+        /// <param name="controller"></param>
+        /// <param name="model"></param>
+        /// <param name="connected"></param>
+        public AxisController(Controller controller, string model, bool connected)
         {
             this.axisController = controller;
             this.axisControllerModel = model;
-            this.axisControllerState = conected;
+            this.axisControllerState = connected;
         }
        
-        // Custom casting
+        /// <summary>
+        /// Custom casting.
+        /// </summary>
+        /// <param name="controller"></param>
         public static implicit operator Controller(AxisController controller) {
             
             Type type = controller.axisController.GetType(); 

@@ -5,11 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 
-
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Grasshopper.Kernel.Parameters;
-
 
 using Rhino.Geometry;
 
@@ -50,7 +48,7 @@ namespace Axis.Online
         {
             pManager.AddGenericParameter("Controller", "Controller", "Recives the output from a controller module", GH_ParamAccess.item);
             pManager.AddBooleanParameter("Send", "Send", "Send to module", GH_ParamAccess.item, false);
-            pManager.AddTextParameter("Moduel", "Module", "Module to be wtritten to the controller.", GH_ParamAccess.list);
+            pManager.AddTextParameter("Module", "Module", "Module to be wtritten to the controller.", GH_ParamAccess.list);
             pManager[1].Optional = true;
         }
 
@@ -69,7 +67,7 @@ namespace Axis.Online
 
             if (!DA.GetData("Controller", ref controller)) ;
             if (!DA.GetData("Send", ref send)) ;
-            if (!DA.GetDataList("Moduel", modFile)){ return; }
+            if (!DA.GetDataList("Module", modFile)){ return; }
             if (logOption)
             {
                 if (!DA.GetData("Clear", ref clear)) ;
@@ -102,7 +100,7 @@ namespace Axis.Online
                 if (sending == false)
                 {
                     sending = true;
-                    log.Add("Sending moduel to controller");
+                    log.Add("Sending Module to controller");
                     try
                     {
                         using (Mastership m = Mastership.Request(abbController.Rapid))

@@ -12,25 +12,17 @@ using static Axis.Properties.Settings;
 
 namespace Axis.Core
 {
+    /// <summary>
+    /// Method to check an entire program for issues
+    /// without running full geometry for the IK solutions.
+    /// </summary>
     public class CheckProgram : GH_Component
     {
-        protected override System.Drawing.Bitmap Icon
-        {
-            get
-            {
-                return Axis.Properties.Resources.CheckProgram;
-            }
-        }
-        public override Guid ComponentGuid
-        {
-            get { return new Guid("73f9ed66-9a0d-48aa-afdc-9a7a8902031c"); }
-        }
-        public override GH_Exposure Exposure => GH_Exposure.primary;
-
         public CheckProgram() : base("Check Program", "Check", "Check an entire program for kinematic errors.", AxisInfo.Plugin, AxisInfo.TabCore)
         {
         }
 
+        #region IO
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddGenericParameter("Program", "Program", "Robot program as list of commands.", GH_ParamAccess.list);
@@ -44,13 +36,19 @@ namespace Axis.Core
             pManager.AddTextParameter("Log", "Log", "Message log.", GH_ParamAccess.list);
             pManager.AddPointParameter("Error", "Errors", "List of program error points.", GH_ParamAccess.list);
         }
+        #endregion
 
         // License token variable.
         bool validToken = false;
+        Auth auth = null;
 
+        /// <summary>
+        /// Check the authentification status.
+        /// </summary>
         protected override void BeforeSolveInstance()
         {
-            Auth auth = new Auth();
+            // Validate the login token.
+            auth = new Auth();
             validToken = auth.IsValid;
 
             if (!validToken)
@@ -110,9 +108,7 @@ namespace Axis.Core
                     target = new Plane(targ.Plane);
                     errorPos = target.Origin;
                     
-
-
-                    // Kinematics
+                    // Compute kinematic solutions.
                     bool overheadSing = false; bool outOfReach = false; bool wristSing = false; bool outOfRotation = false;
                     List<System.Drawing.Color> colors = new List<System.Drawing.Color>();
 
@@ -151,5 +147,20 @@ namespace Axis.Core
             DA.SetDataList(0, log);
             DA.SetDataList(1, errorPositions);
         }
+
+        #region Component Settings
+        protected override System.Drawing.Bitmap Icon
+        {
+            get
+            {
+                return Axis.Properties.Resources.CheckProgram;
+            }
+        }
+        public override Guid ComponentGuid
+        {
+            get { return new Guid("73f9ed66-9a0d-48aa-afdc-9a7a8902031c"); }
+        }
+        public override GH_Exposure Exposure => GH_Exposure.primary;
+        #endregion  
     }
 }

@@ -18,33 +18,23 @@ using Rhino.DocObjects.Custom;
 
 namespace Axis.Core
 {
-
+    /// <summary>
+    /// Core inverse kinematics class.
+    /// </summary>
     public class InverseKinematics : GH_Component, IGH_VariableParameterComponent
     {
-
+        // Global variables.
         Manipulator m_Robot = null;
         Target m_Target = null;
         Tool m_Tool = null;
         Manipulator.ManipulatorPose m_Pose = null;
         bool m_PoseOut = false;
 
-        protected override System.Drawing.Bitmap Icon
-        {
-            get
-            {
-                return Properties.Resources.IK;
-            }
-        }
-        public override Guid ComponentGuid
-        {
-            get { return new Guid("{9079ef8a-31c0-4c5a-8f04-775b9aa21047}"); }
-        }
-        public override GH_Exposure Exposure => GH_Exposure.primary;
-
         public InverseKinematics() : base("Inverse Kinematics", "Kinematics", "Inverse and forward kinematics for a 6 degree of freedom robotic arm, based on Lobster Reloaded by Daniel Piker.", AxisInfo.Plugin, AxisInfo.TabCore)
         {
         }
 
+        #region IO
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             IGH_Param Robot = new Axis.Params.Param_Manipulator();
@@ -61,6 +51,7 @@ namespace Axis.Core
             pManager.AddNumberParameter("Angles", "Angles", "Axis angles for forward kinematics.", GH_ParamAccess.list);
             pManager.AddTextParameter("Log", "Log", "Message log.", GH_ParamAccess.list);
         }
+        #endregion
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
@@ -69,13 +60,14 @@ namespace Axis.Core
             {
                 manipulator = Manipulator.Default;
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No robot system defined, using default");
-            }  //Set Robot 
-            if (!DA.GetData(1, ref m_Target)) return; //Get the target
-            if (m_Target.Tool != null) m_Tool = m_Target.Tool; //Get the tool from the target
+            }   // Set Robot.
+            if (!DA.GetData(1, ref m_Target)) return; // Get the target.
+            if (m_Target.Tool != null) m_Tool = m_Target.Tool; // Get the tool from the target.
             m_Robot = m_Robot = (Manipulator)manipulator.Duplicate();
 
             Manipulator.ManipulatorPose pose = new Manipulator.ManipulatorPose(m_Robot, m_Target);
 
+            #region Handle Errors
             // Handle errors
             List<string> log = new List<string>();
             if (pose.OverHeadSig) log.Add("Close to overhead singularity.");
@@ -83,14 +75,13 @@ namespace Axis.Core
             if (pose.OutOfReach) log.Add("Target out of range.");
             if (pose.OutOfRoation) log.Add("Joint out of range.");
 
-
             if (m_Pose != null) m_Robot.SetPose(m_Pose, validetyCheck: true);
             m_Robot.SetPose(pose, validetyCheck: true);
             if (m_Robot.CurrentPose.IsValid) m_Pose = m_Robot.CurrentPose;
+            #endregion
 
             Plane flange = (m_Robot.CurrentPose.IsValid)? m_Robot.CurrentPose.Flange: Plane.Unset;
             double[] selectedAngles = m_Robot.CurrentPose.Angles;
-            
 
             // Set output
             DA.SetData("Flange", flange);
@@ -98,15 +89,22 @@ namespace Axis.Core
             DA.SetDataList("Log", log);
             if(m_PoseOut)DA.SetData("Robot Pose", m_Robot.CurrentPose);
 
-
-            // Update Display data
+            // Update and display data
             m_Robot.UpdatePose();
             m_Robot.GetBoundingBox(Transform.Identity);
 
         }
 
+        public override void ClearData()
+        {
+            base.ClearData();
+            if (m_Robot != null) m_Robot.ClearCaches();
+            //if (m_Tool != null) m_Tool.ClearCaches();
+            //if (m_Target != null) m_Target.ClearCaches();
+        }
 
-        // Display 
+        #region Display Pipeline
+        // Custom display pipeline 
         public override void DrawViewportWires(IGH_PreviewArgs args)
         {
             base.DrawViewportWires(args);
@@ -117,8 +115,6 @@ namespace Axis.Core
 
             var meshColorPair = m_Robot.RobMeshes.Zip(m_Robot.CurrentPose.Colors, (mesh, color) => new { Mesh = mesh, Color = color });
             foreach (var pair in meshColorPair) args.Display.DrawMeshShaded(pair.Mesh, new DisplayMaterial(pair.Color));
-
-
         }
         public override void DrawViewportMeshes(IGH_PreviewArgs args)
         {
@@ -130,7 +126,6 @@ namespace Axis.Core
 
             var meshColorPair = m_Robot.RobMeshes.Zip(m_Robot.CurrentPose.Colors, (mesh, color) => new { Mesh = mesh, Color = color });
             foreach (var pair in meshColorPair) args.Display.DrawMeshShaded(pair.Mesh, new DisplayMaterial(pair.Color));
-
         }
         public override void BakeGeometry(RhinoDoc doc, List<Guid> obj_ids)
         {
@@ -145,6 +140,7 @@ namespace Axis.Core
                 obj_ids.Add(doc.Objects.AddMesh(m_Robot.CurrentPose.Geometry[i], attributes));
             }
         }
+
         public override void BakeGeometry(RhinoDoc doc, ObjectAttributes att, List<Guid> obj_ids)
         {
             base.BakeGeometry(doc, att, obj_ids);
@@ -159,6 +155,7 @@ namespace Axis.Core
                 obj_ids.Add(doc.Objects.AddMesh(m_Robot.CurrentPose.Geometry[i], attributes));
             }
         }
+
         public override BoundingBox ClippingBox
         {
             get
@@ -171,18 +168,9 @@ namespace Axis.Core
                 return box;
             }
         }
-        public override void ClearData()
-        {
-            base.ClearData();
-            if (m_Robot != null) m_Robot.ClearCaches();
-            //if (m_Tool != null) m_Tool.ClearCaches();
-            //if (m_Target != null) m_Target.ClearCaches();
-        }
+        #endregion
 
-
-        #region Component UI
-
-
+        #region UI
         // Build a list of optional output parameters
         IGH_Param[] outputParams = new IGH_Param[1]
         {
@@ -227,17 +215,14 @@ namespace Axis.Core
                         break;
                     }
                 }
-
                 Params.RegisterOutputParam(parameter, insertIndex);
             }
-
             Params.OnParametersChanged();
             //ExpireSolution(true);
         }
-
         #endregion
 
-
+        #region Serialization
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
@@ -251,11 +236,9 @@ namespace Axis.Core
             this.m_PoseOut = reader.GetBoolean("PoseOut");
             return base.Read(reader);
         }
+        #endregion
 
-
-
-
-
+        #region Component Settings
         /// <summary>
         /// Implement this interface in your component if you want to enable variable parameter UI.
         /// </summary>
@@ -265,5 +248,18 @@ namespace Axis.Core
         bool IGH_VariableParameterComponent.DestroyParameter(GH_ParameterSide side, int index) => false;
         void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
 
+        protected override System.Drawing.Bitmap Icon
+        {
+            get
+            {
+                return Properties.Resources.IK;
+            }
+        }
+        public override Guid ComponentGuid
+        {
+            get { return new Guid("{9079ef8a-31c0-4c5a-8f04-775b9aa21047}"); }
+        }
+        public override GH_Exposure Exposure => GH_Exposure.primary;
+        #endregion
     }
 }

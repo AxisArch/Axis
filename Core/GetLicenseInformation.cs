@@ -8,6 +8,10 @@ using System.Diagnostics;
 
 namespace Axis.Core
 {
+    /// <summary>
+    /// Get license information for creating
+    /// unique user hashes from the PC identifiers.
+    /// </summary>
     public class GetLicenseInformation : GH_Component
     {
         public override GH_Exposure Exposure => GH_Exposure.primary;
@@ -27,6 +31,7 @@ namespace Axis.Core
         {
         }
 
+        #region IO
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddTextParameter("Full Name", "Full Name", "First name followed by surname, capitalized.", GH_ParamAccess.item, "No Name");
@@ -37,6 +42,7 @@ namespace Axis.Core
         {
             pManager.AddTextParameter("Info", "Info", "License information.", GH_ParamAccess.item);
         }
+        #endregion
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
@@ -63,6 +69,12 @@ namespace Axis.Core
             DA.SetDataList(0, info);
         }
 
+        /// <summary>
+        /// Get the requested ID from the key.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="propertyValue"></param>
+        /// <returns></returns>
         public string GetHardwareId(string key, string propertyValue)
         {
             var value = string.Empty;
@@ -76,6 +88,13 @@ namespace Axis.Core
             return value;
         }
 
+        /// <summary>
+        /// Automate the sending of the necessary
+        /// licensing request.
+        /// </summary>
+        /// <param name="emailAddress"></param>
+        /// <param name="subject"></param>
+        /// <param name="body"></param>
         public void SendSupportEmail(string emailAddress, string subject, string body)
         {
             Process.Start("mailto:" + emailAddress + "?subject=" + subject + "&body="
