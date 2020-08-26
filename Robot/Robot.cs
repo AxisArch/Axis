@@ -16,7 +16,9 @@ using System.Linq;
 
 namespace Axis.Core
 {
-    // Define a custom robot.
+    /// <summary>
+    /// Define a custom robot object.
+    /// </summary>
     public class Robot : GH_Component, IGH_VariableParameterComponent
     {
         // Sticky context menu toggles
@@ -54,7 +56,7 @@ namespace Axis.Core
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            IGH_Param robot = new Axis.Params.Param_Manipulator();
+            IGH_Param robot = new Axis.Params.RobotParam();
             pManager.AddParameter(robot, "Robot", "Robot", "Custom robot data type.", GH_ParamAccess.item);
         }
 

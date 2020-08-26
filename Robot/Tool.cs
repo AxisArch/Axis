@@ -9,24 +9,13 @@ using Grasshopper.Kernel.Parameters;
 using Rhino.Geometry;
 using Axis.Core;
 
-
 namespace Axis.Robot
 {
+    /// <summary>
+    /// Create custom robotic end effectors.
+    /// </summary>
     public class CreateTool : GH_Component, IGH_VariableParameterComponent
     {
-        public override GH_Exposure Exposure => GH_Exposure.primary;
-        protected override System.Drawing.Bitmap Icon
-        {
-            get
-            {
-                return Axis.Properties.Resources.Tool;
-            }
-        }
-        public override Guid ComponentGuid
-        {
-            get { return new Guid("{ae134b08-ee29-444e-b689-a218ff73379d}"); }
-        }
-
         // Sticky context menu toggles
         Manufacturer manufacturer = Manufacturer.ABB;
         bool toolWeight = false;
@@ -37,6 +26,7 @@ namespace Axis.Robot
         {
         }
 
+        #region IO
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddTextParameter("Name", "Name", "Tool name.", GH_ParamAccess.item, "AxisTool");
@@ -51,6 +41,7 @@ namespace Axis.Robot
             pManager.AddParameter(tool, "Tool", "Tool", "Axis tool definition.", GH_ParamAccess.item);
             //pManager.AddGenericParameter("Tool", "Tool", "Axis tool definition.", GH_ParamAccess.item);
         }
+        #endregion
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
@@ -88,6 +79,7 @@ namespace Axis.Robot
                 DA.SetData("Declaration", tool.Declaration);
         }
 
+        #region UI
         // Build a list of optional input and output parameters
         IGH_Param[] inputParams = new IGH_Param[2]
         {
@@ -129,6 +121,7 @@ namespace Axis.Robot
             this.manufacturer = (Manufacturer)currentItem.Owner.Items.IndexOf(currentItem);
             ExpireSolution(true);
         }
+
         private void Weight_Click(object sender, EventArgs e)
         {
             RecordUndoEvent("Weight");
@@ -145,6 +138,7 @@ namespace Axis.Robot
             }
             ExpireSolution(true);
         }
+
         private void Declaration_Click(object sender, EventArgs e)
         {
             RecordUndoEvent("Declaration");
@@ -161,6 +155,7 @@ namespace Axis.Robot
             }
             ExpireSolution(true);
         }
+
         private void RelTool_Click(object sender, EventArgs e)
         {
             RecordUndoEvent("Relative Tool Offset");
@@ -203,6 +198,7 @@ namespace Axis.Robot
             Params.OnParametersChanged();
             ExpireSolution(true);
         }
+
         // Register the new output parameters to our component.
         private void AddOutput(int index)
         {
@@ -228,7 +224,9 @@ namespace Axis.Robot
             Params.OnParametersChanged();
             ExpireSolution(true);
         }
+        #endregion
 
+        #region Serialization
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
@@ -248,7 +246,9 @@ namespace Axis.Robot
             this.relTool = reader.GetBoolean("Relative Tool Offset");
             return base.Read(reader);
         }
+        #endregion
 
+        #region Component Settings
         /// <summary>
         /// Implement this interface in your component if you want to enable variable parameter UI.
         /// </summary>
@@ -257,5 +257,19 @@ namespace Axis.Robot
         IGH_Param IGH_VariableParameterComponent.CreateParameter(GH_ParameterSide side, int index) => null;
         bool IGH_VariableParameterComponent.DestroyParameter(GH_ParameterSide side, int index) => false;
         void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
+
+        public override GH_Exposure Exposure => GH_Exposure.primary;
+        protected override System.Drawing.Bitmap Icon
+        {
+            get
+            {
+                return Axis.Properties.Resources.Tool;
+            }
+        }
+        public override Guid ComponentGuid
+        {
+            get { return new Guid("{ae134b08-ee29-444e-b689-a218ff73379d}"); }
+        }
+        #endregion
     }
 }

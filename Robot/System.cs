@@ -13,12 +13,13 @@ using Axis;
 using Microsoft.Office.Interop.Excel;
 using System.Linq;
 
-
 namespace Axis.Core 
 {
+    /// <summary>
+    /// Create custom industrial robot configurations.
+    /// </summary>
     public class Manipulator : IGH_GeometricGoo
     {
-        #region Main Class variables
         public string Name = "Wall-E"; // This variable can hold the model number
         private Guid id = Guid.Empty;
         public Manufacturer Manufacturer { get; private set; }
@@ -28,34 +29,37 @@ namespace Axis.Core
         public List<double> MaxAngles { get; private set; }
         public List<int> Indices { get; private set; }
         public List<Mesh> RobMeshes { get; private set; }
-        #endregion
 
-        #region Propperties
         public ManipulatorPose CurrentPose { get; private set; }
         public double WristOffsetLength { get => this.AxisPlanes[5].Origin.DistanceTo(this.AxisPlanes[4].Origin); }
         public double LowerArmLength { get => this.AxisPlanes[1].Origin.DistanceTo(this.AxisPlanes[2].Origin); }
         public double UpperArmLength { get => this.AxisPlanes[2].Origin.DistanceTo(this.AxisPlanes[4].Origin); }
         public double AxisFourOffsetAngle { get => Math.Atan2(this.AxisPlanes[4].Origin.Z - this.AxisPlanes[2].Origin.Z, this.AxisPlanes[4].Origin.X - this.AxisPlanes[2].Origin.X); }  // =>0.22177 for IRB 6620 //This currently limitting the robot to be in a XZ configuration
 
-
         public Plane Flange { get => this.AxisPlanes[5].Clone(); }
         private Transform[] resetTransform = null;
         public Transform[] ResetTransform { get 
             {
-                // Check if Transform already has been applied
+                // Check if transform already has been applied
                 if (this.resetTransform != null) return resetTransform;
 
-                var rT = new Transform[this.RobMeshes.Count-1]; // <--- Probalbly change this to the number of meshes
+                var rT = new Transform[this.RobMeshes.Count-1]; // <--- Probably change this to the number of meshes
                 for (int i = 0; i < this.RobMeshes.Count -1; ++i) rT[i] = Rhino.Geometry.Transform.Identity;
                 resetTransform = rT;
                 return rT;
 
             } set => resetTransform = value; 
         }
-        #endregion
 
-        #region Constructors and defaults
+        #region Constructors
+        /// <summary>
+        /// Built-in default robot - ABB IRB 120.
+        /// </summary>
         public static Manipulator Default { get => IRB120; }
+
+        /// <summary>
+        /// Built-in ABB IRB 120.
+        /// </summary>
         public static Manipulator IRB120 { get
             {
                 // Deserialize the list of robot meshes
@@ -97,6 +101,10 @@ namespace Axis.Core
                 //return manipulator;
             }
         }
+
+        /// <summary>
+        /// Built-in ABB IRB 6620.
+        /// </summary>
         public static Manipulator IRB6620
         {
             get
@@ -142,7 +150,22 @@ namespace Axis.Core
 
             }
         }
+
+        /// <summary>
+        /// Default constructor.
+        /// </summary>
         public Manipulator() { }
+
+        /// <summary>
+        /// Stanard robot constructor method.
+        /// </summary>
+        /// <param name="manufacturer"></param>
+        /// <param name="axisPlanes"></param>
+        /// <param name="minAngles"></param>
+        /// <param name="maxAngles"></param>
+        /// <param name="robMeshes"></param>
+        /// <param name="basePlane"></param>
+        /// <param name="indices"></param>
         public Manipulator(Manufacturer manufacturer, Plane[] axisPlanes, List<double> minAngles, List<double> maxAngles, List<Mesh> robMeshes, Plane basePlane, List<int> indices)
         {
             this.Manufacturer = manufacturer;
@@ -157,7 +180,6 @@ namespace Axis.Core
 
             this.Indices = indices;
 
-
             // Transformation
             Rhino.Geometry.Transform Remap = Rhino.Geometry.Transform.PlaneToPlane(AxisPlanes[0], this.RobBasePlane);
 
@@ -165,7 +187,6 @@ namespace Axis.Core
             //tempPlanes.ForEach(p => p.Transform(Remap));
             for (int i = 0; i < tempPlanes.Length; ++i) tempPlanes[i].Transform(Remap);
             this.AxisPlanes = tempPlanes.ToList();
-
 
             // Then transform all of these meshes based on the input base plane.
             List<Mesh> tempMesh = this.RobMeshes.Select(m => m.DuplicateMesh()).ToList();
@@ -178,18 +199,31 @@ namespace Axis.Core
         #endregion
 
         #region Methods
-        //Public
+        /// <summary>
+        /// Set the default robot pose.
+        /// </summary>
         public void SetPose()
         {
             this.SetPose(Targets.Target.Default);
-        } //Default Pose
+        }
+
+        /// <summary>
+        /// Set the pose based on a target TCP/flange position.
+        /// </summary>
+        /// <param name="target"></param>
         public void SetPose(Targets.Target target)
         {
             this.CurrentPose = new Manipulator.ManipulatorPose(this, target);
         }
-        public void SetPose(ManipulatorPose pose, bool validetyCheck = false)
+
+        /// <summary>
+        /// Set the pose for a given robot based on a target TCP/flange position.
+        /// </summary>
+        /// <param name="pose"></param>
+        /// <param name="checkValidity"></param>
+        public void SetPose(ManipulatorPose pose, bool checkValidity = false)
         {
-            if (validetyCheck)
+            if (checkValidity)
             {
                 if (pose.IsValid)
                 {
@@ -200,6 +234,10 @@ namespace Axis.Core
             }
             else this.CurrentPose = pose; ;
         }
+
+        /// <summary>
+        /// Update the current pose.
+        /// </summary>
         public void UpdatePose()
         {
 
@@ -209,11 +247,10 @@ namespace Axis.Core
         }
         #endregion
 
-
-        #region Interface variables 
-
+        #region Interfaces
         //IGH_GeometricGoo
         public BoundingBox Boundingbox { get; private set; }
+
         public Guid ReferenceID { 
             get
             {
@@ -257,7 +294,6 @@ namespace Axis.Core
         public bool LoadGeometry(Rhino.RhinoDoc doc) => throw new NotImplementedException();
         public IGH_GeometricGoo Morph(SpaceMorph xmorph) => throw new NotImplementedException();
         public IGH_GeometricGoo Transform(Transform xform) => throw new NotImplementedException();
-
 
         //IGH_Goo
         public bool IsValid { get => (this.CurrentPose != null)? this.CurrentPose.IsValid : false; }
@@ -389,6 +425,7 @@ namespace Axis.Core
             return true;
 
         }
+
         public bool Write(GH_IWriter writer)
         {
             GH_IO.Types.GH_Plane gH_RobBasePlane = new GH_IO.Types.GH_Plane(
@@ -446,7 +483,6 @@ namespace Axis.Core
             return true;
         }
         #endregion
-
 
         /// <summary>
         /// Class to hold the values describing the tansformation of a tool
@@ -1154,9 +1190,8 @@ namespace Axis.Core
             public bool Write(GH_IWriter writer) => throw new NotImplementedException();
             #endregion
 
-
             /// <summary>
-            /// A list of different joint states
+            /// A list of different joint states.
             /// </summary>
             public enum JointStatesValue
             {
@@ -1167,7 +1202,6 @@ namespace Axis.Core
                 WristSing = 4,
                 OverHeadSing = 5,
             }
-
         }
     }
 
@@ -1176,15 +1210,13 @@ namespace Axis.Core
     /// </summary>
     public class Tool: IGH_GeometricGoo
     {
-        #region Main Class variables
         public string Name { get; private set; }
         private Guid ID { get; set; }
         public Plane TCP { get; private set; }
         public double Weight { get; private set; }
         public List<Mesh> Geometry { get; private set; }
         public Manufacturer Manufacturer { get; private set; }
-        public Vector3d relTool { get; private set; }
-        #endregion
+        public Vector3d RelTool { get; private set; }
 
         #region Propperties
         public string Declaration { 
@@ -1252,9 +1284,26 @@ namespace Axis.Core
         }
         #endregion
 
-        #region Constructor and Default
+        #region Constructors
+        /// <summary>
+        /// Default tool.
+        /// </summary>
         public static Tool Default { get => new Tool("DefaultTool", Plane.WorldXY, 1.5, null, Manufacturer.ABB, Vector3d.Zero); }
+
+        /// <summary>
+        /// Default constructor.
+        /// </summary>
         public Tool(){}
+
+        /// <summary>
+        /// Standard constructor.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="TCP"></param>
+        /// <param name="weight"></param>
+        /// <param name="mesh"></param>
+        /// <param name="type"></param>
+        /// <param name="relToolOffset"></param>
         public Tool(string name, Plane TCP, double weight, List<Mesh> mesh, Manufacturer type, Vector3d relToolOffset)
         {
             this.Name = name;
@@ -1262,11 +1311,11 @@ namespace Axis.Core
             this.Weight = weight;
             this.Geometry = mesh;
             this.Manufacturer = type;
-            this.relTool = relToolOffset;
+            this.RelTool = relToolOffset;
         }
         #endregion
 
-        #region Interface Implementation
+        #region Interfaces
         //IGH_GeometricGoo
         public BoundingBox Boundingbox { get; private set; }
         public Guid ReferenceID { get; set; }
@@ -1281,9 +1330,11 @@ namespace Axis.Core
             this.Weight = double.NaN;
             this.Geometry = null;
             this.Manufacturer = 0;
-            this.relTool = Vector3d.Unset;
+            this.RelTool = Vector3d.Unset;
         }
+
         public IGH_GeometricGoo DuplicateGeometry() => throw new NotImplementedException();
+
         public BoundingBox GetBoundingBox(Transform xform) 
         {
             BoundingBox box = BoundingBox.Empty;
@@ -1297,7 +1348,6 @@ namespace Axis.Core
         public IGH_GeometricGoo Morph(SpaceMorph xmorph) => throw new NotImplementedException();
         public IGH_GeometricGoo Transform(Transform xform) => throw new NotImplementedException();
 
-
         //IGH_Goo
         public  bool IsValid => true;
         public string IsValidWhyNot { get { return ""; } }
@@ -1308,12 +1358,11 @@ namespace Axis.Core
         public bool CastTo<T>(out T target) {target = default; return false; }
         public IGH_Goo Duplicate()
         {
-            return new Tool(this.Name, this.TCP, this.Weight, this.Geometry, this.Manufacturer, this.relTool);
+            return new Tool(this.Name, this.TCP, this.Weight, this.Geometry, this.Manufacturer, this.RelTool);
         }
         public IGH_GooProxy EmitProxy() => null;
         public object ScriptVariable() => null;
         public override string ToString() => $"Tool: {this.Name}";
-
 
         //GH_ISerializable
         public bool Read(GH_IReader reader)
@@ -1322,7 +1371,6 @@ namespace Axis.Core
             if (reader.ItemExists("GUID")) this.ID = reader.GetGuid("GUID");
             if (reader.ItemExists("Weight")) this.Weight = reader.GetDouble("Weight");
             if (reader.ItemExists("Manufacturer")) this.Manufacturer = (Manufacturer)reader.GetInt32("Manufacturer");
-
 
             if (reader.ChunkExists("TCP"))
             {
@@ -1355,14 +1403,12 @@ namespace Axis.Core
                     var vec = new Vector3d();
                     data.Read(chunk3);
                     GH_Convert.ToVector3d(chunk3, ref vec, GH_Conversion.Both);
-                    this.relTool = vec;
+                    this.RelTool = vec;
                 }
             }
-            
-
             return true;
-
         }
+
         public bool Write(GH_IWriter writer)
         {
             writer.SetString("Name", this.Name);
@@ -1376,18 +1422,16 @@ namespace Axis.Core
             GH_Structure<GH_Mesh> gh_Meshes = this.Geometry.ToGHStructure<GH_Mesh, Mesh>();
             gh_Meshes.Write(writer.CreateChunk("Geometry"));
             
-            GH_Vector gH_relTool = new GH_Vector(this.relTool);
+            GH_Vector gH_relTool = new GH_Vector(this.RelTool);
             gH_relTool.Write(writer.CreateChunk("RelTool"));
 
             return true;
-            
         }
         #endregion
-
     }
 
     /// <summary>
-    /// List of possible manufactures
+    /// List of manufacturers.
     /// </summary>
     public enum Manufacturer
     {
