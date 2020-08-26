@@ -35,7 +35,7 @@ namespace Axis
             pManager.AddPlaneParameter("Plane", "Plane", "Target TCP location as plane.", GH_ParamAccess.list);
             pManager.AddGenericParameter("Speed", "Speed", "List of speed objects per plane.", GH_ParamAccess.list);
             pManager.AddGenericParameter("Zone", "Zone", "Approximation zone per target, in mm.", GH_ParamAccess.list);
-            IGH_Param tool = new Axis.Params.Param_Tool();
+            IGH_Param tool = new Axis.Params.ToolParam();
             pManager.AddParameter(tool, "Tool", "Tool", "Tool to use for operation.", GH_ParamAccess.list);
             pManager.AddGenericParameter("Wobj", "Wobj", "Wobj to use for operation.", GH_ParamAccess.list);
 

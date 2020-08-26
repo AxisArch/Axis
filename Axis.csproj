@@ -234,9 +234,9 @@
     <Compile Include="Core\Authentification.cs" />
     <Compile Include="Core\AuthTest.cs" />
     <Compile Include="Core\CheckProgram.cs" />
-    <Compile Include="Params\Param_Target.cs" />
-    <Compile Include="Params\Param_Tool.cs" />
-    <Compile Include="Params\Param_Manipulator.cs" />
+    <Compile Include="Params\TargetParam.cs" />
+    <Compile Include="Params\ToolParam.cs" />
+    <Compile Include="Params\RobotParam.cs" />
     <Compile Include="Core\Simulation.cs" />
     <Compile Include="Core\OffsetWristKinematics.cs" />
     <Compile Include="Core\Engine.cs" />

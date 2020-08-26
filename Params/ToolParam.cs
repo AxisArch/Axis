@@ -11,11 +11,11 @@ using System.Windows.Forms;
 
 namespace Axis.Params
 {
-    public class Param_Tool : GH_PersistentParam<Tool>
+    public class ToolParam : GH_PersistentParam<Tool>
     {
         public override GH_Exposure Exposure => GH_Exposure.hidden; // <--- Make it hidden when it is working.
 
-        public Param_Tool()
+        public ToolParam()
           : base("Axis Tool", "Axis Tool", "This parampeter will store Axis Tools and their data.", Axis.AxisInfo.Plugin, Axis.AxisInfo.TabCore)
         { }
 

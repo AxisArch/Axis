@@ -39,7 +39,7 @@ namespace Axis.Core
         {
             IGH_Param Robot = new Axis.Params.Param_Manipulator();
             pManager.AddParameter(Robot, "Robot", "Robot", "Robot object to use for inverse kinematics. You can define this using the robot creator tool.", GH_ParamAccess.item);
-            IGH_Param Target = new Axis.Params.Param_Target();
+            IGH_Param Target = new Axis.Params.TargetParam();
             pManager.AddParameter(Target, "Target", "Target", "Robotic target for inverse kinematics. Use the simulation component to select a specific target from a toolpath for preview of the kinematic solution.", GH_ParamAccess.item);
             
             pManager[0].Optional = true;

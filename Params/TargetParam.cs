@@ -12,11 +12,11 @@ using System.Windows.Forms;
 
 namespace Axis.Params
 {
-    public class Param_Target : GH_PersistentParam<Target>
+    public class TargetParam : GH_PersistentParam<Target>
     {
         public override GH_Exposure Exposure => GH_Exposure.hidden; // <--- Make it hidden when it is working.
 
-        public Param_Target()
+        public TargetParam()
           : base("Axis Target", "Axis Target", "This parampeter will store Axis Targets and their data.", Axis.AxisInfo.Plugin, Axis.AxisInfo.TabCore)
         { }
 

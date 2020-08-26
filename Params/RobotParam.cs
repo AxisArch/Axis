@@ -5,8 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-//using Rhino.Geometry;
-
 using Axis.Params;
 using Axis.Core;
 using GH_IO.Serialization;
@@ -17,11 +15,11 @@ using Grasshopper.Kernel.Types;
 
 namespace Axis.Params
 {
-    public class Param_Manipulator : GH_PersistentParam<Manipulator>
+    public class RobotParam : GH_PersistentParam<Manipulator>
     {
         public override GH_Exposure Exposure => GH_Exposure.hidden; // <--- Make it hidden when it is working.
-        public Param_Manipulator()
-          : base("Axis Robot", "Axis Robot", "This parampeter will store Axis Robots and their data.", Axis.AxisInfo.Plugin, Axis.AxisInfo.TabCore)
+        public RobotParam()
+          : base("Robot", "Robot", "Axis robot type.", Axis.AxisInfo.Plugin, Axis.AxisInfo.TabCore)
         { }
 
         public override Guid ComponentGuid => new Guid("17C49BD4-7A54-4471-961A-B5E0E971F7F4");
@@ -71,6 +69,5 @@ namespace Axis.Params
             PersistentData.Append(Manipulator.Default, new GH_Path(0));
             ExpireSolution(true);
         }
-
     }
 }
