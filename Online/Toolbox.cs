@@ -34,7 +34,7 @@ namespace Axis.Online
             doc.ScheduleSolution(10, chanegValuelist);
 
 
-            void chanegValuelist(GH_Document document)
+            void changeValueList(GH_Document document)
             {
                 
                 IList<IGH_Param> sources = comp.Params.Input[InputIndex].Sources;
@@ -112,7 +112,7 @@ namespace Axis.Online
         }
     }
     /*
-    class DoubelClick : Grasshopper.Kernel.Attributes.GH_ComponentAttributes
+    class DoubleClick : Grasshopper.Kernel.Attributes.GH_ComponentAttributes
     {
         override RespondToMouseDoubleClick()
         {

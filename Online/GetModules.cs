@@ -25,6 +25,7 @@ namespace Axis.Online
         {
         }
 
+        #region IO
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddBooleanParameter("Activate", "Activate", "Activate the online communication module.", GH_ParamAccess.item, false);
@@ -43,11 +44,13 @@ namespace Axis.Online
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
         }
+        #endregion
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
         }
 
+        #region Component Settings
         protected override System.Drawing.Bitmap Icon
         {
             get
@@ -59,5 +62,6 @@ namespace Axis.Online
         {
             get { return new Guid("9503f909-fd58-4a57-8900-0f9c83c04846"); }
         }
+        #endregion
     }
 }

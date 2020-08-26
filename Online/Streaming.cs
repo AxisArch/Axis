@@ -24,6 +24,9 @@ using static Axis.Properties.Settings;
 
 namespace Axis.Online
 {
+    /// <summary>
+    /// Stream command instructions to a remote IRC5 controller.
+    /// </summary>
     public class Streaming : GH_Component, IGH_VariableParameterComponent
     {
         // Optionable Log
@@ -69,6 +72,7 @@ namespace Axis.Online
         {
         }
 
+        #region IO
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddGenericParameter("Controller", "Controller", "Recives the output from a controller module", GH_ParamAccess.item);
@@ -81,7 +85,9 @@ namespace Axis.Online
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
         }
+        #endregion
 
+        #region Auth
         /// <summary>
         /// Check that we are logged in before continuing.
         /// </summary>
@@ -96,6 +102,7 @@ namespace Axis.Online
                 return;
             }
         }
+        #endregion
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
@@ -277,6 +284,7 @@ namespace Axis.Online
             }
         }
 
+        #region UI
         // Build a list of optional input parameters
         IGH_Param[] inputParams = new IGH_Param[2]
         {
@@ -407,7 +415,9 @@ namespace Axis.Online
 
             ExpireSolution(true);
         }
+        #endregion
 
+        #region Serialization
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
@@ -427,7 +437,9 @@ namespace Axis.Online
             this.lQOption = reader.GetBoolean("Local Queue");
             return base.Read(reader);
         }
+        #endregion
 
+        #region Component Settings
         /// <summary>
         /// Implement this interface in your component if you want to enable variable parameter UI.
         /// </summary>
@@ -457,5 +469,6 @@ namespace Axis.Online
         {
             get { return new Guid("b2f9edfc-14d6-4db0-a569-6d3a0ddec76a"); }
         }
+        #endregion
     }
 }
