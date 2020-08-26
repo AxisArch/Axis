@@ -496,7 +496,7 @@ namespace Axis.Core
             private Manipulator Robot;
             private Axis.Targets.Target Target;
             private double[] radAngles;
-            private JointStatesValue[] jointStates;
+            private JointState[] jointStates;
 
             private bool outOfReach = false;
             private bool outOfRoation = false;
@@ -504,7 +504,7 @@ namespace Axis.Core
             private bool wristSing = false;
 
             public double[] Angles { get => this.radAngles.Select(d => d.ToDegrees()).ToArray(); }
-            public JointStatesValue[] JointStates {
+            public JointState[] JointStates {
                 get => jointStates;
                 set { jointStates = value; }
             }
@@ -528,13 +528,13 @@ namespace Axis.Core
 
             // Mesh colours
             public Color[] Colors { get => (this.jointStates != null) ? this.jointStates.Select(state => GetColour(state)).ToArray() : null; }
-            private static Dictionary<JointStatesValue, Color> JointColours = new Dictionary<JointStatesValue, Color>()
+            private static Dictionary<JointState, Color> JointColours = new Dictionary<JointState, Color>()
             {
-                { JointStatesValue.Normal, Axis.Styles.DarkGrey },
-                { JointStatesValue.OutOfReach, Axis.Styles.Pink },
-                { JointStatesValue.OutOfRotation, Axis.Styles.Pink },
-                { JointStatesValue.WristSing, Axis.Styles.Blue },
-                { JointStatesValue.OverHeadSing, Axis.Styles.Blue },
+                { JointState.Normal, Axis.Styles.DarkGrey },
+                { JointState.OutOfReach, Axis.Styles.Pink },
+                { JointState.OutOfRotation, Axis.Styles.Pink },
+                { JointState.WristSing, Axis.Styles.Blue },
+                { JointState.OverHeadSing, Axis.Styles.Blue },
 
             };
 
@@ -582,7 +582,7 @@ namespace Axis.Core
 
                 double[] radAngles = new double[6];
                 double[] degAngles = new double[6];
-                JointStatesValue[] jointStates = new JointStatesValue[6];
+                JointState[] jointStates = new JointState[6];
 
                 //Invers and farward kinematics devided by manufacturar
                 switch (this.Robot.Manufacturer)
@@ -702,7 +702,7 @@ namespace Axis.Core
 
 
                 //////////////////////////////////////////////////////////////
-                //// Everything past this should be locals to the Function////
+                //// Everything past this should be local to the Function ////
                 //////////////////////////////////////////////////////////////
 
                 double UnWrap(double value)
@@ -1099,14 +1099,14 @@ namespace Axis.Core
             /// <param name="checkSingularity"></param>
             /// <param name="singularityTol"></param>
             /// <returns>Returns a list of JointStates</returns>
-            private static JointStatesValue[] CheckJointAngles(double[] angeles, Manipulator robot, bool checkSingularity = false, double singularityTol = 5)
+            private static JointState[] CheckJointAngles(double[] angeles, Manipulator robot, bool checkSingularity = false, double singularityTol = 5)
             {
                 // Check for out of rotation
-                JointStatesValue[] states = new JointStatesValue[angeles.Length];
+                JointState[] states = new JointState[angeles.Length];
                 for (int i = 0; i < angeles.Length; ++i)
                 {
-                    if (angeles[i] < robot.MaxAngles[i] && angeles[i] > robot.MinAngles[i]) states[i] = JointStatesValue.Normal;
-                    else states[i] = JointStatesValue.OutOfRotation;
+                    if (angeles[i] < robot.MaxAngles[i] && angeles[i] > robot.MinAngles[i]) states[i] = JointState.Normal;
+                    else states[i] = JointState.OutOfRotation;
                 }
 
                 // Check for Wrist Singularity
@@ -1125,23 +1125,23 @@ namespace Axis.Core
             /// <param name="OutOfReach"></param>
             /// <param name="WristSing"></param>
             /// <param name="OutOfRoation"></param>
-            private static void SetSignals(JointStatesValue[] states, out bool OverHeadSig, out bool OutOfReach, out bool WristSing, out bool OutOfRoation)
+            private static void SetSignals(JointState[] states, out bool OverHeadSig, out bool OutOfReach, out bool WristSing, out bool OutOfRoation)
             {
                 bool overHeadSig = false;
                 bool outOfReach = false;
                 bool wristSing = false;
                 bool outOfRoation = false;
 
-                void Update(JointStatesValue state)
+                void Update(JointState state)
                 {
                     switch (state)
                     {
-                        case JointStatesValue.Normal:
+                        case JointState.Normal:
                             break;
-                        case JointStatesValue.OutOfRotation:
+                        case JointState.OutOfRotation:
                             outOfRoation = true;
                             break;
-                        case JointStatesValue.Singularity:
+                        case JointState.Singularity:
                             wristSing = true;
                             break;
                     }
@@ -1158,7 +1158,7 @@ namespace Axis.Core
             /// </summary>
             /// <param name="state"></param>
             /// <returns>Colour</returns>
-            private static Color GetColour(JointStatesValue state)
+            private static Color GetColour(JointState state)
             {
                 Color color = new Color();
                 JointColours.TryGetValue(state, out color);
@@ -1191,7 +1191,7 @@ namespace Axis.Core
             /// <summary>
             /// A list of different joint states.
             /// </summary>
-            public enum JointStatesValue
+            public enum JointState
             {
                 Normal = 0,
                 OutOfReach = 1,
