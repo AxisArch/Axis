@@ -10,6 +10,7 @@ using Rhino.Geometry;
 
 using MongoDB.Bson;
 using MongoDB.Driver;
+using System.Runtime.Serialization;
 
 namespace Axis.Online
 {
@@ -52,10 +53,10 @@ namespace Axis.Online
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            List<GH_ObjectWrapper> data = new List<GH_ObjectWrapper>();
+            List<GH_ObjectWrapper> dataInput = new List<GH_ObjectWrapper>();
             bool send = false;
 
-            if (!DA.GetDataList<GH_ObjectWrapper>("Data", data)) return;
+            if (!DA.GetDataList<GH_ObjectWrapper>("Data", dataInput)) return;
             if (!DA.GetData("Send", ref send)) return;
 
             var client = new MongoClient(
@@ -64,34 +65,39 @@ namespace Axis.Online
 
             var database = client.GetDatabase("AxisPresets");
 
+            string collectionName = "Robots";
+
             if (send)
             {
-                foreach (GH_ObjectWrapper obj in data)
+                foreach (GH_ObjectWrapper obj in dataInput) 
                 {
-                    if (typeof(Axis.Core.Manipulator).IsAssignableFrom(obj.Value.GetType()))
+                    if (typeof(GH_IO.GH_ISerializable).IsAssignableFrom(obj.GetType()))
                     {
-                        Axis.Core.Manipulator robot = obj.Value as Axis.Core.Manipulator;
-                        var collection = database.GetCollection<AxisDB.MongoBDRobot>("Robots");
+                        //Document
+                        BsonDocument bsons = new BsonDocument();
+
+                        //Lable
+                        BsonElement bson1 = new BsonElement("name", obj.Value.ToString());
+                        bsons.Add(bson1);
+
+                        BsonElement bson2 = new BsonElement("type", obj.Value.GetType().FullName.ToString());
+                        bsons.Add(bson2);
+
+                        //Data
+                        GH_IO.Serialization.GH_Archive a = new GH_IO.Serialization.GH_Archive();
+                        a.AppendObject(obj.Value as IGH_Goo, obj.Value.ToString());
+                        byte[] chunk = a.Serialize_Binary();
 
 
-                        AxisDB.MongoBDRobot r = (AxisDB.MongoBDRobot)robot;
-                        r.Name = "IRB 120";
+                        BsonBinaryData data = new BsonBinaryData(chunk);
+                        BsonElement bson3 = new BsonElement("data", data);
+                        bsons.Add(bson3);
 
-                        collection.InsertOne(r);
+                        //Send
+                        var collection = database.GetCollection<object>(collectionName);
+                        collection.InsertOne(bsons);
 
-
-                    }
-                    else if (typeof(Axis.Core.Tool).IsAssignableFrom(obj.Value.GetType()))
-                    {
-                        Axis.Core.Tool tool = obj.Value as Axis.Core.Tool;
-                        var collection = database.GetCollection<AxisDB.MongoBDTool>("Tools");
-
-                        AxisDB.MongoBDTool t = tool;
-                        collection.InsertOne(t);
-
-                    }
-                    else AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Sending the current datatype is not supported");
-
+                    };
                 }
             }
         }
@@ -116,6 +122,9 @@ namespace Axis.Online
         {
             get { return new Guid("af9d98ed-d395-430c-81c4-8b84d99e19f5"); }
         }
+
+
+
 
 
     } //Send Data
@@ -153,7 +162,7 @@ namespace Axis.Online
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("Data", "D", "Data from data base", GH_ParamAccess.item);
+            pManager.AddGenericParameter("Data", "D", "Data from data base", GH_ParamAccess.tree);
         }
 
         /// <summary>
@@ -177,12 +186,14 @@ namespace Axis.Online
             ); 
             var database = client.GetDatabase("AxisPresets");
 
+
             var test = database.ListCollectionNames();
             List<string> colloectionNames = database.ListCollectionNames().ToList<string>();
             foreach (string s in colloectionNames) 
             {
                 categorys.Add(new KeyValuePair<string, string>( s, '"'+s+'"'));
             }
+
 
             GH_Document ghDoc = OnPingDocument();
             if (this.Params.Input[0].SourceCount == 0) Canvas.Component.SetValueList(ghDoc, this, 0, categorys, "Categorys");
@@ -195,7 +206,10 @@ namespace Axis.Online
 
             foreach (BsonDocument doc in docs) 
             {
-                string name = doc.GetValue("Name").AsString;
+                var e = doc.GetElement("_v");
+
+                BsonDocument doc2 = e.Value as BsonDocument;
+                string name = doc2.GetValue("name").AsString;
                 var id = doc.GetValue("_id").AsObjectId.ToString();// valueOf();
                 options.Add(new KeyValuePair<string, string>( name, '"'+id+'"'));
             }
@@ -206,27 +220,43 @@ namespace Axis.Online
 
             if (category != null)
             {
-                if (category == "Robots" & ithem != null)
+                var collection = database.GetCollection<BsonDocument>(category);
+                
+                var filter = Builders<BsonDocument>.Filter.Eq("_id", ObjectId.Parse(ithem));
+                var objects = collection.Find<BsonDocument>(filter).ToList();
+
+                Grasshopper.Kernel.Data.GH_Structure<IGH_Goo> recivedData = new Grasshopper.Kernel.Data.GH_Structure<IGH_Goo>();
+
+                foreach (BsonDocument obj in objects) 
                 {
-                    var collection = database.GetCollection<AxisDB.MongoBDRobot>("Robots");
+                    BsonDocument value = obj.GetValue("_v") as BsonDocument;
+                    var d = value.GetValue("data").AsBsonBinaryData;
+                    var t = value.GetValue("type").AsString;
 
-                    var filter = Builders<AxisDB.MongoBDRobot>.Filter.Eq("_id", ObjectId.Parse(ithem));
-                    var robots = collection.Find<AxisDB.MongoBDRobot>(filter).ToList();
+                    GH_IO.Serialization.GH_Archive archive = new GH_IO.Serialization.GH_Archive();
+                    bool sucsess= archive.Deserialize_Binary(d.AsByteArray);
 
-                    if (robots.Count == 0) {AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Robot not found"); return;}
-                    DA.SetData("Data", (Axis.Core.Manipulator)robots[0]);
+                    var rootNode = archive.GetRootNode;
+                    foreach (GH_IO.Serialization.GH_Chunk chunk in rootNode.Chunks) 
+                    {
+                        Type T = null;
+                        var asemblyInfoList = Grasshopper.Instances.ComponentServer.Libraries;
+                        foreach (var asemblyInfo in asemblyInfoList) 
+                        {
+                            T = asemblyInfo.Assembly.GetType(t);
+                            if (T != null) break;
+                        }
+                        if (T == null) return;
 
+                        var instance = Activator.CreateInstance(T) as IGH_Goo;
+                        instance.Read(chunk);
+                        recivedData.Append(instance);
+                    }
                 }
-                else if (category == "Tools" & ithem != null)
-                {
-                    var collection = database.GetCollection<AxisDB.MongoBDTool>("Tools");
 
-                    var filter = Builders<AxisDB.MongoBDTool>.Filter.Eq("_id", ObjectId.Parse(ithem));
-                    var tools = collection.Find<AxisDB.MongoBDTool>(filter).ToList();
+                if (objects.Count == 0) {AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Data not found"); return;}
+                DA.SetDataTree(0, recivedData);
 
-                    if (tools.Count() == 0) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Tool not found"); return; }
-                    DA.SetData("Data", (Axis.Core.Tool)tools[0]);
-                }
                 return; 
             }
         }
@@ -254,247 +284,9 @@ namespace Axis.Online
         }
     } //Retreving Data
     public class AxisDB {
-        public class MongoBDRobot
-    {
-        public ObjectId _id { get; set; }
-        public string Name { get; set; }
-        public int Manufacturer { get; set; }
-        public BsonDocument RobBasePlane { get; set; }
-        public BsonDocument AxisPoints { get; set; }
-        public BsonDocument RobMeshes { get; set; }
-        public BsonDocument MinAngles { get; set; }
-        public BsonDocument MaxAngles { get; set; }
-        public BsonDocument Indices { get; set; }
 
 
-        public MongoBDRobot() { }
-        public static implicit operator Axis.Core.Manipulator(MongoBDRobot rob)
-        {
 
-                Axis.Core.Manipulator r = new Axis.Core.Manipulator(
-                    (Axis.Core.Manufacturer)rob.Manufacturer,
-                    UnPackList<Point3d>(rob.AxisPoints),
-                    UnPackList<double>(rob.MinAngles),
-                    UnPackList<double>(rob.MaxAngles),
-                    UnPackList<Mesh>(rob.RobMeshes),
-                    new Plane(
-                        new Point3d(
-                            rob.RobBasePlane.GetValue("OriginX").AsDouble, 
-                            rob.RobBasePlane.GetValue("OriginZ").AsDouble, 
-                            rob.RobBasePlane.GetValue("OriginZ").AsDouble), 
-                        new Vector3d(
-                            rob.RobBasePlane.GetValue("XAxis").AsBsonDocument.GetValue("X").AsDouble,
-                            rob.RobBasePlane.GetValue("XAxis").AsBsonDocument.GetValue("Y").AsDouble,
-                            rob.RobBasePlane.GetValue("XAxis").AsBsonDocument.GetValue("Z").AsDouble), 
-                        new Vector3d(
-                            rob.RobBasePlane.GetValue("YAxis").AsBsonDocument.GetValue("Z").AsDouble,
-                            rob.RobBasePlane.GetValue("YAxis").AsBsonDocument.GetValue("Z").AsDouble,
-                            rob.RobBasePlane.GetValue("YAxis").AsBsonDocument.GetValue("Z").AsDouble
-                            )
-                        ),
-                    UnPackList<int>(rob.Indices)
-                );
-
-            r.Name = rob.Name;
-            return r;
-        }
-        public static implicit operator MongoBDRobot(Axis.Core.Manipulator rob)
-        {
-            MongoBDRobot r = new MongoBDRobot();
-            r.Name = rob.Name;
-            r.Manufacturer = (int)rob.Manufacturer;
-            r.RobBasePlane = rob.RobBasePlane.ToBsonDocument();
-            r.AxisPoints = PackList(rob.AxisPoints);
-            r.RobMeshes = PackList(rob.RobMeshes);
-            r.MinAngles = PackList(rob.MinAngles);
-            r.MaxAngles = PackList(rob.MaxAngles);
-            r.Indices = PackList(rob.Indices);
-
-            return r;
-        }
     }
-        public class MongoBDTool
-    {
-        public ObjectId _id { get; set; }
-        public string Name { get; set; }
-        public int Manufacturer { get; set; }
-        public BsonDocument TCP { get; set; }
-        public double Weight { get; set; }
-        public BsonDocument Geometry { get; set; }
-        public BsonDocument relTool { get; set; }
-
-
-        public MongoBDTool() { }
-        public static implicit operator Axis.Core.Tool(MongoBDTool tool)
-        {
-            Axis.Core.Tool t = new Axis.Core.Tool(
-                tool.Name,
-                new Plane(
-                    new Point3d(
-                        tool.TCP.GetValue("OriginX").AsDouble,
-                        tool.TCP.GetValue("OriginZ").AsDouble,
-                        tool.TCP.GetValue("OriginZ").AsDouble),
-                    new Vector3d(
-                        tool.TCP.GetValue("XAxis").AsBsonDocument.GetValue("X").AsDouble,
-                        tool.TCP.GetValue("XAxis").AsBsonDocument.GetValue("Y").AsDouble,
-                        tool.TCP.GetValue("XAxis").AsBsonDocument.GetValue("Z").AsDouble),
-                    new Vector3d(
-                        tool.TCP.GetValue("YAxis").AsBsonDocument.GetValue("Z").AsDouble,
-                        tool.TCP.GetValue("YAxis").AsBsonDocument.GetValue("Z").AsDouble,
-                        tool.TCP.GetValue("YAxis").AsBsonDocument.GetValue("Z").AsDouble
-                        )
-                    ),
-                tool.Weight,
-                UnPackList<Mesh>(tool.Geometry),
-                (Axis.Core.Manufacturer)tool.Manufacturer,
-                new Vector3d(
-                    tool.relTool.GetValue("X").AsDouble,
-                    tool.relTool.GetValue("Y").AsDouble,
-                    tool.relTool.GetValue("Z").AsDouble
-                    )
-                );
-            return t;;
-        }
-        public static implicit operator MongoBDTool(Axis.Core.Tool tool)
-        {
-            MongoBDTool t = new MongoBDTool();
-                t.Name = tool.Name;
-                t.Manufacturer = (int)tool.Manufacturer;
-                t.TCP = tool.TCP.ToBsonDocument();
-                t.Weight = tool.Weight;
-                t.Geometry = PackList<Mesh>(tool.Geometry);
-                t.relTool = tool.relTool.ToBsonDocument();
-            return t;
-        }
-    }
-
-        public static BsonDocument PackList<T>(List<T> data)
-        {
-            BsonDocument doc = new BsonDocument();
-            doc.Add("type", data.GetType().ToString());
-
-            for (int i = 0; i < data.Count(); ++i)
-            {
-                if (typeof(System.Runtime.Serialization.ISerializable).IsAssignableFrom(data[i].GetType()))
-                {
-                    System.Runtime.Serialization.ISerializable s = data[i] as System.Runtime.Serialization.ISerializable;
-                    doc.Add(i.ToString(), ObjectToByteArray(s));
-                }
-                else if (typeof(int).IsAssignableFrom(data[i].GetType()))
-                {
-                    int d = Convert.ToInt32(data[i]);
-                    doc.Add(i.ToString(), d);
-                }
-                else if (typeof(double).IsAssignableFrom(data[i].GetType()))
-                {
-                    double d = Convert.ToDouble(data[i]);
-                    doc.Add(i.ToString(), d);
-                }
-                else if (typeof(string).IsAssignableFrom(data[i].GetType()))
-                {
-                    doc.Add(i.ToString(), data[i].ToString());
-                }
-            }
-            return doc;
-        }
-        public static List<T> UnPackList<T>(BsonDocument data)
-        {
-            List<T> output = new List<T>();
-
-            foreach (BsonElement e in data.Elements)
-            {
-                if (e.Name == "type") { }
-                else
-                {
-                    if (e.Value.BsonType == BsonType.Binary)
-                    {
-                        byte[] b = e.Value.RawValue as byte[];
-                        T v = FromByteArrayTo<T>(b);
-                        output.Add(v);
-                    }
-                    else
-                    {
-                        output.Add((T)e.Value.RawValue);
-                    }
-                }
-            }
-
-            return output;
-        }
-        public static BsonDocument Pack<T>(T data)
-        {
-            BsonDocument doc = new BsonDocument();
-            doc.Add("type", data.GetType().ToString());
-
-            if (typeof(System.Runtime.Serialization.ISerializable).IsAssignableFrom(data.GetType()))
-            {
-                System.Runtime.Serialization.ISerializable s = data as System.Runtime.Serialization.ISerializable;
-                doc.Add("object", ObjectToByteArray(s));
-            }
-            else if (typeof(int).IsAssignableFrom(data.GetType()))
-            {
-                int d = Convert.ToInt32(data);
-                doc.Add("object", d);
-            }
-            else if (typeof(double).IsAssignableFrom(data.GetType()))
-            {
-                double d = Convert.ToDouble(data);
-                doc.Add("object".ToString(), d);
-            }
-            else if (typeof(string).IsAssignableFrom(data.GetType()))
-            {
-                doc.Add("object".ToString(), data.ToString());
-            }
-            
-            return doc;
-        }
-        public static T UnPack<T>(BsonDocument data)
-        {
-
-            if (data.Values.First().BsonType == BsonType.Binary)
-            {
-                byte[] b = data.Values.First().RawValue as byte[];
-                return FromByteArrayTo<T>(b);
-            }
-            else
-            {
-                return  (T)data.Values.First().RawValue;
-            }
-
-        }
-
-
-        public static byte[] ObjectToByteArray(Object obj)
-        {
-            System.Runtime.Serialization.Formatters.Binary.BinaryFormatter bf =
-                new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
-            using (var ms = new System.IO.MemoryStream())
-            {
-                bf.Serialize(ms, obj);
-                return ms.ToArray();
-            }
-        }
-        public static T FromByteArrayTo<T>(byte[] data)
-        {
-            System.Runtime.Serialization.Formatters.Binary.BinaryFormatter bf =
-                new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
-            using (var ms = new System.IO.MemoryStream(data))
-            {
-                object obj = bf.Deserialize(ms);
-                return (T)obj;
-
-            }
-        }
-        public static string Base64Encode(string plainText)
-        {
-            var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(plainText);
-            return System.Convert.ToBase64String(plainTextBytes);
-        }
-        public static string Base64Decode(string base64EncodedData)
-        {
-            var base64EncodedBytes = System.Convert.FromBase64String(base64EncodedData);
-            return System.Text.Encoding.UTF8.GetString(base64EncodedBytes);
-        }
-    } 
 
 }
