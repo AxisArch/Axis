@@ -1376,7 +1376,21 @@ namespace Axis.Core
         public string TypeDescription => "Robot end effector";
 
         public bool CastFrom(object o) => false;
-        public bool CastTo<T>(out T target) {target = default; return false; }
+        public bool CastTo<T>(out T target) 
+        {
+            target = default(T);
+
+            if (typeof(T).IsAssignableFrom(typeof(GH_ObjectWrapper)))
+            {
+                string name = typeof(T).Name;
+                object value = new GH_ObjectWrapper(this);
+                target = (T)value;
+                return true;
+            }
+
+
+            return false;
+        }
         public IGH_Goo Duplicate()
         {
             return new Tool(this.Name, this.TCP, this.Weight, this.Geometries.ToList(), this.Manufacturer, this.RelTool);

@@ -246,6 +246,14 @@ namespace Axis.Targets
         public bool CastFrom(object source) => throw new NotImplementedException();
         public bool CastTo<Q>(out Q target)
         {
+            if (typeof(Q).IsAssignableFrom(typeof(GH_ObjectWrapper)))
+            {
+                string name = typeof(Q).Name;
+                object value = new GH_ObjectWrapper(this);
+                target = (Q)value;
+                return true;
+            }
+
             if (typeof(Q).IsAssignableFrom(typeof(GH_Plane)) && (this.Plane != null))
             {
                 object _Plane = new GH_Plane(this.Plane);
@@ -461,6 +469,14 @@ namespace Axis.Targets
         public bool CastFrom(object source) => throw new NotImplementedException();
         public bool CastTo<Q>(out Q target)
         {
+            if (typeof(Q).IsAssignableFrom(typeof(GH_ObjectWrapper)))
+            {
+                string name = typeof(Q).Name;
+                object value = new GH_ObjectWrapper(this);
+                target = (Q)value;
+                return true;
+            }
+
             if (typeof(Q).IsAssignableFrom(typeof(GH_Number)) && (this.TranslationSpeed != null))
             {
                 object _number = new GH_Number(this.TranslationSpeed);
@@ -559,6 +575,14 @@ namespace Axis.Targets
         public bool CastFrom(object source) => throw new NotImplementedException();
         public bool CastTo<Q>(out Q target)
         {
+            if (typeof(Q).IsAssignableFrom(typeof(GH_ObjectWrapper)))
+            {
+                string name = typeof(Q).Name;
+                object value = new GH_ObjectWrapper(this);
+                target = (Q)value;
+                return true;
+            }
+
             if (typeof(Q).IsAssignableFrom(typeof(GH_Number)) && (this.PathRadius != null))
             {
                 object _number = new GH_Number(this.PathRadius);
@@ -651,6 +675,13 @@ namespace Axis.Targets
         public bool CastFrom(object source) => throw new NotImplementedException();
         public bool CastTo<Q>(out Q target)
         {
+            if (typeof(Q).IsAssignableFrom(typeof(GH_ObjectWrapper)))
+            {
+                string name = typeof(Q).Name;
+                object value = new GH_ObjectWrapper(this);
+                target = (Q)value;
+                return true;
+            }
 
             if (typeof(Q).IsAssignableFrom(typeof(GH_Plane)) && (this.CSPlane != null))
             {
@@ -794,6 +825,13 @@ namespace Axis.Targets
         public bool CastFrom(object source) => throw new NotImplementedException();
         public bool CastTo<Q>(out Q target)
         {
+            if (typeof(Q).IsAssignableFrom(typeof(GH_ObjectWrapper)))
+            {
+                string name = typeof(Q).Name;
+                object value = new GH_ObjectWrapper(this);
+                target = (Q)value;
+                return true;
+            }
 
             if (typeof(Q).IsAssignableFrom(typeof(GH_Curve)))
             {
