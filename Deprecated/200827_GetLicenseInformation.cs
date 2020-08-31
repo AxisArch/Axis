@@ -8,13 +8,16 @@ using System.Diagnostics;
 
 namespace Axis.Core
 {
+
     /// <summary>
     /// Get license information for creating
     /// unique user hashes from the PC identifiers.
     /// </summary>
     public class GetLicenseInformation : GH_Component
     {
-        public override GH_Exposure Exposure => GH_Exposure.primary;
+        public override bool Obsolete => true;
+        public override GH_Exposure Exposure => GH_Exposure.hidden;
+
         protected override System.Drawing.Bitmap Icon
         {
             get

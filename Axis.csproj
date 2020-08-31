@@ -232,8 +232,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Core\Authentification.cs" />
-    <Compile Include="Core\AuthTest.cs" />
     <Compile Include="Core\CheckProgram.cs" />
+    <Compile Include="Deprecated\200827_AuthTest.cs" />
+    <Compile Include="Deprecated\200827_GetLicenseInformation.cs" />
+    <Compile Include="Online\DataBaseCommunication.cs" />
     <Compile Include="Params\SpeedParam.cs" />
     <Compile Include="Params\TargetParam.cs" />
     <Compile Include="Params\CSystemParam.cs" />
@@ -272,7 +274,7 @@
     </Compile>
     <Compile Include="RAPID\SetVelocity.cs" />
     <Compile Include="Core\InverseKinematics.cs" />
-    <Compile Include="Deprecated\Simulation_200129.cs" />
+    <Compile Include="Deprecated\200129_Simulation.cs" />
     <Compile Include="Robot\Tool.cs" />
     <Compile Include="Robot\CreateRobot.cs" />
     <Compile Include="Core\CodeGenerator.cs" />
@@ -288,7 +290,6 @@
     <Compile Include="Targets\DefineZone.cs" />
     <Compile Include="Targets\Target.cs" />
     <Compile Include="Geometry\PlaneToQuat.cs" />
-    <Compile Include="Core\GetLicenseInformation.cs" />
     <Compile Include="Targets\LinearInterpolation.cs" />
     <Compile Include="Geometry\QuatToPlane.cs" />
     <Compile Include="Utilities.cs" />
