@@ -322,7 +322,21 @@ namespace Axis.Core
 
             return false;
         }
-        public bool CastTo<T>(out T target) => throw new NotImplementedException();
+        public bool CastTo<T>(out T target) 
+        {
+            target = default(T);
+
+            if (typeof(T).IsAssignableFrom(typeof(GH_ObjectWrapper)))
+            {
+                string name = typeof(T).Name;
+                object value = new GH_ObjectWrapper(this);
+                target = (T)value;
+                return true;
+            }
+
+                
+            return false;
+        }
         public IGH_Goo Duplicate()
         {
             Manipulator robot = new Manipulator(this.Manufacturer, this.AxisPlanes.ToArray(), this.MinAngles, this.MaxAngles, this.RobMeshes.Select(m => m.DuplicateMesh()).ToList(), this.RobBasePlane.Clone(), this.Indices);
