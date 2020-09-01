@@ -275,7 +275,7 @@
     <Compile Include="RAPID\SetVelocity.cs" />
     <Compile Include="Core\InverseKinematics.cs" />
     <Compile Include="Deprecated\200129_Simulation.cs" />
-    <Compile Include="Robot\Tool.cs" />
+    <Compile Include="Robot\CreateTool.cs" />
     <Compile Include="Robot\CreateRobot.cs" />
     <Compile Include="Core\CodeGenerator.cs" />
     <Compile Include="Styles.cs" />
