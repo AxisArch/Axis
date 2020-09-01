@@ -24,11 +24,11 @@ namespace Axis.Core
     public class InverseKinematics : GH_Component, IGH_VariableParameterComponent
     {
         // Global variables.
-        Manipulator m_Robot = null;
-        Target m_Target = null;
-        Tool m_Tool = null;
-        Manipulator.ManipulatorPose m_Pose = null;
-        bool m_PoseOut = false;
+        Manipulator c_Robot = null;
+        Target c_Target = null;
+        Tool c_Tool = null;
+        Manipulator.ManipulatorPose c_Pose = null;
+        bool c_PoseOut = false;
 
         public InverseKinematics() : base("Inverse Kinematics", "Kinematics", "Inverse and forward kinematics for a 6 degree of freedom robotic arm, based on Lobster Reloaded by Daniel Piker.", AxisInfo.Plugin, AxisInfo.TabCore)
         {
@@ -61,11 +61,11 @@ namespace Axis.Core
                 manipulator = Manipulator.Default;
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No robot system defined, using default");
             }   // Set Robot.
-            if (!DA.GetData(1, ref m_Target)) return; // Get the target.
-            if (m_Target.Tool != null) m_Tool = m_Target.Tool; // Get the tool from the target.
-            m_Robot = m_Robot = (Manipulator)manipulator.Duplicate();
+            if (!DA.GetData(1, ref c_Target)) return; // Get the target.
+            if (c_Target.Tool != null) c_Tool = c_Target.Tool; // Get the tool from the target.
+            c_Robot = c_Robot = (Manipulator)manipulator.Duplicate();
 
-            Manipulator.ManipulatorPose pose = new Manipulator.ManipulatorPose(m_Robot, m_Target);
+            Manipulator.ManipulatorPose pose = new Manipulator.ManipulatorPose(c_Robot, c_Target);
 
             // Handle errors
             List<string> log = new List<string>();
@@ -74,30 +74,30 @@ namespace Axis.Core
             if (pose.OutOfReach) log.Add("Target out of range.");
             if (pose.OutOfRoation) log.Add("Joint out of range.");
 
-            if (m_Pose != null) m_Robot.SetPose(m_Pose, checkValidity: true);
-            m_Robot.SetPose(pose, checkValidity: true);
-            if (m_Robot.CurrentPose.IsValid) m_Pose = m_Robot.CurrentPose;
+            if (c_Pose != null) c_Robot.SetPose(c_Pose, checkValidity: true);
+            c_Robot.SetPose(pose, checkValidity: true);
+            if (c_Robot.CurrentPose.IsValid) c_Pose = c_Robot.CurrentPose;
 
-            Plane flange = (m_Robot.CurrentPose.IsValid)? m_Robot.CurrentPose.Flange: Plane.Unset;
-            double[] selectedAngles = m_Robot.CurrentPose.Angles;
+            Plane flange = (c_Robot.CurrentPose.IsValid)? c_Robot.CurrentPose.Flange: Plane.Unset;
+            double[] selectedAngles = c_Robot.CurrentPose.Angles;
 
             // Set output
             DA.SetData("Flange", flange);
             DA.SetDataList("Angles", selectedAngles);
             DA.SetDataList("Log", log);
-            if(m_PoseOut)DA.SetData("Robot Pose", m_Robot.CurrentPose);
+            if(c_PoseOut)DA.SetData("Robot Pose", c_Robot.CurrentPose);
 
             // Update and display data
-            m_Robot.UpdatePose();
-            m_Robot.GetBoundingBox(Transform.Identity);
+            c_Robot.UpdatePose();
+            c_Robot.GetBoundingBox(Transform.Identity);
         }
 
         public override void ClearData()
         {
             base.ClearData();
-            if (m_Robot != null) m_Robot.ClearCaches();
-            //if (m_Tool != null) m_Tool.ClearCaches();
-            //if (m_Target != null) m_Target.ClearCaches();
+            if (c_Robot != null) c_Robot.ClearCaches();
+            //if (c_Tool != null) c_Tool.ClearCaches();
+            //if (c_Target != null) c_Target.ClearCaches();
         }
 
         #region Display Pipeline
@@ -106,50 +106,50 @@ namespace Axis.Core
         {
             base.DrawViewportWires(args);
 
-            if (m_Robot == null) return;
-            if (m_Robot.CurrentPose == null) return;
-            if (m_Robot.CurrentPose.Colors == null) return;
+            if (c_Robot == null) return;
+            if (c_Robot.CurrentPose == null) return;
+            if (c_Robot.CurrentPose.Colors == null) return;
 
-            var meshColorPair = m_Robot.RobMeshes.Zip(m_Robot.CurrentPose.Colors, (mesh, color) => new { Mesh = mesh, Color = color });
+            var meshColorPair = c_Robot.RobMeshes.Zip(c_Robot.CurrentPose.Colors, (mesh, color) => new { Mesh = mesh, Color = color });
             foreach (var pair in meshColorPair) args.Display.DrawMeshShaded(pair.Mesh, new DisplayMaterial(pair.Color));
         }
         public override void DrawViewportMeshes(IGH_PreviewArgs args)
         {
             base.DrawViewportMeshes(args);
 
-            if (m_Robot == null) return;
-            if (m_Robot.CurrentPose == null) return;
-            if (m_Robot.CurrentPose.Colors == null) return;
+            if (c_Robot == null) return;
+            if (c_Robot.CurrentPose == null) return;
+            if (c_Robot.CurrentPose.Colors == null) return;
 
-            var meshColorPair = m_Robot.Geometries.Zip(m_Robot.Colors, (mesh, color) => new { Mesh = mesh, Color = color });
+            var meshColorPair = c_Robot.Geometries.Zip(c_Robot.Colors, (mesh, color) => new { Mesh = mesh, Color = color });
             foreach (var pair in meshColorPair) args.Display.DrawMeshShaded(pair.Mesh, new DisplayMaterial(pair.Color));
         }
         public override void BakeGeometry(RhinoDoc doc, List<Guid> obj_ids)
         {
             base.BakeGeometry(doc, obj_ids);
-            for (int i = 0; i < m_Robot.CurrentPose.Geometry.Count(); i++)
+            for (int i = 0; i < c_Robot.CurrentPose.Geometry.Count(); i++)
             {
                 int cID = i;
-                if (i >= m_Robot.CurrentPose.Colors.Count()) cID = m_Robot.CurrentPose.Colors.Count() - 1;
+                if (i >= c_Robot.CurrentPose.Colors.Count()) cID = c_Robot.CurrentPose.Colors.Count() - 1;
                 var attributes = doc.CreateDefaultAttributes();
                 attributes.ColorSource = Rhino.DocObjects.ObjectColorSource.ColorFromObject;
-                attributes.ObjectColor = m_Robot.CurrentPose.Colors[cID];
-                obj_ids.Add(doc.Objects.AddMesh(m_Robot.CurrentPose.Geometry[i], attributes));
+                attributes.ObjectColor = c_Robot.CurrentPose.Colors[cID];
+                obj_ids.Add(doc.Objects.AddMesh(c_Robot.CurrentPose.Geometry[i], attributes));
             }
         }
 
         public override void BakeGeometry(RhinoDoc doc, ObjectAttributes att, List<Guid> obj_ids)
         {
             base.BakeGeometry(doc, att, obj_ids);
-            for (int i = 0; i < m_Robot.CurrentPose.Geometry.Count(); i++)
+            for (int i = 0; i < c_Robot.CurrentPose.Geometry.Count(); i++)
             {
                 int cID = i;
-                if (i >= m_Robot.CurrentPose.Colors.Count()) cID = m_Robot.CurrentPose.Colors.Count() - 1;
+                if (i >= c_Robot.CurrentPose.Colors.Count()) cID = c_Robot.CurrentPose.Colors.Count() - 1;
                 var attributes = doc.CreateDefaultAttributes();
                 if (att != null) attributes = att;
                 attributes.ColorSource = Rhino.DocObjects.ObjectColorSource.ColorFromObject;
-                attributes.ObjectColor = m_Robot.CurrentPose.Colors[cID];
-                obj_ids.Add(doc.Objects.AddMesh(m_Robot.CurrentPose.Geometry[i], attributes));
+                attributes.ObjectColor = c_Robot.CurrentPose.Colors[cID];
+                obj_ids.Add(doc.Objects.AddMesh(c_Robot.CurrentPose.Geometry[i], attributes));
             }
         }
 
@@ -159,9 +159,9 @@ namespace Axis.Core
             {
                 BoundingBox box = BoundingBox.Empty;
 
-                if (m_Robot != null) box.Union(m_Robot.Boundingbox);
-                //if (m_Tool != null) box.Union(m_Tool.Boundingbox);
-                //if (m_Target != null) box.Union(m_Target.Boundingbox);
+                if (c_Robot != null) box.Union(c_Robot.Boundingbox);
+                //if (c_Tool != null) box.Union(c_Tool.Boundingbox);
+                //if (c_Target != null) box.Union(c_Target.Boundingbox);
                 return box;
             }
         }
@@ -177,14 +177,14 @@ namespace Axis.Core
         // The following functions append menu items and then handle the item clicked event.
         protected override void AppendAdditionalComponentMenuItems(System.Windows.Forms.ToolStripDropDown menu)
         {
-            ToolStripMenuItem outputRobot = Menu_AppendItem(menu, "Output the curretn robot pose", poseOut_Click, true, m_PoseOut);
+            ToolStripMenuItem outputRobot = Menu_AppendItem(menu, "Output the curretn robot pose", poseOut_Click, true, c_PoseOut);
             outputRobot.ToolTipText = "This will provide the robot as a position class";
         }
 
         private void poseOut_Click(object sender, EventArgs e)
         {
             RecordUndoEvent("Output Robot");
-            m_PoseOut = !m_PoseOut;
+            c_PoseOut = !c_PoseOut;
 
             ToggleOutput(0);
             //ToggleOutput(1);
@@ -223,14 +223,14 @@ namespace Axis.Core
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
-            writer.SetBoolean("PoseOut", this.m_PoseOut);
+            writer.SetBoolean("PoseOut", this.c_PoseOut);
             return base.Write(writer);
         }
 
         // Deserialize this instance from a Grasshopper reader object.
         public override bool Read(GH_IO.Serialization.GH_IReader reader)
         {
-            this.m_PoseOut = reader.GetBoolean("PoseOut");
+            this.c_PoseOut = reader.GetBoolean("PoseOut");
             return base.Read(reader);
         }
         #endregion
