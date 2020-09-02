@@ -507,8 +507,8 @@ namespace Axis.Core
         /// </summary>
         public class ManipulatorPose : IGH_Goo
         {
-            private Manipulator Robot;
-            private Axis.Targets.Target Target;
+            private Manipulator robot;
+            private Axis.Targets.Target target;
             private double[] radAngles;
             private JointState[] jointStates;
 
@@ -553,32 +553,51 @@ namespace Axis.Core
 
             public Plane[] Planes { get
                 {
-                    Plane[] planes = this.Robot.AxisPlanes.Select(plane => plane.Clone()).ToArray();
-                    for (int i = 0; i < planes.Length; ++i) planes[i].Transform(this.Robot.ResetTransform[i] * this.Forward[i]);
+                    Plane[] planes = this.robot.AxisPlanes.Select(plane => plane.Clone()).ToArray();
+                    for (int i = 0; i < planes.Length; ++i) planes[i].Transform(this.robot.ResetTransform[i] * this.Forward[i]);
                     return planes;
                 } }
 
             public Plane Flange { get
                 {
-                    Plane flange = this.Robot.AxisPlanes[5].Clone();
+                    Plane flange = this.robot.AxisPlanes[5].Clone();
                     flange.Transform(Forward[5]);
                     return flange;
                 } }
+
+            public Plane Target { 
+                get 
+                {
+                    switch (this.target.Method) 
+                    {
+                        case MotionType.Linear:
+                        case MotionType.Joint:
+                            return this.target.Plane;
+                        case MotionType.AbsoluteJoint:
+                            var plane = this.Flange.Clone();
+                            var xform = Rhino.Geometry.Transform.PlaneToPlane(Plane.WorldXY, this.target.Tool.TCP);
+                            plane.Transform(xform);
+                            return plane;
+                    }
+                    return Plane.Unset;
+                } }
+            public Tool Tool => this.target.Tool;
+            public Speed Speed => this.target.Speed;
 
             public Mesh[] Geometries
             {
                 get
                 {
-                    Mesh[] meshes = new Mesh[this.Robot.RobMeshes.Count + this.Target.Tool.Geometries.Length];
+                    Mesh[] meshes = new Mesh[this.robot.RobMeshes.Count + this.target.Tool.Geometries.Length];
 
-                    var rob = this.Robot.RobMeshes.Select(mesh => mesh.DuplicateMesh()).ToArray();
-                    for (int i = 0; i < rob.Length - 1; ++i) rob[i + 1].Transform(this.Robot.ResetTransform[i] * this.Forward[i]);
+                    var rob = this.robot.RobMeshes.Select(mesh => mesh.DuplicateMesh()).ToArray();
+                    for (int i = 0; i < rob.Length - 1; ++i) rob[i + 1].Transform(this.robot.ResetTransform[i] * this.Forward[i]);
 
-                    var tool = this.Target.Tool.Geometries.Select(mesh => mesh.DuplicateMesh()).ToArray();
-                    foreach (Mesh m in tool) m.Transform(this.Target.Tool.ResetTransform * Rhino.Geometry.Transform.PlaneToPlane(Plane.WorldXY, this.Flange));
+                    var tool = this.target.Tool.Geometries.Select(mesh => mesh.DuplicateMesh()).ToArray();
+                    foreach (Mesh m in tool) m.Transform(this.target.Tool.ResetTransform * Rhino.Geometry.Transform.PlaneToPlane(Plane.WorldXY, this.Flange));
 
                     for (int i = 0; i < rob.Length; ++i) meshes[i] = rob[i];
-                    for (int i = rob.Length; i < this.Robot.RobMeshes.Count + tool.Length; ++i) meshes[i] = tool[i - rob.Length];
+                    for (int i = rob.Length; i < this.robot.RobMeshes.Count + tool.Length; ++i) meshes[i] = tool[i - rob.Length];
 
                     //Maybe a list based implementation is easier.
                     // But this way I'm sure that the out put of "Geometies" has the identical length of "Colors"
@@ -592,16 +611,16 @@ namespace Axis.Core
                     if (this.jointStates == null) return null;
 
                     var jointColors = this.jointStates.Select(state => GetColour(state)).ToArray();
-                    var tool = this.Target.Tool.Colors;
+                    var tool = this.target.Tool.Colors;
 
-                    Color[] colors = new Color[this.Robot.Geometries.Length + this.Target.Tool.Geometries.Length];
+                    Color[] colors = new Color[this.robot.Geometries.Length + this.target.Tool.Geometries.Length];
 
 
                     colors[0] = Axis.Styles.DarkGrey; //Base Color
                     for (int i = 1; i < jointColors.Length+1; ++i) colors[i] = jointColors[i-1]; // Joint Colours 
-                    for (int i = 1+ jointColors.Length; i < this.Robot.Geometries.Length; ++i) colors[i]= Axis.Styles.DarkGrey; //Left over Colors
+                    for (int i = 1+ jointColors.Length; i < this.robot.Geometries.Length; ++i) colors[i]= Axis.Styles.DarkGrey; //Left over Colors
 
-                    for (int i = this.Robot.Geometries.Length; i < this.Robot.Geometries.Length + this.Target.Tool.Geometries.Length; ++i) colors[i] = tool[i- this.Robot.Geometries.Length]; // Tool Color
+                    for (int i = this.robot.Geometries.Length; i < this.robot.Geometries.Length + this.target.Tool.Geometries.Length; ++i) colors[i] = tool[i- this.robot.Geometries.Length]; // Tool Color
 
                     //Maybe a list based implementation is easier.
                     // But this way I'm sure that the out put of "Geometies" has the identical length of "Colors"
@@ -614,11 +633,11 @@ namespace Axis.Core
             #region Constructors
             public ManipulatorPose(Manipulator robot)
             {
-                this.Robot = robot;
+                this.robot = robot;
             }
             public ManipulatorPose(Manipulator robot, Targets.Target target)
             {
-                this.Robot = robot;
+                this.robot = robot;
                 this.SetPose(target);
             }
             #endregion
@@ -627,14 +646,14 @@ namespace Axis.Core
             //Public
             public void SetPose(Targets.Target target)
             {
-                this.Target = target;
+                this.target = target;
 
                 double[] radAngles = new double[6];
                 double[] degAngles = new double[6];
                 JointState[] jointStates = new JointState[6];
 
                 //Invers and farward kinematics devided by manufacturar
-                switch (this.Robot.Manufacturer)
+                switch (this.robot.Manufacturer)
                 {
                     case Manufacturer.ABB:
                         switch (target.Method)
@@ -652,21 +671,21 @@ namespace Axis.Core
 
                                 // Select Solution based on Indecies
                                 //for (int i = 0; i < anglesSet.Length / anglesSet.GetLength(1); ++i) degAngles[i] = anglesSet[i, this.Robot.Indices[i]];
-                                radAngles = anglesSet.Zip<List<double>, int, double>(this.Robot.Indices, (solutions, selIdx) => solutions[selIdx]).ToArray();
+                                radAngles = anglesSet.Zip<List<double>, int, double>(this.robot.Indices, (solutions, selIdx) => solutions[selIdx]).ToArray();
                                 degAngles = radAngles.Select(a => a.ToDegrees()).ToArray();
 
-                                jointStates = CheckJointAngles(degAngles, this.Robot, checkSingularity: true);
+                                jointStates = CheckJointAngles(degAngles, this.robot, checkSingularity: true);
 
                                 break;
                             case Targets.MotionType.AbsoluteJoint:
                                 degAngles = target.JointAngles.ToArray();
                                 radAngles = degAngles.Select(a => a.ToRadians()).ToArray();
 
-                                jointStates = CheckJointAngles(degAngles, this.Robot);
+                                jointStates = CheckJointAngles(degAngles, this.robot);
 
                                 break;
                             default:
-                                throw new NotImplementedException($"This movment: {target.Method.ToString()} has not jet been implemented for {this.Robot.Manufacturer.ToString()}"); ;
+                                throw new NotImplementedException($"This movment: {target.Method.ToString()} has not jet been implemented for {this.robot.Manufacturer.ToString()}"); ;
                         } break;
                     case Manufacturer.Kuka:
                         switch (target.Method)
@@ -674,12 +693,12 @@ namespace Axis.Core
                             case Targets.MotionType.AbsoluteJoint:
 
                                 degAngles = target.JointAngles.ToArray();
-                                jointStates = CheckJointAngles(degAngles, this.Robot);
+                                jointStates = CheckJointAngles(degAngles, this.robot);
 
                                 radAngles = degAngles.Select(value => value.ToRadians()).ToArray();
                                 break;
                             default:
-                                throw new NotImplementedException($"This movment: {target.Method.ToString()} has not jet been implemented for {this.Robot.Manufacturer.ToString()}");
+                                throw new NotImplementedException($"This movment: {target.Method.ToString()} has not jet been implemented for {this.robot.Manufacturer.ToString()}");
                         } break;
                 }
 
@@ -688,18 +707,18 @@ namespace Axis.Core
 
                 this.radAngles = radAngles;
 
-                this.Forward = ForwardKinematics(radAngles, this.Robot);
+                this.Forward = ForwardKinematics(radAngles, this.robot);
 
                 this.IsValid = (!outOfReach && !outOfRoation && !overHeadSig && !wristSing) ? true : false;
 
             }
-            public void UpdateRobot(Manipulator robot) => this.Robot = robot;
+            public void UpdateRobot(Manipulator robot) => this.robot = robot;
             public Transform[] GetPose()
             {
                 if (this.Forward == null) throw new Exception("Unable to transfromation for empty pose please first call SetPost");
 
                 // Set Transform in relation to current position
-                this.Forward = this.Forward.Zip(this.Robot.ResetTransform, (forward, reverse) => reverse * forward).ToArray();
+                this.Forward = this.Forward.Zip(this.robot.ResetTransform, (forward, reverse) => reverse * forward).ToArray();
 
                 // Update inverse of current position
 
@@ -732,20 +751,20 @@ namespace Axis.Core
                 //////////////////////////////////////////////////////////////
 
                 //Setting up Planes 
-                Plane P0 = this.Robot.AxisPlanes[0].Clone();
-                Plane P1 = this.Robot.AxisPlanes[1].Clone();
-                Plane P2 = this.Robot.AxisPlanes[2].Clone();
-                Plane P3 = this.Robot.AxisPlanes[3].Clone();
-                Plane P4 = this.Robot.AxisPlanes[4].Clone();
-                Plane P5 = this.Robot.AxisPlanes[5].Clone();
+                Plane P0 = this.robot.AxisPlanes[0].Clone();
+                Plane P1 = this.robot.AxisPlanes[1].Clone();
+                Plane P2 = this.robot.AxisPlanes[2].Clone();
+                Plane P3 = this.robot.AxisPlanes[3].Clone();
+                Plane P4 = this.robot.AxisPlanes[4].Clone();
+                Plane P5 = this.robot.AxisPlanes[5].Clone();
                 Plane flange = target.Clone();
 
 
                 // Setting Up Lengths
-                double wristOffsetLength = this.Robot.WristOffsetLength;
-                double lowerArmLength = this.Robot.LowerArmLength;
-                double upperArmLength = this.Robot.UpperArmLength;
-                double axisFourOffsetAngle = this.Robot.AxisFourOffsetAngle;
+                double wristOffsetLength = this.robot.WristOffsetLength;
+                double lowerArmLength = this.robot.LowerArmLength;
+                double upperArmLength = this.robot.UpperArmLength;
+                double axisFourOffsetAngle = this.robot.AxisFourOffsetAngle;
 
 
 
@@ -986,11 +1005,11 @@ namespace Axis.Core
 
 
                 /// Konstruct K points
-                Plane K0 = this.Robot.RobBasePlane.Clone();
-                Plane K1 = this.Robot.AxisPlanes[1].Clone();
-                Plane K2 = this.Robot.AxisPlanes[2].Clone();
-                Plane K3 = this.Robot.AxisPlanes[3].Clone();
-                Plane K4 = this.Robot.AxisPlanes[4].Clone();
+                Plane K0 = this.robot.RobBasePlane.Clone();
+                Plane K1 = this.robot.AxisPlanes[1].Clone();
+                Plane K2 = this.robot.AxisPlanes[2].Clone();
+                Plane K3 = this.robot.AxisPlanes[3].Clone();
+                Plane K4 = this.robot.AxisPlanes[4].Clone();
 
                 //Move K4 in rlation to the flange
                 //K4.Transform(Rhino.Geometry.Transform.Translation(this.Robot.WristOffset));
@@ -1051,8 +1070,8 @@ namespace Axis.Core
                         for (int j = 0; i < targetPlane.Count(); ++i)
                         {
                             // Spheres
-                            Sphere Sphere1 = new Sphere(startPlanes[i], this.Robot.LowerArmLength);
-                            Sphere Sphere2 = new Sphere(targetPlane[j], this.Robot.UpperArmLength);
+                            Sphere Sphere1 = new Sphere(startPlanes[i], this.robot.LowerArmLength);
+                            Sphere Sphere2 = new Sphere(targetPlane[j], this.robot.UpperArmLength);
                             Circle Circ = new Circle();
 
                             double Par1 = new double();
@@ -1225,12 +1244,12 @@ namespace Axis.Core
             public  bool CastTo<T>(out T target) => throw new NotImplementedException();
             public IGH_Goo Duplicate()
             {
-                if (this.Target == null) return new ManipulatorPose(this.Robot);
-                else return new ManipulatorPose(this.Robot, this.Target);
+                if (this.target == null) return new ManipulatorPose(this.robot);
+                else return new ManipulatorPose(this.robot, this.target);
             }
             public IGH_GooProxy EmitProxy() => throw new NotImplementedException();
             public object ScriptVariable() => this;
-            public override string ToString() => $"Position for {this.Robot.Name} [{string.Join(";", this.radAngles.Select(a => a.ToDegrees().ToString("0.00")).ToArray())}]";
+            public override string ToString() => $"Position for {this.robot.Name} [{string.Join(";", this.radAngles.Select(a => a.ToDegrees().ToString("0.00")).ToArray())}]";
 
 
             public bool Read(GH_IReader reader) => throw new NotImplementedException();

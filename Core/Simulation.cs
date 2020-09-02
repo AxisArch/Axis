@@ -6,7 +6,12 @@ using System.Windows.Forms;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Types;
+
+using Rhino;
+using Rhino.DocObjects;
+using Rhino.DocObjects.Custom;
 using Rhino.Geometry;
+using Rhino.Display;
 
 using Axis.Targets;
 
@@ -17,10 +22,18 @@ namespace Axis.Core
     /// </summary>
     public class Simulation : GH_Component, IGH_VariableParameterComponent
     {
+        // Global variables.
+        Manipulator c_Robot = null;
+        //Target c_Target = null;
+        Tool c_Tool = null;
+        Manipulator.ManipulatorPose c_Pose = null;
+
         DateTime strat = new DateTime();
         Toolpath toolpath;
-        Target cTarget;
+        //Manipulator.ManipulatorPose cPose;
+        bool run = false;
 
+        bool m_PoseOut = false;
         bool timeline = false;
         bool showSpeed = false;
         bool showAngles = false;
@@ -34,6 +47,8 @@ namespace Axis.Core
         #region IO
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
+            IGH_Param robot = new Axis.Params.RobotParam();
+            pManager.AddParameter(robot, "Robot", "Robot", "Robot object to use for inverse kinematics. You can define this using the robot creator tool.", GH_ParamAccess.item);
             IGH_Param target = new Axis.Params.TargetParam();
             pManager.AddParameter(target, "Targets", "Targets", "T", GH_ParamAccess.list);
             pManager.AddBooleanParameter("Run", "Run", "", GH_ParamAccess.item);
@@ -42,45 +57,158 @@ namespace Axis.Core
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            IGH_Param target = new Axis.Params.TargetParam();
-            pManager.AddParameter(target, "Target", "Target", "", GH_ParamAccess.item);
+            //IGH_Param target = new Axis.Params.TargetParam();
+            //pManager.AddParameter(target, "Target", "Target", "", GH_ParamAccess.item);
+            pManager.AddPlaneParameter("Flange", "Flange", "Robot flange position.", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Angles", "Angles", "Axis angles for forward kinematics.", GH_ParamAccess.list);
+            pManager.AddTextParameter("Log", "Log", "Message log.", GH_ParamAccess.list);
         }
         #endregion
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            List<Target> targets = new List<Target>();
-            bool run = false;
+            // Set up solution variables
             bool rest = false;
-
+            List<Target> targets = new List<Target>();
             DateTime now = DateTime.Now;
 
+            // Load Inputs 
+            if (!DA.GetData(0, ref c_Robot)) return;
+            c_Robot = (Manipulator)c_Robot.Duplicate(); //Duplicate Robot
             if (!DA.GetDataList("Targets", targets)) return;
             if (!DA.GetData("Run", ref run)) return;
             if (!DA.GetData("Reset", ref rest)) return;
 
-            if ( toolpath== null) toolpath = new Toolpath(targets);
 
-            if (rest)
+            //Set Up Tool path
+            if (rest | toolpath == null) 
             {
+                var poses = targets.Select(t => new Manipulator.ManipulatorPose(c_Robot, (Target)t.Duplicate())).ToList(); //Duplate targets
+                toolpath = new Toolpath(poses);
                 strat = DateTime.Now;
-                toolpath = new Toolpath(targets);
             }
 
-            if (run) 
+            //bool run = false;
+
+
+            if (run)
             {
-                Target nTarget = toolpath.GetTarget(now - strat);
-                if (cTarget != nTarget) 
-                {
-                    cTarget = nTarget;
-                }
-                
-                DA.SetData("Target", cTarget);
-                ExpireSolution(true);
+                c_Pose = toolpath.GetPose(DateTime.Now - strat);
             }
-            else DA.SetData("Target", targets[0]);
+            else if (timeline && !run) 
+            {
+                double tValue = 0;
+                if (!DA.GetData("Timeline", ref tValue)) return;
+                c_Pose = toolpath.GetPose(tValue);
+            }
+            else c_Pose = toolpath.StartPose; // DA.SetData("Target", targets[0]);
 
+
+            if (c_Pose != null)
+            {
+                if (c_Pose.Tool != null) c_Tool = c_Pose.Tool; // Get the tool from the target.
+
+
+                // Handle errors
+                void SetLogMessages(Manipulator.ManipulatorPose Poses, List<string> Log)
+                {
+                    if (Poses.OverHeadSig) Log.Add("Close to overhead singularity.");
+                    if (Poses.WristSing) Log.Add("Close to wrist singularity.");
+                    if (Poses.OutOfReach) Log.Add("Target out of range.");
+                    if (Poses.OutOfRoation) Log.Add("Joint out of range.");
+                }
+                List<string> log = new List<string>();
+                SetLogMessages(c_Pose, log);
+
+                if (c_Pose != null) c_Robot.SetPose(c_Pose, checkValidity: true);
+                if (c_Robot.CurrentPose.IsValid) c_Pose = c_Robot.CurrentPose;
+
+
+                // Set output
+                DA.SetData("Flange", c_Robot.CurrentPose.Flange);
+                DA.SetDataList("Angles", c_Robot.CurrentPose.Angles);
+                DA.SetDataList("Log", log);
+                if (m_PoseOut) DA.SetData("Robot Pose", c_Robot.CurrentPose);
+
+
+                // Update and display data
+                c_Robot.UpdatePose();
+                c_Robot.GetBoundingBox(Transform.Identity);
+
+                c_Tool.UpdatePose(c_Robot);
+                c_Tool.GetBoundingBox(Transform.Identity);
+
+                if (run) ExpireSolution(true);
+            }
         }
+
+        #region Display Pipeline
+        // Custom display pipeline 
+        public override void DrawViewportWires(IGH_PreviewArgs args)
+        {
+            base.DrawViewportWires(args);
+
+            if (c_Robot == null) return;
+            if (c_Robot.CurrentPose == null) return;
+            if (c_Robot.CurrentPose.Colors == null) return;
+
+            var meshColorPair = c_Robot.RobMeshes.Zip(c_Robot.CurrentPose.Colors, (mesh, color) => new { Mesh = mesh, Color = color });
+            foreach (var pair in meshColorPair) args.Display.DrawMeshShaded(pair.Mesh, new DisplayMaterial(pair.Color));
+        }
+        public override void DrawViewportMeshes(IGH_PreviewArgs args)
+        {
+            base.DrawViewportMeshes(args);
+
+
+            if (c_Robot == null) return;
+            if (c_Robot.CurrentPose == null) return;
+            if (c_Robot.CurrentPose.Colors == null) return;
+
+            var meshColorPairRobot = c_Robot.Geometries.Zip(c_Robot.Colors, (mesh, color) => new { Mesh = mesh, Color = color });
+            foreach (var pair in meshColorPairRobot) args.Display.DrawMeshShaded(pair.Mesh, new DisplayMaterial(pair.Color));
+
+            if (c_Tool == null) return;
+            var meshColorPairTool = c_Tool.Geometries.Zip(c_Tool.Colors, (mesh, color) => new { Mesh = mesh, Color = color });
+            foreach (var pair in meshColorPairTool) args.Display.DrawMeshShaded(pair.Mesh, new DisplayMaterial(pair.Color));
+        }
+        public override void BakeGeometry(RhinoDoc doc, List<Guid> obj_ids)
+        {
+            base.BakeGeometry(doc, obj_ids);
+            for (int i = 0; i < c_Robot.CurrentPose.Geometries.Count(); i++)
+            {
+                var attributes = doc.CreateDefaultAttributes();
+                attributes.ColorSource = Rhino.DocObjects.ObjectColorSource.ColorFromObject;
+                attributes.ObjectColor = c_Robot.CurrentPose.Colors[i];
+                obj_ids.Add(doc.Objects.AddMesh(c_Robot.CurrentPose.Geometries[i], attributes));
+            }
+        }
+
+        public override void BakeGeometry(RhinoDoc doc, ObjectAttributes att, List<Guid> obj_ids)
+        {
+            base.BakeGeometry(doc, att, obj_ids);
+            for (int i = 0; i < c_Robot.CurrentPose.Geometries.Count(); i++)
+            {
+                var attributes = doc.CreateDefaultAttributes();
+                if (att != null) attributes = att;
+                attributes.ColorSource = Rhino.DocObjects.ObjectColorSource.ColorFromObject;
+                attributes.ObjectColor = c_Robot.CurrentPose.Colors[i];
+                obj_ids.Add(doc.Objects.AddMesh(c_Robot.CurrentPose.Geometries[i], attributes));
+            }
+        }
+
+        public override BoundingBox ClippingBox
+        {
+            get
+            {
+                BoundingBox box = BoundingBox.Empty;
+
+                if (c_Robot != null) box.Union(c_Robot.Boundingbox);
+                //if (c_Tool != null) box.Union(c_Tool.Boundingbox);
+                //if (c_Target != null) box.Union(c_Target.Boundingbox);
+                return box;
+            }
+        }
+        #endregion
 
         #region UI
         protected override void BeforeSolveInstance()
@@ -274,6 +402,7 @@ namespace Axis.Core
             writer.SetBoolean("ShowAngles", this.showAngles);
             writer.SetBoolean("ShowMotion", this.showMotion);
             writer.SetBoolean("ShowExternal", this.showExternal);
+            writer.SetBoolean("PoseOut", this.m_PoseOut);
             return base.Write(writer);
         }
 
@@ -285,6 +414,7 @@ namespace Axis.Core
             this.showAngles = reader.GetBoolean("ShowAngles");
             this.showMotion = reader.GetBoolean("ShowMotion");
             this.showExternal = reader.GetBoolean("ShowExternal");
+            this.m_PoseOut = reader.GetBoolean("PoseOut");
             return base.Read(reader);
         }
         #endregion
@@ -302,7 +432,7 @@ namespace Axis.Core
         /// <summary>
         /// Component settings.
         /// </summary>
-        public override GH_Exposure Exposure => GH_Exposure.secondary;
+        public override GH_Exposure Exposure => GH_Exposure.primary;
         protected override System.Drawing.Bitmap Icon
         {
             get

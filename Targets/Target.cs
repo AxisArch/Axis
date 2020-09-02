@@ -759,8 +759,10 @@ namespace Axis.Targets
     {
         public TimeSpan duration { get; private set; }
         double totalSec;
-        List<Target> targets;
+        List<Manipulator.ManipulatorPose> poses;
         List<double> targetProgress;
+
+        public Manipulator.ManipulatorPose StartPose => poses[0];
 
         #region Constructor
         public Toolpath() { }
@@ -768,10 +770,10 @@ namespace Axis.Targets
         /// Toolpath constructor.
         /// </summary>
         /// <param name="targets"></param>
-        public Toolpath(List<Target> targets)
+        public Toolpath(List<Manipulator.ManipulatorPose> targets)
         {
             Times(targets);
-            this.targets = targets;
+            this.poses = targets;
         }
         #endregion
 
@@ -787,10 +789,10 @@ namespace Axis.Targets
             if (passedSec < this.totalSec)
             {
                 var val = -this.targetProgress.BinarySearch(passedSec);
-                if (val >= targets.Count) val = targets.Count - 1;
+                if (val >= poses.Count) val = poses.Count - 1;
                 return val;
             }
-            else return targets.Count - 1;
+            else return poses.Count - 1;
         }
 
         /// <summary>
@@ -798,22 +800,37 @@ namespace Axis.Targets
         /// </summary>
         /// <param name="timePassed"></param>
         /// <returns></returns>
-        public Target GetTarget(TimeSpan timePassed)
+        public Manipulator.ManipulatorPose GetPose(TimeSpan timePassed)
         {
-            return this.targets[this.GetProgress(timePassed)];
+            return this.poses[this.GetProgress(timePassed)];
+        }
+        public Manipulator.ManipulatorPose GetPose(double value) 
+        {
+            // Ensure value is between 0 and 1
+            value = (value > 0) ? value : 0;
+            value = (value < 1) ? value : 1;
+
+            double total = poses.Count-1;
+
+            int position = (int)Math.Round((total / 100) * value*100);
+
+            return poses[position];
+
+
         }
 
-        void Times(List<Target> targets)
+        void Times(List<Manipulator.ManipulatorPose> poses)
         {
             double timeTotal = 0;
 
             List<double> tProgress = new List<double>();
             tProgress.Add(0);
 
-            for (int i = 0; i < targets.Count - 1; ++i)
+            for (int i = 0; i < poses.Count - 1; ++i)
             {
-                double distance = new Line(targets[i].Position, targets[i + 1].Position).Length;
-                double speed = targets[i + 1].Speed.TranslationSpeed;
+                var targets = poses[i].Target;
+                double distance = new Line(poses[i].Target.Origin, poses[i+1].Target.Origin).Length;
+                double speed = poses[i + 1].Speed.TranslationSpeed;
                 timeTotal += distance / speed;
                 tProgress.Add(timeTotal);
             }
@@ -867,11 +884,11 @@ namespace Axis.Targets
             {
                 List<Point3d> points = new List<Point3d>();
 
-                foreach (Target t in this.targets)
+                foreach (Manipulator.ManipulatorPose p in this.poses)
                 {
-                    if (t.Plane.Origin != null)
+                    if (p.Target.Origin != null)
                     {
-                        points.Add(t.Plane.Origin);
+                        points.Add(p.Target.Origin);
                     }
                 }
 
@@ -886,7 +903,7 @@ namespace Axis.Targets
         public IGH_Goo Duplicate() => throw new NotImplementedException();
         public IGH_GooProxy EmitProxy() => throw new NotImplementedException();
         public object ScriptVariable() => throw new NotImplementedException();
-        public override string ToString() => $"Toolpath of length: {this.targets.Count}";
+        public override string ToString() => $"Toolpath of length: {this.poses.Count}";
 
         //GH_ISerializable
         public bool Read(GH_IReader reader) => throw new NotImplementedException();
