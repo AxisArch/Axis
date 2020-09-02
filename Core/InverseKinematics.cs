@@ -62,8 +62,10 @@ namespace Axis.Core
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No robot system defined, using default");
             }   // Set Robot.
             if (!DA.GetData(1, ref c_Target)) return; // Get the target.
+            c_Robot = (Manipulator)manipulator.Duplicate();
+            c_Target = (Target)c_Target.Duplicate();
             if (c_Target.Tool != null) c_Tool = c_Target.Tool; // Get the tool from the target.
-            c_Robot = c_Robot = (Manipulator)manipulator.Duplicate();
+
 
             Manipulator.ManipulatorPose pose = new Manipulator.ManipulatorPose(c_Robot, c_Target);
 
@@ -87,17 +89,21 @@ namespace Axis.Core
             DA.SetDataList("Log", log);
             if(c_PoseOut)DA.SetData("Robot Pose", c_Robot.CurrentPose);
 
+
             // Update and display data
             c_Robot.UpdatePose();
             c_Robot.GetBoundingBox(Transform.Identity);
+
+            c_Tool.UpdatePose(c_Robot);
+            c_Tool.GetBoundingBox(Transform.Identity);
         }
 
         public override void ClearData()
         {
             base.ClearData();
             if (c_Robot != null) c_Robot.ClearCaches();
-            //if (c_Tool != null) c_Tool.ClearCaches();
-            //if (c_Target != null) c_Target.ClearCaches();
+            if (c_Tool != null) c_Tool.ClearCaches();
+            if (c_Target != null) c_Target.ClearCaches();
         }
 
         #region Display Pipeline
@@ -121,35 +127,35 @@ namespace Axis.Core
             if (c_Robot.CurrentPose == null) return;
             if (c_Robot.CurrentPose.Colors == null) return;
 
-            var meshColorPair = c_Robot.Geometries.Zip(c_Robot.Colors, (mesh, color) => new { Mesh = mesh, Color = color });
-            foreach (var pair in meshColorPair) args.Display.DrawMeshShaded(pair.Mesh, new DisplayMaterial(pair.Color));
+            var meshColorPairRobot = c_Robot.Geometries.Zip(c_Robot.Colors, (mesh, color) => new { Mesh = mesh, Color = color });
+            foreach (var pair in meshColorPairRobot) args.Display.DrawMeshShaded(pair.Mesh, new DisplayMaterial(pair.Color));
+
+            if (c_Tool == null) return;
+            var meshColorPairTool = c_Tool.Geometries.Zip(c_Tool.Colors, (mesh, color) => new { Mesh = mesh, Color = color });
+            foreach (var pair in meshColorPairTool) args.Display.DrawMeshShaded(pair.Mesh, new DisplayMaterial(pair.Color));
         }
         public override void BakeGeometry(RhinoDoc doc, List<Guid> obj_ids)
         {
             base.BakeGeometry(doc, obj_ids);
-            for (int i = 0; i < c_Robot.CurrentPose.Geometry.Count(); i++)
+            for (int i = 0; i < c_Robot.CurrentPose.Geometries.Count(); i++)
             {
-                int cID = i;
-                if (i >= c_Robot.CurrentPose.Colors.Count()) cID = c_Robot.CurrentPose.Colors.Count() - 1;
                 var attributes = doc.CreateDefaultAttributes();
                 attributes.ColorSource = Rhino.DocObjects.ObjectColorSource.ColorFromObject;
-                attributes.ObjectColor = c_Robot.CurrentPose.Colors[cID];
-                obj_ids.Add(doc.Objects.AddMesh(c_Robot.CurrentPose.Geometry[i], attributes));
+                attributes.ObjectColor = c_Robot.CurrentPose.Colors[i];
+                obj_ids.Add(doc.Objects.AddMesh(c_Robot.CurrentPose.Geometries[i], attributes));
             }
         }
 
         public override void BakeGeometry(RhinoDoc doc, ObjectAttributes att, List<Guid> obj_ids)
         {
             base.BakeGeometry(doc, att, obj_ids);
-            for (int i = 0; i < c_Robot.CurrentPose.Geometry.Count(); i++)
+            for (int i = 0; i < c_Robot.CurrentPose.Geometries.Count(); i++)
             {
-                int cID = i;
-                if (i >= c_Robot.CurrentPose.Colors.Count()) cID = c_Robot.CurrentPose.Colors.Count() - 1;
                 var attributes = doc.CreateDefaultAttributes();
                 if (att != null) attributes = att;
                 attributes.ColorSource = Rhino.DocObjects.ObjectColorSource.ColorFromObject;
-                attributes.ObjectColor = c_Robot.CurrentPose.Colors[cID];
-                obj_ids.Add(doc.Objects.AddMesh(c_Robot.CurrentPose.Geometry[i], attributes));
+                attributes.ObjectColor = c_Robot.CurrentPose.Colors[i];
+                obj_ids.Add(doc.Objects.AddMesh(c_Robot.CurrentPose.Geometries[i], attributes));
             }
         }
 

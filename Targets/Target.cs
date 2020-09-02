@@ -22,16 +22,16 @@ namespace Axis.Targets
         public Quaternion Quaternion { get; set; }
         public List<double> JointAngles { get; set; }
 
-        public Speed Speed { get; }
-        public Zone Zone { get; }
+        public Speed Speed { get; private set; }
+        public Zone Zone { get; private set; }
 
-        public Tool Tool { get; }
+        public Tool Tool { get; private set; }
         public CSystem CSystem { get; set; }
 
         public ExtVal ExtRot { get; set; }
         public ExtVal ExtLin { get; set; }
         #endregion
-        public Manufacturer Manufacturer { get; }
+        public Manufacturer Manufacturer { get; private set; }
 
         public string StrRob
         { get
@@ -148,7 +148,7 @@ namespace Axis.Targets
             }
         }
         public Point3d Position { get =>  this.TargetPlane.Origin; }
-        public MotionType Method { get; }
+        public MotionType Method { get; private set; }
 
         #region Constructors
 
@@ -228,7 +228,20 @@ namespace Axis.Targets
         public bool IsReferencedGeometry { get => false; }
         public bool IsGeometryLoaded { get => throw new NotImplementedException(); }
 
-        public void ClearCaches() => throw new NotImplementedException();
+        public void ClearCaches() 
+        {
+            this.Plane = Plane.Unset;
+            this.TargetPlane = Plane.Unset;
+            this.Quaternion = Quaternion.Zero;
+            this.JointAngles = null;
+            this.Tool = null;
+            this.Speed = null;
+            this.Zone = null;
+            this.ExtRot = null;
+            this.ExtLin = null;
+            this.Method = 0;
+            this.Manufacturer = 0;
+        }
         public IGH_GeometricGoo DuplicateGeometry() => throw new NotImplementedException();
         public BoundingBox GetBoundingBox(Transform xform) => throw new NotImplementedException();
         public bool LoadGeometry() => throw new NotImplementedException();
@@ -269,7 +282,21 @@ namespace Axis.Targets
             target = default(Q);
             return false;
         }
-        public IGH_Goo Duplicate() => throw new NotImplementedException();
+        public IGH_Goo Duplicate() 
+        {
+            var target = default(Target);
+            switch (this.Method) 
+            {
+                case MotionType.Joint:
+                case MotionType.Linear:
+                    target = new  Target(this.Plane.Clone(), this.Method , (Speed)this.Speed.Duplicate(), (Zone)this.Zone.Duplicate(), (Tool)this.Tool.Duplicate(), (CSystem)this.CSystem.Duplicate(), this.ExtRot, this.ExtLin, this.Manufacturer);
+                    break;
+                case MotionType.AbsoluteJoint:
+                    target = new Target(this.JointAngles, (Speed)this.Speed.Duplicate(), (Zone)this.Zone.Duplicate(), (Tool)this.Tool.Duplicate(), this.ExtRot, this.ExtLin, this.Manufacturer);
+                    break;
+            }
+            return target;
+        }
         public IGH_GooProxy EmitProxy() => throw new NotImplementedException();
         public object ScriptVariable() => throw new NotImplementedException();
         public override string ToString() => (Method != null) ? $"Target ({Method.ToString()})" : $"Target ({Position})";
@@ -486,7 +513,10 @@ namespace Axis.Targets
             target = (Q)default;
             return false;
         }
-        public IGH_Goo Duplicate() => throw new NotImplementedException();
+        public IGH_Goo Duplicate() 
+        {
+            return new Speed(this.TranslationSpeed, this.RotationSpeed, this.Name, this.Time);
+        }
         public IGH_GooProxy EmitProxy() => throw new NotImplementedException();
         public object ScriptVariable() => throw new NotImplementedException();
         public  override string ToString() => (Name != null) ? $"Speed ({Name})" : $"Speed ({TranslationSpeed:0.0} mm/s)";
@@ -516,15 +546,12 @@ namespace Axis.Targets
         /// <summary>
         /// Default zone object.
         /// </summary>
-        public static Zone Default { get; }
+        public static Zone Default => new Zone(false, 5, 25, 25, 15, 35, 5, "DefaultZone");
 
         /// <summary>
         /// Default constructor.
         /// </summary>
-        static Zone()
-        {
-            Default = new Zone(false, 5, 25, 25, 15, 35, 5, "DefaultZone");
-        }
+        static Zone(){}
 
         /// <summary>
         /// Standard constructor.
@@ -592,7 +619,10 @@ namespace Axis.Targets
             target = default(Q);
             return false;
         }
-        public IGH_Goo Duplicate() => throw new NotImplementedException();
+        public IGH_Goo Duplicate() 
+        {
+            return new Zone(this.StopPoint, this.PathRadius, this.PathOrient, this.PathExternal, this.Orientation, this.LinearExternal, this.RotaryExternal, this.Name);
+        }
         public IGH_GooProxy EmitProxy() => throw new NotImplementedException();
         public object ScriptVariable() => throw new NotImplementedException();
         public override string ToString() => (Name != null) ? $"Zone ({Name})" : $"Zone ({PathRadius:0.0} mm)";
@@ -617,15 +647,12 @@ namespace Axis.Targets
         /// <summary>
         /// Default coordinate system object.
         /// </summary>
-        public static CSystem Default { get; set; }
+        public static CSystem Default => new CSystem("Default", Plane.WorldXY, false, Plane.WorldXY);
 
         /// <summary>
         /// Default constructor.
         /// </summary>
-        static CSystem()
-        {
-            Default = new CSystem("Default", Plane.WorldXY, false, Plane.WorldXY);
-        }
+        static CSystem(){}
 
         /// <summary>
         /// Standard coordinate system constructor.
@@ -698,7 +725,10 @@ namespace Axis.Targets
             target = default(Q);
             return false;
         }
-        public IGH_Goo Duplicate() => throw new NotImplementedException();
+        public IGH_Goo Duplicate()
+        {
+            return new CSystem(this.Name, this.CSPlane.Clone(), this.Dynamic, this.ExternalAxis.Clone());
+        }
         public IGH_GooProxy EmitProxy() => throw new NotImplementedException();
         public object ScriptVariable() => throw new NotImplementedException();
         public  override string ToString() => $"CSystem at: {CSPlane.ToString()}";

@@ -12,6 +12,7 @@ using GH_IO.Serialization;
 using Axis;
 using Microsoft.Office.Interop.Excel;
 using System.Linq;
+using Axis.Targets;
 
 namespace Axis.Core 
 {
@@ -244,7 +245,6 @@ namespace Axis.Core
         /// </summary>
         public void UpdatePose()
         {
-
             var xform = this.CurrentPose.GetPose().ToList();
             for (int i = 0; i < this.RobMeshes.Count - 1; ++i) this.RobMeshes[i + 1].Transform(xform[i]);
             this.ResetTransform = this.CurrentPose.Reverse;
@@ -541,7 +541,6 @@ namespace Axis.Core
             }
 
             // Mesh colours
-            public Color[] Colors { get => (this.jointStates != null) ? this.jointStates.Select(state => GetColour(state)).ToArray() : null; }
             private static Dictionary<JointState, Color> JointColours = new Dictionary<JointState, Color>()
             {
                 { JointState.Normal, Axis.Styles.DarkGrey },
@@ -566,13 +565,49 @@ namespace Axis.Core
                     return flange;
                 } }
 
-            public Mesh[] Geometry
+            public Mesh[] Geometries
             {
                 get
                 {
-                    Mesh[] meshes = this.Robot.RobMeshes.Select(plane => plane.DuplicateMesh()).ToArray();
-                    for (int i = 0; i < meshes.Length - 1; ++i) meshes[i + 1].Transform(this.Robot.ResetTransform[i] * this.Forward[i]);
+                    Mesh[] meshes = new Mesh[this.Robot.RobMeshes.Count + this.Target.Tool.Geometries.Length];
+
+                    var rob = this.Robot.RobMeshes.Select(mesh => mesh.DuplicateMesh()).ToArray();
+                    for (int i = 0; i < rob.Length - 1; ++i) rob[i + 1].Transform(this.Robot.ResetTransform[i] * this.Forward[i]);
+
+                    var tool = this.Target.Tool.Geometries.Select(mesh => mesh.DuplicateMesh()).ToArray();
+                    foreach (Mesh m in tool) m.Transform(this.Target.Tool.ResetTransform * Rhino.Geometry.Transform.PlaneToPlane(Plane.WorldXY, this.Flange));
+
+                    for (int i = 0; i < rob.Length; ++i) meshes[i] = rob[i];
+                    for (int i = rob.Length; i < this.Robot.RobMeshes.Count + tool.Length; ++i) meshes[i] = tool[i - rob.Length];
+
+                    //Maybe a list based implementation is easier.
+                    // But this way I'm sure that the out put of "Geometies" has the identical length of "Colors"
                     return meshes;
+                }
+            }
+            public Color[] Colors 
+            { 
+                get
+                {
+                    if (this.jointStates == null) return null;
+
+                    var jointColors = this.jointStates.Select(state => GetColour(state)).ToArray();
+                    var tool = this.Target.Tool.Colors;
+
+                    Color[] colors = new Color[this.Robot.Geometries.Length + this.Target.Tool.Geometries.Length];
+
+
+                    colors[0] = Axis.Styles.DarkGrey; //Base Color
+                    for (int i = 1; i < jointColors.Length+1; ++i) colors[i] = jointColors[i-1]; // Joint Colours 
+                    for (int i = 1+ jointColors.Length; i < this.Robot.Geometries.Length; ++i) colors[i]= Axis.Styles.DarkGrey; //Left over Colors
+
+                    for (int i = this.Robot.Geometries.Length; i < this.Robot.Geometries.Length + this.Target.Tool.Geometries.Length; ++i) colors[i] = tool[i- this.Robot.Geometries.Length]; // Tool Color
+
+                    //Maybe a list based implementation is easier.
+                    // But this way I'm sure that the out put of "Geometies" has the identical length of "Colors"
+
+
+                    return colors;
                 }
             }
 
@@ -1297,12 +1332,14 @@ namespace Axis.Core
                 return declaration;
             }
         }
-        public Transform FlangeOffset { 
-            get 
-            {
-                return Rhino.Geometry.Transform.PlaneToPlane(TCP, Plane.WorldXY);
-            }  
-        }
+        public Transform ResetTransform { get; set; } = Rhino.Geometry.Transform.Identity;
+
+        //public Transform FlangeOffset { 
+        //    get 
+        //    {
+        //        return Rhino.Geometry.Transform.PlaneToPlane(TCP, Plane.WorldXY);
+        //    }  
+        //}
         #endregion
 
         #region Constructors
@@ -1330,9 +1367,21 @@ namespace Axis.Core
             this.Name = name;
             this.TCP = TCP;
             this.Weight = weight;
-            if (mesh != null) this.Geometries = mesh.ToArray();
+            this.Geometries = (mesh != null)?  mesh.ToArray(): new Mesh[0];
             this.Manufacturer = type;
             this.RelTool = relToolOffset;
+        }
+        #endregion
+
+        #region Methods
+        public void UpdatePose(Manipulator robot) 
+        {
+            var forward = Rhino.Geometry.Transform.PlaneToPlane(Plane.WorldXY, robot.CurrentPose.Flange);
+            Rhino.Geometry.Transform reverse;
+            forward.TryGetInverse(out reverse);
+
+            foreach(Mesh m in this.Geometries) m.Transform(this.ResetTransform * forward);
+            this.ResetTransform = reverse;
         }
         #endregion
 
@@ -1393,7 +1442,7 @@ namespace Axis.Core
         }
         public IGH_Goo Duplicate()
         {
-            return new Tool(this.Name, this.TCP, this.Weight, this.Geometries.ToList(), this.Manufacturer, this.RelTool);
+            return new Tool(this.Name, this.TCP, this.Weight, this.Geometries.Select(m => (Mesh)m.Duplicate()).ToList(), this.Manufacturer, this.RelTool);
         }
         public IGH_GooProxy EmitProxy() => null;
         public object ScriptVariable() => null;
