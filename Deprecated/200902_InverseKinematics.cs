@@ -262,7 +262,9 @@ namespace Axis.Core
         {
             get { return new Guid("{9079ef8a-31c0-4c5a-8f04-775b9aa21047}"); }
         }
-        public override GH_Exposure Exposure => GH_Exposure.primary;
+        public override GH_Exposure Exposure => GH_Exposure.hidden;
+        public override bool Obsolete => true;
+
         #endregion
     }
 }
