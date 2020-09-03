@@ -281,6 +281,7 @@
     <Compile Include="Styles.cs" />
     <Compile Include="Targets\CreateJointTarget.cs" />
     <Compile Include="Properties\AxisInfo.cs" />
+    <Compile Include="Targets\CreateTarget_multithreaded.cs" />
     <Compile Include="Targets\FlipPlane.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Targets\CoordinateSystem.cs" />
@@ -498,6 +499,9 @@
     </PackageReference>
     <PackageReference Include="MongoDB.Driver">
       <Version>2.11.0</Version>
+    </PackageReference>
+    <PackageReference Include="morelinq">
+      <Version>3.3.2</Version>
     </PackageReference>
     <PackageReference Include="NETStandard.Library">
       <Version>2.0.3</Version>

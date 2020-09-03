@@ -376,7 +376,7 @@ namespace Axis.Targets
             {
                 case Manufacturer.ABB:
                     string str = "9E9";
-                    if (eVal != Util.ExAxisTol) // If the external axis value is present... (otherwise 0.00001 is passed as a default value).
+                    if (eVal.IsValid) // If the external axis value is present... (otherwise 0.00001 is passed as a default value).
                         str = Math.Round(eVal, 4).ToString(); // Get the external axis value per target and round it to two decimal places.                            
                     return str;
             }
@@ -420,11 +420,79 @@ namespace Axis.Targets
     /// <summary>
     /// Type wrapper for a double representing the external axis value.
     /// </summary>
-    public class ExtVal
+    public class ExtVal : IGH_Goo
     {
         private double val;
+        private bool isNull = true;
 
-        ExtVal(double d) => this.val = d;
+        #region Constructors
+        /// <summary>
+        /// Default constructor.
+        /// </summary>
+        public static ExtVal Default { get => new ExtVal(); }
+        public ExtVal() { }
+
+        /// <summary>
+        /// Standard speed constructor.
+        /// </summary>
+        /// <param name="tcpSpeed"></param>
+        /// <param name="rotSpeed"></param>
+        /// <param name="name"></param>
+        /// <param name="time"></param>
+        public ExtVal(double value)
+        {
+            this.val = value;
+            this.isNull = false;
+        }
+        #endregion
+
+        #region Interfaces
+        //IGH_GeometricGoo
+        public BoundingBox Boundingbox { get => throw new NotImplementedException(); }
+        public Guid ReferenceID { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public bool IsReferencedGeometry { get => throw new NotImplementedException(); }
+        public bool IsGeometryLoaded { get => throw new NotImplementedException(); }
+
+        public void ClearCaches() => throw new NotImplementedException();
+        public IGH_GeometricGoo DuplicateGeometry() => throw new NotImplementedException();
+        public BoundingBox GetBoundingBox(Transform xform) => throw new NotImplementedException();
+        public bool LoadGeometry() => throw new NotImplementedException();
+        public bool LoadGeometry(Rhino.RhinoDoc doc) => throw new NotImplementedException();
+        public IGH_GeometricGoo Morph(SpaceMorph xmorph) => throw new NotImplementedException();
+        public IGH_GeometricGoo Transform(Transform xform) => throw new NotImplementedException();
+
+        // IGH_Goo
+        public bool IsValid => !this.isNull;
+        public string IsValidWhyNot => throw new NotImplementedException();
+        public string TypeName => "External Axis Value";
+        public string TypeDescription => "The value describing the external axis movment";
+
+        public bool CastFrom(object source) => throw new NotImplementedException();
+        public bool CastTo<Q>(out Q target) => throw new NotImplementedException();
+        public IGH_Goo Duplicate()
+        {
+            return new ExtVal(this.val);
+        }
+        public IGH_GooProxy EmitProxy() => throw new NotImplementedException();
+        public object ScriptVariable() => throw new NotImplementedException();
+        public override string ToString() => $"Extenal axis value ({val.ToString("0.00")})";
+
+        //GH_ISerializable
+        public bool Read(GH_IReader reader) 
+        {
+            this.isNull = reader.GetBoolean("isValis");
+            this.val = reader.GetDouble("Value");
+            return true;
+        }
+        public bool Write(GH_IWriter writer)
+        {
+            writer.SetBoolean("isValis", this.isNull);
+            writer.SetDouble("Value", this.val);
+            return true;
+
+        }
+        #endregion
+
 
         public static implicit operator double(ExtVal eV) => eV.val;
         public static implicit operator ExtVal(double d) => new ExtVal(d);
