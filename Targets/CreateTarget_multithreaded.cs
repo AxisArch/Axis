@@ -2,6 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
+using System.Threading.Tasks;
+
+using MoreLinq;
+
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Types;
@@ -14,7 +18,7 @@ namespace Axis
     /// <summary>
     /// Define robot end effector plane target positions.
     /// </summary>
-    public class CreateTarget : GH_Component, IGH_VariableParameterComponent
+    public class CreateTarget_Multithreaded : GH_TaskCapableComponent<CreateTarget_Multithreaded.SolveResults>, IGH_VariableParameterComponent
     {
         // Boolean toggle for context menu items.
         bool m_outputCode = false;
@@ -28,8 +32,8 @@ namespace Axis
         // External axis presence.
         bool extRotary = false;
         bool extLinear = false;
-        
-        public CreateTarget() : base("Plane Target", "Target", "Create custom robot targets from planes.", AxisInfo.Plugin, AxisInfo.TabTargets)
+
+        public CreateTarget_Multithreaded() : base("Plane Target", "Target", "Create custom robot targets from planes.", AxisInfo.Plugin, AxisInfo.TabTargets)
         {
         }
 
@@ -46,14 +50,14 @@ namespace Axis
             IGH_Param csystem = new Axis.Params.CSystemParam();
             pManager.AddParameter(csystem, "Wobj", "Wobj", "Wobj to use for operation.", GH_ParamAccess.list);
 
-            for (int i = 0; i < 5; i++)
+            for (int i = 1; i < 5; i++)
                 pManager[i].Optional = true;
         }
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
             IGH_Param target = new Axis.Params.TargetParam();
-            pManager.AddParameter(target,"Targets", "Targets", "Robot targets.", GH_ParamAccess.list);
+            pManager.AddParameter(target, "Targets", "Targets", "Robot targets.", GH_ParamAccess.list);
         }
         #endregion
 
@@ -67,9 +71,12 @@ namespace Axis
         {
             this.Message = m_Manufacturer.ToString();
 
+            List<Target> targets = new List<Target>();
+            List<string> code = new List<string>();
+
             List<Plane> planes = new List<Plane>();
-            List<GH_ObjectWrapper> speedsIn = new List<GH_ObjectWrapper>();
-            List<GH_ObjectWrapper> zonesIn = new List<GH_ObjectWrapper>();
+            List<Speed> speeds = new List<Speed>();
+            List<Zone> zones = new List<Zone>();
             List<Tool> tools = new List<Tool>();
             List<CSystem> wobjs = new List<CSystem>();
             List<int> methods = new List<int>();
@@ -78,167 +85,243 @@ namespace Axis
             List<double> eRotVals = new List<double>();
             List<double> eLinVals = new List<double>();
 
-            bool hasSpeed = true;
-            bool hasZone = true;
 
-            if (!DA.GetDataList(0, planes)) return;
-            if (!DA.GetDataList(1, speedsIn)) hasSpeed = false;
-            if (!DA.GetDataList(2, zonesIn)) hasZone = false;
-            if (!DA.GetDataList(3, tools)) tools.Add(Tool.Default);
-            if (!DA.GetDataList(4, wobjs)) wobjs.Add(CSystem.Default);
-
-            // If interpolation types are specified, get them.
-            if (m_interpolationTypes) { if (!DA.GetDataList("*Method", methods)) return; }
-
-            // If the inputs are present, get the external axis values.
-            if (extRotary) { if (!DA.GetDataList("Rotary", eRotVals)) return; }
-            if (extLinear) { if (!DA.GetDataList("Linear", eLinVals)) return; }
-
-            List<Speed> speeds = new List<Speed>();
-            List<Zone> zones = new List<Zone>();
-
-            // Check to see if we have speeds, and if they are custom speed objects, otherwise use values.
-            if (hasSpeed)
+            if (InPreSolve)
             {
-                // Default speed dictionary.
-                Dictionary<double, Speed> defaultSpeeds = Util.ABBSpeeds();
-                double speedVal = 0;
+                // First pass; collect input data
+                DA.GetDataList(0, planes);
+                if (!DA.GetDataList(1, speeds)) speeds.Add(Speed.Default);
+                if (!DA.GetDataList(2, zones)) zones.Add(Zone.Default);
+                if (!DA.GetDataList(3, tools)) tools.Add(Tool.Default);
+                if (!DA.GetDataList(4, wobjs)) wobjs.Add(CSystem.Default);
 
-                foreach (GH_ObjectWrapper speedIn in speedsIn)
+                // If interpolation types are specified, get them.
+                if (m_interpolationTypes) { if (!DA.GetDataList("*Method", methods)) methods.Add(0); }
+                if (!m_interpolationTypes) methods.Add(0);
+
+                // If the inputs are present, get the external axis values.
+                if (extRotary) { if (!DA.GetDataList("Rotary", eRotVals)) eRotVals.Add(ExtVal.Default); }
+                if (!extRotary) eRotVals.Add(ExtVal.Default);
+                if (extLinear) { if (!DA.GetDataList("Linear", eLinVals)) eLinVals.Add(ExtVal.Default); }
+                if (!extLinear) eLinVals.Add(ExtVal.Default);
+
+
+
+                // Queue up the task
+                for (int i = 0; i < planes.Count; ++i)
                 {
-                    GH_ObjectWrapper speedObj = speedIn;
-                    Type cType = speedObj.Value.GetType();
-                    GH_Convert.ToDouble_Secondary(speedObj.Value, ref speedVal);
-
-                    if (cType.Name == "Speed")
-                        speeds.Add(speedObj.Value as Speed);
-                    else
-                    {
-                        if (!defaultSpeeds.ContainsKey(speedVal))
-                            AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Supplied speed value is non-standard. Please supply a default value (check the Axis Wiki - Controlling Speed for more info) or create a custom speed using the Speed component.");
-                        else
-                            speeds.Add(defaultSpeeds[speedVal]);
-                    }
+                    Task<SolveResults> task = Task.Run(() => ComputeTargets_Ordered(i, planes, speeds, zones,
+                        tools, wobjs, eRotVals, eLinVals, methods, m_Manufacturer), CancelToken);
+                    TaskList.Add(task);
                 }
-            }
-            // If we don't have any speed values, use the default speed.
-            else
-                speeds.Add(Speed.Default);
 
-            // Check to see if we have zones, and if they are custom zones objects, otherwise use values.
-            if (hasZone)
+                return;
+            }
+            if (!GetSolveResults(DA, out SolveResults result))
             {
-                // Default zone dictionary.
-                Dictionary<double, Zone> defaultZones = Util.ABBZones();
-                double zoneVal = 0;
+                DA.GetDataList(0, planes);
+                if (!DA.GetDataList(1, speeds)) speeds.Add(Speed.Default);
+                if (!DA.GetDataList(2, zones)) zones.Add(Zone.Default);
+                if (!DA.GetDataList(3, tools)) tools.Add(Tool.Default);
+                if (!DA.GetDataList(4, wobjs)) wobjs.Add(CSystem.Default);
 
-                foreach (GH_ObjectWrapper zoneIn in zonesIn)
-                {
-                    GH_ObjectWrapper zoneObj = zoneIn;
-                    Type cType = zoneObj.Value.GetType();
-                    GH_Convert.ToDouble_Secondary(zoneObj.Value, ref zoneVal);
+                // If interpolation types are specified, get them.
+                if (m_interpolationTypes) { if (!DA.GetDataList("*Method", methods)) return; }
 
-                    if (cType.Name == "Zone")
-                        zones.Add(zoneObj.Value as Zone);
-                    else
-                    {
-                        if (!defaultZones.ContainsKey(zoneVal))
-                            AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Supplied zone value is non-standard. Please supply a default value (check the Axis Wiki - Controlling Zone for more info) or create a custom zone using the Zoe component.");
-                        else
-                            zones.Add(defaultZones[zoneVal]);
-                    }
-                }
+                // If the inputs are present, get the external axis values.
+                if (extRotary) { if (!DA.GetDataList("Rotary", eRotVals)) return; }
+                if (extLinear) { if (!DA.GetDataList("Linear", eLinVals)) return; }
+
+
+                // Compute results on given data
+                System.Collections.Concurrent.ConcurrentBag<TargetOrderPair> bag = new System.Collections.Concurrent.ConcurrentBag<TargetOrderPair>();
+                Parallel.For(0, planes.Count, index => ComputeTargets_Unordered(bag, index, planes, m_interpolationTypes, speeds, zones, extRotary, extLinear, tools, wobjs, eRotVals, eLinVals, methods, m_Manufacturer));
+                targets = bag.OrderBy(b => b.Order).Select(b => b.Value).ToList();
+
+                result = new SolveResults();
+                result.Value = targets;
             }
-            // If we don't have any zone values, use the default zone.
-            else
-                zones.Add(Zone.Default);
 
-            List<Target> targets = new List<Target>();
-            List<string> code = new List<string>();
-            Speed speed = Speed.Default;
-            Zone zone = Zone.Default;
-            Tool tool = Tool.Default;
-            CSystem wobj = CSystem.Default;
+            // Set output data
+            if (result != null)
+            {
+                if (result.Value.Count != 0) DA.SetDataList("Targets", result.Value);
+            }
+        }
+
+        public class TargetOrderPair
+        {
+            public Target Value { get; set; }
+            public int Order { get; set; }
+        }
+        public class SolveResults
+        {
+            public List<Target> Value { get; set; } = new List<Target>();
+        }
+
+        /*
+        private static Tuple<MotionType mType,Speed speed,Zone zone,Tool tool,CSystem wobj,double extRot,double extLin,Manufacturer manufacturer> StructureValues(
+            List<MotionType> mTypes, List<Speed> speeds, List<Tool> tools, List<CSystem> wobjs, List<double> , List<double> , List<Manufacturer> ) 
+        {
+            Speed speed;
+            Zone zone;
+            Tool tool;
+            CSystem wobj;
             int method = 0;
-            
-            // External axis placeholders
-            double extRot = Util.ExAxisTol;
-            double extLin = Util.ExAxisTol;
+            double extRot = 0;
+            double extLin = 0;
 
-            for (int i = 0; i < planes.Count; i++)
+            if (m_interpolationTypes)
             {
-                if (m_interpolationTypes)
-                {
-                    // Method
-                    if (i < methods.Count) { method = methods[i]; }
-                    else if (methods != null && i >= methods.Count) { method = methods[methods.Count - 1]; }
-                    else { method = 0; }
-                }
-
-                if (speeds.Count > 0)
-                {
-                    if (i < speeds.Count) { speed = speeds[i]; }
-                    else { speed = speeds[speeds.Count - 1]; }
-                }
-                else { speed = Speed.Default; }
-
-                // Zone
-                if (i < zones.Count) { zone = zones[i]; }
-                else { zone = zones[zones.Count - 1]; }
-
-                // External rotary axis
-                if (extRotary)
-                {
-                    if (i < eRotVals.Count) { extRot = Math.Round(eRotVals[i], 3); }
-                    else { extRot = Math.Round(eRotVals[eRotVals.Count - 1], 3); }
-                }
-
-                // External linear axis
-                if (extLinear)
-                {
-                    if (i < eLinVals.Count) { extLin = Math.Round(eLinVals[i], 3); }
-                    else { extLin = Math.Round(eLinVals[eLinVals.Count - 1], 3); }
-                }
-
-                // Tools
-                if (tools.Count > 0)
-                {
-                    if (i < tools.Count) { tool = tools[i]; }
-                    else { tool = tools[tools.Count - 1]; }
-                }
-                else { tool = Tool.Default; }
-
-                // Wobjs
-                if (wobjs.Count > 0)
-                {
-                    if (i < wobjs.Count) { wobj = wobjs[i]; }
-                    else { wobj = wobjs[wobjs.Count - 1]; }
-                }
-                else { wobj = CSystem.Default; }
-
-                // Methods
-                MotionType mType = MotionType.Linear;
-
-                if (method == 1) { mType = MotionType.Joint; }
-                else if (method == 2) { mType = MotionType.AbsoluteJoint; }
-
-                // Create the robot target.
-                Target robTarg = new Target(planes[i], mType, speed, zone, tool, wobj, extRot, extLin, m_Manufacturer);
-                targets.Add(robTarg);
-
-                code.Add(robTarg.StrRob);
+                // Method
+                if (i < methods.Count) { method = methods[i]; }
+                else if (methods != null && i >= methods.Count) { method = methods[methods.Count - 1]; }
+                else { method = 0; }
             }
-            DA.SetDataList(0, targets);
 
-            m_targets = targets;
+            if (speeds.Count > 0)
+            {
+                if (i < speeds.Count) { speed = speeds[i]; }
+                else { speed = speeds[speeds.Count - 1]; }
+            }
+            else { speed = Speed.Default; }
 
-            List<Point3d> points = new List<Point3d>();
-            foreach (Target t in targets) points.Add(t.Position);
-            m_bBox = new BoundingBox(points);
-            /*
-            if (m_outputTarget)
-                DA.SetDataList("Code", code);
-            */
+            // Zone
+            if (i < zones.Count) { zone = zones[i]; }
+            else { zone = zones[zones.Count - 1]; }
+
+            // External rotary axis
+            if (extRotary)
+            {
+                if (i < eRotVals.Count) { extRot = Math.Round(eRotVals[i], 3); }
+                else { extRot = Math.Round(eRotVals[eRotVals.Count - 1], 3); }
+            }
+
+            // External linear axis
+            if (extLinear)
+            {
+                if (i < eLinVals.Count) { extLin = Math.Round(eLinVals[i], 3); }
+                else { extLin = Math.Round(eLinVals[eLinVals.Count - 1], 3); }
+            }
+
+            // Tools
+            if (tools.Count > 0)
+            {
+                if (i < tools.Count) { tool = tools[i]; }
+                else { tool = tools[tools.Count - 1]; }
+            }
+            else { tool = Tool.Default; }
+
+            // Wobjs
+            if (wobjs.Count > 0)
+            {
+                if (i < wobjs.Count) { wobj = wobjs[i]; }
+                else { wobj = wobjs[wobjs.Count - 1]; }
+            }
+            else { wobj = CSystem.Default; }
+
+            // Methods
+            MotionType mType = MotionType.Linear;
+
+            if (method == 1) { mType = MotionType.Joint; }
+            else if (method == 2) { mType = MotionType.AbsoluteJoint; }
+
+        }
+        */
+
+        private static SolveResults ComputeTargets_Ordered(int i, List<Plane> planes, List<Speed> speeds,
+            List<Zone> zones, List<Tool> tools, List<CSystem> wobjs, List<double> eRotVals,
+            List<double> eLinVals, List<int> methods, Manufacturer m_Manufacturer)
+        {
+            SolveResults result = new SolveResults();
+
+
+            for (int j = 0; j < planes.Count; ++j)
+            {
+                result.Value.Add(new Target(planes[j], (MotionType)methods.InfinitElementAt(j), 
+                    speeds.InfinitElementAt(j), zones.InfinitElementAt(j), tools.InfinitElementAt(j), wobjs.InfinitElementAt(j), 
+                    eRotVals.InfinitElementAt(j), eLinVals.InfinitElementAt(j), m_Manufacturer));
+            }
+
+            return result;
+        }
+
+        private static void ComputeTargets_Unordered(System.Collections.Concurrent.ConcurrentBag<TargetOrderPair> bag, 
+            int i, List<Plane> planes, bool m_interpolationTypes, List<Speed> speeds,
+            List<Zone> zones, bool extRotary, bool extLinear, List<Tool> tools, List<CSystem> wobjs, List<double> eRotVals,
+            List<double> eLinVals, List<int> methods, Manufacturer m_Manufacturer)
+        {
+            TargetOrderPair result = new TargetOrderPair();
+
+            Speed speed;
+            Zone zone;
+            Tool tool;
+            CSystem wobj;
+            int method = 0;
+            double extRot = 0;
+            double extLin = 0;
+
+
+            if (m_interpolationTypes)
+            {
+                // Method
+                if (i < methods.Count) { method = methods[i]; }
+                else if (methods != null && i >= methods.Count) { method = methods[methods.Count - 1]; }
+                else { method = 0; }
+            }
+
+            if (speeds.Count > 0)
+            {
+                if (i < speeds.Count) { speed = speeds[i]; }
+                else { speed = speeds[speeds.Count - 1]; }
+            }
+            else { speed = Speed.Default; }
+
+            // Zone
+            if (i < zones.Count) { zone = zones[i]; }
+            else { zone = zones[zones.Count - 1]; }
+
+            // External rotary axis
+            if (extRotary)
+            {
+                if (i < eRotVals.Count) { extRot = Math.Round(eRotVals[i], 3); }
+                else { extRot = Math.Round(eRotVals[eRotVals.Count - 1], 3); }
+            }
+
+            // External linear axis
+            if (extLinear)
+            {
+                if (i < eLinVals.Count) { extLin = Math.Round(eLinVals[i], 3); }
+                else { extLin = Math.Round(eLinVals[eLinVals.Count - 1], 3); }
+            }
+
+            // Tools
+            if (tools.Count > 0)
+            {
+                if (i < tools.Count) { tool = tools[i]; }
+                else { tool = tools[tools.Count - 1]; }
+            }
+            else { tool = Tool.Default; }
+
+            // Wobjs
+            if (wobjs.Count > 0)
+            {
+                if (i < wobjs.Count) { wobj = wobjs[i]; }
+                else { wobj = wobjs[wobjs.Count - 1]; }
+            }
+            else { wobj = CSystem.Default; }
+
+            // Methods
+            MotionType mType = MotionType.Linear;
+
+            if (method == 1) { mType = MotionType.Joint; }
+            else if (method == 2) { mType = MotionType.AbsoluteJoint; }
+
+            // Create the robot target.
+            result.Value = new Target(planes[i], mType, speed, zone, tool, wobj, extRot, extLin, m_Manufacturer);
+            result.Order = i;
+
+            bag.Add(result);
         }
 
         #region UI
@@ -456,7 +539,7 @@ namespace Axis
             foreach (Target target in m_targets) Canvas.Component.DisplayPlane(target.Plane, args);
 
         }
-        
+
         public override void ClearData()
         {
             base.ClearData();
@@ -509,8 +592,18 @@ namespace Axis
         }
         public override Guid ComponentGuid
         {
-            get { return new Guid("{c8ae5262-f447-4807-b1ff-10b29b37c984}"); }
+            get { return new Guid("C3B49429-C457-4573-939E-0D3BA69DF071"); }
         }
         #endregion
+    }
+
+    public static class Extentions
+    {
+        public static T InfinitElementAt<T>(this IList<T> source, int index) 
+        {
+            if (source == null) return default(T);
+            if (source.Count() == 0) return default(T);
+            return ((source.Count() > index) ? source[index] : source[source.Count()-1]); 
+        }
     }
 }

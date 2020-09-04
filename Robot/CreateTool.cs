@@ -39,7 +39,6 @@ namespace Axis.Robot
         {
             IGH_Param tool = new Axis.Params.ToolParam();
             pManager.AddParameter(tool, "Tool", "Tool", "Axis tool definition.", GH_ParamAccess.item);
-            //pManager.AddGenericParameter("Tool", "Tool", "Axis tool definition.", GH_ParamAccess.item);
         }
         #endregion
 

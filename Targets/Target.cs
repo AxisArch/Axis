@@ -22,16 +22,16 @@ namespace Axis.Targets
         public Quaternion Quaternion { get; set; }
         public List<double> JointAngles { get; set; }
 
-        public Speed Speed { get; }
-        public Zone Zone { get; }
+        public Speed Speed { get; private set; }
+        public Zone Zone { get; private set; }
 
-        public Tool Tool { get; }
+        public Tool Tool { get; private set; }
         public CSystem CSystem { get; set; }
 
         public ExtVal ExtRot { get; set; }
         public ExtVal ExtLin { get; set; }
         #endregion
-        public Manufacturer Manufacturer { get; }
+        public Manufacturer Manufacturer { get; private set; }
 
         public string StrRob
         { get
@@ -105,7 +105,7 @@ namespace Axis.Targets
                             case MotionType.NoMovement:
                                 return "! No Movement";
                         }
-                        throw new Exception($"{this.Method.ToString()} not implemented for ABB");
+                        throw new NotImplementedException($"{this.Method.ToString()} not implemented for ABB");
                     #endregion
 
                     #region Kuka
@@ -140,15 +140,15 @@ namespace Axis.Targets
                             case MotionType.NoMovement:
                                 return "! No Movement";
                         }
-                        throw new Exception($"{this.Method.ToString()} not implemented for Kuka");
+                        throw new NotImplementedException($"{this.Method.ToString()} not implemented for Kuka");
                         #endregion
                 }
-                throw new Exception($"The target string repersentation for {this.Manufacturer.ToString()} is not implemented");
+                throw new NotImplementedException($"The target string repersentation for {this.Manufacturer.ToString()} is not implemented");
 
             }
         }
         public Point3d Position { get =>  this.TargetPlane.Origin; }
-        public MotionType Method { get; }
+        public MotionType Method { get; private set; }
 
         #region Constructors
 
@@ -228,7 +228,20 @@ namespace Axis.Targets
         public bool IsReferencedGeometry { get => false; }
         public bool IsGeometryLoaded { get => throw new NotImplementedException(); }
 
-        public void ClearCaches() => throw new NotImplementedException();
+        public void ClearCaches() 
+        {
+            this.Plane = Plane.Unset;
+            this.TargetPlane = Plane.Unset;
+            this.Quaternion = Quaternion.Zero;
+            this.JointAngles = null;
+            this.Tool = null;
+            this.Speed = null;
+            this.Zone = null;
+            this.ExtRot = null;
+            this.ExtLin = null;
+            this.Method = 0;
+            this.Manufacturer = 0;
+        }
         public IGH_GeometricGoo DuplicateGeometry() => throw new NotImplementedException();
         public BoundingBox GetBoundingBox(Transform xform) => throw new NotImplementedException();
         public bool LoadGeometry() => throw new NotImplementedException();
@@ -246,6 +259,14 @@ namespace Axis.Targets
         public bool CastFrom(object source) => throw new NotImplementedException();
         public bool CastTo<Q>(out Q target)
         {
+            if (typeof(Q).IsAssignableFrom(typeof(GH_ObjectWrapper)))
+            {
+                string name = typeof(Q).Name;
+                object value = new GH_ObjectWrapper(this);
+                target = (Q)value;
+                return true;
+            }
+
             if (typeof(Q).IsAssignableFrom(typeof(GH_Plane)) && (this.Plane != null))
             {
                 object _Plane = new GH_Plane(this.Plane);
@@ -261,7 +282,21 @@ namespace Axis.Targets
             target = default(Q);
             return false;
         }
-        public IGH_Goo Duplicate() => throw new NotImplementedException();
+        public IGH_Goo Duplicate() 
+        {
+            var target = default(Target);
+            switch (this.Method) 
+            {
+                case MotionType.Joint:
+                case MotionType.Linear:
+                    target = new  Target(this.Plane.Clone(), this.Method , (Speed)this.Speed.Duplicate(), (Zone)this.Zone.Duplicate(), (Tool)this.Tool.Duplicate(), (CSystem)this.CSystem.Duplicate(), this.ExtRot, this.ExtLin, this.Manufacturer);
+                    break;
+                case MotionType.AbsoluteJoint:
+                    target = new Target(this.JointAngles, (Speed)this.Speed.Duplicate(), (Zone)this.Zone.Duplicate(), (Tool)this.Tool.Duplicate(), this.ExtRot, this.ExtLin, this.Manufacturer);
+                    break;
+            }
+            return target;
+        }
         public IGH_GooProxy EmitProxy() => throw new NotImplementedException();
         public object ScriptVariable() => throw new NotImplementedException();
         public override string ToString() => (Method != null) ? $"Target ({Method.ToString()})" : $"Target ({Position})";
@@ -302,8 +337,7 @@ namespace Axis.Targets
 
                     return strSpeed;
             }
-
-            throw new Exception($"String representation of speeds not implemented for {manufacturer.ToString()}");
+            throw new NotImplementedException($"String representation of speeds not implemented for {manufacturer.ToString()}");
         }
         public static string CodeStrFor(this Zone zone, Manufacturer manufacturer)
         {
@@ -312,7 +346,7 @@ namespace Axis.Targets
                 case Manufacturer.ABB:
                     return zone.Name;
             }
-            throw new Exception($"String representation of zones not implemented for {manufacturer.ToString()}");
+            throw new NotImplementedException($"String representation of zones not implemented for {manufacturer.ToString()}");
         }
         public static string CodeStrFor(this Tool tool, Manufacturer manufacturer)
         {
@@ -325,7 +359,7 @@ namespace Axis.Targets
                         toolName = tool.Name;
                     return toolName;
             }
-            throw new Exception($"String representation of tools not implemented for {manufacturer.ToString()}");
+            throw new NotImplementedException($"String representation of tools not implemented for {manufacturer.ToString()}");
         }
         public static string CodeStrFor(this CSystem cSystem, Manufacturer manufacturer)
         {
@@ -334,7 +368,7 @@ namespace Axis.Targets
                 case Manufacturer.ABB:
                     return $"\\WObj:={cSystem.Name}";
             }
-            throw new Exception($"Linear external axis string not implemented for {manufacturer.ToString()}");
+            throw new NotImplementedException($"Linear external axis string not implemented for {manufacturer.ToString()}");
         }
         public static string CodeStrFor(this ExtVal eVal, Manufacturer manufacturer)
         {
@@ -342,11 +376,11 @@ namespace Axis.Targets
             {
                 case Manufacturer.ABB:
                     string str = "9E9";
-                    if (eVal != Util.ExAxisTol) // If the external axis value is present... (otherwise 0.00001 is passed as a default value).
+                    if (eVal.IsValid) // If the external axis value is present... (otherwise 0.00001 is passed as a default value).
                         str = Math.Round(eVal, 4).ToString(); // Get the external axis value per target and round it to two decimal places.                            
                     return str;
             }
-            throw new Exception($"External axis string not implemented for {manufacturer.ToString()}");
+            throw new NotImplementedException($"External axis string not implemented for {manufacturer.ToString()}");
         }
         public static string CodeStrFor(this Quaternion quat, Manufacturer manufacturer)
         {
@@ -363,7 +397,7 @@ namespace Axis.Targets
 
                     return $"{w.ToString()},{x.ToString()},{y.ToString()},{z.ToString()}";
             }
-            throw new Exception($"Quaternion string not implemented for {manufacturer.ToString()}");
+            throw new NotImplementedException($"Quaternion string not implemented for {manufacturer.ToString()}");
         }
         public static string CodeStrFor(this Point3d position, Manufacturer manufacturer)
         {
@@ -378,7 +412,7 @@ namespace Axis.Targets
                 case Manufacturer.Kuka:
                     return $"X {posX.ToString()}, Y {posY.ToString()}, Z {posZ.ToString()}";
             }
-            throw new Exception($"Point3d string not implemented for {manufacturer.ToString()}");
+            throw new NotImplementedException($"Point3d string not implemented for {manufacturer.ToString()}");
         }
 
     }
@@ -386,11 +420,79 @@ namespace Axis.Targets
     /// <summary>
     /// Type wrapper for a double representing the external axis value.
     /// </summary>
-    public class ExtVal
+    public class ExtVal : IGH_Goo
     {
         private double val;
+        private bool isNull = true;
 
-        ExtVal(double d) => this.val = d;
+        #region Constructors
+        /// <summary>
+        /// Default constructor.
+        /// </summary>
+        public static ExtVal Default { get => new ExtVal(); }
+        public ExtVal() { }
+
+        /// <summary>
+        /// Standard speed constructor.
+        /// </summary>
+        /// <param name="tcpSpeed"></param>
+        /// <param name="rotSpeed"></param>
+        /// <param name="name"></param>
+        /// <param name="time"></param>
+        public ExtVal(double value)
+        {
+            this.val = value;
+            this.isNull = false;
+        }
+        #endregion
+
+        #region Interfaces
+        //IGH_GeometricGoo
+        public BoundingBox Boundingbox { get => throw new NotImplementedException(); }
+        public Guid ReferenceID { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public bool IsReferencedGeometry { get => throw new NotImplementedException(); }
+        public bool IsGeometryLoaded { get => throw new NotImplementedException(); }
+
+        public void ClearCaches() => throw new NotImplementedException();
+        public IGH_GeometricGoo DuplicateGeometry() => throw new NotImplementedException();
+        public BoundingBox GetBoundingBox(Transform xform) => throw new NotImplementedException();
+        public bool LoadGeometry() => throw new NotImplementedException();
+        public bool LoadGeometry(Rhino.RhinoDoc doc) => throw new NotImplementedException();
+        public IGH_GeometricGoo Morph(SpaceMorph xmorph) => throw new NotImplementedException();
+        public IGH_GeometricGoo Transform(Transform xform) => throw new NotImplementedException();
+
+        // IGH_Goo
+        public bool IsValid => !this.isNull;
+        public string IsValidWhyNot => throw new NotImplementedException();
+        public string TypeName => "External Axis Value";
+        public string TypeDescription => "The value describing the external axis movment";
+
+        public bool CastFrom(object source) => throw new NotImplementedException();
+        public bool CastTo<Q>(out Q target) => throw new NotImplementedException();
+        public IGH_Goo Duplicate()
+        {
+            return new ExtVal(this.val);
+        }
+        public IGH_GooProxy EmitProxy() => throw new NotImplementedException();
+        public object ScriptVariable() => throw new NotImplementedException();
+        public override string ToString() => $"Extenal axis value ({val.ToString("0.00")})";
+
+        //GH_ISerializable
+        public bool Read(GH_IReader reader) 
+        {
+            this.isNull = reader.GetBoolean("isValis");
+            this.val = reader.GetDouble("Value");
+            return true;
+        }
+        public bool Write(GH_IWriter writer)
+        {
+            writer.SetBoolean("isValis", this.isNull);
+            writer.SetDouble("Value", this.val);
+            return true;
+
+        }
+        #endregion
+
 
         public static implicit operator double(ExtVal eV) => eV.val;
         public static implicit operator ExtVal(double d) => new ExtVal(d);
@@ -462,6 +564,14 @@ namespace Axis.Targets
         public bool CastFrom(object source) => throw new NotImplementedException();
         public bool CastTo<Q>(out Q target)
         {
+            if (typeof(Q).IsAssignableFrom(typeof(GH_ObjectWrapper)))
+            {
+                string name = typeof(Q).Name;
+                object value = new GH_ObjectWrapper(this);
+                target = (Q)value;
+                return true;
+            }
+
             if (typeof(Q).IsAssignableFrom(typeof(GH_Number)) && (this.TranslationSpeed != null))
             {
                 object _number = new GH_Number(this.TranslationSpeed);
@@ -471,7 +581,10 @@ namespace Axis.Targets
             target = (Q)default;
             return false;
         }
-        public IGH_Goo Duplicate() => throw new NotImplementedException();
+        public IGH_Goo Duplicate() 
+        {
+            return new Speed(this.TranslationSpeed, this.RotationSpeed, this.Name, this.Time);
+        }
         public IGH_GooProxy EmitProxy() => throw new NotImplementedException();
         public object ScriptVariable() => throw new NotImplementedException();
         public  override string ToString() => (Name != null) ? $"Speed ({Name})" : $"Speed ({TranslationSpeed:0.0} mm/s)";
@@ -501,15 +614,12 @@ namespace Axis.Targets
         /// <summary>
         /// Default zone object.
         /// </summary>
-        public static Zone Default { get; }
+        public static Zone Default => new Zone(false, 5, 25, 25, 15, 35, 5, "DefaultZone");
 
         /// <summary>
         /// Default constructor.
         /// </summary>
-        static Zone()
-        {
-            Default = new Zone(false, 5, 25, 25, 15, 35, 5, "DefaultZone");
-        }
+        static Zone(){}
 
         /// <summary>
         /// Standard constructor.
@@ -560,6 +670,14 @@ namespace Axis.Targets
         public bool CastFrom(object source) => throw new NotImplementedException();
         public bool CastTo<Q>(out Q target)
         {
+            if (typeof(Q).IsAssignableFrom(typeof(GH_ObjectWrapper)))
+            {
+                string name = typeof(Q).Name;
+                object value = new GH_ObjectWrapper(this);
+                target = (Q)value;
+                return true;
+            }
+
             if (typeof(Q).IsAssignableFrom(typeof(GH_Number)) && (this.PathRadius != null))
             {
                 object _number = new GH_Number(this.PathRadius);
@@ -569,7 +687,10 @@ namespace Axis.Targets
             target = default(Q);
             return false;
         }
-        public IGH_Goo Duplicate() => throw new NotImplementedException();
+        public IGH_Goo Duplicate() 
+        {
+            return new Zone(this.StopPoint, this.PathRadius, this.PathOrient, this.PathExternal, this.Orientation, this.LinearExternal, this.RotaryExternal, this.Name);
+        }
         public IGH_GooProxy EmitProxy() => throw new NotImplementedException();
         public object ScriptVariable() => throw new NotImplementedException();
         public override string ToString() => (Name != null) ? $"Zone ({Name})" : $"Zone ({PathRadius:0.0} mm)";
@@ -594,15 +715,12 @@ namespace Axis.Targets
         /// <summary>
         /// Default coordinate system object.
         /// </summary>
-        public static CSystem Default { get; set; }
+        public static CSystem Default => new CSystem("Default", Plane.WorldXY, false, Plane.WorldXY);
 
         /// <summary>
         /// Default constructor.
         /// </summary>
-        static CSystem()
-        {
-            Default = new CSystem("Default", Plane.WorldXY, false, Plane.WorldXY);
-        }
+        static CSystem(){}
 
         /// <summary>
         /// Standard coordinate system constructor.
@@ -652,6 +770,13 @@ namespace Axis.Targets
         public bool CastFrom(object source) => throw new NotImplementedException();
         public bool CastTo<Q>(out Q target)
         {
+            if (typeof(Q).IsAssignableFrom(typeof(GH_ObjectWrapper)))
+            {
+                string name = typeof(Q).Name;
+                object value = new GH_ObjectWrapper(this);
+                target = (Q)value;
+                return true;
+            }
 
             if (typeof(Q).IsAssignableFrom(typeof(GH_Plane)) && (this.CSPlane != null))
             {
@@ -668,7 +793,10 @@ namespace Axis.Targets
             target = default(Q);
             return false;
         }
-        public IGH_Goo Duplicate() => throw new NotImplementedException();
+        public IGH_Goo Duplicate()
+        {
+            return new CSystem(this.Name, this.CSPlane.Clone(), this.Dynamic, this.ExternalAxis.Clone());
+        }
         public IGH_GooProxy EmitProxy() => throw new NotImplementedException();
         public object ScriptVariable() => throw new NotImplementedException();
         public  override string ToString() => $"CSystem at: {CSPlane.ToString()}";
@@ -699,18 +827,21 @@ namespace Axis.Targets
     {
         public TimeSpan duration { get; private set; }
         double totalSec;
-        List<Target> targets;
+        List<Manipulator.ManipulatorPose> poses;
         List<double> targetProgress;
 
+        public Manipulator.ManipulatorPose StartPose => poses[0];
+
         #region Constructor
+        public Toolpath() { }
         /// <summary>
         /// Toolpath constructor.
         /// </summary>
         /// <param name="targets"></param>
-        public Toolpath(List<Target> targets)
+        public Toolpath(List<Manipulator.ManipulatorPose> targets)
         {
             Times(targets);
-            this.targets = targets;
+            this.poses = targets;
         }
         #endregion
 
@@ -726,10 +857,10 @@ namespace Axis.Targets
             if (passedSec < this.totalSec)
             {
                 var val = -this.targetProgress.BinarySearch(passedSec);
-                if (val >= targets.Count) val = targets.Count - 1;
+                if (val >= poses.Count) val = poses.Count - 1;
                 return val;
             }
-            else return targets.Count - 1;
+            else return poses.Count - 1;
         }
 
         /// <summary>
@@ -737,22 +868,37 @@ namespace Axis.Targets
         /// </summary>
         /// <param name="timePassed"></param>
         /// <returns></returns>
-        public Target GetTarget(TimeSpan timePassed)
+        public Manipulator.ManipulatorPose GetPose(TimeSpan timePassed)
         {
-            return this.targets[this.GetProgress(timePassed)];
+            return this.poses[this.GetProgress(timePassed)];
+        }
+        public Manipulator.ManipulatorPose GetPose(double value) 
+        {
+            // Ensure value is between 0 and 1
+            value = (value > 0) ? value : 0;
+            value = (value < 1) ? value : 1;
+
+            double total = poses.Count-1;
+
+            int position = (int)Math.Round((total / 100) * value*100);
+
+            return poses[position];
+
+
         }
 
-        void Times(List<Target> targets)
+        void Times(List<Manipulator.ManipulatorPose> poses)
         {
             double timeTotal = 0;
 
             List<double> tProgress = new List<double>();
             tProgress.Add(0);
 
-            for (int i = 0; i < targets.Count - 1; ++i)
+            for (int i = 0; i < poses.Count - 1; ++i)
             {
-                double distance = new Line(targets[i].Position, targets[i + 1].Position).Length;
-                double speed = targets[i + 1].Speed.TranslationSpeed;
+                var targets = poses[i].Target;
+                double distance = new Line(poses[i].Target.Origin, poses[i+1].Target.Origin).Length;
+                double speed = poses[i + 1].Speed.TranslationSpeed;
                 timeTotal += distance / speed;
                 tProgress.Add(timeTotal);
             }
@@ -794,16 +940,23 @@ namespace Axis.Targets
         public bool CastFrom(object source) => throw new NotImplementedException();
         public bool CastTo<Q>(out Q target)
         {
+            if (typeof(Q).IsAssignableFrom(typeof(GH_ObjectWrapper)))
+            {
+                string name = typeof(Q).Name;
+                object value = new GH_ObjectWrapper(this);
+                target = (Q)value;
+                return true;
+            }
 
             if (typeof(Q).IsAssignableFrom(typeof(GH_Curve)))
             {
                 List<Point3d> points = new List<Point3d>();
 
-                foreach (Target t in this.targets)
+                foreach (Manipulator.ManipulatorPose p in this.poses)
                 {
-                    if (t.Plane.Origin != null)
+                    if (p.Target.Origin != null)
                     {
-                        points.Add(t.Plane.Origin);
+                        points.Add(p.Target.Origin);
                     }
                 }
 
@@ -818,7 +971,7 @@ namespace Axis.Targets
         public IGH_Goo Duplicate() => throw new NotImplementedException();
         public IGH_GooProxy EmitProxy() => throw new NotImplementedException();
         public object ScriptVariable() => throw new NotImplementedException();
-        public override string ToString() => $"Toolpath of length: {this.targets.Count}";
+        public override string ToString() => $"Toolpath of length: {this.poses.Count}";
 
         //GH_ISerializable
         public bool Read(GH_IReader reader) => throw new NotImplementedException();

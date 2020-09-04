@@ -12,13 +12,14 @@ using GH_IO.Serialization;
 using Axis;
 using Microsoft.Office.Interop.Excel;
 using System.Linq;
+using Axis.Targets;
 
 namespace Axis.Core 
 {
     /// <summary>
     /// Create custom industrial robot configurations.
     /// </summary>
-    public class Manipulator : IGH_GeometricGoo
+    public class Manipulator : IGH_GeometricGoo, Axis_Displayable<Mesh>
     {
         public string Name = "Wall-E"; // This variable can hold the model number
         private Guid id = Guid.Empty;
@@ -50,6 +51,10 @@ namespace Axis.Core
 
             } set => resetTransform = value; 
         }
+
+        //Used for Axis display pipeline
+        public Color[] Colors { get => CurrentPose.Colors; }
+        public Mesh[] Geometries { get => RobMeshes.ToArray(); }
 
         #region Constructors
         /// <summary>
@@ -240,7 +245,6 @@ namespace Axis.Core
         /// </summary>
         public void UpdatePose()
         {
-
             var xform = this.CurrentPose.GetPose().ToList();
             for (int i = 0; i < this.RobMeshes.Count - 1; ++i) this.RobMeshes[i + 1].Transform(xform[i]);
             this.ResetTransform = this.CurrentPose.Reverse;
@@ -318,7 +322,21 @@ namespace Axis.Core
 
             return false;
         }
-        public bool CastTo<T>(out T target) => throw new NotImplementedException();
+        public bool CastTo<T>(out T target) 
+        {
+            target = default(T);
+
+            if (typeof(T).IsAssignableFrom(typeof(GH_ObjectWrapper)))
+            {
+                string name = typeof(T).Name;
+                object value = new GH_ObjectWrapper(this);
+                target = (T)value;
+                return true;
+            }
+
+                
+            return false;
+        }
         public IGH_Goo Duplicate()
         {
             Manipulator robot = new Manipulator(this.Manufacturer, this.AxisPlanes.ToArray(), this.MinAngles, this.MaxAngles, this.RobMeshes.Select(m => m.DuplicateMesh()).ToList(), this.RobBasePlane.Clone(), this.Indices);
@@ -489,10 +507,10 @@ namespace Axis.Core
         /// </summary>
         public class ManipulatorPose : IGH_Goo
         {
-            private Manipulator Robot;
-            private Axis.Targets.Target Target;
+            private Manipulator robot;
+            private Axis.Targets.Target target;
             private double[] radAngles;
-            private JointStatesValue[] jointStates;
+            private JointState[] jointStates;
 
             private bool outOfReach = false;
             private bool outOfRoation = false;
@@ -500,7 +518,7 @@ namespace Axis.Core
             private bool wristSing = false;
 
             public double[] Angles { get => this.radAngles.Select(d => d.ToDegrees()).ToArray(); }
-            public JointStatesValue[] JointStates {
+            public JointState[] JointStates {
                 get => jointStates;
                 set { jointStates = value; }
             }
@@ -523,49 +541,103 @@ namespace Axis.Core
             }
 
             // Mesh colours
-            public Color[] Colors { get => (this.jointStates != null) ? this.jointStates.Select(state => GetColour(state)).ToArray() : null; }
-            private static Dictionary<JointStatesValue, Color> JointColours = new Dictionary<JointStatesValue, Color>()
+            private static Dictionary<JointState, Color> JointColours = new Dictionary<JointState, Color>()
             {
-                { JointStatesValue.Normal, Axis.Styles.DarkGrey },
-                { JointStatesValue.OutOfReach, Axis.Styles.Pink },
-                { JointStatesValue.OutOfRotation, Axis.Styles.Pink },
-                { JointStatesValue.WristSing, Axis.Styles.Blue },
-                { JointStatesValue.OverHeadSing, Axis.Styles.Blue },
+                { JointState.Normal, Axis.Styles.DarkGrey },
+                { JointState.OutOfReach, Axis.Styles.Pink },
+                { JointState.OutOfRotation, Axis.Styles.Pink },
+                { JointState.WristSing, Axis.Styles.Blue },
+                { JointState.OverHeadSing, Axis.Styles.Blue },
 
             };
 
             public Plane[] Planes { get
                 {
-                    Plane[] planes = this.Robot.AxisPlanes.Select(plane => plane.Clone()).ToArray();
-                    for (int i = 0; i < planes.Length; ++i) planes[i].Transform(this.Robot.ResetTransform[i] * this.Forward[i]);
+                    Plane[] planes = this.robot.AxisPlanes.Select(plane => plane.Clone()).ToArray();
+                    for (int i = 0; i < planes.Length; ++i) planes[i].Transform(this.robot.ResetTransform[i] * this.Forward[i]);
                     return planes;
                 } }
 
             public Plane Flange { get
                 {
-                    Plane flange = this.Robot.AxisPlanes[5].Clone();
+                    Plane flange = this.robot.AxisPlanes[5].Clone();
                     flange.Transform(Forward[5]);
                     return flange;
                 } }
 
-            public Mesh[] Geometry
+            public Plane Target { 
+                get 
+                {
+                    switch (this.target.Method) 
+                    {
+                        case MotionType.Linear:
+                        case MotionType.Joint:
+                            return this.target.Plane;
+                        case MotionType.AbsoluteJoint:
+                            var plane = this.Flange.Clone();
+                            var xform = Rhino.Geometry.Transform.PlaneToPlane(Plane.WorldXY, this.target.Tool.TCP);
+                            plane.Transform(xform);
+                            return plane;
+                    }
+                    return Plane.Unset;
+                } }
+            public Tool Tool => this.target.Tool;
+            public Speed Speed => this.target.Speed;
+
+            public Mesh[] Geometries
             {
                 get
                 {
-                    Mesh[] meshes = this.Robot.RobMeshes.Select(plane => plane.DuplicateMesh()).ToArray();
-                    for (int i = 0; i < meshes.Length - 1; ++i) meshes[i + 1].Transform(this.Robot.ResetTransform[i] * this.Forward[i]);
+                    Mesh[] meshes = new Mesh[this.robot.RobMeshes.Count + this.target.Tool.Geometries.Length];
+
+                    var rob = this.robot.RobMeshes.Select(mesh => mesh.DuplicateMesh()).ToArray();
+                    for (int i = 0; i < rob.Length - 1; ++i) rob[i + 1].Transform(this.robot.ResetTransform[i] * this.Forward[i]);
+
+                    var tool = this.target.Tool.Geometries.Select(mesh => mesh.DuplicateMesh()).ToArray();
+                    foreach (Mesh m in tool) m.Transform(this.target.Tool.ResetTransform * Rhino.Geometry.Transform.PlaneToPlane(Plane.WorldXY, this.Flange));
+
+                    for (int i = 0; i < rob.Length; ++i) meshes[i] = rob[i];
+                    for (int i = rob.Length; i < this.robot.RobMeshes.Count + tool.Length; ++i) meshes[i] = tool[i - rob.Length];
+
+                    //Maybe a list based implementation is easier.
+                    // But this way I'm sure that the out put of "Geometies" has the identical length of "Colors"
                     return meshes;
+                }
+            }
+            public Color[] Colors 
+            { 
+                get
+                {
+                    if (this.jointStates == null) return null;
+
+                    var jointColors = this.jointStates.Select(state => GetColour(state)).ToArray();
+                    var tool = this.target.Tool.Colors;
+
+                    Color[] colors = new Color[this.robot.Geometries.Length + this.target.Tool.Geometries.Length];
+
+
+                    colors[0] = Axis.Styles.DarkGrey; //Base Color
+                    for (int i = 1; i < jointColors.Length+1; ++i) colors[i] = jointColors[i-1]; // Joint Colours 
+                    for (int i = 1+ jointColors.Length; i < this.robot.Geometries.Length; ++i) colors[i]= Axis.Styles.DarkGrey; //Left over Colors
+
+                    for (int i = this.robot.Geometries.Length; i < this.robot.Geometries.Length + this.target.Tool.Geometries.Length; ++i) colors[i] = tool[i- this.robot.Geometries.Length]; // Tool Color
+
+                    //Maybe a list based implementation is easier.
+                    // But this way I'm sure that the out put of "Geometies" has the identical length of "Colors"
+
+
+                    return colors;
                 }
             }
 
             #region Constructors
             public ManipulatorPose(Manipulator robot)
             {
-                this.Robot = robot;
+                this.robot = robot;
             }
             public ManipulatorPose(Manipulator robot, Targets.Target target)
             {
-                this.Robot = robot;
+                this.robot = robot;
                 this.SetPose(target);
             }
             #endregion
@@ -574,14 +646,14 @@ namespace Axis.Core
             //Public
             public void SetPose(Targets.Target target)
             {
-                this.Target = target;
+                this.target = target;
 
                 double[] radAngles = new double[6];
                 double[] degAngles = new double[6];
-                JointStatesValue[] jointStates = new JointStatesValue[6];
+                JointState[] jointStates = new JointState[6];
 
                 //Invers and farward kinematics devided by manufacturar
-                switch (this.Robot.Manufacturer)
+                switch (this.robot.Manufacturer)
                 {
                     case Manufacturer.ABB:
                         switch (target.Method)
@@ -599,21 +671,21 @@ namespace Axis.Core
 
                                 // Select Solution based on Indecies
                                 //for (int i = 0; i < anglesSet.Length / anglesSet.GetLength(1); ++i) degAngles[i] = anglesSet[i, this.Robot.Indices[i]];
-                                radAngles = anglesSet.Zip<List<double>, int, double>(this.Robot.Indices, (solutions, selIdx) => solutions[selIdx]).ToArray();
+                                radAngles = anglesSet.Zip<List<double>, int, double>(this.robot.Indices, (solutions, selIdx) => solutions[selIdx]).ToArray();
                                 degAngles = radAngles.Select(a => a.ToDegrees()).ToArray();
 
-                                jointStates = CheckJointAngles(degAngles, this.Robot, checkSingularity: true);
+                                jointStates = CheckJointAngles(degAngles, this.robot, checkSingularity: true);
 
                                 break;
                             case Targets.MotionType.AbsoluteJoint:
                                 degAngles = target.JointAngles.ToArray();
                                 radAngles = degAngles.Select(a => a.ToRadians()).ToArray();
 
-                                jointStates = CheckJointAngles(degAngles, this.Robot);
+                                jointStates = CheckJointAngles(degAngles, this.robot);
 
                                 break;
                             default:
-                                throw new Exception($"This movment: {target.Method.ToString()} has not jet been implemented for {this.Robot.Manufacturer.ToString()}"); ;
+                                throw new NotImplementedException($"This movment: {target.Method.ToString()} has not jet been implemented for {this.robot.Manufacturer.ToString()}"); ;
                         } break;
                     case Manufacturer.Kuka:
                         switch (target.Method)
@@ -621,12 +693,12 @@ namespace Axis.Core
                             case Targets.MotionType.AbsoluteJoint:
 
                                 degAngles = target.JointAngles.ToArray();
-                                jointStates = CheckJointAngles(degAngles, this.Robot);
+                                jointStates = CheckJointAngles(degAngles, this.robot);
 
                                 radAngles = degAngles.Select(value => value.ToRadians()).ToArray();
                                 break;
                             default:
-                                throw new Exception($"This movment: {target.Method.ToString()} has not jet been implemented for {this.Robot.Manufacturer.ToString()}");
+                                throw new NotImplementedException($"This movment: {target.Method.ToString()} has not jet been implemented for {this.robot.Manufacturer.ToString()}");
                         } break;
                 }
 
@@ -635,18 +707,18 @@ namespace Axis.Core
 
                 this.radAngles = radAngles;
 
-                this.Forward = ForwardKinematics(radAngles, this.Robot);
+                this.Forward = ForwardKinematics(radAngles, this.robot);
 
                 this.IsValid = (!outOfReach && !outOfRoation && !overHeadSig && !wristSing) ? true : false;
 
             }
-            public void UpdateRobot(Manipulator robot) => this.Robot = robot;
+            public void UpdateRobot(Manipulator robot) => this.robot = robot;
             public Transform[] GetPose()
             {
                 if (this.Forward == null) throw new Exception("Unable to transfromation for empty pose please first call SetPost");
 
                 // Set Transform in relation to current position
-                this.Forward = this.Forward.Zip(this.Robot.ResetTransform, (forward, reverse) => reverse * forward).ToArray();
+                this.Forward = this.Forward.Zip(this.robot.ResetTransform, (forward, reverse) => reverse * forward).ToArray();
 
                 // Update inverse of current position
 
@@ -679,26 +751,26 @@ namespace Axis.Core
                 //////////////////////////////////////////////////////////////
 
                 //Setting up Planes 
-                Plane P0 = this.Robot.AxisPlanes[0].Clone();
-                Plane P1 = this.Robot.AxisPlanes[1].Clone();
-                Plane P2 = this.Robot.AxisPlanes[2].Clone();
-                Plane P3 = this.Robot.AxisPlanes[3].Clone();
-                Plane P4 = this.Robot.AxisPlanes[4].Clone();
-                Plane P5 = this.Robot.AxisPlanes[5].Clone();
+                Plane P0 = this.robot.AxisPlanes[0].Clone();
+                Plane P1 = this.robot.AxisPlanes[1].Clone();
+                Plane P2 = this.robot.AxisPlanes[2].Clone();
+                Plane P3 = this.robot.AxisPlanes[3].Clone();
+                Plane P4 = this.robot.AxisPlanes[4].Clone();
+                Plane P5 = this.robot.AxisPlanes[5].Clone();
                 Plane flange = target.Clone();
 
 
                 // Setting Up Lengths
-                double wristOffsetLength = this.Robot.WristOffsetLength;
-                double lowerArmLength = this.Robot.LowerArmLength;
-                double upperArmLength = this.Robot.UpperArmLength;
-                double axisFourOffsetAngle = this.Robot.AxisFourOffsetAngle;
+                double wristOffsetLength = this.robot.WristOffsetLength;
+                double lowerArmLength = this.robot.LowerArmLength;
+                double upperArmLength = this.robot.UpperArmLength;
+                double axisFourOffsetAngle = this.robot.AxisFourOffsetAngle;
 
 
 
 
                 //////////////////////////////////////////////////////////////
-                //// Everything past this should be locals to the Function////
+                //// Everything past this should be local to the Function ////
                 //////////////////////////////////////////////////////////////
 
                 double UnWrap(double value)
@@ -933,11 +1005,11 @@ namespace Axis.Core
 
 
                 /// Konstruct K points
-                Plane K0 = this.Robot.RobBasePlane.Clone();
-                Plane K1 = this.Robot.AxisPlanes[1].Clone();
-                Plane K2 = this.Robot.AxisPlanes[2].Clone();
-                Plane K3 = this.Robot.AxisPlanes[3].Clone();
-                Plane K4 = this.Robot.AxisPlanes[4].Clone();
+                Plane K0 = this.robot.RobBasePlane.Clone();
+                Plane K1 = this.robot.AxisPlanes[1].Clone();
+                Plane K2 = this.robot.AxisPlanes[2].Clone();
+                Plane K3 = this.robot.AxisPlanes[3].Clone();
+                Plane K4 = this.robot.AxisPlanes[4].Clone();
 
                 //Move K4 in rlation to the flange
                 //K4.Transform(Rhino.Geometry.Transform.Translation(this.Robot.WristOffset));
@@ -998,8 +1070,8 @@ namespace Axis.Core
                         for (int j = 0; i < targetPlane.Count(); ++i)
                         {
                             // Spheres
-                            Sphere Sphere1 = new Sphere(startPlanes[i], this.Robot.LowerArmLength);
-                            Sphere Sphere2 = new Sphere(targetPlane[j], this.Robot.UpperArmLength);
+                            Sphere Sphere1 = new Sphere(startPlanes[i], this.robot.LowerArmLength);
+                            Sphere Sphere2 = new Sphere(targetPlane[j], this.robot.UpperArmLength);
                             Circle Circ = new Circle();
 
                             double Par1 = new double();
@@ -1095,14 +1167,14 @@ namespace Axis.Core
             /// <param name="checkSingularity"></param>
             /// <param name="singularityTol"></param>
             /// <returns>Returns a list of JointStates</returns>
-            private static JointStatesValue[] CheckJointAngles(double[] angeles, Manipulator robot, bool checkSingularity = false, double singularityTol = 5)
+            private static JointState[] CheckJointAngles(double[] angeles, Manipulator robot, bool checkSingularity = false, double singularityTol = 5)
             {
                 // Check for out of rotation
-                JointStatesValue[] states = new JointStatesValue[angeles.Length];
+                JointState[] states = new JointState[angeles.Length];
                 for (int i = 0; i < angeles.Length; ++i)
                 {
-                    if (angeles[i] < robot.MaxAngles[i] && angeles[i] > robot.MinAngles[i]) states[i] = JointStatesValue.Normal;
-                    else states[i] = JointStatesValue.OutOfRotation;
+                    if (angeles[i] < robot.MaxAngles[i] && angeles[i] > robot.MinAngles[i]) states[i] = JointState.Normal;
+                    else states[i] = JointState.OutOfRotation;
                 }
 
                 // Check for Wrist Singularity
@@ -1121,23 +1193,23 @@ namespace Axis.Core
             /// <param name="OutOfReach"></param>
             /// <param name="WristSing"></param>
             /// <param name="OutOfRoation"></param>
-            private static void SetSignals(JointStatesValue[] states, out bool OverHeadSig, out bool OutOfReach, out bool WristSing, out bool OutOfRoation)
+            private static void SetSignals(JointState[] states, out bool OverHeadSig, out bool OutOfReach, out bool WristSing, out bool OutOfRoation)
             {
                 bool overHeadSig = false;
                 bool outOfReach = false;
                 bool wristSing = false;
                 bool outOfRoation = false;
 
-                void Update(JointStatesValue state)
+                void Update(JointState state)
                 {
                     switch (state)
                     {
-                        case JointStatesValue.Normal:
+                        case JointState.Normal:
                             break;
-                        case JointStatesValue.OutOfRotation:
+                        case JointState.OutOfRotation:
                             outOfRoation = true;
                             break;
-                        case JointStatesValue.Singularity:
+                        case JointState.Singularity:
                             wristSing = true;
                             break;
                     }
@@ -1154,7 +1226,7 @@ namespace Axis.Core
             /// </summary>
             /// <param name="state"></param>
             /// <returns>Colour</returns>
-            private static Color GetColour(JointStatesValue state)
+            private static Color GetColour(JointState state)
             {
                 Color color = new Color();
                 JointColours.TryGetValue(state, out color);
@@ -1172,12 +1244,12 @@ namespace Axis.Core
             public  bool CastTo<T>(out T target) => throw new NotImplementedException();
             public IGH_Goo Duplicate()
             {
-                if (this.Target == null) return new ManipulatorPose(this.Robot);
-                else return new ManipulatorPose(this.Robot, this.Target);
+                if (this.target == null) return new ManipulatorPose(this.robot);
+                else return new ManipulatorPose(this.robot, this.target);
             }
             public IGH_GooProxy EmitProxy() => throw new NotImplementedException();
             public object ScriptVariable() => this;
-            public override string ToString() => $"Position for {this.Robot.Name} [{string.Join(";", this.radAngles.Select(a => a.ToDegrees().ToString("0.00")).ToArray())}]";
+            public override string ToString() => $"Position for {this.robot.Name} [{string.Join(";", this.radAngles.Select(a => a.ToDegrees().ToString("0.00")).ToArray())}]";
 
 
             public bool Read(GH_IReader reader) => throw new NotImplementedException();
@@ -1187,7 +1259,7 @@ namespace Axis.Core
             /// <summary>
             /// A list of different joint states.
             /// </summary>
-            public enum JointStatesValue
+            public enum JointState
             {
                 Normal = 0,
                 OutOfReach = 1,
@@ -1202,13 +1274,22 @@ namespace Axis.Core
     /// <summary>
     /// Class represeing an endefector for a robotic manipulator
     /// </summary>
-    public class Tool: IGH_GeometricGoo
+    public class Tool: IGH_GeometricGoo, Axis_Displayable<Mesh>
     {
         public string Name { get; private set; }
         private Guid ID { get; set; }
         public Plane TCP { get; private set; }
         public double Weight { get; private set; }
-        public List<Mesh> Geometry { get; private set; }
+        public Mesh[] Geometries { get; private set; }
+        public Color[] Colors
+        { 
+            get 
+            {
+                Color[] list = new Color[this.Geometries.Length];
+                for (int i = 0; i < this.Geometries.Length; ++i) list[i] = Axis.Styles.MediumGrey;
+                return list;
+            } 
+        }
         public Manufacturer Manufacturer { get; private set; }
         public Vector3d RelTool { get; private set; }
 
@@ -1270,12 +1351,14 @@ namespace Axis.Core
                 return declaration;
             }
         }
-        public Transform FlangeOffset { 
-            get 
-            {
-                return Rhino.Geometry.Transform.PlaneToPlane(TCP, Plane.WorldXY);
-            }  
-        }
+        public Transform ResetTransform { get; set; } = Rhino.Geometry.Transform.Identity;
+
+        //public Transform FlangeOffset { 
+        //    get 
+        //    {
+        //        return Rhino.Geometry.Transform.PlaneToPlane(TCP, Plane.WorldXY);
+        //    }  
+        //}
         #endregion
 
         #region Constructors
@@ -1303,9 +1386,21 @@ namespace Axis.Core
             this.Name = name;
             this.TCP = TCP;
             this.Weight = weight;
-            this.Geometry = mesh;
+            this.Geometries = (mesh != null)?  mesh.ToArray(): new Mesh[0];
             this.Manufacturer = type;
             this.RelTool = relToolOffset;
+        }
+        #endregion
+
+        #region Methods
+        public void UpdatePose(Manipulator robot) 
+        {
+            var forward = Rhino.Geometry.Transform.PlaneToPlane(Plane.WorldXY, robot.CurrentPose.Flange);
+            Rhino.Geometry.Transform reverse;
+            forward.TryGetInverse(out reverse);
+
+            foreach(Mesh m in this.Geometries) m.Transform(this.ResetTransform * forward);
+            this.ResetTransform = reverse;
         }
         #endregion
 
@@ -1322,7 +1417,7 @@ namespace Axis.Core
             this.ID = Guid.Empty;
             this.TCP = Plane.Unset;
             this.Weight = double.NaN;
-            this.Geometry = null;
+            this.Geometries = null;
             this.Manufacturer = 0;
             this.RelTool = Vector3d.Unset;
         }
@@ -1332,8 +1427,8 @@ namespace Axis.Core
         public BoundingBox GetBoundingBox(Transform xform) 
         {
             BoundingBox box = BoundingBox.Empty;
-            foreach (Mesh m in this.Geometry) m.Transform(xform);
-            this.Geometry.ForEach(m => box.Union(m.GetBoundingBox(false)));
+            foreach (Mesh m in this.Geometries) m.Transform(xform);
+            foreach (Mesh m in this.Geometries) box.Union(m.GetBoundingBox(false));
             this.Boundingbox = box;
             return box;
         }
@@ -1349,10 +1444,24 @@ namespace Axis.Core
         public string TypeDescription => "Robot end effector";
 
         public bool CastFrom(object o) => false;
-        public bool CastTo<T>(out T target) {target = default; return false; }
+        public bool CastTo<T>(out T target) 
+        {
+            target = default(T);
+
+            if (typeof(T).IsAssignableFrom(typeof(GH_ObjectWrapper)))
+            {
+                string name = typeof(T).Name;
+                object value = new GH_ObjectWrapper(this);
+                target = (T)value;
+                return true;
+            }
+
+
+            return false;
+        }
         public IGH_Goo Duplicate()
         {
-            return new Tool(this.Name, this.TCP, this.Weight, this.Geometry, this.Manufacturer, this.RelTool);
+            return new Tool(this.Name, this.TCP, this.Weight, this.Geometries.Select(m => (Mesh)m.Duplicate()).ToList(), this.Manufacturer, this.RelTool);
         }
         public IGH_GooProxy EmitProxy() => null;
         public object ScriptVariable() => null;
@@ -1385,7 +1494,7 @@ namespace Axis.Core
                 {
                     var data = new GH_Structure<GH_Mesh>();
                     data.Read(chunk2);
-                    this.Geometry = data.ToList<Mesh, GH_Mesh>();
+                    this.Geometries = data.ToList<Mesh, GH_Mesh>().ToArray();
                 }
             }
             if (reader.ChunkExists("FlangeOffset")) 
@@ -1413,7 +1522,7 @@ namespace Axis.Core
             GH_Plane gH_TCP = new GH_Plane(this.TCP);
             gH_TCP.Write(writer.CreateChunk("TCP"));
             
-            GH_Structure<GH_Mesh> gh_Meshes = this.Geometry.ToGHStructure<GH_Mesh, Mesh>();
+            GH_Structure<GH_Mesh> gh_Meshes = this.Geometries.ToList().ToGHStructure<GH_Mesh, Mesh>();
             gh_Meshes.Write(writer.CreateChunk("Geometry"));
             
             GH_Vector gH_relTool = new GH_Vector(this.RelTool);
@@ -1422,6 +1531,16 @@ namespace Axis.Core
             return true;
         }
         #endregion
+    }
+
+    /// <summary>
+    /// Interface ensuring types have the right propperies to be displayed inside the other componets
+    /// This should help enforce consistency throughout the plugin.
+    /// </summary>
+    interface Axis_Displayable<T>: IGH_GeometricGoo where T: Rhino.Runtime.CommonObject 
+    {
+        T[] Geometries { get; }
+        Color[] Colors { get; }
     }
 
     /// <summary>

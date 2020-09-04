@@ -34,7 +34,8 @@ namespace Axis.Targets
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("Speed", "Speed", "List of speed objects.", GH_ParamAccess.list);
+            IGH_Param speed = new Axis.Params.SpeedParam();
+            pManager.AddParameter(speed,"Speed", "Speed", "List of speed objects.", GH_ParamAccess.list);
         }
         #endregion
 

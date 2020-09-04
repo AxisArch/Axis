@@ -584,7 +584,7 @@ namespace Axis
         /// <typeparam name="Q">Source type, can be IGH_Goo or Rhino CommonObject</typeparam>
         /// <param name="list">List to be converted</param>
         /// <returns>GH_Structure containing list</returns>
-        public static Grasshopper.Kernel.Data.GH_Structure<T> ToGHStructure<T, Q>(this List<Q> list) where T : IGH_Goo
+        public static Grasshopper.Kernel.Data.GH_Structure<T> ToGHStructure<T, Q>(this IEnumerable<Q> list) where T : IGH_Goo
         {
             Grasshopper.Kernel.Data.GH_Structure<T> gh_Struc = new Grasshopper.Kernel.Data.GH_Structure<T>();
 
@@ -618,7 +618,7 @@ namespace Axis
         /// <typeparam name="Q"></typeparam>
         /// <param name="gh_struct"></param>
         /// <returns></returns>
-        public static List<T> ToList<T, Q>(this Grasshopper.Kernel.Data.GH_Structure<Q> gh_struct )  where T : Rhino.Runtime.CommonObject where Q : IGH_Goo
+        public static T[] ToList<T, Q>(this Grasshopper.Kernel.Data.GH_Structure<Q> gh_struct )  where T : Rhino.Runtime.CommonObject where Q : IGH_Goo
         {
             if (gh_struct == null) return null;
             var list = new List<T>();
@@ -639,7 +639,7 @@ namespace Axis
                 }
 ;
             }
-            return list;
+            return list.ToArray();
         }
         
     }
@@ -794,7 +794,7 @@ namespace RAPID
                 };
         private List<Program> main = new List<Program>();
         private List<Program> progs = new List<Program>();
-        private List<string> legaryProgs = new List<string>();
+        private List<string> legacyProgs = new List<string>();
 
         public List<Program> extraProg = new List<Program>();
 
@@ -847,7 +847,7 @@ namespace RAPID
         }
         public void AddPrograms(List<string> progs)
         {
-            legaryProgs.AddRange(progs);
+            legacyProgs.AddRange(progs);
         }
         public void AddMain(Program main)
         {
@@ -894,7 +894,7 @@ namespace RAPID
             {
                 mod.AddRange(prog.Code());
             }
-            if (legaryProgs.Count > 0) { mod.AddRange(legaryProgs); }
+            if (legacyProgs.Count > 0) { mod.AddRange(legacyProgs); }
             if (progs.Count > 0)
             {
                 mod.Add("! Additional Programs");

@@ -13,6 +13,9 @@ namespace Axis.Core
     /// </summary>
     public class AuthTest : GH_Component
     {
+        public override bool Obsolete => true;
+        public override GH_Exposure Exposure => GH_Exposure.hidden;
+
         public AuthTest() : base("Auth Test", "Auth", "Test", AxisInfo.Plugin, AxisInfo.TabCore)
         {
         }

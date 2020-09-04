@@ -9,6 +9,6 @@ Class has to have `_Obsolete` added to to its name
 
 and be moved to this folder, further their name should be appened by the current date
 
-`ComponentName_200129.cs`
+`YYMMDD_ComponentName.cs`
 
 Further new copies of components need to have their GUIDs changed.

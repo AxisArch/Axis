@@ -37,7 +37,8 @@ namespace Axis.Targets
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("Wobj", "Wobj", "Work object coordinate system.", GH_ParamAccess.list);
+            IGH_Param csystem = new Axis.Params.CSystemParam();
+            pManager.AddParameter(csystem, "Wobj", "Wobj", "Work object coordinate system.", GH_ParamAccess.list);
         }
         #endregion
 

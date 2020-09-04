@@ -13,10 +13,12 @@ namespace Axis.Core
 {
     public class Simulation_Obsolete : GH_Component, IGH_VariableParameterComponent
     {
+        public override bool Obsolete => true;
+        public override GH_Exposure Exposure => GH_Exposure.hidden;
+
         /// <summary>
         /// This Component has been depricated
         /// </summary>
-        public override bool Obsolete => true;
 
         internal int n = 0;
 
@@ -41,7 +43,6 @@ namespace Axis.Core
         {
             get { return new Guid("0d998b74-4e74-4108-a4e8-c49103160f73"); }
         }
-        public override GH_Exposure Exposure => GH_Exposure.hidden;
 
         public Simulation_Obsolete() : base("Simulation", "Program", "Simulate a robotic toolpath.", AxisInfo.Plugin, AxisInfo.TabCore)
         {
