@@ -610,6 +610,7 @@ namespace Axis
 
             return gh_Struc;
         }
+
         /// <summary>
         /// Convert a GH_Structure back to a list
         /// </summary>
