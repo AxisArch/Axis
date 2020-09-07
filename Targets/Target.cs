@@ -827,7 +827,38 @@ namespace Axis.Targets
         List<Manipulator.ManipulatorPose> poses;
         List<double> targetProgress;
 
+        #region Propperties
         public Manipulator.ManipulatorPose StartPose => poses[0];
+        public List<string> ErrorLog { 
+            get 
+            {
+                var list = new List<string>();
+                for (int i = 0; i < poses.Count; ++i) 
+                { 
+                    if (!poses[i].IsValid)
+                    {
+                        var msg = $"{(i+1).ToString()}. Target"; 
+                        if (poses[i].OverHeadSig) msg +=": Singularity";
+                        if (poses[i].OutOfReach) msg += ": Unreachable";
+                        if (poses[i].WristSing) msg += ": Wrist Singularity";
+                        if (poses[i].OutOfRoation) msg += ": Joint Error";
+                        if (poses[i].WristSing) msg += ": Wrist Singularity";
+                        list.Add(msg);
+                    } 
+                }
+                return list;
+            }
+        }
+        public List<Point3d> ErrorPositions 
+        {
+            get 
+            {
+                var points = new List<Point3d>();
+                foreach (Manipulator.ManipulatorPose pose in poses) if (!pose.IsValid) points.Add(pose.Target.Origin);
+                return points;
+            }
+        }
+        #endregion
 
         #region Constructor
         public Toolpath() { }
@@ -843,6 +874,8 @@ namespace Axis.Targets
         #endregion
 
         #region Methods
+
+        //public
         /// <summary>
         /// Get the target index for the specified time.
         /// </summary>
@@ -884,6 +917,7 @@ namespace Axis.Targets
 
         }
 
+        //private
         void Times(List<Manipulator.ManipulatorPose> poses)
         {
             double timeTotal = 0;

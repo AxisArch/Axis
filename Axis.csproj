@@ -232,7 +232,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Core\Authentification.cs" />
-    <Compile Include="Core\CheckProgram.cs" />
+    <Compile Include="Deprecated\200907_CheckProgram.cs" />
     <Compile Include="Deprecated\200827_AuthTest.cs" />
     <Compile Include="Deprecated\200827_GetLicenseInformation.cs" />
     <Compile Include="Params\MotionTypeParam.cs" />
