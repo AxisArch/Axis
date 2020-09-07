@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Axis</RootNamespace>
     <AssemblyName>Axis</AssemblyName>
-    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <TargetFrameworkProfile />
@@ -177,8 +177,9 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="ABB.Robotics.Controllers.PC">
-      <HintPath>..\..\..\..\..\..\Program Files (x86)\ABB\SDK\PCSDK 2020\ABB.Robotics.Controllers.PC.dll</HintPath>
+    <Reference Include="ABB.Robotics.Controllers.PC, Version=6.8.8148.134, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\Program Files (x86)\ABB\SDK\RobotStudio 2019 SDK\ABB.Robotics.Controllers.PC.dll</HintPath>
     </Reference>
     <Reference Include="Eto, Version=2.4.6815.16896, Culture=neutral, PublicKeyToken=552281e97c755530, processorArchitecture=MSIL">
       <HintPath>packages\RhinoCommon.6.8.18240.20051\lib\net45\Eto.dll</HintPath>
@@ -239,6 +240,14 @@
     <Compile Include="Deprecated\200907_CheckProgram.cs" />
     <Compile Include="Deprecated\200827_AuthTest.cs" />
     <Compile Include="Deprecated\200827_GetLicenseInformation.cs" />
+    <Compile Include="Online\AxisController.cs" />
+    <Compile Include="Online\Connect.cs" />
+    <Compile Include="Online\GetModules.cs" />
+    <Compile Include="Online\Monitoring.cs" />
+    <Compile Include="Online\SetModule.cs" />
+    <Compile Include="Online\StartStop.cs" />
+    <Compile Include="Online\Streaming.cs" />
+    <Compile Include="Online\Toolbox.cs" />
     <Compile Include="Params\MotionTypeParam.cs" />
     <Compile Include="Params\SpeedParam.cs" />
     <Compile Include="Params\TargetParam.cs" />
@@ -253,18 +262,12 @@
     <Compile Include="Geometry\SurfaceFrame.cs" />
     <Compile Include="IO\GetDI.cs" />
     <Compile Include="IO\SetDO.cs" />
-    <Compile Include="Online\AxisController.cs" />
-    <Compile Include="Online\Connect.cs" />
-    <Compile Include="Online\GetModules.cs" />
-    <Compile Include="Online\Monitoring.cs" />
-    <Compile Include="Online\SetModule.cs" />
-    <Compile Include="Online\StartStop.cs" />
-    <Compile Include="Online\Streaming.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Content Include="Online\moduleFile.mod" />
     <Content Include="Robot\RobotBinaries\ExampleCode for generating binary.txt" />
     <Compile Include="Robot\RobotSystems.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -464,11 +467,6 @@
     <None Include="Resources\UnknownMotorState.png" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Online\moduleFile.mod">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="Auth0.OidcClient.WPF">
       <Version>3.1.7</Version>
     </PackageReference>
@@ -489,9 +487,6 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Windows.SDK.Contracts">
       <Version>10.0.19041.1</Version>
-    </PackageReference>
-    <PackageReference Include="morelinq">
-      <Version>3.3.2</Version>
     </PackageReference>
     <PackageReference Include="NETStandard.Library">
       <Version>2.0.3</Version>

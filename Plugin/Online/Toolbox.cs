@@ -31,7 +31,7 @@ namespace Axis.Online
             doc.UndoUtil.RecordAddObjectEvent("Create Accent List", objs);
             doc.MergeDocument(docIO.Document);
 
-            doc.ScheduleSolution(10, chanegValuelist);
+            doc.ScheduleSolution(10, changeValueList);
 
 
             void changeValueList(GH_Document document)
