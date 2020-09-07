@@ -503,7 +503,7 @@ namespace Axis.Targets
     /// Robot Speed type
     /// </summary>
     public class Speed : IGH_Goo
-{
+    {
         public string Name { get; set; }
         public double TranslationSpeed { get; set; }
         public double RotationSpeed { get; set; }
@@ -514,15 +514,12 @@ namespace Axis.Targets
         /// <summary>
         /// Default speed object.
         /// </summary>
-        public static Speed Default { get; }
+        public static Speed Default {get =>  new Speed(100, 30, "v100"); }
 
         /// <summary>
         /// Default constructor.
         /// </summary>
-        static Speed()
-        {
-            Default = new Speed(100, 30, "DefaultSpeed");
-        }
+        static Speed() {}
 
         /// <summary>
         /// Standard speed constructor.
@@ -614,7 +611,7 @@ namespace Axis.Targets
         /// <summary>
         /// Default zone object.
         /// </summary>
-        public static Zone Default => new Zone(false, 5, 25, 25, 15, 35, 5, "DefaultZone");
+        public static Zone Default => new Zone(false, 5, 25, 25, 15, 35, 5, "z5");
 
         /// <summary>
         /// Default constructor.
