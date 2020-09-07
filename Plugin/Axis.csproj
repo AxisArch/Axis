@@ -240,8 +240,8 @@
     <Compile Include="Core\OffsetWristKinematics.cs" />
     <Compile Include="Core\Engine.cs" />
     <Compile Include="Geometry\SurfaceFrame.cs" />
-    <Compile Include="IO\GetDI.cs" />
-    <Compile Include="IO\SetDO.cs" />
+    <Compile Include="Deprecated\200907_GetDI.cs" />
+    <Compile Include="RAPID\SetDO.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -287,6 +287,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <None Include="Deprecated\README.md" />
     <None Include="Robot\RobotBinaries\IRB120mesh.bin" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>

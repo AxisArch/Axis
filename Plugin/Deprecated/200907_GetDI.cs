@@ -30,6 +30,8 @@ namespace Axis.IO
         }
 
         #region Component Settings
+        public override bool Obsolete => true;
+        public override GH_Exposure Exposure => GH_Exposure.hidden;
         protected override System.Drawing.Bitmap Icon
         {
             get
