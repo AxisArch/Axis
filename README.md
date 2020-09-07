@@ -9,7 +9,7 @@ The library is written in C# and compiled against .NET 4.6.1. The library is und
 - [ ] Full-feature support for KUKA robots
 
 ## Installation
-The latest release version of Axis can be installed using the MSI installer. This will copy Axis to your Grasshopper libraries folder along with a library of user objects and all necessry dependency files.
+The latest release version of Axis can be installed using the MSI installer. This will copy Axis to your Grasshopper libraries folder along with a library of user objects and all necessary dependency files. To install Axis manually, start by downloading the 
 
 ## Building From Source
 To build the solution from source, you need to first change the following project variables:
@@ -27,7 +27,7 @@ Secondary components are dependent on:
 * MathNet.Spatial.dll
 * EPPlus.dll
 
-Online control functionality for ABB robots requires the latest version of the ABB Communication Runtime to be installed, which can be found here:
+Online control functionality for ABB robots requires the latest version of the ABB Communication Runtime to be installed, which can be found here: 
 
 ## Controlling Speed
 The target components can be supplied with default speed values (double) corresponding to the TCP speed from the following table:
