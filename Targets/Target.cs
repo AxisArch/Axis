@@ -960,6 +960,8 @@ namespace Axis.Targets
         {
             get
             {
+                bool valid = false;
+                foreach (Manipulator.ManipulatorPose p in poses) { valid = valid & p.IsValid; }
                 if (this.totalSec != null) return true;
                 else return false;
             }

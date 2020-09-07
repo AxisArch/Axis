@@ -86,6 +86,7 @@ namespace Axis.Core
             {
                 var poses = targets.Select(t => new Manipulator.ManipulatorPose(c_Robot, (Target)t.Duplicate())).ToList(); //Duplate targets
                 toolpath = new Toolpath(poses);
+                this.Message = (toolpath.IsValid)? "No Errors detected" : "Errors";
                 strat = DateTime.Now;
             }
 
