@@ -235,7 +235,6 @@
     <Compile Include="Core\CheckProgram.cs" />
     <Compile Include="Deprecated\200827_AuthTest.cs" />
     <Compile Include="Deprecated\200827_GetLicenseInformation.cs" />
-    <Compile Include="Online\DataBaseCommunication.cs" />
     <Compile Include="Params\MotionTypeParam.cs" />
     <Compile Include="Params\SpeedParam.cs" />
     <Compile Include="Params\TargetParam.cs" />
