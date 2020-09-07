@@ -1,6 +1,6 @@
 # Axis
 Axis is Grasshopper plugin for McNeel's Rhinoceros 3D that facilitates the intuitive programming and simulation of industrial robots.
-The library is written in C# and compiled against .NET 4.5.1. The library is under constant development, and we are always working on new features and integrations. We're currently busy with:
+The library is written in C# and compiled against .NET 4.5.1. It's under constant development, and we welcome feature suggestions. We're currently busy with:
 
 - [x] Component cleanup and simplification
 - [x] Online control for IRC5 controllers
