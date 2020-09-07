@@ -22,6 +22,9 @@ using Axis.Targets;
 
 namespace Axis.Online
 {
+    /// <summary>
+    /// Start and stop robot tasks on a controller.
+    /// </summary>
     public class StartStop : GH_Component, IGH_VariableParameterComponent
     {
         // Optionable Log
@@ -42,6 +45,7 @@ namespace Axis.Online
         {
         }
 
+        #region IO
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddGenericParameter("Controller", "Controller", "Recives the output from a controller module", GH_ParamAccess.list);
@@ -53,6 +57,7 @@ namespace Axis.Online
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
         }
+        #endregion
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
@@ -181,7 +186,7 @@ namespace Axis.Online
             }
         }
 
-
+        #region UI
         // Build a list of optional input parameters
         IGH_Param[] inputParams = new IGH_Param[1]
         {
@@ -219,7 +224,6 @@ namespace Axis.Online
                 logOptionOut = false;
             }
         }
-
 
         // Register the new input parameters to our component.
         private void AddInput(int index)
@@ -272,7 +276,9 @@ namespace Axis.Online
 
             ExpireSolution(true);
         }
+        #endregion
 
+        #region Serialization
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
@@ -288,15 +294,14 @@ namespace Axis.Online
             this.logOptionOut = reader.GetBoolean("LogOptionSetOutModule");
             return base.Read(reader);
         }
+        #endregion
 
-
+        #region Component Settings
         bool IGH_VariableParameterComponent.CanInsertParameter(GH_ParameterSide side, int index) => false;
         bool IGH_VariableParameterComponent.CanRemoveParameter(GH_ParameterSide side, int index) => false;
         IGH_Param IGH_VariableParameterComponent.CreateParameter(GH_ParameterSide side, int index) => null;
         bool IGH_VariableParameterComponent.DestroyParameter(GH_ParameterSide side, int index) => false;
         void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
-
-
 
         protected override System.Drawing.Bitmap Icon
         {
@@ -321,10 +326,10 @@ namespace Axis.Online
             }
         }
 
-
         public override Guid ComponentGuid
         {
             get { return new Guid("1dca8994-0a96-4454-a5bb-28c8bd911829"); }
         }
+        #endregion
     }
 }

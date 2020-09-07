@@ -12,7 +12,9 @@ namespace Axis.Targets
 {
     public class HomePose : GH_Component
     {
-        public override GH_Exposure Exposure => GH_Exposure.primary;
+        public override bool Obsolete => true;
+        public override GH_Exposure Exposure => GH_Exposure.hidden;
+
         protected override System.Drawing.Bitmap Icon
         {
             get

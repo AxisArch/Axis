@@ -7,12 +7,16 @@ using Rhino.Geometry;
 
 namespace Axis.Core
 {
+    /// <summary>
+    /// Inverse kinematics for a offset wrist 6 axis robot.
+    /// </summary>
     public class OffsetWristKinematics : GH_Component
     {
         public OffsetWristKinematics() : base("UR IK", "UR IK", "Offset wrist kinematics for UR.", AxisInfo.Plugin, AxisInfo.TabCore)
         {
         }
 
+        #region IO
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddTransformParameter("X", "X", "Target transformation.", GH_ParamAccess.item);
@@ -23,6 +27,7 @@ namespace Axis.Core
             pManager.AddNumberParameter("A", "A", "List of angle values.", GH_ParamAccess.list);
             pManager.AddTextParameter("L", "L", "Error log.", GH_ParamAccess.list);
         }
+        #endregion
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
@@ -65,7 +70,7 @@ namespace Axis.Core
             double[] a = { 0, -0.612, -0.5723, 0, 0, 0 };
             double[] d = { 0.1273, 0, 0, 0.163941, 0.1157, 0.0922 };
 
-            // shoulder
+            // Shoulder
             {
                 double A = d[5] * transform[1, 2] - transform[1, 3];
                 double B = d[5] * transform[0, 2] - transform[0, 3];
@@ -86,7 +91,7 @@ namespace Axis.Core
                     joints[0] = -arccos + arctan;
             }
 
-            // wrist 2
+            // Wrist 2
             {
                 double numer = (transform[0, 3] * Sin(joints[0]) - transform[1, 3] * Cos(joints[0]) - d[3]);
                 double div = numer / d[5];
@@ -105,7 +110,7 @@ namespace Axis.Core
                     joints[4] = 2.0 * PI - arccos;
             }
 
-            // rest
+            // Rest
             {
                 double c1 = Cos(joints[0]);
                 double s1 = Sin(joints[0]);
@@ -163,6 +168,7 @@ namespace Axis.Core
             return joints;
         }
 
+        #region Component Settings
         protected override System.Drawing.Bitmap Icon
         {
             get
@@ -177,5 +183,6 @@ namespace Axis.Core
         {
             get { return new Guid("c37ffb5e-0f98-4938-b14b-04962ba3e14b"); }
         }
+        #endregion
     }
 }

@@ -8,6 +8,9 @@ using Rhino.Geometry;
 
 namespace Axis.Targets
 {
+    /// <summary>
+    /// Define a custom zone object.
+    /// </summary>
     public class DefineZone : GH_Component, IGH_VariableParameterComponent
     {
         // Sticky context menu item values.
@@ -19,22 +22,11 @@ namespace Axis.Targets
         bool m_LinExt = false;
         bool m_RotExt = false;
 
-        protected override System.Drawing.Bitmap Icon
-        {
-            get
-            {
-                return Axis.Properties.Resources.Zone;
-            }
-        }
-        public override Guid ComponentGuid
-        {
-            get { return new Guid("8314b5fd-f75c-46db-922d-ee506338b161"); }
-        }
-
         public DefineZone() : base("Zone", "Z", "Define a list of robot interpolation zones.", AxisInfo.Plugin, AxisInfo.TabToolpath)
         {
         }
 
+        #region IO
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddNumberParameter("*TCP", "TCP", "TCP path radius of the zone.", GH_ParamAccess.list, 5);
@@ -42,7 +34,17 @@ namespace Axis.Targets
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("Zone", "Zone", "List of zone objects.", GH_ParamAccess.list);
+            IGH_Param zone = new Axis.Params.ZoneParam();
+            pManager.AddParameter(zone, "Zone", "Zone", "List of zone objects.", GH_ParamAccess.list);
+        }
+        #endregion
+
+        protected override void BeforeSolveInstance()
+        {
+            base.BeforeSolveInstance();
+
+            //Subscribe to all event handelers
+            this.Params.ParameterSourcesChanged += OnParameterSourcesChanged;
         }
 
         protected override void SolveInstance(IGH_DataAccess DA)
@@ -230,14 +232,7 @@ namespace Axis.Targets
             }
         }
 
-        protected override void BeforeSolveInstance()
-        {
-            base.BeforeSolveInstance();
-
-            //Subscribe to all event handelers
-            this.Params.ParameterSourcesChanged += OnParameterSourcesChanged;
-        }
-
+        #region UI
         /// <summary>
         ///  Replace a value list with one that has been pre-populated with possible zones.
         /// </summary>
@@ -464,7 +459,9 @@ namespace Axis.Targets
             Params.OnParametersChanged();
             ExpireSolution(true);
         }
+#endregion
 
+        #region Serialization
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
@@ -488,7 +485,9 @@ namespace Axis.Targets
             this.m_Declaration = reader.GetBoolean("OutputDec");
             return base.Read(reader);
         }
+        #endregion
 
+        #region Component Settings
         /// <summary>
         /// Implement this interface in your component if you want to enable variable parameter UI.
         /// </summary>
@@ -497,5 +496,18 @@ namespace Axis.Targets
         IGH_Param IGH_VariableParameterComponent.CreateParameter(GH_ParameterSide side, int index) => null;
         bool IGH_VariableParameterComponent.DestroyParameter(GH_ParameterSide side, int index) => false;
         void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
+
+        protected override System.Drawing.Bitmap Icon
+        {
+            get
+            {
+                return Axis.Properties.Resources.Zone;
+            }
+        }
+        public override Guid ComponentGuid
+        {
+            get { return new Guid("8314b5fd-f75c-46db-922d-ee506338b161"); }
+        }
+        #endregion
     }
 }

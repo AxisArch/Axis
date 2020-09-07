@@ -6,12 +6,16 @@ using Rhino.Geometry;
 
 namespace Axis.Geometry
 {
+    /// <summary>
+    /// Reparameterize a surface and return the central frame.
+    /// </summary>
     public class SurfaceFrame : GH_Component
     {
         public SurfaceFrame() : base("Surface Frame", "Frame", "Reparamaterize a surface and return the frame at U:0.5, V:0.5.", AxisInfo.Plugin, AxisInfo.TabGeometry)
         {
         }
 
+        #region IO
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddSurfaceParameter("Surface", "S", "Surface to return frame on.", GH_ParamAccess.list);
@@ -21,6 +25,7 @@ namespace Axis.Geometry
         {
             pManager.AddPlaneParameter("Frame", "F", "Surface frame at U:0.5, V:0.5.", GH_ParamAccess.list);
         }
+        #endregion
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
@@ -51,6 +56,7 @@ namespace Axis.Geometry
             DA.SetDataList(0, frames);
         }
 
+        #region Component Settings
         protected override System.Drawing.Bitmap Icon
         {
             get
@@ -63,5 +69,6 @@ namespace Axis.Geometry
         {
             get { return new Guid("ab5216a3-81b1-4c80-a6bb-da54b9a8169a"); }
         }
+        #endregion
     }
 }

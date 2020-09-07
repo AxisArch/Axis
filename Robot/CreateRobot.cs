@@ -16,36 +16,26 @@ using System.Linq;
 
 namespace Axis.Core
 {
-    // Define a custom robot.
-    public class Robot : GH_Component, IGH_VariableParameterComponent
+    /// <summary>
+    /// Define a custom robot object.
+    /// </summary>
+    public class CreateRobot : GH_Component, IGH_VariableParameterComponent
     {
         // Sticky context menu toggles
         Manufacturer m_Manufacturer = Manufacturer.ABB;
         bool m_Pose = false;
 
-        public override GH_Exposure Exposure => GH_Exposure.primary;
-        protected override System.Drawing.Bitmap Icon
-        {
-            get
-            {
-                return Properties.Resources.Robot;
-            }
-        }
-        public override Guid ComponentGuid
-        {
-            get { return new Guid("{26289bd0-15cc-408f-af2d-5a87ea81cb18}"); }
-        }
-
-        public Robot() : base("Robot", "Robot", "Create a kinematic model of a custom robot.", AxisInfo.Plugin, AxisInfo.TabRobot)
+        public CreateRobot() : base("Robot", "Robot", "Create a kinematic model of a custom robot.", AxisInfo.Plugin, AxisInfo.TabRobot)
         {
         }
 
+        #region IO
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddPointParameter("Points", "Points", "Axis intersection points for kinematics. (Upper base, shoulder, elbow and wrist.)", GH_ParamAccess.list);
+            pManager.AddPlaneParameter("Planes", "Planes", "Axis rotation planes for kinematics.", GH_ParamAccess.list);
             pManager.AddNumberParameter("Minimums", "Minimums", "Joint minimum angles, as a list of doubles.", GH_ParamAccess.list);
             pManager.AddNumberParameter("Maximums", "Maximums", "Joint maximum angles, as a list of doubles.", GH_ParamAccess.list);
-            pManager.AddIntegerParameter("Indices", "Indices", "Inverse kinematic solution indices.", GH_ParamAccess.list, new List<int>() { 2, 2, 2, 2, 2, 2 });
+            pManager.AddIntegerParameter("Indices", "Indices", "Inverse kinematic solution indices.", GH_ParamAccess.list, new List<int>() { 0, 0, 0, 0, 0, 0 });
             pManager.AddMeshParameter("Mesh", "Mesh", "List of robot mesh geometry. [Base + 6 joint meshes]", GH_ParamAccess.list);
             pManager.AddPlaneParameter("Base", "Base", "Optional custom robot base plane. [Default = World XY]", GH_ParamAccess.item, Plane.WorldXY);
             pManager[3].Optional = true;
@@ -54,40 +44,45 @@ namespace Axis.Core
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("Robot", "Robot", "Custom robot data type.", GH_ParamAccess.item);
+            IGH_Param robot = new Axis.Params.RobotParam();
+            pManager.AddParameter(robot, "Robot", "Robot", "Custom robot data type.", GH_ParamAccess.item);
         }
+        #endregion
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            List<Point3d> inPoints = new List<Point3d>();
+            List<Plane> inPlanes = new List<Plane>();
             List<double> inMin = new List<double>();
             List<double> inMax = new List<double>();
             List<int> indices = new List<int>();
             List<Mesh> inMeshes = new List<Mesh>();
             Plane inBase = Plane.WorldXY;
             
-
-            if (!DA.GetDataList(0, inPoints)) return;
+            if (!DA.GetDataList(0, inPlanes)) return;
             if (!DA.GetDataList(1, inMin)) return;
             if (!DA.GetDataList(2, inMax)) return;
-            if (!DA.GetDataList(3, indices)) indices = new List<int>() { 2, 2, 2, 2, 2, 2 };
+            if (!DA.GetDataList(3, indices)) return;
             if (!DA.GetDataList(4, inMeshes)) return;
             if (!DA.GetData(5, ref inBase)) return;
 
             this.Message = this.m_Manufacturer.ToString();
 
+            // Create axis planes in relation to robot joint points.
+            //List<Plane> axisPlanes = new List<Plane>();
+            //List<Plane> tAxisPlanes = new List<Plane>();
 
-            Manipulator robot = new Manipulator(m_Manufacturer, inPoints, inMin, inMax, inMeshes, inBase, indices);
-            List<Mesh> startPose = robot.StartPose();
+            Manipulator robot = new Manipulator(m_Manufacturer, inPlanes.ToArray(), inMin, inMax, inMeshes, inBase, indices);
+            //robot.SetPose();
 
             DA.SetData(0, robot);
 
-            if (m_Pose)
-            {
-                DA.SetDataList("Pose", startPose);
-            }
+            //if (m_Pose)
+            //{
+            //    DA.SetDataList("Pose", startPose);
+            //}
         }
 
+        #region UI
         // Build a list of optional input and output parameters
         IGH_Param[] outputParams = new IGH_Param[1]
         {
@@ -166,12 +161,9 @@ namespace Axis.Core
             Params.OnParametersChanged();
             ExpireSolution(true);
         }
-        /// <summary>
-        /// Uncheck other dropdown menu items
-        /// </summary>
-        /// <param name="selectedMenuItem"></param>
-        
+        #endregion
 
+        #region Serialization
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
@@ -187,7 +179,9 @@ namespace Axis.Core
             this.m_Pose = reader.GetBoolean("StartPose");
             return base.Read(reader);
         }
+        #endregion
 
+        #region Component Settings
         /// <summary>
         /// Implement this interface in your component if you want to enable variable parameter UI.
         /// </summary>
@@ -196,5 +190,19 @@ namespace Axis.Core
         IGH_Param IGH_VariableParameterComponent.CreateParameter(GH_ParameterSide side, int index) => null;
         bool IGH_VariableParameterComponent.DestroyParameter(GH_ParameterSide side, int index) => false;
         void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
+
+        public override GH_Exposure Exposure => GH_Exposure.primary;
+        protected override System.Drawing.Bitmap Icon
+        {
+            get
+            {
+                return Properties.Resources.Robot;
+            }
+        }
+        public override Guid ComponentGuid
+        {
+            get { return new Guid("{26289bd0-15cc-408f-af2d-5a87ea81cb18}"); }
+        }
+        #endregion
     }
 }

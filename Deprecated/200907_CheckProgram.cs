@@ -12,29 +12,26 @@ using static Axis.Properties.Settings;
 
 namespace Axis.Core
 {
+    /// <summary>
+    /// Method to check an entire program for issues
+    /// without running full geometry for the IK solutions.
+    /// </summary>
     public class CheckProgram : GH_Component
     {
-        protected override System.Drawing.Bitmap Icon
-        {
-            get
-            {
-                return Axis.Properties.Resources.CheckProgram;
-            }
-        }
-        public override Guid ComponentGuid
-        {
-            get { return new Guid("73f9ed66-9a0d-48aa-afdc-9a7a8902031c"); }
-        }
-        public override GH_Exposure Exposure => GH_Exposure.primary;
+        public override bool Obsolete => true;
+        public override GH_Exposure Exposure => GH_Exposure.hidden;
+
 
         public CheckProgram() : base("Check Program", "Check", "Check an entire program for kinematic errors.", AxisInfo.Plugin, AxisInfo.TabCore)
         {
         }
 
+        #region IO
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddGenericParameter("Program", "Program", "Robot program as list of commands.", GH_ParamAccess.list);
-            pManager.AddGenericParameter("Robot", "Robot", "Robot object to use for inverse kinematics. You can define this using the robot creator tool.", GH_ParamAccess.item);
+            IGH_Param robot = new Axis.Params.RobotParam();
+            pManager.AddParameter(robot, "Robot", "Robot", "Robot object to use for inverse kinematics. You can define this using the robot creator tool.", GH_ParamAccess.item);
             pManager.AddBooleanParameter("Run", "Run", "Run a check of the entire program.", GH_ParamAccess.item, false);
             pManager[2].Optional = true;
         }
@@ -44,13 +41,19 @@ namespace Axis.Core
             pManager.AddTextParameter("Log", "Log", "Message log.", GH_ParamAccess.list);
             pManager.AddPointParameter("Error", "Errors", "List of program error points.", GH_ParamAccess.list);
         }
+        #endregion
 
         // License token variable.
         bool validToken = false;
+        Auth auth = null;
 
+        /// <summary>
+        /// Check the authentification status.
+        /// </summary>
         protected override void BeforeSolveInstance()
         {
-            Auth auth = new Auth();
+            // Validate the login token.
+            auth = new Auth();
             validToken = auth.IsValid;
 
             if (!validToken)
@@ -65,10 +68,11 @@ namespace Axis.Core
             List<GH_ObjectWrapper> program = new List<GH_ObjectWrapper>();
             Plane target = Plane.WorldXY;
             Manipulator robot = null;
-            List<double> angles = new List<double>();
-            List<Plane> planes = new List<Plane>();
 
-            int singularityTol = 5;
+            //List<double> angles = new List<double>();
+            //List<Plane> planes = new List<Plane>();
+
+            //int singularityTol = 5;
             bool run = false;
             int counter = 0;
 
@@ -81,7 +85,7 @@ namespace Axis.Core
             Point3d errorPos = new Point3d();
 
             // Get the list of kinematic indices from the robot definition, otherwise use default values.
-            List<int> indices = new List<int>() { 2, 2, 2, 2, 2, 2 };
+            List<int> indices = new List<int>() { 0, 0, 0, 0, 0, 0 };
             if (robot.Indices.Count == 6) indices = robot.Indices;
 
             List<Point3d> errorPositions = new List<Point3d>();
@@ -108,55 +112,30 @@ namespace Axis.Core
                     // Transform the robot target from the base plane to the XY plane.
                     target = new Plane(targ.Plane);
                     errorPos = target.Origin;
-                    target.Transform(robot.InverseRemap);
                     
-
-                    Transform xForm = Transform.PlaneToPlane(Plane.WorldXY, target);
-
-                    Plane tempTarg = Plane.WorldXY;
-                    tempTarg.Transform(targ.Tool.FlangeOffset);
-                    tempTarg.Transform(xForm);
-                    target = tempTarg;
-
-                    // Check the movement type.
-                    mType = targ.Method;
-
-                    // Kinematics
+                    // Compute kinematic solutions.
                     bool overheadSing = false; bool outOfReach = false; bool wristSing = false; bool outOfRotation = false;
                     List<System.Drawing.Color> colors = new List<System.Drawing.Color>();
 
-                    if (mType != MotionType.NoMovement)
+                    if (targ.Method != MotionType.NoMovement)
                     {
-                        if (mType == MotionType.Linear || mType == MotionType.Joint)
+                        if (targ.Method == MotionType.Linear || targ.Method == MotionType.Joint)
                         {
-                            List<List<double>> ikAngles = InverseKinematics.TargetInverseKinematics(robot, target, out overheadSing, out outOfReach);
+                            Axis.Core.Manipulator.ManipulatorPose pose = new Axis.Core.Manipulator.ManipulatorPose(robot, targ);
+
+                            outOfReach = pose.OutOfReach; overheadSing = pose.OverHeadSig; wristSing = pose.WristSing; outOfRotation = pose.OutOfRoation;
+
                             if (overheadSing) log.Add(counter.ToString() + ": Singularity");
                             if (outOfReach) log.Add(counter.ToString() + ": Unreachable");
-
-                            // Select an angle from each list and make the radian version.
-                            List<double> selectedAngles = new List<double>();
-                            for (int i = 0; i < ikAngles.Count; i++)
-                            {
-                                double sel = ikAngles[i][indices[i]];
-
-                                // Correction for setup
-                                if (i == 1) sel += 90;
-                                if (i == 2) sel -= 90;
-
-                                selectedAngles.Add(sel);
-                            }
-
-                            // Check the joint angles.
-                            colors = InverseKinematics.CheckJointAngles(robot, selectedAngles, out wristSing, out outOfRotation);
                             if (wristSing) log.Add(counter.ToString() + ": Wrist Singularity");
                             if (outOfRotation) log.Add(counter.ToString() + ": Joint Error");
-
                             if (overheadSing || outOfReach || wristSing || outOfRotation) errorPositions.Add(errorPos);
                         }
-                        else if (mType == MotionType.AbsoluteJoint)
+                        else if (targ.Method == MotionType.AbsoluteJoint)
                         {
-                            // Check the joint angles.
-                            colors = InverseKinematics.CheckJointAngles(robot, targ.JointAngles, out wristSing, out outOfRotation);
+                            Axis.Core.Manipulator.ManipulatorPose pose = new Axis.Core.Manipulator.ManipulatorPose(robot, targ);
+                            outOfReach = pose.OutOfReach; overheadSing = pose.OverHeadSig; wristSing = pose.WristSing; outOfRotation = pose.OutOfRoation;
+
                             if (wristSing) log.Add(counter.ToString() + ": Wrist Singularity");
                             if (outOfRotation) log.Add(counter.ToString() + ": Joint Error");
                         }
@@ -173,5 +152,19 @@ namespace Axis.Core
             DA.SetDataList(0, log);
             DA.SetDataList(1, errorPositions);
         }
+
+        #region Component Settings
+        protected override System.Drawing.Bitmap Icon
+        {
+            get
+            {
+                return Axis.Properties.Resources.CheckProgram;
+            }
+        }
+        public override Guid ComponentGuid
+        {
+            get { return new Guid("73f9ed66-9a0d-48aa-afdc-9a7a8902031c"); }
+        }
+        #endregion  
     }
 }

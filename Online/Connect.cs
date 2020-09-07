@@ -23,6 +23,9 @@ using static Axis.Properties.Settings;
 
 namespace Axis.Online
 {
+    /// <summary>
+    /// Handles online connections to an IRC5 controller.
+    /// </summary>
     public class Connect : GH_Component, IGH_VariableParameterComponent
     {
         public string ControllerID { get; set; }
@@ -43,10 +46,8 @@ namespace Axis.Online
         private bool logOptionOut;
         public bool validToken = false;
 
-
         NetworkScanner scanner = new NetworkScanner();
         ControllerInfo[] controllers = null;
-
 
         // Create a list of string to store a log of the connection status.
         private List<string> log = new List<string>();
@@ -57,7 +58,6 @@ namespace Axis.Online
         List<IGH_Param> delInputs = new List<IGH_Param>();
         Grasshopper.Kernel.Special.GH_ValueList vl = new Grasshopper.Kernel.Special.GH_ValueList();
 
-
         public Connect()
           : base("Controller", "Controller",
               "Connect to an ABB controller",
@@ -65,6 +65,7 @@ namespace Axis.Online
         {
         }
 
+        #region IO
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddBooleanParameter("Activate", "Activate", "Activate the online communication module.", GH_ParamAccess.item, false);
@@ -80,14 +81,16 @@ namespace Axis.Online
             }
         }
 
-        /// <summary>
-        /// Registers all the output parameters for this component.
-        /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
             pManager.AddGenericParameter("Controller", "Controller", "Connection to Robot contoller", GH_ParamAccess.list);
         }
+        #endregion
 
+        #region Auth
+        /// <summary>
+        /// Handle the authentification.
+        /// </summary>
         protected override void BeforeSolveInstance()
         {
             Auth auth = new Auth();
@@ -99,6 +102,7 @@ namespace Axis.Online
                 return;
             }
         }
+        #endregion
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
@@ -110,7 +114,6 @@ namespace Axis.Online
             int index = 0;
             bool connect = false;
          
-          
             if (!DA.GetData("Activate", ref activate)) ;
             if (!DA.GetData("Scan", ref scan)) ;
             if (!DA.GetDataList("IP",  ipAddresses)){return;}
@@ -129,7 +132,7 @@ namespace Axis.Online
             {
                 if (scan)
                 {
-                    // Scan the network for controllers and add them to our controller array       
+                    // Scan the network for controllers and add them to our controller array.  
                     scanner.Scan();
 
                     if (ipAddresses != null)
@@ -185,6 +188,7 @@ namespace Axis.Online
                     log.Add("Log cleared.");
                 }
 
+                // Make the actual connection.
                 if (connect)
                 {
                     if (controller == null && controllers.Length > 0)
@@ -196,7 +200,7 @@ namespace Axis.Online
                         {
                             log.Add("Robot controller " + controllers[index].ControllerName + " is available.");
 
-                            // Shound never be the case see base if statment
+                            // Shound never be the case see base if statment.
                             if (controller != null)
                             {
                                 controller.Logoff();
@@ -255,7 +259,6 @@ namespace Axis.Online
                     DA.SetDataList("Log", log);
                 }
 
-
                 if (controller != null)
                 {
                     AxisController myAxisController = new AxisController(controller);
@@ -264,10 +267,9 @@ namespace Axis.Online
                 }
                 else { DA.SetData(0, "No active connection"); }
             }
-            
         }
 
-
+        #region UI
         // Build a list of optional input parameters
         IGH_Param[] inputParams = new IGH_Param[1]
         {
@@ -308,7 +310,6 @@ namespace Axis.Online
             ExpireSolution(true);
         }
 
-
         // Register the new input parameters to our component.
         private void AddInput(int index)
         {
@@ -334,6 +335,7 @@ namespace Axis.Online
             Params.OnParametersChanged();
             ExpireSolution(true);
         }
+
         // Register the new output parameters to our component.
         private void AddOutput(int index)
         {
@@ -360,7 +362,9 @@ namespace Axis.Online
 
             ExpireSolution(true);
         }
+        #endregion
 
+        #region Serialization
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
@@ -376,8 +380,9 @@ namespace Axis.Online
             this.logOptionOut = reader.GetBoolean("LogOptionOutConnect");
             return base.Read(reader);
         }
+        #endregion
 
-
+        #region Component Settings
         bool IGH_VariableParameterComponent.CanInsertParameter(GH_ParameterSide side, int index) => false;
         bool IGH_VariableParameterComponent.CanRemoveParameter(GH_ParameterSide side, int index) => false;
         IGH_Param IGH_VariableParameterComponent.CreateParameter(GH_ParameterSide side, int index) => null;
@@ -398,5 +403,6 @@ namespace Axis.Online
         {
             get { return new Guid("20538b5a-c2f6-4b3e-ab91-e59104ff2c71"); }
         }
+        #endregion
     }
 }

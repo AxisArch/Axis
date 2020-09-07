@@ -10,21 +10,11 @@ using System.Linq;
 
 namespace Axis.Targets
 {
+    /// <summary>
+    /// Define a coordinate system / work object.
+    /// </summary>
     public class CoordinateSystem : GH_Component, IGH_VariableParameterComponent
-    {
-        protected override System.Drawing.Bitmap Icon
-        {
-            get
-            {
-                return Properties.Resources.CSystem;
-            }
-        }
-        public override Guid ComponentGuid
-        {
-            get { return new Guid("{b11f15a4-c0dd-43d6-aecd-d87d2fb05664}"); }
-        }
-        public override GH_Exposure Exposure => GH_Exposure.primary;
-        
+    {    
         // Optional context menu toggles
         bool m_dynamicCS = false;
         Plane eAxis = Plane.WorldXY;
@@ -36,6 +26,7 @@ namespace Axis.Targets
         {
         }
 
+        #region IO
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddTextParameter("Name", "Name", "Name of the coordinate system.", GH_ParamAccess.list);
@@ -46,8 +37,10 @@ namespace Axis.Targets
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("Wobj", "Wobj", "Work object coordinate system.", GH_ParamAccess.list);
+            IGH_Param csystem = new Axis.Params.CSystemParam();
+            pManager.AddParameter(csystem, "Wobj", "Wobj", "Work object coordinate system.", GH_ParamAccess.list);
         }
+        #endregion
 
         /// <summary>
         /// Create custom coordinate system objects.
@@ -106,6 +99,14 @@ namespace Axis.Targets
             }
         }
 
+        public override void ClearData()
+        {
+            base.ClearData();
+            m_cSystems.Clear();
+            m_bBox = BoundingBox.Unset;
+        }
+
+        #region Display
         // Custom preview options for the component.
         public override void DrawViewportWires(IGH_PreviewArgs args)
         {
@@ -118,14 +119,9 @@ namespace Axis.Targets
             base.DrawViewportMeshes(args);
             foreach (CSystem c in m_cSystems) Canvas.Component.DisplayPlane(c.CSPlane, args);
         }
+        #endregion
 
-        public override void ClearData()
-        {
-            base.ClearData();
-            m_cSystems.Clear();
-            m_bBox = BoundingBox.Unset;
-        }
-
+        #region UI
         // Build a list of optional input parameters
         IGH_Param[] inputParams = new IGH_Param[1]
         {
@@ -230,7 +226,9 @@ namespace Axis.Targets
             Params.OnParametersChanged();
             ExpireSolution(true);
         }
+        #endregion
 
+        #region Serialization
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
@@ -246,7 +244,9 @@ namespace Axis.Targets
             this.m_outputDeclarations = reader.GetBoolean("CSDec");
             return base.Read(reader);
         }
+        #endregion
 
+        #region Component Settings
         /// <summary>
         /// Implement this interface in your component if you want to enable variable parameter UI.
         /// </summary>
@@ -256,5 +256,18 @@ namespace Axis.Targets
         bool IGH_VariableParameterComponent.DestroyParameter(GH_ParameterSide side, int index) => false;
         void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
 
+        protected override System.Drawing.Bitmap Icon
+        {
+            get
+            {
+                return Properties.Resources.CSystem;
+            }
+        }
+        public override Guid ComponentGuid
+        {
+            get { return new Guid("{b11f15a4-c0dd-43d6-aecd-d87d2fb05664}"); }
+        }
+        public override GH_Exposure Exposure => GH_Exposure.primary;
+        #endregion
     }
 }

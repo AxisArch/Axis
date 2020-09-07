@@ -13,7 +13,6 @@ using System.Windows.Forms;
 using System.Text;
 using System.Threading.Tasks;
 
-
 using Excel = Microsoft.Office.Interop.Excel;
 
 using Rhino;
@@ -24,18 +23,18 @@ using Rhino.Input.Custom;
 using Rhino.DocObjects;
 
 using Grasshopper.Kernel;
+using Grasshopper.Kernel.Types;
 using Grasshopper.Kernel.Special;
 
 using Axis.Targets;
 
 using Newtonsoft.Json;
 
-/// <summary>
-/// Commone Axis specific functions
-/// </summary>
 namespace Axis
 {
-
+    /// <summary>
+    /// Utility class for generic functions.
+    /// </summary>
     public static class Util
     {
         // Public constants across the plugin.
@@ -554,6 +553,95 @@ namespace Axis
                 meshOut[i].VertexColors.CreateMonotoneMesh(colors[i]);
             return meshOut;
         }
+
+        /// <summary>
+        /// Limit a value to a range
+        /// </summary>
+        /// <param name="value">Value to limit</param>
+        /// <param name="inclusiveMinimum">Minimum value</param>
+        /// <param name="inlusiveMaximum">Maximum value</param>
+        /// <returns>Limited Value</returns>
+        public static T LimitToRange<T>(IComparable<T> value, T inclusiveMinimum, T inlusiveMaximum)
+        {
+
+            if (value.CompareTo(inclusiveMinimum) == 0 | value.CompareTo(inclusiveMinimum) == 1)
+            {
+                if (value.CompareTo(inlusiveMaximum) ==  -1 | value.CompareTo(inlusiveMaximum) == 0)
+                {
+                    return (T)value;
+                }
+
+                return inlusiveMaximum;
+            }
+
+            return inclusiveMinimum;
+        }
+
+        /// <summary>
+        /// Convert List to GH_Structure - Extention method
+        /// </summary>
+        /// <typeparam name="T">Target type, has to inherit from IGH_Goo</typeparam>
+        /// <typeparam name="Q">Source type, can be IGH_Goo or Rhino CommonObject</typeparam>
+        /// <param name="list">List to be converted</param>
+        /// <returns>GH_Structure containing list</returns>
+        public static Grasshopper.Kernel.Data.GH_Structure<T> ToGHStructure<T, Q>(this IEnumerable<Q> list) where T : IGH_Goo
+        {
+            Grasshopper.Kernel.Data.GH_Structure<T> gh_Struc = new Grasshopper.Kernel.Data.GH_Structure<T>();
+
+            if (list == null) return null;
+
+            if (typeof(Rhino.Runtime.CommonObject).IsAssignableFrom(typeof(Q)))
+            {
+                foreach (object item in list)
+                {
+                    var g_Obj = GH_Convert.ToGoo(item);
+                    gh_Struc.Append((T)g_Obj);
+                }
+            }
+            else if (typeof(IGH_Goo).IsAssignableFrom(typeof(Q)))
+            {
+                foreach (object obj in list)
+                {
+                    var g_Obj = obj as IGH_Goo;
+                    gh_Struc.Append((T)g_Obj);
+                }
+            }
+            else return null;
+
+            return gh_Struc;
+        }
+
+        /// <summary>
+        /// Convert a GH_Structure back to a list
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="Q"></typeparam>
+        /// <param name="gh_struct"></param>
+        /// <returns></returns>
+        public static T[] ToList<T, Q>(this Grasshopper.Kernel.Data.GH_Structure<Q> gh_struct )  where T : Rhino.Runtime.CommonObject where Q : IGH_Goo
+        {
+            if (gh_struct == null) return null;
+            var list = new List<T>();
+            for (int i = 0; i < gh_struct.Branches.Count; ++i)
+            {
+                for(int j = 0; j< gh_struct[i].Count; ++j) 
+                {
+                    var data = gh_struct[i][j];
+                    //if (data == typeof(T))
+                    //{
+                        var temp = data as T;
+                        list.Add(temp);
+                    //}
+                    //else if () { }
+
+                    //var data = GH_Convert.ByteArrayToCommonObject<T>(byteArray as byte[]);
+                    //list.Add((T)gh_struct[i][j]);
+                }
+;
+            }
+            return list.ToArray();
+        }
+        
     }
 
     /// <summary>
@@ -597,7 +685,7 @@ namespace RAPID
     /// <summary>
     /// RAPID program
     /// </summary>
-    public class Program : IEnumerable<string>
+    public class Program : GH_Goo<Program>, IEnumerable<string>
     {
         public List<string> code { get; private set; }
         public bool IsMain { get; private set; }
@@ -668,14 +756,26 @@ namespace RAPID
         {
             return GetEnumerator();
         }
+
+        public override string TypeName => "RAPID Proc";
+        public override string TypeDescription => "Represents a RAPID procedure that can be combined to a RAPID module";
+        public override bool IsValid => true;
+        public override string ToString()
+        {
+            return $"RAPID Proc: {Name}";
+        }
+        public override IGH_Goo Duplicate()
+        {
+            return this;
+        }
     }
 
     /// <summary>
     /// RAPID module
     /// </summary>
-    public class Module
+    public class Module : GH_Goo<Module>
     {
-        public bool IsValid { get; private set; }
+        private bool isValid;
 
         private string Name;
         private List<string> tag = new List<string>
@@ -694,7 +794,7 @@ namespace RAPID
                 };
         private List<Program> main = new List<Program>();
         private List<Program> progs = new List<Program>();
-        private List<string> legaryProgs = new List<string>();
+        private List<string> legacyProgs = new List<string>();
 
         public List<Program> extraProg = new List<Program>();
 
@@ -721,7 +821,7 @@ namespace RAPID
             }
             this.Name = name;
             if (declarations != null) { this.declarations = declarations; }
-            this.IsValid = this.validate();
+            this.isValid = this.validate();
         }
         public void AddDeclarations(List<string> declaration)
         {
@@ -747,7 +847,7 @@ namespace RAPID
         }
         public void AddPrograms(List<string> progs)
         {
-            legaryProgs.AddRange(progs);
+            legacyProgs.AddRange(progs);
         }
         public void AddMain(Program main)
         {
@@ -759,7 +859,7 @@ namespace RAPID
             {
                 this.main.Add(main);
             }
-            this.IsValid = this.validate();
+            this.isValid = this.validate();
         }
         public void AddOverrides(List<string> overrides)
         {
@@ -794,7 +894,7 @@ namespace RAPID
             {
                 mod.AddRange(prog.Code());
             }
-            if (legaryProgs.Count > 0) { mod.AddRange(legaryProgs); }
+            if (legacyProgs.Count > 0) { mod.AddRange(legacyProgs); }
             if (progs.Count > 0)
             {
                 mod.Add("! Additional Programs");
@@ -818,6 +918,18 @@ namespace RAPID
             }
             if (c == 1) { return true; }
             else { return false; }
+        }
+
+        public override string TypeName => "RAPID Module";
+        public override string TypeDescription => "Represents a RAPID mudule consisting of RAPID procedures";
+        public override bool IsValid => isValid;
+        public override string ToString()
+        {
+            return $"RAPID Module: {Name}";
+        }
+        public override IGH_Goo Duplicate()
+        {
+           return this;
         }
 
     }
@@ -975,6 +1087,33 @@ namespace Canvas
 
             return vl;
         }
+        public static GH_NumberSlider CreateNumbersilder(string name, decimal min, decimal max, int precision = 0, int length = 174)
+        {
+            var nS = new GH_NumberSlider();
+            nS.ClearData();
+
+            //Naming
+            nS.Name = name;
+            nS.NickName = name;
+
+            nS.Slider.Minimum = min;
+            nS.Slider.Maximum = max;
+
+            nS.Slider.DecimalPlaces = Axis.Util.LimitToRange(precision, 0,12);
+
+            if (precision == 0)
+                nS.Slider.Type = Grasshopper.GUI.Base.GH_SliderAccuracy.Integer;
+            else
+                nS.Slider.Type = Grasshopper.GUI.Base.GH_SliderAccuracy.Float;
+
+            nS.CreateAttributes();
+            var bounds = nS.Attributes.Bounds;
+            bounds.Width = length;
+            nS.Attributes.Bounds = bounds;
+
+            nS.SetSliderValue(min);
+            return nS;
+        }
 
         // private methods to magee the placement of ne objects
         static void AddObject(GH_DocumentIO docIO, IGH_Param Object, IGH_Param param, PointF location = new PointF())
@@ -1001,7 +1140,8 @@ namespace Canvas
             //doc.ScheduleSolution(10);
         }
 
-
+        #region Display Methods
+        
         static public void DisplayPlane(Plane plane, IGH_PreviewArgs args, double sizeLine = 70, double sizeArrow = 30, int thickness = 3)
         {
             args.Display.DrawLineArrow(
@@ -1018,48 +1158,77 @@ namespace Canvas
                 thickness,
                 sizeArrow);
         }
-        static public void DisplayRobotMesh(Axis.Core.Manipulator robot, IGH_PreviewArgs args)
-        {
-            if (robot.colors.Count == 0) { robot.colors.Add(Axis.Styles.DarkGrey); }
-
-            int cC = robot.colors.Count;
-            int rC = robot.ikMeshes.Count;
-
-            for (int i = 0; i < rC; ++i)
-            {
-                int cID = i;
-
-                if (i >= rC) cID = cC - 1;
-                args.Display.DrawMeshShaded(robot.ikMeshes[i], new DisplayMaterial(robot.colors[cID]));
-            }
-        }
         static public void DisplayRobotLines(Axis.Core.Manipulator robot, IGH_PreviewArgs args, int thickness = 3)
         {
-            List<Point3d> points = new List<Point3d>();
-            foreach (Plane p in robot.ikPlanes) { points.Add(p.Origin); }
-
-            Polyline pLine = new Polyline(points);
-
-            Line[] lines = pLine.GetSegments();
-
-            // Draw lines
-            for (int i = 0; i < lines.Length; ++i)
-            {
-                int cID = i;
-                if (i >= lines.Length) cID = robot.colors.Count - 1;
-                args.Display.DrawLine(lines[i], robot.colors[cID], thickness);
-            }
-
-            //Draw Sphers
-
-            //Draw Plane
-            DisplayPlane(robot.ikPlanes[0], args);
+            //List<Point3d> points = new List<Point3d>();
+            //foreach (Plane p in robot.ikPlanes) { points.Add(p.Origin); }
+            //
+            //Polyline pLine = new Polyline(points);
+            //
+            //Line[] lines = pLine.GetSegments();
+            //
+            //// Draw lines
+            //for (int i = 0; i < lines.Length; ++i)
+            //{
+            //    int cID = i;
+            //    if (i >= lines.Length) cID = robot.ikColors.Count - 1;
+            //    args.Display.DrawLine(lines[i], robot.ikColors[cID], thickness);
+            //}
+            //
+            ////Draw Sphers
+            //
+            ////Draw Plane
+            //DisplayPlane(robot.ikPlanes[0], args);
         }
         static public void DisplayTool(Axis.Core.Tool tool, IGH_PreviewArgs args)
         {
+            //int cC = tool.ikColors.Count;
+            //int tC = tool.ikGeometry.Count;
+            //
+            //for (int i = 0; i < tC; ++i)
+            //{
+            //    int cID = i;
+            //
+            //    if (i >= cC) cID = cC - 1;
+            //    args.Display.DrawMeshShaded(tool.ikGeometry[i], new DisplayMaterial(tool.ikColors[cID]));
+            //}
+        }
+        static public void DisplayToolLines(Axis.Core.Tool tool, IGH_PreviewArgs args, int thickness = 3)
+        {
+            //Line line = new Line(tool.ikBase.Origin, tool.ikTCP.Origin);
+            //args.Display.DrawLine(line, tool.ikColors[0], thickness);
+            //
+            ////Draw Plane
+            //DisplayPlane(tool.ikTCP, args);
+        }
+        static public void DisplayToolPath(Axis.Targets.Toolpath toolpath, IGH_PreviewArgs args, int thickness = 3, double radius = 2 )
+        {
+            List<Line> lines = new List<Line>();
+            List<Color> colors = new List<Color>();
+
+            Dictionary<Line, Color> pairs = lines.Zip(colors, (k, v) => new { k, v })
+              .ToDictionary(x => x.k, x => x.v);
+
+            //Draw line segments
+            foreach (KeyValuePair<Line, Color> pair in pairs)
+            {
+                args.Display.DrawLine(pair.Key, pair.Value, thickness);
+            }
+
+            List<Point3d> points = new List<Point3d>();
+            List<Sphere> spheres = points.Select(p => new Sphere(p, radius)).ToList();
+
+            //Draw Commants
+            foreach (Sphere sphere in spheres)
+            {
+                //IF bitmats are to be used
+                //args.Display.DrawSprites();
+                args.Display.DrawSphere(sphere, Axis.Styles.LightOrange);
+            }
 
         }
-
+        
+        #endregion
     }
     class Menu
     {
@@ -1086,12 +1255,4 @@ namespace Canvas
             //selectedMenuItem.Owner.Show();
         }
     }
-    /*
-    class DoubelClick : Grasshopper.Kernel.Attributes.GH_ComponentAttributes
-    {
-        override RespondToMouseDoubleClick()
-        {
-
-        }
-    }*/
 }

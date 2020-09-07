@@ -20,6 +20,9 @@ using Axis.Targets;
 
 namespace Axis.Online
 {
+    public override bool Obsolete => true;
+    public override GH_Exposure Exposure => GH_Exposure.hidden;
+
     public class IRC5Online : GH_Component
     {
         public string ControllerID { get; set; }

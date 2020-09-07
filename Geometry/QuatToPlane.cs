@@ -6,21 +6,11 @@ using Rhino.Geometry;
 
 namespace Axis.Geometry
 {
+    /// <summary>
+    /// Convert a point-quaternion pair to a geometric plane.
+    /// </summary>
     public class QuatToPlane : GH_Component
     {
-        public override GH_Exposure Exposure => GH_Exposure.tertiary;
-        protected override System.Drawing.Bitmap Icon
-        {
-            get
-            {
-                return Properties.Resources.Robot;
-            }
-        }
-        public override Guid ComponentGuid
-        {
-            get { return new Guid("{c834c84f-e010-4a51-a4a6-06b16257538c}"); }
-        }
-
         public QuatToPlane() : base("Quaternion To Plane", "Q-P", "Convert a point and a quaternion to a geometric plane.", AxisInfo.Plugin, AxisInfo.TabGeometry)
         {
         }
@@ -52,5 +42,20 @@ namespace Axis.Geometry
                 DA.SetData(0, outPlane);
             }
         }
+
+        #region Component Settings
+        public override GH_Exposure Exposure => GH_Exposure.tertiary;
+        protected override System.Drawing.Bitmap Icon
+        {
+            get
+            {
+                return Properties.Resources.Robot;
+            }
+        }
+        public override Guid ComponentGuid
+        {
+            get { return new Guid("{c834c84f-e010-4a51-a4a6-06b16257538c}"); }
+        }
+        #endregion
     }
 }

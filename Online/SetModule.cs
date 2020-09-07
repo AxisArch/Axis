@@ -5,11 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 
-
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Grasshopper.Kernel.Parameters;
-
 
 using Rhino.Geometry;
 
@@ -24,6 +22,9 @@ using Axis.Targets;
 
 namespace Axis.Online
 {
+    /// <summary>
+    /// Set a module to an online IRC5 controller.
+    /// </summary>
     public class SetModule : GH_Component, IGH_VariableParameterComponent
     {
         public List<string> Status { get; set; }
@@ -38,7 +39,6 @@ namespace Axis.Online
         // Create a list of string to store a log of the connection status.
         private List<string> log = new List<string>();
 
-
         public SetModule()
           : base("Set Module", "Set Mod",
               "Set the main module on the robot controller",
@@ -46,18 +46,19 @@ namespace Axis.Online
         {
         }
 
+        #region IO
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddGenericParameter("Controller", "Controller", "Recives the output from a controller module", GH_ParamAccess.item);
             pManager.AddBooleanParameter("Send", "Send", "Send to module", GH_ParamAccess.item, false);
-            pManager.AddTextParameter("Moduel", "Module", "Module to be wtritten to the controller.", GH_ParamAccess.list);
+            pManager.AddTextParameter("Module", "Module", "Module to be wtritten to the controller.", GH_ParamAccess.list);
             pManager[1].Optional = true;
         }
-
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
         }
+        #endregion
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
@@ -66,10 +67,9 @@ namespace Axis.Online
             Controller abbController = null;
             bool clear = false;
 
-
             if (!DA.GetData("Controller", ref controller)) ;
             if (!DA.GetData("Send", ref send)) ;
-            if (!DA.GetDataList("Moduel", modFile)){ return; }
+            if (!DA.GetDataList("Module", modFile)){ return; }
             if (logOption)
             {
                 if (!DA.GetData("Clear", ref clear)) ;
@@ -82,7 +82,6 @@ namespace Axis.Online
                 abbController = myAxisController;
             }
             else { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No active controller connected"); return;}
-
 
             if ((abbController != null) && send)
             {
@@ -98,11 +97,11 @@ namespace Axis.Online
                     }
                 }
 
-                //Not working perfectly yet
+                // Not working perfectly yet
                 if (sending == false)
                 {
                     sending = true;
-                    log.Add("Sending moduel to controller");
+                    log.Add("Sending Module to controller");
                     try
                     {
                         using (Mastership m = Mastership.Request(abbController.Rapid))
@@ -162,7 +161,6 @@ namespace Axis.Online
                     //log.Add("Program has been loaded");
                 }
             }
-            
 
             if (clear)
             {
@@ -175,12 +173,10 @@ namespace Axis.Online
                 Status = log;
                 DA.SetDataList("Log", log);
             }
-
-            
-
             //ExpireSolution(true);
         }
-    
+
+        #region UI
         // Build a list of optional input parameters
         IGH_Param[] inputParams = new IGH_Param[1]
         {
@@ -220,7 +216,6 @@ namespace Axis.Online
 
             ExpireSolution(true);
         }
-    
 
         // Register the new input parameters to our component.
         private void AddInput(int index)
@@ -273,7 +268,9 @@ namespace Axis.Online
 
             ExpireSolution(true);
         }
+        #endregion
 
+        #region Serialization
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
@@ -289,8 +286,9 @@ namespace Axis.Online
             this.logOptionOut = reader.GetBoolean("LogOptionSetOutModule");
             return base.Read(reader);
         }
-       
+        #endregion
 
+        #region Component Settings
         bool IGH_VariableParameterComponent.CanInsertParameter(GH_ParameterSide side, int index) => false;
         bool IGH_VariableParameterComponent.CanRemoveParameter(GH_ParameterSide side, int index) => false;
         IGH_Param IGH_VariableParameterComponent.CreateParameter(GH_ParameterSide side, int index) => null;
@@ -307,10 +305,10 @@ namespace Axis.Online
             }
         }
 
-
         public override Guid ComponentGuid
         {
             get { return new Guid("676a28f1-9320-4a02-a9bc-59c617dd04d0"); }
         }
+        #endregion
     }
 }

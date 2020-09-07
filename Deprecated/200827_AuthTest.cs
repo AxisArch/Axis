@@ -8,12 +8,19 @@ using static Axis.Properties.Settings;
 
 namespace Axis.Core
 {
+    /// <summary>
+    /// Test class to verify the auth pipeline.
+    /// </summary>
     public class AuthTest : GH_Component
     {
+        public override bool Obsolete => true;
+        public override GH_Exposure Exposure => GH_Exposure.hidden;
+
         public AuthTest() : base("Auth Test", "Auth", "Test", AxisInfo.Plugin, AxisInfo.TabCore)
         {
         }
 
+        #region IO
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
         }
@@ -22,6 +29,7 @@ namespace Axis.Core
         {
             pManager.AddTextParameter("Log", "Log", "Log", GH_ParamAccess.list);
         }
+        #endregion
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
@@ -61,6 +69,7 @@ namespace Axis.Core
             DA.SetDataList(0, log);
         }
 
+        #region Component Settings
         protected override System.Drawing.Bitmap Icon
         {
             get
@@ -73,5 +82,6 @@ namespace Axis.Core
         {
             get { return new Guid("10f5cef1-1906-422e-bb81-9f5304fb7902"); }
         }
+        #endregion
     }
 }

@@ -10,43 +10,39 @@ using Axis.Core;
 
 namespace Axis.Targets
 {
+    /// <summary>
+    /// Define robot end effector joint target positions.
+    /// </summary>
     public class CreateJointTarget : GH_Component, IGH_VariableParameterComponent
     {
         bool manufacturer = false;
         bool useRotary = false;
         bool useLinear = false;
 
-        public override GH_Exposure Exposure => GH_Exposure.primary;
-        protected override System.Drawing.Bitmap Icon
-        {
-            get
-            {
-                return Properties.Resources.Target;
-            }
-        }
-        public override Guid ComponentGuid
-        {
-            get { return new Guid("8854333d-79f7-47e0-9b80-03966486b42b"); }
-        }
-
         public CreateJointTarget() : base("Joint Target", "Joint", "Compose an absolute joint target from a list of axis values.", AxisInfo.Plugin, AxisInfo.TabTargets)
         {
         }
 
+        #region IO
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddNumberParameter("Angles", "Angles", "Axis values for each axis as a list.", GH_ParamAccess.list, new List<double> { 0, 0, 0, 0, 0, 0 });
-            pManager.AddGenericParameter("Tool", "Tool", "Tool to use for operation.", GH_ParamAccess.item);
-            pManager.AddGenericParameter("Speed", "Speed", "Speed to use for the movement.", GH_ParamAccess.item);
-            pManager.AddGenericParameter("Zone", "Zone", "Zone to use for the movement.", GH_ParamAccess.item);
+            IGH_Param tool = new Axis.Params.ToolParam();
+            pManager.AddParameter(tool, "Tool", "Tool", "Tool to use for operation.", GH_ParamAccess.item);
+            IGH_Param speed = new Axis.Params.SpeedParam();
+            pManager.AddParameter(speed, "Speed", "Speed", "Speed to use for the movement.", GH_ParamAccess.item);
+            IGH_Param zone = new Axis.Params.ZoneParam();
+            pManager.AddParameter(zone, "Zone", "Zone", "Zone to use for the movement.", GH_ParamAccess.item);
             for (int i = 0; i < 4; i++)
                 pManager[i].Optional = true;
         }
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("Target", "Target", "Robot joint target.", GH_ParamAccess.item);
+            IGH_Param target = new Axis.Params.TargetParam();
+            pManager.AddParameter(target, "Target", "Target", "Robot joint target.", GH_ParamAccess.item);
         }
+        #endregion
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
@@ -134,6 +130,7 @@ namespace Axis.Targets
             DA.SetData(0, jointTarget);
         }
 
+        #region UI
         // Build a list of optional input parameters
         IGH_Param[] inputParams = new IGH_Param[]
         {
@@ -194,24 +191,6 @@ namespace Axis.Targets
             ExpireSolution(true);
         }
 
-        // Serialize this instance to a Grasshopper writer object.
-        public override bool Write(GH_IO.Serialization.GH_IWriter writer)
-        {
-            writer.SetBoolean("KukaJointMovement", this.manufacturer);
-            writer.SetBoolean("JointRotary", this.useRotary);
-            writer.SetBoolean("JointLinear", this.useLinear);
-            return base.Write(writer);
-        }
-
-        // Deserialize this instance from a Grasshopper reader object.
-        public override bool Read(GH_IO.Serialization.GH_IReader reader)
-        {
-            this.manufacturer = reader.GetBoolean("KukaJointMovement");
-            this.useRotary = reader.GetBoolean("JointRotary");
-            this.useLinear = reader.GetBoolean("JointLinear");
-            return base.Read(reader);
-        }
-
         // Register the new input parameters to our component.
         private void AddInput(int index)
         {
@@ -237,7 +216,29 @@ namespace Axis.Targets
             Params.OnParametersChanged();
             ExpireSolution(true);
         }
+        #endregion
 
+        #region Serialization
+        // Serialize this instance to a Grasshopper writer object.
+        public override bool Write(GH_IO.Serialization.GH_IWriter writer)
+        {
+            writer.SetBoolean("KukaJointMovement", this.manufacturer);
+            writer.SetBoolean("JointRotary", this.useRotary);
+            writer.SetBoolean("JointLinear", this.useLinear);
+            return base.Write(writer);
+        }
+
+        // Deserialize this instance from a Grasshopper reader object.
+        public override bool Read(GH_IO.Serialization.GH_IReader reader)
+        {
+            this.manufacturer = reader.GetBoolean("KukaJointMovement");
+            this.useRotary = reader.GetBoolean("JointRotary");
+            this.useLinear = reader.GetBoolean("JointLinear");
+            return base.Read(reader);
+        }
+        #endregion
+
+        #region Component Settings
         /// <summary>
         /// Implement this interface in your component if you want to enable variable parameter UI.
         /// </summary>
@@ -246,5 +247,19 @@ namespace Axis.Targets
         IGH_Param IGH_VariableParameterComponent.CreateParameter(GH_ParameterSide side, int index) => null;
         bool IGH_VariableParameterComponent.DestroyParameter(GH_ParameterSide side, int index) => false;
         void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
+
+        public override GH_Exposure Exposure => GH_Exposure.primary;
+        protected override System.Drawing.Bitmap Icon
+        {
+            get
+            {
+                return Properties.Resources.Target;
+            }
+        }
+        public override Guid ComponentGuid
+        {
+            get { return new Guid("8854333d-79f7-47e0-9b80-03966486b42b"); }
+        }
+        #endregion
     }
 }

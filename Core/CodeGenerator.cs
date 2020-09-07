@@ -17,6 +17,9 @@ using RAPID;
 
 namespace Axis.Core
 {
+    /// <summary>
+    /// Generate the output code for a robot program.
+    /// </summary>
     public class CodeGenerator : GH_Component, IGH_VariableParameterComponent
     {
         // Sticky variables for the options.
@@ -28,23 +31,11 @@ namespace Axis.Core
         bool validToken = false;
         Auth auth = null;
 
-        protected override System.Drawing.Bitmap Icon
-        {
-            get
-            {
-                return Properties.Resources.CodeGen;
-            }
-        }
-        public override Guid ComponentGuid
-        {
-            get { return new Guid("{6dccd5dc-520b-482d-bbb2-93607ba5166f}"); }
-        }
-        public override GH_Exposure Exposure => GH_Exposure.primary;
-
         public CodeGenerator() : base("Code Generator", "Code", "Generate manufacturer-specific robot code from a toolpath.", AxisInfo.Plugin, AxisInfo.TabCore)
         {
         }
 
+        #region IO
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddGenericParameter("Program", "Program", "Robot program as list of strings.", GH_ParamAccess.list);
@@ -59,8 +50,12 @@ namespace Axis.Core
         {
             pManager.AddTextParameter("Code", "Code", "Robot code.", GH_ParamAccess.list);
         }
+        #endregion
 
-        protected override void SolveInstance(IGH_DataAccess DA)
+        /// <summary>
+        /// Check the authentification status.
+        /// </summary>
+        protected override void BeforeSolveInstance()
         {
             // Validate the login token.
             auth = new Auth();
@@ -70,7 +65,10 @@ namespace Axis.Core
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Please log in to Axis.");
             }
+        }
 
+        protected override void SolveInstance(IGH_DataAccess DA)
+        {
             string strModName = "MainModule";
             string path = Environment.SpecialFolder.Desktop.ToString();
             string filename = "RobotProgram";
@@ -190,9 +188,9 @@ namespace Axis.Core
                     KRL.Add("; Programmed Movement");
                     if (strProgram.Count > 5000)
                     {
-                        KRL.Add("; Warning: Procedure length exceeds recommend maximum. Advise splitting main proc into sub-procs.");
+                        KRL.Add("; Warning: Procedure length exceeds recommended maximum. Advise splitting main proc into sub-procs.");
                         KRL.Add(" ");
-                        AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Procedure length exceeds recommend maximum. Advise splitting main proc into sub-procs.");
+                        AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Procedure length exceeds recommended maximum. Advise splitting main proc into sub-procs.");
                         //this.Message = "Large Program";
                     }
                     for (int i = 0; i < strProgram.Count; i++)
@@ -204,6 +202,7 @@ namespace Axis.Core
 
                     DA.SetDataList(0, KRL);
                 }
+
                 // If the user has requested KUKA code...
                 else if (m_Manufacturer == Manufacturer.ABB)
                 {
@@ -212,11 +211,10 @@ namespace Axis.Core
                     int topLim = 70000 - bottomLim; //ABB limit about 80.000
                     int progLen = strProgram.Count;
 
-                    if (Enumerable.Range(bottomLim, topLim).Contains(progLen) && !ignoreLen)  // Medium length program. Will be cut into submodules
+                    if (Enumerable.Range(bottomLim, topLim).Contains(progLen) && !ignoreLen)  // Medium length program. Will be cut into submodules...
                     {
                         AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Procedure length exceeds recommended maximum. Program will be split into multiple procedures.");
                         //this.Message = "Large Program";
-
 
                         var subs = Util.SplitProgram(strProgram, 5000);
                         List<Program> progs = new List<Program>();
@@ -234,41 +232,39 @@ namespace Axis.Core
                         }
 
                         var comment = new List<string> {
-                            "! Warning: Procedure length exceeds recommend maximum. Program will be split into multiple procedures.",
+                            "! Warning: Procedure length exceeds recommended maximum. Program will be split into multiple procedures.",
                             " "
                         };
+
                         Program main = new Program(strMain, progName: "main", LJ: true, comments: comment);
 
                         module.AddMain(main);
                         module.AddPrograms(progs);
-
                     }
-                    else if (progLen > topLim && !ignoreLen) // Long program. Will be split up into seperate files
+                    else if (progLen > topLim && !ignoreLen) // Long program. Will be split up into seperate files...
                     {
                         AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Procedure length exceeds recommended maximum. Program will be split into multiple procedures.");
                         //this.Message = "Extra Large Program";
 
-
                         var progsStr = Util.SplitProgram(strProgram, 5000);
-
                         string procname = "progNumber";
 
-                        //
                         List<Program> external = new List<Program>();
                         for (int i = 0; i < progsStr.Count; ++i)
                         {
                             external.Add(new Program(progsStr[i], progName: procname + i.ToString()));
                         }
 
-                        // Write the instructions for the main prog
+                        // Write the instructions for the main prog.
                         List<string> strMain = new List<string>();
-                        strMain.AddRange(new List<string> // Load the first pair 
+                        strMain.AddRange(new List<string> // Load the first pair
                         {
                             $"StartLoad \\Dynamic, sDirHome \\File:= sFile + \"{smFileName}{0}.mod\", load1;",
                             $"StartLoad \\Dynamic, sDirHome \\File:= sFile + \"{smFileName}{1}.mod\", load2;",
                             ""
                         });
-                        for (int i = 0; i < external.Count(); i += 2) // Loop through all sub programms
+
+                        for (int i = 0; i < external.Count(); i += 2) // Loop through all subprogs
                         {
                             strMain.AddRange(new List<string>
                             {
@@ -283,7 +279,6 @@ namespace Axis.Core
                                 strMain.AddRange(new List<string>
                             {
                                 $"StartLoad \\Dynamic, sDirHome \\File:= sFile + \"{smFileName}{i+2}.mod\", load1;",
-                                //""
                             });
                             }
 
@@ -309,7 +304,6 @@ namespace Axis.Core
                             }
                         }
 
-
                         List<string> dec = new List<string>
                         {
                             "",
@@ -319,12 +313,14 @@ namespace Axis.Core
                             $"CONST string sDirHome:= \"{dirHome}\"; ",
                             $"CONST string sFile:= \"{filePath}\";",
                         };
+
                         var comment = new List<string>
                         {
-                            "! Warning: Procedure length exceeds recommend maximum. Program will be split into multiple procedures.",
+                            "! Warning: Procedure length exceeds recommended maximum. Program will be split into multiple procedures.",
                             "! That will be loaded successively at runtime",
                             " "
                         };
+
                         var main = new Program(strMain, progName: "main", comments: comment, LJ: true);
                         module.AddMain(main);
                         module.extraProg = external;
@@ -342,12 +338,12 @@ namespace Axis.Core
                     if (declarations) module.AddDeclarations(strDeclarations);
                     if (overrides) module.AddOverrides(strOverrides);
 
-                    if (!module.IsValid) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The program/module is invalid"); }
+                    if (!module.IsValid) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The program is invalid."); }
 
 
                     DA.SetDataList(0, module.Code());
-                } //If 
-                else AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The selected manifacturar has not yet been implemented");
+                }
+                else AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The selected manufacturer has not yet been implemented.");
 
                 if (export)
                 {
@@ -385,6 +381,7 @@ namespace Axis.Core
             }
         }
 
+        #region UI
         // Build a list of optional input and output parameters
         IGH_Param[] inputParams = new IGH_Param[3]
         {
@@ -515,7 +512,9 @@ namespace Axis.Core
             Params.OnParametersChanged();
             ExpireSolution(true);
         }
+        #endregion
 
+        #region Serialization
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
@@ -537,12 +536,28 @@ namespace Axis.Core
             this.ignoreLen = reader.GetBoolean("IgnoreLen");
             return base.Read(reader);
         }
+        #endregion
 
+        #region Component Settings
         bool IGH_VariableParameterComponent.CanInsertParameter(GH_ParameterSide side, int index) => false;
         bool IGH_VariableParameterComponent.CanRemoveParameter(GH_ParameterSide side, int index) => false;
         IGH_Param IGH_VariableParameterComponent.CreateParameter(GH_ParameterSide side, int index) => null;
         bool IGH_VariableParameterComponent.DestroyParameter(GH_ParameterSide side, int index) => false;
         void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
+
+        protected override System.Drawing.Bitmap Icon
+        {
+            get
+            {
+                return Properties.Resources.CodeGen;
+            }
+        }
+        public override Guid ComponentGuid
+        {
+            get { return new Guid("{6dccd5dc-520b-482d-bbb2-93607ba5166f}"); }
+        }
+        public override GH_Exposure Exposure => GH_Exposure.primary;
+        #endregion
     }
 }
 

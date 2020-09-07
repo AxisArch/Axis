@@ -22,6 +22,9 @@ using Axis.Targets;
 
 namespace Axis.Online
 {
+    /// <summary>
+    /// Online monitoring of an IRC5 controller object.
+    /// </summary>
     public class Monitoring : GH_Component, IGH_VariableParameterComponent
     {
         // Optionable Log
@@ -33,7 +36,6 @@ namespace Axis.Online
 
         Controller controller = null;
         Task[] tasks = null;
-
 
         // State switch variables for TCP monitoring.
         int ioMonitoringOn = 0; int ioMonitoringOff = 0;
@@ -47,11 +49,11 @@ namespace Axis.Online
         List<string> IOstatus = new List<string>();
         Plane tcp = new Plane();
 
-
         public Monitoring() : base("Monitoring  ", "Monitoring", "This will monitor the robots position and IO's", AxisInfo.Plugin, AxisInfo.TabOnline)
         {
         }
 
+        #region IO
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddGenericParameter("Controller", "Controller", "Recives the output from a controller module", GH_ParamAccess.item);
@@ -62,6 +64,7 @@ namespace Axis.Online
             pManager.AddTextParameter("IO", "IO", "IO status.", GH_ParamAccess.list);
             pManager.AddPlaneParameter("TCP", "TCP", "TCP status.", GH_ParamAccess.item);
         }
+        #endregion
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
@@ -78,7 +81,6 @@ namespace Axis.Online
 
             bool monitorTCP = true;
             bool monitorIO = true;
-
             bool clear = false;
 
             // Current Robot task
@@ -88,9 +90,8 @@ namespace Axis.Online
             double cRobX = 0; double cRobY = 0; double cRobZ = 0;
             double cRobQ1 = 0; double cRobQ2 = 0; double cRobQ3 = 0; double cRobQ4 = 0;
             Quaternion cRobQuat = new Quaternion();
-            
 
-            // TCP monitoring
+            // Update TCP
             if (monitorTCP)
             {
                 if (tcpMonitoringOn == 0)
@@ -114,9 +115,6 @@ namespace Axis.Online
                 tcp = Util.QuaternionToPlane(cRobPos, cRobQuat);
 
                 tcpMonitoringOn += 1; tcpMonitoringOff = 0;
-
-
-
             }
             else if (tcpMonitoringOn > 0)
             {
@@ -181,9 +179,9 @@ namespace Axis.Online
             {
                 ExpireSolution(true);
             }
-
         }
 
+        #region UI
         // Build a list of optional input parameters
         IGH_Param[] inputParams = new IGH_Param[1]
         {
@@ -284,7 +282,9 @@ namespace Axis.Online
 
             ExpireSolution(true);
         }
+        #endregion
 
+        #region Serialization
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
@@ -302,10 +302,9 @@ namespace Axis.Online
             this.autoUpdate = reader.GetBoolean("AutoUpdate");
             return base.Read(reader);
         }
+        #endregion
 
-        /// <summary>
-        /// Implement this interface in your component if you want to enable variable parameter UI.
-        /// </summary>
+        #region Component Settings
         bool IGH_VariableParameterComponent.CanInsertParameter(GH_ParameterSide side, int index) => false;
         bool IGH_VariableParameterComponent.CanRemoveParameter(GH_ParameterSide side, int index) => false;
         IGH_Param IGH_VariableParameterComponent.CreateParameter(GH_ParameterSide side, int index) => null;
@@ -332,5 +331,6 @@ namespace Axis.Online
         {
             get { return new Guid("288C0F4E-542A-4A37-A947-4B541436BEFB"); }
         }
+        #endregion
     }
 }
