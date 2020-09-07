@@ -18,16 +18,15 @@ namespace Axis
     /// <summary>
     /// Define robot end effector plane target positions.
     /// </summary>
-    public class CreateTarget_Multithreaded : GH_TaskCapableComponent<CreateTarget_Multithreaded.SolveResults>, IGH_VariableParameterComponent
+    public class CreateTarget_Multithreaded : GH_Component, IGH_VariableParameterComponent
     {
         // Boolean toggle for context menu items.
         bool m_outputCode = false;
         bool m_interpolationTypes = false;
-        bool m_outputTarget = false;
 
         Manufacturer m_Manufacturer = Manufacturer.ABB;
-        List<Target> m_targets = new List<Target>();
-        BoundingBox m_bBox = new BoundingBox();
+        List<Target> c_targets = new List<Target>();
+        BoundingBox c_bBox = new BoundingBox();
 
         // External axis presence.
         bool extRotary = false;
@@ -71,7 +70,6 @@ namespace Axis
         {
             this.Message = m_Manufacturer.ToString();
 
-            List<Target> targets = new List<Target>();
             List<string> code = new List<string>();
 
             List<Plane> planes = new List<Plane>();
@@ -86,164 +84,46 @@ namespace Axis
             List<double> eLinVals = new List<double>();
 
 
-            if (InPreSolve)
-            {
-                // First pass; collect input data
-                DA.GetDataList(0, planes);
-                if (!DA.GetDataList(1, speeds)) speeds.Add(Speed.Default);
-                if (!DA.GetDataList(2, zones)) zones.Add(Zone.Default);
-                if (!DA.GetDataList(3, tools)) tools.Add(Tool.Default);
-                if (!DA.GetDataList(4, wobjs)) wobjs.Add(CSystem.Default);
 
-                // If interpolation types are specified, get them.
-                if (m_interpolationTypes) { if (!DA.GetDataList("*Method", methods)) methods.Add(0); }
-                if (!m_interpolationTypes) methods.Add(0);
+            DA.GetDataList(0, planes);
+            if (!DA.GetDataList(1, speeds)) speeds.Add(Speed.Default);
+            if (!DA.GetDataList(2, zones)) zones.Add(Zone.Default);
+            if (!DA.GetDataList(3, tools)) tools.Add(Tool.Default);
+            if (!DA.GetDataList(4, wobjs)) wobjs.Add(CSystem.Default);
 
-                // If the inputs are present, get the external axis values.
-                if (extRotary) { if (!DA.GetDataList("Rotary", eRotVals)) eRotVals.Add(ExtVal.Default); }
-                if (!extRotary) eRotVals.Add(ExtVal.Default);
-                if (extLinear) { if (!DA.GetDataList("Linear", eLinVals)) eLinVals.Add(ExtVal.Default); }
-                if (!extLinear) eLinVals.Add(ExtVal.Default);
+            // If interpolation types are specified, get them.
+            if (m_interpolationTypes) { if (!DA.GetDataList("*Method", methods)) return; }
+
+            // If the inputs are present, get the external axis values.
+            if (extRotary) { if (!DA.GetDataList("Rotary", eRotVals)) return; }
+            if (extLinear) { if (!DA.GetDataList("Linear", eLinVals)) return; }
 
 
-
-                // Queue up the task
-                for (int i = 0; i < planes.Count; ++i)
-                {
-                    Task<SolveResults> task = Task.Run(() => ComputeTargets_Ordered(i, planes, speeds, zones,
-                        tools, wobjs, eRotVals, eLinVals, methods, m_Manufacturer), CancelToken);
-                    TaskList.Add(task);
-                }
-
-                return;
-            }
-            if (!GetSolveResults(DA, out SolveResults result))
-            {
-                DA.GetDataList(0, planes);
-                if (!DA.GetDataList(1, speeds)) speeds.Add(Speed.Default);
-                if (!DA.GetDataList(2, zones)) zones.Add(Zone.Default);
-                if (!DA.GetDataList(3, tools)) tools.Add(Tool.Default);
-                if (!DA.GetDataList(4, wobjs)) wobjs.Add(CSystem.Default);
-
-                // If interpolation types are specified, get them.
-                if (m_interpolationTypes) { if (!DA.GetDataList("*Method", methods)) return; }
-
-                // If the inputs are present, get the external axis values.
-                if (extRotary) { if (!DA.GetDataList("Rotary", eRotVals)) return; }
-                if (extLinear) { if (!DA.GetDataList("Linear", eLinVals)) return; }
-
-
-                // Compute results on given data
-                System.Collections.Concurrent.ConcurrentBag<TargetOrderPair> bag = new System.Collections.Concurrent.ConcurrentBag<TargetOrderPair>();
-                Parallel.For(0, planes.Count, index => ComputeTargets_Unordered(bag, index, planes, m_interpolationTypes, speeds, zones, extRotary, extLinear, tools, wobjs, eRotVals, eLinVals, methods, m_Manufacturer));
-                targets = bag.OrderBy(b => b.Order).Select(b => b.Value).ToList();
-
-                result = new SolveResults();
-                result.Value = targets;
-            }
+            // Compute results on given data
+            System.Collections.Concurrent.ConcurrentBag<TargetOrderPair> bag = new System.Collections.Concurrent.ConcurrentBag<TargetOrderPair>();
+            //Parallel.For(0, planes.Count, index => ComputeTargets_Unordered(bag, index, planes, m_interpolationTypes, speeds, zones, extRotary, extLinear, tools, wobjs, eRotVals, eLinVals, methods, m_Manufacturer));
+            Parallel.For(0, planes.Count, index => ComputeTargets(bag, index, planes, speeds, zones, tools, wobjs, eRotVals, eLinVals, methods, m_Manufacturer));
+            c_targets = bag.OrderBy(b => b.Order).Select(b => b.Value).ToList();
+            
+            //Compute bounding box for visualisation
+            c_bBox = new BoundingBox(c_targets.Select(t => t.Plane.Origin).ToList());
 
             // Set output data
-            if (result != null)
+            if (c_targets != null)
             {
-                if (result.Value.Count != 0) DA.SetDataList("Targets", result.Value);
+                DA.SetDataList("Targets", c_targets);
+            }
+            if (m_outputCode) 
+            {
+                code = c_targets.Select(t => t.StrRob).ToList();
+                DA.SetDataList("Code", code);
             }
         }
 
-        public class TargetOrderPair
+        struct TargetOrderPair
         {
             public Target Value { get; set; }
             public int Order { get; set; }
-        }
-        public class SolveResults
-        {
-            public List<Target> Value { get; set; } = new List<Target>();
-        }
-
-        /*
-        private static Tuple<MotionType mType,Speed speed,Zone zone,Tool tool,CSystem wobj,double extRot,double extLin,Manufacturer manufacturer> StructureValues(
-            List<MotionType> mTypes, List<Speed> speeds, List<Tool> tools, List<CSystem> wobjs, List<double> , List<double> , List<Manufacturer> ) 
-        {
-            Speed speed;
-            Zone zone;
-            Tool tool;
-            CSystem wobj;
-            int method = 0;
-            double extRot = 0;
-            double extLin = 0;
-
-            if (m_interpolationTypes)
-            {
-                // Method
-                if (i < methods.Count) { method = methods[i]; }
-                else if (methods != null && i >= methods.Count) { method = methods[methods.Count - 1]; }
-                else { method = 0; }
-            }
-
-            if (speeds.Count > 0)
-            {
-                if (i < speeds.Count) { speed = speeds[i]; }
-                else { speed = speeds[speeds.Count - 1]; }
-            }
-            else { speed = Speed.Default; }
-
-            // Zone
-            if (i < zones.Count) { zone = zones[i]; }
-            else { zone = zones[zones.Count - 1]; }
-
-            // External rotary axis
-            if (extRotary)
-            {
-                if (i < eRotVals.Count) { extRot = Math.Round(eRotVals[i], 3); }
-                else { extRot = Math.Round(eRotVals[eRotVals.Count - 1], 3); }
-            }
-
-            // External linear axis
-            if (extLinear)
-            {
-                if (i < eLinVals.Count) { extLin = Math.Round(eLinVals[i], 3); }
-                else { extLin = Math.Round(eLinVals[eLinVals.Count - 1], 3); }
-            }
-
-            // Tools
-            if (tools.Count > 0)
-            {
-                if (i < tools.Count) { tool = tools[i]; }
-                else { tool = tools[tools.Count - 1]; }
-            }
-            else { tool = Tool.Default; }
-
-            // Wobjs
-            if (wobjs.Count > 0)
-            {
-                if (i < wobjs.Count) { wobj = wobjs[i]; }
-                else { wobj = wobjs[wobjs.Count - 1]; }
-            }
-            else { wobj = CSystem.Default; }
-
-            // Methods
-            MotionType mType = MotionType.Linear;
-
-            if (method == 1) { mType = MotionType.Joint; }
-            else if (method == 2) { mType = MotionType.AbsoluteJoint; }
-
-        }
-        */
-
-        private static SolveResults ComputeTargets_Ordered(int i, List<Plane> planes, List<Speed> speeds,
-            List<Zone> zones, List<Tool> tools, List<CSystem> wobjs, List<double> eRotVals,
-            List<double> eLinVals, List<int> methods, Manufacturer m_Manufacturer)
-        {
-            SolveResults result = new SolveResults();
-
-
-            for (int j = 0; j < planes.Count; ++j)
-            {
-                result.Value.Add(new Target(planes[j], (MotionType)methods.InfinitElementAt(j), 
-                    speeds.InfinitElementAt(j), zones.InfinitElementAt(j), tools.InfinitElementAt(j), wobjs.InfinitElementAt(j), 
-                    eRotVals.InfinitElementAt(j), eLinVals.InfinitElementAt(j), m_Manufacturer));
-            }
-
-            return result;
         }
 
         private static void ComputeTargets_Unordered(System.Collections.Concurrent.ConcurrentBag<TargetOrderPair> bag, 
@@ -324,6 +204,20 @@ namespace Axis
             bag.Add(result);
         }
 
+        private static void ComputeTargets(System.Collections.Concurrent.ConcurrentBag<TargetOrderPair> bag, int i, 
+            List<Plane> planes, List<Speed> speeds, List<Zone> zones, List<Tool> tools, List<CSystem> wobjs, 
+            List<double> eRotVals, List<double> eLinVals, List<int> methods, Manufacturer m_Manufacturer)
+        {
+            TargetOrderPair result = new TargetOrderPair();
+
+            // Create the robot target.
+            result.Value = new Target(planes[i], (MotionType)methods.InfinitElementAt(i), speeds.InfinitElementAt(i), zones.InfinitElementAt(i), 
+                tools.InfinitElementAt(i), wobjs.InfinitElementAt(i), eRotVals.InfinitElementAt(i), eLinVals.InfinitElementAt(i), m_Manufacturer);
+            result.Order = i;
+
+            bag.Add(result);
+        }
+
         #region UI
         /// <summary>
         ///  Replace a value list with one that has been pre-populated with possible methonds.
@@ -358,9 +252,9 @@ namespace Axis
         // Build a list of optional input parameters
         IGH_Param[] inputParams = new IGH_Param[3]
         {
-        new Param_Integer() { Name = "*Method", NickName = "Method", Description = "A list of target interpolation types [0 = Linear, 1 = Joint]. If one value is supplied it will be applied to all targets.", Access = GH_ParamAccess.list },
-        new Param_Number() { Name = "Rotary", NickName = "Rotary", Description = "A list of external rotary axis positions in degrees. If one value is supplied it will be applied to all targets.", Access = GH_ParamAccess.list },
-        new Param_Number() { Name = "Linear", NickName = "Linear", Description = "A list of external linear axis positions in degrees. If one value is supplied it will be applied to all targets.", Access = GH_ParamAccess.list },
+            new Param_Integer() { Name = "*Method", NickName = "Method", Description = "A list of target interpolation types [0 = Linear, 1 = Joint]. If one value is supplied it will be applied to all targets.", Access = GH_ParamAccess.list },
+            new Param_Number() { Name = "Rotary", NickName = "Rotary", Description = "A list of external rotary axis positions in degrees. If one value is supplied it will be applied to all targets.", Access = GH_ParamAccess.list },
+            new Param_Number() { Name = "Linear", NickName = "Linear", Description = "A list of external linear axis positions in degrees. If one value is supplied it will be applied to all targets.", Access = GH_ParamAccess.list },
         };
 
         // Build a list of optional output parameters
@@ -372,7 +266,7 @@ namespace Axis
         // The following functions append menu items and then handle the item clicked event.
         protected override void AppendAdditionalComponentMenuItems(System.Windows.Forms.ToolStripDropDown menu)
         {
-            ToolStripMenuItem outputCode = Menu_AppendItem(menu, "Output Code", outputCode_Click, true, m_outputTarget);
+            ToolStripMenuItem outputCode = Menu_AppendItem(menu, "Output Code", outputCode_Click, true, m_outputCode);
             outputCode.ToolTipText = "Output a string representation of the robot targets.";
 
             ToolStripSeparator seperator = Menu_AppendSeparator(menu);
@@ -411,9 +305,9 @@ namespace Axis
         private void outputCode_Click(object sender, EventArgs e)
         {
             RecordUndoEvent("OutputCode");
-            m_outputTarget = !m_outputTarget;
+            m_outputCode = !m_outputCode;
 
-            if (m_outputTarget)
+            if (m_outputCode)
             {
                 AddOutput(0);
             }
@@ -530,21 +424,21 @@ namespace Axis
         public override void DrawViewportMeshes(IGH_PreviewArgs args)
         {
             base.DrawViewportMeshes(args);
-            foreach (Target target in m_targets) Canvas.Component.DisplayPlane(target.Plane, args);
+            foreach (Target target in c_targets) Canvas.Component.DisplayPlane(target.Plane, args);
         }
         public override void DrawViewportWires(IGH_PreviewArgs args)
         {
 
             base.DrawViewportWires(args);
-            foreach (Target target in m_targets) Canvas.Component.DisplayPlane(target.Plane, args);
+            foreach (Target target in c_targets) Canvas.Component.DisplayPlane(target.Plane, args);
 
         }
 
         public override void ClearData()
         {
             base.ClearData();
-            m_targets.Clear();
-            m_bBox = BoundingBox.Empty;
+            c_targets.Clear();
+            c_bBox = BoundingBox.Empty;
         }
         #endregion
 
