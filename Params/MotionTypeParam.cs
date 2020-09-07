@@ -12,7 +12,7 @@ using System.Windows.Forms;
 
 namespace Axis.Params
 {
-    public class MotionTypeParam : GH_PersistentParam<Enum>
+    public class MotionTypeParam : GH_PersistentParam<GH_Integer>
     {
         public override GH_Exposure Exposure => GH_Exposure.hidden; // <--- Make it hidden when it is working.
 
@@ -22,12 +22,12 @@ namespace Axis.Params
 
         public override Guid ComponentGuid => new Guid("6635130E-710A-41A4-BF6B-25F98D9C7917");
 
-        protected override Enum InstantiateT()
+        protected override GH_Integer InstantiateT()
         {
-            return MotionType.Linear;
+            return new GH_Integer((int)MotionType.Linear);
         }
 
-        protected override GH_GetterResult Prompt_Singular(ref Enum value)
+        protected override GH_GetterResult Prompt_Singular(ref GH_Integer value)
         {
             Rhino.Input.Custom.GetOption go = new Rhino.Input.Custom.GetOption();
             go.SetCommandPrompt("Set default motion type.");
@@ -37,7 +37,7 @@ namespace Axis.Params
             switch (go.Get())
             {
                 case Rhino.Input.GetResult.Option:
-                    if (go.Option().EnglishName == "True") { value = MotionType.Linear; }
+                    if (go.Option().EnglishName == "True") { value = new GH_Integer((int)MotionType.Linear); }
                     return GH_GetterResult.success;
 
                 case Rhino.Input.GetResult.Nothing:
@@ -50,7 +50,7 @@ namespace Axis.Params
             return GH_GetterResult.cancel;
         }
 
-        protected override GH_GetterResult Prompt_Plural(ref List<Enum> values)
+        protected override GH_GetterResult Prompt_Plural(ref List<GH_Integer> values)
         {
             return GH_GetterResult.cancel;
         }
@@ -64,7 +64,7 @@ namespace Axis.Params
         private void SetDefaultHandler(object sender, EventArgs e)
         {
             PersistentData.Clear();
-            PersistentData.Append(MotionType.Linear, new GH_Path(0));
+            PersistentData.Append(new GH_Integer((int)MotionType.Linear), new GH_Path(0));
             ExpireSolution(true);
         }
     }
