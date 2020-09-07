@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AxisPlugin\Axis.csproj" />
+    <ProjectReference Include="..\Plugin\Axis.csproj" />
   </ItemGroup>
 
 </Project>
