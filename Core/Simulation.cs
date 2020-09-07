@@ -34,6 +34,7 @@ namespace Axis.Core
         bool run = false;
 
         bool m_PoseOut = false;
+        bool m_FullErrorLog = false;
         bool timeline = false;
         bool showSpeed = false;
         bool showAngles = false;
@@ -85,11 +86,16 @@ namespace Axis.Core
             {
                 var poses = targets.Select(t => new Manipulator.ManipulatorPose(c_Robot, (Target)t.Duplicate())).ToList(); //Duplate targets
                 toolpath = new Toolpath(poses);
+                this.Message = (toolpath.IsValid)? "No Errors detected" : "Errors";
                 strat = DateTime.Now;
             }
 
-            //bool run = false;
-
+            // Out put a full error log
+            if (toolpath != null && m_FullErrorLog && !run) 
+            {
+                if (!DA.SetDataList("Full Error Log", toolpath.ErrorLog)) return;
+                if (!DA.SetDataList("Error Positions", toolpath.ErrorPositions)) return;
+            }
 
             if (run)
             {
@@ -102,7 +108,6 @@ namespace Axis.Core
                 c_Pose = toolpath.GetPose(tValue);
             }
             else c_Pose = toolpath.StartPose; // DA.SetData("Target", targets[0]);
-
 
             if (c_Pose != null)
             {
@@ -140,6 +145,7 @@ namespace Axis.Core
 
                 if (run) ExpireSolution(true);
             }
+
         }
 
         #region Display Pipeline
@@ -249,12 +255,14 @@ namespace Axis.Core
         };
 
         // Build a list of optional output parameters
-        IGH_Param[] outputParams = new IGH_Param[4]
+        IGH_Param[] outputParams = new IGH_Param[6]
         {
         new Param_Number() { Name = "Speed", NickName = "Speed", Description = "The current speed of the robot in mm/s." },
         new Param_Number() { Name = "Angles", NickName = "Angles", Description = "The current angle values of the robot." },
         new Param_Number() { Name = "Motion", NickName = "Motion", Description = "The current motion type of the robot." },
         new Param_Number() { Name = "External", NickName = "External", Description = "The current external axis values as a list." },
+        new Param_String() { Name = "Full Error Log", NickName = "Full Error Log", Description = "The full log of all erroro positions" },
+        new Param_Point(){ Name = "Error Positions", NickName = "Error Positions", Description = "A list of all the positions where errors are couring" },
         };
 
         // The following functions append menu items and then handle the item clicked event.
@@ -273,6 +281,8 @@ namespace Axis.Core
             motionCheck.ToolTipText = "Preview the current motion type of the robot at each point in the simulation.";
             ToolStripMenuItem externalCheck = Menu_AppendItem(menu, "Show External", external_Click, true, showExternal);
             externalCheck.ToolTipText = "Preview the current position of each external axis as a list.";
+            ToolStripMenuItem fullprogramCheck = Menu_AppendItem(menu, "Show full error log", fullCheck_Click, true, m_FullErrorLog);
+            externalCheck.ToolTipText = "Out put a list of all the targets that are unreachable and a cresponding log.";
         }
 
         private void timeline_Click(object sender, EventArgs e)
@@ -339,6 +349,22 @@ namespace Axis.Core
             }
             ExpireSolution(true);
         }
+
+        private void fullCheck_Click(object sender, EventArgs e)
+        {
+            RecordUndoEvent("FullCheckClick");
+            m_FullErrorLog = !m_FullErrorLog;
+
+            if (m_FullErrorLog) { AddOutput(4); AddOutput(5); }
+            else
+            {
+                Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Full Error Log"), true);
+                Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Error Positions"), true);
+
+            }
+            ExpireSolution(true);
+        }
+
 
         // Register the new input parameters to our component.
         private void AddInput(int index)

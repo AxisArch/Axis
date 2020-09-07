@@ -18,6 +18,10 @@ namespace Axis.Core
     /// </summary>
     public class CheckProgram : GH_Component
     {
+        public override bool Obsolete => true;
+        public override GH_Exposure Exposure => GH_Exposure.hidden;
+
+
         public CheckProgram() : base("Check Program", "Check", "Check an entire program for kinematic errors.", AxisInfo.Plugin, AxisInfo.TabCore)
         {
         }
@@ -161,7 +165,6 @@ namespace Axis.Core
         {
             get { return new Guid("73f9ed66-9a0d-48aa-afdc-9a7a8902031c"); }
         }
-        public override GH_Exposure Exposure => GH_Exposure.primary;
         #endregion  
     }
 }

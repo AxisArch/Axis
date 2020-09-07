@@ -503,7 +503,7 @@ namespace Axis.Targets
     /// Robot Speed type
     /// </summary>
     public class Speed : IGH_Goo
-{
+    {
         public string Name { get; set; }
         public double TranslationSpeed { get; set; }
         public double RotationSpeed { get; set; }
@@ -514,15 +514,12 @@ namespace Axis.Targets
         /// <summary>
         /// Default speed object.
         /// </summary>
-        public static Speed Default { get; }
+        public static Speed Default {get =>  new Speed(100, 30, "v100"); }
 
         /// <summary>
         /// Default constructor.
         /// </summary>
-        static Speed()
-        {
-            Default = new Speed(100, 30, "DefaultSpeed");
-        }
+        static Speed() {}
 
         /// <summary>
         /// Standard speed constructor.
@@ -614,7 +611,7 @@ namespace Axis.Targets
         /// <summary>
         /// Default zone object.
         /// </summary>
-        public static Zone Default => new Zone(false, 5, 25, 25, 15, 35, 5, "DefaultZone");
+        public static Zone Default => new Zone(false, 5, 25, 25, 15, 35, 5, "z5");
 
         /// <summary>
         /// Default constructor.
@@ -830,7 +827,38 @@ namespace Axis.Targets
         List<Manipulator.ManipulatorPose> poses;
         List<double> targetProgress;
 
+        #region Propperties
         public Manipulator.ManipulatorPose StartPose => poses[0];
+        public List<string> ErrorLog { 
+            get 
+            {
+                var list = new List<string>();
+                for (int i = 0; i < poses.Count; ++i) 
+                { 
+                    if (!poses[i].IsValid)
+                    {
+                        var msg = $"{(i+1).ToString()}. Target"; 
+                        if (poses[i].OverHeadSig) msg +=": Singularity";
+                        if (poses[i].OutOfReach) msg += ": Unreachable";
+                        if (poses[i].WristSing) msg += ": Wrist Singularity";
+                        if (poses[i].OutOfRoation) msg += ": Joint Error";
+                        if (poses[i].WristSing) msg += ": Wrist Singularity";
+                        list.Add(msg);
+                    } 
+                }
+                return list;
+            }
+        }
+        public List<Point3d> ErrorPositions 
+        {
+            get 
+            {
+                var points = new List<Point3d>();
+                foreach (Manipulator.ManipulatorPose pose in poses) if (!pose.IsValid) points.Add(pose.Target.Origin);
+                return points;
+            }
+        }
+        #endregion
 
         #region Constructor
         public Toolpath() { }
@@ -846,6 +874,8 @@ namespace Axis.Targets
         #endregion
 
         #region Methods
+
+        //public
         /// <summary>
         /// Get the target index for the specified time.
         /// </summary>
@@ -887,6 +917,7 @@ namespace Axis.Targets
 
         }
 
+        //private
         void Times(List<Manipulator.ManipulatorPose> poses)
         {
             double timeTotal = 0;
@@ -929,6 +960,8 @@ namespace Axis.Targets
         {
             get
             {
+                bool valid = false;
+                foreach (Manipulator.ManipulatorPose p in poses) { valid = valid & p.IsValid; }
                 if (this.totalSec != null) return true;
                 else return false;
             }
