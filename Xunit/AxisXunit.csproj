@@ -2,6 +2,8 @@
 
   <PropertyGroup>
     <TargetFrameworks>net471</TargetFrameworks>
+    <Configurations>UnitTest</Configurations>
+    <Platforms>x64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
