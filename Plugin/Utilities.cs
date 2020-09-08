@@ -13,7 +13,7 @@ using System.Windows.Forms;
 using System.Text;
 using System.Threading.Tasks;
 
-using Excel = Microsoft.Office.Interop.Excel;
+//using Excel = Microsoft.Office.Interop.Excel;
 
 using Rhino;
 using Rhino.Commands;
@@ -399,105 +399,105 @@ namespace Axis
         /// <param name="path"></param>
         /// <param name="name"></param>
         /// <param name="delim"></param>
-        public static void CreateCSV(DataTable table, string path, string name, string delim)
-        {
-            string filePath = string.Concat(path, name, @".csv");
-            string delimiter = delim;
-
-            StringBuilder sb = new StringBuilder();
-            List<string> row = new List<string>();
-
-            // Write headers
-            foreach (DataColumn c in table.Columns)
-                row.Add(c.ColumnName.ToString());
-            sb.AppendLine(string.Join(delimiter, row));
-
-            // Write data
-            foreach (DataRow r in table.Rows)
-            {
-                row.Clear();
-                // Go through each column adding to a list of strings
-                foreach (DataColumn c in table.Columns)
-                    row.Add(r[c.ColumnName].ToString());
-                sb.AppendLine(string.Join(delimiter, row));
-            }
-            File.WriteAllText(filePath, sb.ToString());
-        }
-
+        //public static void CreateCSV(DataTable table, string path, string name, string delim)
+        //{
+        //    string filePath = string.Concat(path, name, @".csv");
+        //    string delimiter = delim;
+        //
+        //    StringBuilder sb = new StringBuilder();
+        //    List<string> row = new List<string>();
+        //
+        //    // Write headers
+        //    foreach (DataColumn c in table.Columns)
+        //        row.Add(c.ColumnName.ToString());
+        //    sb.AppendLine(string.Join(delimiter, row));
+        //
+        //    // Write data
+        //    foreach (DataRow r in table.Rows)
+        //    {
+        //        row.Clear();
+        //        // Go through each column adding to a list of strings
+        //        foreach (DataColumn c in table.Columns)
+        //            row.Add(r[c.ColumnName].ToString());
+        //        sb.AppendLine(string.Join(delimiter, row));
+        //    }
+        //    File.WriteAllText(filePath, sb.ToString());
+        //}
+        //
         /// <summary>
         /// Read an Excel file and return the associated DataTable.
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
-        public static DataTable ReadExcel(string path)
-        {
-            DataTable dt = new DataTable();
-
-            // Create COM Objects. Create a COM object for everything that is referenced
-            Excel.Application xlApp = new Excel.Application();
-            Excel.Workbook xlWorkbook = xlApp.Workbooks.Open(path);
-            Excel._Worksheet xlWorksheet = xlWorkbook.Sheets[1];
-            Excel.Range xlRange = xlWorksheet.UsedRange;
-
-            int rowCount = xlRange.Rows.Count;
-            int colCount = xlRange.Columns.Count;
-
-            // Iterate over the rows and columns and print to the console as it appears in the file
-            // NB: Excel is not zero based!!
-            for (int i = 1; i <= rowCount; i++)
-            {
-                if (i == 1)
-                {
-                    for (int j = 1; j <= colCount; j++)
-                    {
-                        // Write the value to the data tree
-                        if (xlRange.Cells[i, j] != null && xlRange.Cells[i, j].Value2 != null)
-                        {
-                            dt.Columns.Add(xlRange.Cells[i, j].Value2.ToString());
-                        }
-                    }
-                }
-                else
-                {
-                    string[] vals = new string[colCount];
-
-                    for (int j = 1; j <= colCount; j++)
-                    {
-                        // Write the value to the data tree
-                        if (xlRange.Cells[i, j] != null && xlRange.Cells[i, j].Value2 != null)
-                        {
-                            // Skip the first null element due to the zero based difference between GH and Excel
-                            vals[j - 1] = xlRange.Cells[i, j].Value2.ToString();
-                        }
-                    }
-
-                    dt.Rows.Add(vals);
-                }
-            }
-
-            // Cleanup
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-
-            // Rule of thumb for releasing com objects:
-            // never use two dots, all COM objects must be referenced and released individually
-            // ex: [somthing].[something].[something] is bad
-
-            // Release COM objects to fully kill excel process from running in the background
-            Marshal.ReleaseComObject(xlRange);
-            Marshal.ReleaseComObject(xlWorksheet);
-
-            // Close and release
-            xlWorkbook.Close();
-            Marshal.ReleaseComObject(xlWorkbook);
-
-            // Quit and release
-            xlApp.Quit();
-            Marshal.ReleaseComObject(xlApp);
-
-            return dt;
-        }
-
+        //public static DataTable ReadExcel(string path)
+        //{
+        //    DataTable dt = new DataTable();
+        //
+        //    // Create COM Objects. Create a COM object for everything that is referenced
+        //    Excel.Application xlApp = new Excel.Application();
+        //    Excel.Workbook xlWorkbook = xlApp.Workbooks.Open(path);
+        //    Excel._Worksheet xlWorksheet = xlWorkbook.Sheets[1];
+        //    Excel.Range xlRange = xlWorksheet.UsedRange;
+        //
+        //    int rowCount = xlRange.Rows.Count;
+        //    int colCount = xlRange.Columns.Count;
+        //
+        //    // Iterate over the rows and columns and print to the console as it appears in the file
+        //    // NB: Excel is not zero based!!
+        //    for (int i = 1; i <= rowCount; i++)
+        //    {
+        //        if (i == 1)
+        //        {
+        //            for (int j = 1; j <= colCount; j++)
+        //            {
+        //                // Write the value to the data tree
+        //                if (xlRange.Cells[i, j] != null && xlRange.Cells[i, j].Value2 != null)
+        //                {
+        //                    dt.Columns.Add(xlRange.Cells[i, j].Value2.ToString());
+        //                }
+        //            }
+        //        }
+        //        else
+        //        {
+        //            string[] vals = new string[colCount];
+        //
+        //            for (int j = 1; j <= colCount; j++)
+        //            {
+        //                // Write the value to the data tree
+        //                if (xlRange.Cells[i, j] != null && xlRange.Cells[i, j].Value2 != null)
+        //                {
+        //                    // Skip the first null element due to the zero based difference between GH and Excel
+        //                    vals[j - 1] = xlRange.Cells[i, j].Value2.ToString();
+        //                }
+        //            }
+        //
+        //            dt.Rows.Add(vals);
+        //        }
+        //    }
+        //
+        //    // Cleanup
+        //    GC.Collect();
+        //    GC.WaitForPendingFinalizers();
+        //
+        //    // Rule of thumb for releasing com objects:
+        //    // never use two dots, all COM objects must be referenced and released individually
+        //    // ex: [somthing].[something].[something] is bad
+        //
+        //    // Release COM objects to fully kill excel process from running in the background
+        //    Marshal.ReleaseComObject(xlRange);
+        //    Marshal.ReleaseComObject(xlWorksheet);
+        //
+        //    // Close and release
+        //    xlWorkbook.Close();
+        //    Marshal.ReleaseComObject(xlWorkbook);
+        //
+        //    // Quit and release
+        //    xlApp.Quit();
+        //    Marshal.ReleaseComObject(xlApp);
+        //
+        //    return dt;
+        //}
+        //
         internal sealed class NativeMethods
         {
             [DllImport("kernel32.dll")]
