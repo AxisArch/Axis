@@ -161,7 +161,7 @@
     <Compile Include="Deprecated\200907_CheckProgram.cs" />
     <Compile Include="Deprecated\200827_AuthTest.cs" />
     <Compile Include="Deprecated\200827_GetLicenseInformation.cs" />
-    <Compile Include="Core\PlaneOrientations.cs" />
+    <Compile Include="Targets\PlaneOrientations.cs" />
     <Compile Include="Online\AxisController.cs" />
     <Compile Include="Online\Connect.cs" />
     <Compile Include="Online\GetModules.cs" />
@@ -218,7 +218,6 @@
     <Compile Include="Targets\DefineZone.cs" />
     <Compile Include="Targets\Target.cs" />
     <Compile Include="Deprecated\200908_PlaneToQuat.cs" />
-    <Compile Include="Targets\LinearInterpolation.cs" />
     <Compile Include="Deprecated\200908_QuatToPlane.cs" />
     <Compile Include="Utilities.cs" />
     <Compile Include="Deprecated\200908_Acceleration.cs" />
