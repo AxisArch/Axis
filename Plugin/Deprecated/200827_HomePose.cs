@@ -10,7 +10,7 @@ using Rhino.Geometry;
 
 namespace Axis.Targets
 {
-    public class HomePose : GH_Component
+    public class HomePose_Obsolete : GH_Component
     {
         public override bool Obsolete => true;
         public override GH_Exposure Exposure => GH_Exposure.hidden;
@@ -30,7 +30,7 @@ namespace Axis.Targets
         // Kuka toggle holder
         bool manufacturer = false;
 
-        public HomePose() : base("Home Pose", "Home", "Create an instruction to go to the home pose.", "Axis", "3. Targets")
+        public HomePose_Obsolete() : base("Home Pose", "Home", "Create an instruction to go to the home pose.", "Axis", "3. Targets")
         {
         }
 

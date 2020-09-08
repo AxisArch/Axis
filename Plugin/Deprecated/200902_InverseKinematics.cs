@@ -21,7 +21,7 @@ namespace Axis.Core
     /// <summary>
     /// Core inverse kinematics class.
     /// </summary>
-    public class InverseKinematics : GH_Component, IGH_VariableParameterComponent
+    public class InverseKinematics_Obsolete : GH_Component, IGH_VariableParameterComponent
     {
         // Global variables.
         Manipulator c_Robot = null;
@@ -30,7 +30,7 @@ namespace Axis.Core
         Manipulator.ManipulatorPose c_Pose = null;
         bool c_PoseOut = false;
 
-        public InverseKinematics() : base("Inverse Kinematics", "Kinematics", "Inverse and forward kinematics for a 6 degree of freedom robotic arm, based on Lobster Reloaded by Daniel Piker.", AxisInfo.Plugin, AxisInfo.TabCore)
+        public InverseKinematics_Obsolete() : base("Inverse Kinematics", "Kinematics", "Inverse and forward kinematics for a 6 degree of freedom robotic arm, based on Lobster Reloaded by Daniel Piker.", AxisInfo.Plugin, AxisInfo.TabCore)
         {
         }
 
