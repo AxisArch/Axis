@@ -9,9 +9,9 @@ namespace Axis.Geometry
     /// <summary>
     /// Convert a point-quaternion pair to a geometric plane.
     /// </summary>
-    public class QuatToPlane : GH_Component
+    public class QuatToPlane_Obsolete : GH_Component
     {
-        public QuatToPlane() : base("Quaternion To Plane", "Q-P", "Convert a point and a quaternion to a geometric plane.", AxisInfo.Plugin, AxisInfo.TabGeometry)
+        public QuatToPlane_Obsolete() : base("Quaternion To Plane", "Q-P", "Convert a point and a quaternion to a geometric plane.", AxisInfo.Plugin, AxisInfo.TabGeometry)
         {
         }
 
@@ -44,7 +44,8 @@ namespace Axis.Geometry
         }
 
         #region Component Settings
-        public override GH_Exposure Exposure => GH_Exposure.tertiary;
+        public override bool Obsolete => true;
+        public override GH_Exposure Exposure => GH_Exposure.hidden;
         protected override System.Drawing.Bitmap Icon
         {
             get

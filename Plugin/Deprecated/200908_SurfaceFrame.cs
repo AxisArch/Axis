@@ -9,9 +9,9 @@ namespace Axis.Geometry
     /// <summary>
     /// Reparameterize a surface and return the central frame.
     /// </summary>
-    public class SurfaceFrame : GH_Component
+    public class SurfaceFrame_Obsolete : GH_Component
     {
-        public SurfaceFrame() : base("Surface Frame", "Frame", "Reparamaterize a surface and return the frame at U:0.5, V:0.5.", AxisInfo.Plugin, AxisInfo.TabGeometry)
+        public SurfaceFrame_Obsolete() : base("Surface Frame", "Frame", "Reparamaterize a surface and return the frame at U:0.5, V:0.5.", AxisInfo.Plugin, AxisInfo.TabGeometry)
         {
         }
 
@@ -57,6 +57,8 @@ namespace Axis.Geometry
         }
 
         #region Component Settings
+        public override bool Obsolete => true;
+        public override GH_Exposure Exposure => GH_Exposure.hidden;
         protected override System.Drawing.Bitmap Icon
         {
             get

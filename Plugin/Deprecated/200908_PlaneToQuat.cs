@@ -12,11 +12,11 @@ namespace Axis.Geometry
     /// <summary>
     /// Get the quaternion description of a plane rotation.
     /// </summary>
-    public class PlaneToQuat : GH_Component, IGH_VariableParameterComponent
+    public class PlaneToQuat_Obsolete : GH_Component, IGH_VariableParameterComponent
     {
         bool originOut = false;
 
-        public PlaneToQuat() : base("Plane To Quaternion", "P-Q", "Convert a geometric plane to a quaternion and a point.", AxisInfo.Plugin, AxisInfo.TabGeometry)
+        public PlaneToQuat_Obsolete() : base("Plane To Quaternion", "P-Q", "Convert a geometric plane to a quaternion and a point.", AxisInfo.Plugin, AxisInfo.TabGeometry)
         {
         }
 
@@ -139,7 +139,8 @@ namespace Axis.Geometry
         bool IGH_VariableParameterComponent.DestroyParameter(GH_ParameterSide side, int index) => false;
         void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
 
-        public override GH_Exposure Exposure => GH_Exposure.tertiary;
+        public override bool Obsolete => true;
+        public override GH_Exposure Exposure => GH_Exposure.hidden;
         protected override System.Drawing.Bitmap Icon
         {
             get
