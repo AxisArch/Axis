@@ -161,6 +161,7 @@
     <Compile Include="Deprecated\200907_CheckProgram.cs" />
     <Compile Include="Deprecated\200827_AuthTest.cs" />
     <Compile Include="Deprecated\200827_GetLicenseInformation.cs" />
+    <Compile Include="Geometry\PlaneOrientations.cs" />
     <Compile Include="Online\AxisController.cs" />
     <Compile Include="Online\Connect.cs" />
     <Compile Include="Online\GetModules.cs" />
@@ -178,7 +179,6 @@
     <Compile Include="Params\ToolParam.cs" />
     <Compile Include="Params\RobotParam.cs" />
     <Compile Include="Core\Simulation.cs" />
-    <Compile Include="Core\OffsetWristKinematics.cs" />
     <Compile Include="Core\Engine.cs" />
     <Compile Include="Geometry\SurfaceFrame.cs" />
     <Compile Include="Deprecated\200907_GetDI.cs" />
