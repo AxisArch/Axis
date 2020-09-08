@@ -9,9 +9,9 @@ namespace Axis.RAPID
     /// <summary>
     /// Create custom RAPID code to control the acceleration.
     /// </summary>
-    public class Acceleration : GH_Component
+    public class Acceleration_Obsolete : GH_Component
     {
-        public Acceleration() : base("Acceleration", "Acc", "Override the robot acceleration and deceleration settings.", AxisInfo.Plugin, AxisInfo.TabCode)
+        public Acceleration_Obsolete() : base("Acceleration", "Acc", "Override the robot acceleration and deceleration settings.", AxisInfo.Plugin, AxisInfo.TabCode)
         {
         }
 
@@ -44,7 +44,8 @@ namespace Axis.RAPID
         }
 
         #region Component Settings
-        public override GH_Exposure Exposure => GH_Exposure.primary;
+        public override GH_Exposure Exposure => GH_Exposure.hidden;
+        public override bool Obsolete => true;
         protected override System.Drawing.Bitmap Icon
         {
             get

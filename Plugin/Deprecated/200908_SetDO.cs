@@ -10,12 +10,12 @@ namespace Axis.IO
     /// <summary>
     /// Set the value of a digital output.
     /// </summary>
-    public class SetDO : GH_Component, IGH_VariableParameterComponent
+    public class SetDO_Obsolete : GH_Component, IGH_VariableParameterComponent
     {
         // Context menu data items
         bool m_Sync = false;
 
-        public SetDO() : base("Set Digital Output", "Set DO", "Set the value of a digital output.", AxisInfo.Plugin, AxisInfo.TabIO)
+        public SetDO_Obsolete() : base("Set Digital Output", "Set DO", "Set the value of a digital output.", AxisInfo.Plugin, AxisInfo.TabIO)
         {
         }
 
@@ -89,6 +89,10 @@ namespace Axis.IO
         #endregion
 
         #region Component Settings
+        public override GH_Exposure Exposure => GH_Exposure.hidden;
+
+        public override bool Obsolete => true;
+
         /// <summary>
         /// Implement this interface in your component if you want to enable variable parameter UI.
         /// </summary>

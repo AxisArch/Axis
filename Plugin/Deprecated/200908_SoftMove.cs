@@ -9,9 +9,9 @@ namespace Axis.RAPID
     /// <summary>
     /// Control the SoftMove option.
     /// </summary>
-    public class SoftMove : GH_Component
+    public class SoftMove_Obsolete : GH_Component
     {
-        public SoftMove() : base("SoftMove", "Soft", "Control the ABB SoftMove option.", AxisInfo.Plugin, AxisInfo.TabCode)
+        public SoftMove_Obsolete() : base("SoftMove", "Soft", "Control the ABB SoftMove option.", AxisInfo.Plugin, AxisInfo.TabCode)
         {
         }
 
@@ -37,7 +37,8 @@ namespace Axis.RAPID
         }
 
         #region Component Settings
-        public override GH_Exposure Exposure => GH_Exposure.primary;
+        public override GH_Exposure Exposure => GH_Exposure.hidden;
+        public override bool Obsolete => true;
         protected override System.Drawing.Bitmap Icon
         {
             get

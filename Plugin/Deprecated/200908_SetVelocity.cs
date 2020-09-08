@@ -9,9 +9,9 @@ namespace Axis.RAPID
     /// <summary>
     /// Create custom RAPID code to set the velocity.
     /// </summary>
-    public class SetVelocity : GH_Component
+    public class SetVelocity_Obsolete : GH_Component
     {
-        public SetVelocity() : base("Velocity Override", "Velocity Override", "Override all following programmed velocities to a percentage of their value.", AxisInfo.Plugin, AxisInfo.TabCode)
+        public SetVelocity_Obsolete() : base("Velocity Override", "Velocity Override", "Override all following programmed velocities to a percentage of their value.", AxisInfo.Plugin, AxisInfo.TabCode)
         {
         }
 
@@ -44,7 +44,8 @@ namespace Axis.RAPID
         }
 
         #region Component Settings
-        public override GH_Exposure Exposure => GH_Exposure.primary;
+        public override GH_Exposure Exposure => GH_Exposure.hidden;
+        public override bool Obsolete => true;
         public override Guid ComponentGuid
         {
             get { return new Guid("9ef915c7-893c-4d9d-84cc-4f4919392f97"); }

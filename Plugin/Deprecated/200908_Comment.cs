@@ -9,9 +9,9 @@ namespace Axis.RAPID
     /// <summary>
     /// Add a simple RAPID-formatted comment.
     /// </summary>
-    public class Comment : GH_Component
+    public class Comment_Obsolete : GH_Component
     {
-        public Comment() : base("Comment", "C", "Generates a RAPID comment.", AxisInfo.Plugin, AxisInfo.TabCode)
+        public Comment_Obsolete() : base("Comment", "C", "Generates a RAPID comment.", AxisInfo.Plugin, AxisInfo.TabCode)
         {
         }
 
@@ -36,7 +36,8 @@ namespace Axis.RAPID
         }
 
         #region Component Settings
-        public override GH_Exposure Exposure => GH_Exposure.primary;
+        public override GH_Exposure Exposure => GH_Exposure.hidden;
+        public override bool Obsolete => true;
         protected override System.Drawing.Bitmap Icon
         {
             get

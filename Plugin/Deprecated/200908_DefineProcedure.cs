@@ -10,9 +10,9 @@ namespace Axis.RAPID
     /// <summary>
     /// Define a RAPID-formatted procedure.
     /// </summary>
-    public class DefineProcedure : GH_Component
+    public class DefineProcedure_Obsolete : GH_Component
     {
-        public DefineProcedure() : base("Define Procedure", "Proc", "Creates a custom RAPID procedure", AxisInfo.Plugin, AxisInfo.TabCode)
+        public DefineProcedure_Obsolete() : base("Define Procedure", "Proc", "Creates a custom RAPID procedure", AxisInfo.Plugin, AxisInfo.TabCode)
         {
         }
 
@@ -56,7 +56,8 @@ namespace Axis.RAPID
         }
 
         #region Component Settings
-        public override GH_Exposure Exposure => GH_Exposure.primary;
+        public override GH_Exposure Exposure => GH_Exposure.hidden;
+        public override bool Obsolete => true;
         protected override System.Drawing.Bitmap Icon
         {
             get

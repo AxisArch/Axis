@@ -183,7 +183,7 @@
     <Compile Include="Deprecated\200908_SurfaceFrame.cs" />
     <Compile Include="Deprecated\200907_GetDI.cs" />
     <Compile Include="RAPID\RAPID_Instructions.cs" />
-    <Compile Include="RAPID\SetDO.cs" />
+    <Compile Include="Deprecated\200908_SetDO.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -201,7 +201,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-    <Compile Include="RAPID\SetVelocity.cs" />
+    <Compile Include="Deprecated\200908_SetVelocity.cs" />
     <Compile Include="Robot\CreateTool.cs" />
     <Compile Include="Robot\CreateRobot.cs" />
     <Compile Include="Core\CodeGenerator.cs" />
@@ -221,11 +221,11 @@
     <Compile Include="Targets\LinearInterpolation.cs" />
     <Compile Include="Deprecated\200908_QuatToPlane.cs" />
     <Compile Include="Utilities.cs" />
-    <Compile Include="RAPID\Acceleration.cs" />
-    <Compile Include="RAPID\CallProcedure.cs" />
-    <Compile Include="RAPID\Comment.cs" />
-    <Compile Include="RAPID\DefineProcedure.cs" />
-    <Compile Include="RAPID\SoftMove.cs" />
+    <Compile Include="Deprecated\200908_Acceleration.cs" />
+    <Compile Include="Deprecated\200908_CallProcedure.cs" />
+    <Compile Include="Deprecated\200908_Comment.cs" />
+    <Compile Include="Deprecated\200908_DefineProcedure.cs" />
+    <Compile Include="Deprecated\200908_SoftMove.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
