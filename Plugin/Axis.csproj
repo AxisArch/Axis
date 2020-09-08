@@ -182,6 +182,7 @@
     <Compile Include="Core\Engine.cs" />
     <Compile Include="Deprecated\200908_SurfaceFrame.cs" />
     <Compile Include="Deprecated\200907_GetDI.cs" />
+    <Compile Include="RAPID\RAPID_Instructions.cs" />
     <Compile Include="RAPID\SetDO.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
