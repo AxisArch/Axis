@@ -1,23 +1,21 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net471</TargetFrameworks>
-    <Configurations>UnitTest</Configurations>
     <Platforms>x64</Platforms>
+    <AssemblyName>AxisXunit</AssemblyName>
+    <Authors>Povl Filip Sonne-Frederiksen</Authors>
+    <Company>Axis</Company>
+    <Copyright>Copyright © 2020 Axis Technology</Copyright>
   </PropertyGroup>
-
   <ItemGroup>
-    <PackageReference Include="Grasshopper" Version="6.24.20079.23341" />
-    <PackageReference Include="RhinoCommon" Version="6.24.20079.23341" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\Plugin\Axis.csproj" />
   </ItemGroup>
-
 </Project>
