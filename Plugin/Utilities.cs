@@ -23,6 +23,7 @@ using Rhino.DocObjects;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Grasshopper.Kernel.Special;
+using Grasshopper.Kernel.Parameters;
 
 using Axis.Targets;
 
@@ -1033,7 +1034,7 @@ namespace Canvas
         }
 
         #region Display Methods
-        
+
         static public void DisplayPlane(Plane plane, IGH_PreviewArgs args, double sizeLine = 70, double sizeArrow = 30, int thickness = 3)
         {
             args.Display.DrawLineArrow(
@@ -1122,13 +1123,14 @@ namespace Canvas
         
         #endregion
     }
-    class Menu
+
+    static class Menu
     {
         /// <summary>
         /// Uncheck other dropdown menu items
         /// </summary>
         /// <param name="selectedMenuItem"></param>
-        static public void UncheckOtherMenuItems(ToolStripMenuItem selectedMenuItem)
+        public static void UncheckOtherMenuItems(ToolStripMenuItem selectedMenuItem)
         {
             selectedMenuItem.Checked = true;
 
@@ -1146,5 +1148,127 @@ namespace Canvas
             // This line is optional, for show the mainMenu after click
             //selectedMenuItem.Owner.Show();
         }
+
+        // Register the new input parameters to a component.
+        public static void AddInput(this GH_Component gH_Component, int index, IGH_Param[] inputParams)
+        {
+            IGH_Param parameter = inputParams[index];
+
+            if (gH_Component.Params.Input.Any(x => x.Name == parameter.Name))
+                gH_Component.Params.UnregisterInputParameter(gH_Component.Params.Input.First(x => x.Name == parameter.Name), true);
+            else
+            {
+                int insertIndex = gH_Component.Params.Input.Count;
+                for (int i = 0; i < gH_Component.Params.Input.Count; i++)
+                {
+                    int otherIndex = Array.FindIndex(inputParams, x => x.Name == gH_Component.Params.Input[i].Name);
+                    if (otherIndex > index)
+                    {
+                        insertIndex = i;
+                        break;
+                    }
+                }
+
+                gH_Component.Params.RegisterInputParam(parameter, insertIndex);
+            }
+            gH_Component.Params.OnParametersChanged();
+            gH_Component.ExpireSolution(true);
+
+        }
+        public static void AddInputs(this GH_Component gH_Component, int[] indexes, IGH_Param[] inputParams)
+        {
+            foreach (int index in indexes)
+            {
+                IGH_Param parameter = inputParams[index];
+
+                if (gH_Component.Params.Input.Any(x => x.Name == parameter.Name))
+                    gH_Component.Params.UnregisterInputParameter(gH_Component.Params.Input.First(x => x.Name == parameter.Name), true);
+                else
+                {
+                    int insertIndex = gH_Component.Params.Input.Count;
+                    for (int i = 0; i < gH_Component.Params.Input.Count; i++)
+                    {
+                        int otherIndex = Array.FindIndex(inputParams, x => x.Name == gH_Component.Params.Input[i].Name);
+                        if (otherIndex > index)
+                        {
+                            insertIndex = i;
+                            break;
+                        }
+                    }
+
+                    gH_Component.Params.RegisterInputParam(parameter, insertIndex);
+                }
+                gH_Component.Params.OnParametersChanged();
+
+            }
+            gH_Component.ExpireSolution(true);
+        }
+
+
+        // Register the new output parameters to a component.
+        public static void AddOutput(this GH_Component gH_Component, int index, IGH_Param[] outputParams)
+        {
+            IGH_Param parameter = outputParams[index];
+
+            if (gH_Component.Params.Output.Any(x => x.Name == parameter.Name))
+                gH_Component.Params.UnregisterOutputParameter(gH_Component.Params.Output.First(x => x.Name == parameter.Name), true);
+            else
+            {
+                int insertIndex = gH_Component.Params.Output.Count;
+                for (int i = 0; i < gH_Component.Params.Output.Count; i++)
+                {
+                    int otherIndex = Array.FindIndex(outputParams, x => x.Name == gH_Component.Params.Output[i].Name);
+                    if (otherIndex > index)
+                    {
+                        insertIndex = i;
+                        break;
+                    }
+                }
+
+                gH_Component.Params.RegisterOutputParam(parameter, insertIndex);
+            }
+            gH_Component.Params.OnParametersChanged();
+            gH_Component.ExpireSolution(true);
+        }
+        public static void AddOutputs(this GH_Component gH_Component, int[] indexes, IGH_Param[] outputParams)
+        {
+            foreach (int index in indexes)
+            {
+                IGH_Param parameter = outputParams[index];
+
+                if (gH_Component.Params.Output.Any(x => x.Name == parameter.Name))
+                    gH_Component.Params.UnregisterOutputParameter(gH_Component.Params.Output.First(x => x.Name == parameter.Name), true);
+                else
+                {
+                    int insertIndex = gH_Component.Params.Output.Count;
+                    for (int i = 0; i < gH_Component.Params.Output.Count; i++)
+                    {
+                        int otherIndex = Array.FindIndex(outputParams, x => x.Name == gH_Component.Params.Output[i].Name);
+                        if (otherIndex > index)
+                        {
+                            insertIndex = i;
+                            break;
+                        }
+                    }
+
+                    gH_Component.Params.RegisterOutputParam(parameter, insertIndex);
+                }
+                gH_Component.Params.OnParametersChanged();
+            }
+                gH_Component.ExpireSolution(true);
+        }
+
+        public static void RemoveAllInputs(this GH_ComponentParamServer Params) 
+        {
+            int count = Params.Input.Count;
+            for (int i = 0; i < count; ++i) Params.UnregisterInputParameter(Params.Input[0]);
+        }
+        public static void RemoveAllOutputs(this GH_ComponentParamServer Params)
+        {
+            int count = Params.Output.Count;
+            for (int i = 0; i < count; ++i) Params.UnregisterOutputParameter(Params.Output[0]);
+        }
+
+
     }
 }

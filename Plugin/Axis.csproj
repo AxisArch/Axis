@@ -161,7 +161,7 @@
     <Compile Include="Deprecated\200907_CheckProgram.cs" />
     <Compile Include="Deprecated\200827_AuthTest.cs" />
     <Compile Include="Deprecated\200827_GetLicenseInformation.cs" />
-    <Compile Include="Geometry\PlaneOrientations.cs" />
+    <Compile Include="Core\PlaneOrientations.cs" />
     <Compile Include="Online\AxisController.cs" />
     <Compile Include="Online\Connect.cs" />
     <Compile Include="Online\GetModules.cs" />
@@ -180,7 +180,7 @@
     <Compile Include="Params\RobotParam.cs" />
     <Compile Include="Core\Simulation.cs" />
     <Compile Include="Core\Engine.cs" />
-    <Compile Include="Geometry\SurfaceFrame.cs" />
+    <Compile Include="Deprecated\200908_SurfaceFrame.cs" />
     <Compile Include="Deprecated\200907_GetDI.cs" />
     <Compile Include="RAPID\SetDO.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
@@ -216,9 +216,9 @@
     <Compile Include="Robot\System.cs" />
     <Compile Include="Targets\DefineZone.cs" />
     <Compile Include="Targets\Target.cs" />
-    <Compile Include="Geometry\PlaneToQuat.cs" />
+    <Compile Include="Deprecated\200908_PlaneToQuat.cs" />
     <Compile Include="Targets\LinearInterpolation.cs" />
-    <Compile Include="Geometry\QuatToPlane.cs" />
+    <Compile Include="Deprecated\200908_QuatToPlane.cs" />
     <Compile Include="Utilities.cs" />
     <Compile Include="RAPID\Acceleration.cs" />
     <Compile Include="RAPID\CallProcedure.cs" />
@@ -411,6 +411,7 @@
     <Reference Include="System.Management" />
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
