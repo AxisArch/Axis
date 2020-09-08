@@ -403,9 +403,8 @@
     <None Include="Resources\UnknownMotorState.png" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="ABB.Robotics.Controllers.PC, Version=7.0.8721.594, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\Program Files (x86)\ABB\SDK\RobotStudio 2019 SDK\ABB.Robotics.Controllers.PC.dll</HintPath>
+    <Reference Include="ABB.Robotics.Controllers.PC">
+      <HintPath>..\..\..\..\..\..\Program Files (x86)\ABB Industrial IT\Robotics IT\SDK\PCSDK 6.08\ABB.Robotics.Controllers.PC.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Drawing" />
