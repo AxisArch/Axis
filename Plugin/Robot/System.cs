@@ -181,22 +181,11 @@ namespace Axis.Core
             this.MaxAngles = maxAngles;
 
             this.RobMeshes = robMeshes;
-            this.RobBasePlane = basePlane;
+            this.RobBasePlane = AxisPlanes[0];
 
             this.Indices = indices;
 
-            // Transformation
-            Rhino.Geometry.Transform Remap = Rhino.Geometry.Transform.PlaneToPlane(AxisPlanes[0], this.RobBasePlane);
-
-            Plane[] tempPlanes = this.AxisPlanes.Select(plane => plane.Clone()).ToArray();
-            //tempPlanes.ForEach(p => p.Transform(Remap));
-            for (int i = 0; i < tempPlanes.Length; ++i) tempPlanes[i].Transform(Remap);
-            this.AxisPlanes = tempPlanes.ToList();
-
-            // Then transform all of these meshes based on the input base plane.
-            List<Mesh> tempMesh = this.RobMeshes.Select(m => m.DuplicateMesh()).ToList();
-            tempMesh.ForEach(m => m.Transform(Remap));
-            this.RobMeshes = tempMesh;
+            ChangeBasePlane(basePlane);
 
             this.SetPose();
 
@@ -248,6 +237,28 @@ namespace Axis.Core
             var xform = this.CurrentPose.GetPose().ToList();
             for (int i = 0; i < this.RobMeshes.Count - 1; ++i) this.RobMeshes[i + 1].Transform(xform[i]);
             this.ResetTransform = this.CurrentPose.Reverse;
+        }
+
+        /// <summary>
+        /// Update the locattion of the robot
+        /// </summary>
+        /// <param name="plane"></param>
+        public void ChangeBasePlane(Plane plane) 
+        {
+            // Transformation
+            Rhino.Geometry.Transform xform = Rhino.Geometry.Transform.PlaneToPlane(this.RobBasePlane, plane);
+
+            // Move Planes to new locating
+            Plane[] tempPlanes = this.AxisPlanes.Select(p => p.Clone()).ToArray();
+            for (int i = 0; i < tempPlanes.Length; ++i) tempPlanes[i].Transform(xform);
+            this.AxisPlanes = tempPlanes.ToList();
+
+            // Then transform all of these meshes based on the input base plane.
+            List<Mesh> tempMesh = this.RobMeshes.Select(m => m.DuplicateMesh()).ToList();
+            tempMesh.ForEach(m => m.Transform(xform));
+            this.RobMeshes = tempMesh;
+
+            this.RobBasePlane = plane;
         }
         #endregion
 

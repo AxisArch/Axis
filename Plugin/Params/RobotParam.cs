@@ -30,19 +30,25 @@ namespace Axis.Params
         }
         protected override GH_GetterResult Prompt_Singular(ref Manipulator value)
         {
-            Rhino.Input.Custom.GetPoint gpC = new Rhino.Input.Custom.GetPoint();
-            gpC.SetCommandPrompt("Set default robot center point.");
-            gpC.AcceptNothing(true);
-
-            Rhino.Input.Custom.GetOption go = new Rhino.Input.Custom.GetOption();
+            var go = new Rhino.Input.Custom.GetString();
             go.SetCommandPrompt("Set default robot.");
             go.AcceptNothing(true);
-            go.AddOption("True");
+            go.AddOption("Default");
+            go.AddOption("IRB_120");
+            go.AddOption("IRB_6620");
+
+            var bPlane = Rhino.Geometry.Plane.WorldXY;
+
+            Rhino.Input.RhinoGet.GetPlane(out bPlane);
+
+
 
             switch (go.Get())
             {
                 case Rhino.Input.GetResult.Option:
-                    if (go.Option().EnglishName == "True") { value = Manipulator.Default; }
+                    if (go.Option().EnglishName == "Default") { var rob = Manipulator.Default; rob.ChangeBasePlane(bPlane); value = rob; }
+                    if (go.Option().EnglishName == "IRB_120") { var rob = Manipulator.IRB120; rob.ChangeBasePlane(bPlane); value = rob; }
+                    if (go.Option().EnglishName == "IRB_6620") { var rob = Manipulator.IRB6620; rob.ChangeBasePlane(bPlane); value = rob; }
                     return GH_GetterResult.success;
 
                 case Rhino.Input.GetResult.Nothing:
@@ -69,5 +75,6 @@ namespace Axis.Params
             PersistentData.Append(Manipulator.Default, new GH_Path(0));
             ExpireSolution(true);
         }
+
     }
 }
