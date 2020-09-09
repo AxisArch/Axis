@@ -311,7 +311,7 @@ namespace Axis.Online
             {
                 if (motorState == ControllerState.MotorsOn)
                 {
-                    return Properties.Icons.Star_Stop;
+                    return Properties.Icons.Start_Stop;
                 }
                 if (motorState == ControllerState.MotorsOff)
                 {

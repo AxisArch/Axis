@@ -443,9 +443,9 @@ namespace Axis.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap Star_Stop {
+        internal static System.Drawing.Bitmap Start_Stop {
             get {
-                object obj = ResourceManager.GetObject("Star_Stop", resourceCulture);
+                object obj = ResourceManager.GetObject("Start_Stop", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
