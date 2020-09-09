@@ -209,6 +209,7 @@ namespace Axis.Geometry
             }
 
             previouseState = currentState;
+            DestroyIconCache();
             ExpireSolution(true);
 
             return true;
@@ -245,7 +246,7 @@ namespace Axis.Geometry
                     case Opperation.PlaneToEuler: return null;
                     case Opperation.PlaneToQuatertion: return null;
                     case Opperation.QuaternionToPlane: return null;
-                    case Opperation.SurfaceFrame: return null;
+                    case Opperation.SurfaceFrame: return Properties.Icons.SurfaceFrame;
                     case Opperation.FlipPlane: return Properties.Icons.Flip;
                     default: return null;
                 }

@@ -235,6 +235,7 @@ namespace Axis.RAPID
             }
 
             previouseState = currentState;
+            DestroyIconCache();
             ExpireSolution(true);
 
             return true;
@@ -266,13 +267,13 @@ namespace Axis.RAPID
             {
                 switch (currentState)
                 {
-                    case Opperation.Acceleration: return null;
-                    case Opperation.CallProcedure: return null;
-                    case Opperation.Comment: return null;
-                    case Opperation.DefineProcedure: return null;
-                    case Opperation.SetDO: return null;
-                    case Opperation.SetVelocity: return null;
-                    //case Opperation.SoftMove: return null;
+                    case Opperation.Acceleration: return Properties.Icons.RAPID;
+                    case Opperation.CallProcedure: return Properties.Icons.RAPID;
+                    case Opperation.Comment: return Properties.Icons.RAPID;
+                    case Opperation.DefineProcedure: return Properties.Icons.RAPID;
+                    case Opperation.SetDO: return Properties.Icons.RAPID;
+                    case Opperation.SetVelocity: return Properties.Icons.RAPID;
+                    //case Opperation.SoftMove: return Properties.Icons.RAPID;
                     default: return null;
                 }
             }
