@@ -54,7 +54,7 @@ namespace Axis.RAPID
         {
             get
             {
-                return Axis.Properties.Resources.RAPID;
+                return Axis.Properties.Icons.RAPID;
             }
         }
         #endregion

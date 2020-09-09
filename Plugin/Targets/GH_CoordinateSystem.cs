@@ -260,7 +260,7 @@ namespace Axis.Targets
         {
             get
             {
-                return Properties.Resources.CSystem;
+                return Properties.Icons.CSystem;
             }
         }
         public override Guid ComponentGuid

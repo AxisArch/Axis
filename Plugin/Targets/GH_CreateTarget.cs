@@ -504,7 +504,7 @@ namespace Axis
         {
             get
             {
-                return Properties.Resources.Target;
+                return Properties.Icons.Target;
             }
         }
         public override Guid ComponentGuid

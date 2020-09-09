@@ -262,7 +262,7 @@ namespace Axis.Robot
         {
             get
             {
-                return Axis.Properties.Resources.Tool;
+                return Axis.Properties.Icons.Tool;
             }
         }
         public override Guid ComponentGuid

@@ -22,7 +22,7 @@ namespace Axis.Core
         {
             get
             {
-                return Axis.Properties.Resources.License;
+                return Axis.Properties.Icons.License;
             }
         }
         public override Guid ComponentGuid

@@ -158,7 +158,7 @@ namespace Axis.Core
         {
             get
             {
-                return Axis.Properties.Resources.CheckProgram;
+                return Axis.Properties.Icons.CheckProgram;
             }
         }
         public override Guid ComponentGuid

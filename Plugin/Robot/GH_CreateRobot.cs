@@ -196,7 +196,7 @@ namespace Axis.Core
         {
             get
             {
-                return Properties.Resources.Robot;
+                return Properties.Icons.Robot;
             }
         }
         public override Guid ComponentGuid

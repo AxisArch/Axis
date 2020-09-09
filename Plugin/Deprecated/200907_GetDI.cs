@@ -36,7 +36,7 @@ namespace Axis.IO
         {
             get
             {
-                return Axis.Properties.Resources.DigitalIn;
+                return Axis.Properties.Icons.DigitalIn;
             }
         }
         public override Guid ComponentGuid

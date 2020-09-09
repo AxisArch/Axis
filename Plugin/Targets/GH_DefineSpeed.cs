@@ -422,7 +422,7 @@ namespace Axis.Targets
         {
             get
             {
-                return Axis.Properties.Resources.Speed;
+                return Axis.Properties.Icons.Speed;
             }
         }
         public override Guid ComponentGuid

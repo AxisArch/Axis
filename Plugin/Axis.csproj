@@ -184,10 +184,10 @@
     <Compile Include="Deprecated\200907_GetDI.cs" />
     <Compile Include="RAPID\GH_RAPID_Instructions.cs" />
     <Compile Include="Deprecated\200908_SetDO.cs" />
-    <Compile Include="Properties\Resources.Designer.cs">
+    <Compile Include="Properties\Icons.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
-      <DependentUpon>Resources.resx</DependentUpon>
+      <DependentUpon>Icons.resx</DependentUpon>
     </Compile>
     <Content Include="Online\moduleFile.mod" />
     <Content Include="Robot\RobotBinaries\ExampleCode for generating binary.txt" />
@@ -237,9 +237,9 @@
     <None Include="Robot\RobotBinaries\IRB6620mesh.bin" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Properties\Resources.resx">
+    <EmbeddedResource Include="Properties\Icons.resx">
       <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <LastGenOutput>Icons.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <EmbeddedResource Include="Robot\RobotSystems.resx">
       <Generator>ResXFileCodeGenerator</Generator>

@@ -62,7 +62,7 @@ namespace Axis.Targets
         {
             get
             {
-                return Properties.Resources.Flip;
+                return Properties.Icons.Flip;
             }
         }
         public override Guid ComponentGuid

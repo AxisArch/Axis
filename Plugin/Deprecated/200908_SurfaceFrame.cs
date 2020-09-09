@@ -63,7 +63,7 @@ namespace Axis.Geometry
         {
             get
             {
-                return Axis.Properties.Resources.SurfaceFrame;
+                return Axis.Properties.Icons.SurfaceFrame;
             }
         }
 

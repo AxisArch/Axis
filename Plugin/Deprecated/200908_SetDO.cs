@@ -106,7 +106,7 @@ namespace Axis.IO
         {
             get
             {
-                return Properties.Resources.DigitalOut;
+                return Properties.Icons.DigitalOut;
             }
         }
         public override Guid ComponentGuid

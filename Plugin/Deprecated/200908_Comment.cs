@@ -42,7 +42,7 @@ namespace Axis.RAPID
         {
             get
             {
-                return Properties.Resources.RAPID;
+                return Properties.Icons.RAPID;
             }
         }
         public override Guid ComponentGuid

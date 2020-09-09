@@ -59,7 +59,7 @@ namespace Axis.Online
         {
             get
             {
-                return Properties.Resources.Get_Module;
+                return Properties.Icons.Get_Module;
             }
         }
         public override Guid ComponentGuid

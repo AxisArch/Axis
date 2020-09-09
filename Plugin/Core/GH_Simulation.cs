@@ -462,7 +462,7 @@ namespace Axis.Core
         protected override System.Drawing.Bitmap Icon
         {
             get
-            { return Properties.Resources.Play; }
+            { return Properties.Icons.Play; }
         }
         public override Guid ComponentGuid
         {

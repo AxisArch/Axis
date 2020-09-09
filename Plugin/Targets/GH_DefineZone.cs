@@ -503,7 +503,7 @@ namespace Axis.Targets
         {
             get
             {
-                return Axis.Properties.Resources.Zone;
+                return Axis.Properties.Icons.Zone;
             }
         }
         public override Guid ComponentGuid

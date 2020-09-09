@@ -18,7 +18,7 @@ namespace Axis
             get
             {
                 //Return a 24x24 pixel bitmap to represent this GHA library.
-                return Axis.Properties.Resources.Robot;
+                return Axis.Properties.Icons.Robot;
             }
         }
         public override string Description

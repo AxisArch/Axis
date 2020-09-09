@@ -246,7 +246,7 @@ namespace Axis.Geometry
                     case Opperation.PlaneToQuatertion: return null;
                     case Opperation.QuaternionToPlane: return null;
                     case Opperation.SurfaceFrame: return null;
-                    case Opperation.FlipPlane: return Properties.Resources.Flip;
+                    case Opperation.FlipPlane: return Properties.Icons.Flip;
                     default: return null;
                 }
             }

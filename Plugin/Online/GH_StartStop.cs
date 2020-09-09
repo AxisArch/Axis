@@ -311,19 +311,19 @@ namespace Axis.Online
             {
                 if (motorState == ControllerState.MotorsOn)
                 {
-                    return Properties.Resources.Star_Stop;
+                    return Properties.Icons.Star_Stop;
                 }
                 if (motorState == ControllerState.MotorsOff)
                 {
-                    return Properties.Resources.MotorOff;
+                    return Properties.Icons.MotorOff;
                 }
                 if (motorState == ControllerState.EmergencyStop)
                 {
-                    return Properties.Resources.EmergencyStop;
+                    return Properties.Icons.EmergencyStop;
                 }
                 else
                 {
-                    return Properties.Resources.UnknownMotorState;
+                    return Properties.Icons.UnknownMotorState;
                 }
             }
         }

@@ -549,7 +549,7 @@ namespace Axis.Core
         {
             get
             {
-                return Properties.Resources.CodeGen;
+                return Properties.Icons.CodeGen;
             }
         }
         public override Guid ComponentGuid
