@@ -10,16 +10,16 @@ using Rhino.Geometry;
 
 namespace Axis.Geometry
 {
-    public class GH_PlaneOrientations : GH_Component
+    public class GH_PlaneOptions : GH_Component
     {
-        Opperation currentState = Opperation.QuaternionToPlane;
-        Opperation previouseState = Opperation.PlaneToEuler;
+        Opperation currentState = Opperation.FlipPlane;
+        Opperation previouseState = Opperation.PlaneToQuatertion; // Should not be the same as currentState
 
 
         /// <summary>
         /// Initializes a new instance of the MyComponent1 class.
         /// </summary>
-        public GH_PlaneOrientations()
+        public GH_PlaneOptions()
           : base("Plane Orientations", "Plane Orientations",
               "This porvides accsess to different conversion methods for plain oriemtations, such as Quaternions and Euler angles",
               AxisInfo.Plugin, AxisInfo.TabConfiguration)
@@ -63,6 +63,7 @@ namespace Axis.Geometry
                     var q = Util.QuaternionFromPlane(plane);
                     DA.SetDataList("List", new List<string>() { q.A.ToString("0.000000"), q.B.ToString("0.000000"), q.C.ToString("0.000000"), q.D.ToString("0.000000") });
                     break;
+
                 case Opperation.QuaternionToPlane:
                     if (Params.Input.Count == 0 | Params.Output.Count == 0) return;
                     if (!DA.GetData("Point", ref point)) return;
@@ -70,11 +71,13 @@ namespace Axis.Geometry
                     if (list.Count != 4) return;
                     DA.SetData("Plane", Util.QuaternionToPlane(point, new Quaternion(list[0], list[1], list[2], list[3])));
                     break;
+
                 case Opperation.PlaneToEuler:
                     if (Params.Input.Count == 0 | Params.Output.Count == 0) return;
                     if (!DA.GetData("Plane", ref plane)) return;
                     DA.SetDataList("List", Util.QuaternionToEuler(Util.QuaternionFromPlane(plane)));
                     break;
+
                 case Opperation.EulerToPlane:
                     if (Params.Input.Count == 0 | Params.Output.Count == 0) return;
                     if (!DA.GetData("Point", ref point)) return;
@@ -85,6 +88,7 @@ namespace Axis.Geometry
                     eulerPlane.Transform(Transform.Translation((Vector3d)point));
                     DA.SetData("Plane", eulerPlane);
                     break;
+
                 case Opperation.SurfaceFrame:
                     if (Params.Input.Count == 0 | Params.Output.Count == 0) return;
                     if (!DA.GetData("Surface", ref surf)) return;
@@ -101,6 +105,11 @@ namespace Axis.Geometry
                     }
 
                     DA.SetData("Plane", frame);
+                    break;
+
+                case Opperation.FlipPlane:
+                    Plane targIn = Plane.Unset; if (!DA.GetData<Plane>(0, ref targIn)) return;
+                    DA.SetData(0, new Plane(targIn.Origin, -targIn.XAxis, targIn.YAxis));
                     break;
             }
         }
@@ -191,6 +200,12 @@ namespace Axis.Geometry
                     this.AddInput(3, inputParams);
                     this.AddOutput(0, outputParams);
                     break;
+                case Opperation.FlipPlane:
+                    Params.RemoveAllInputs();
+                    Params.RemoveAllOutputs();
+                    this.AddInput(0, inputParams);
+                    this.AddOutput(0, outputParams);
+                    break;
             }
 
             previouseState = currentState;
@@ -231,6 +246,7 @@ namespace Axis.Geometry
                     case Opperation.PlaneToQuatertion: return null;
                     case Opperation.QuaternionToPlane: return null;
                     case Opperation.SurfaceFrame: return null;
+                    case Opperation.FlipPlane: return Properties.Resources.Flip;
                     default: return null;
                 }
             }
@@ -252,6 +268,7 @@ namespace Axis.Geometry
             EulerToPlane = 2,
             PlaneToEuler = 3,
             SurfaceFrame = 4,
+            FlipPlane = 5,
         }
     }
 }

@@ -9,9 +9,9 @@ namespace Axis.Targets
     /// <summary>
     /// Flip a plane to comply with robot programming conventions.
     /// </summary>
-    public class GH_FlipPlane : GH_Component
+    public class GH_FlipPlane_Obsolete : GH_Component
     {
-        public GH_FlipPlane() : base("Flip Plane", "Flip", "Flip a plane around it's Y axis.", AxisInfo.Plugin, AxisInfo.TabConfiguration)
+        public GH_FlipPlane_Obsolete() : base("Flip Plane", "Flip", "Flip a plane around it's Y axis.", AxisInfo.Plugin, AxisInfo.TabConfiguration)
         {
         }
 
@@ -55,7 +55,9 @@ namespace Axis.Targets
         }
 
         #region Component Settings
-        public override GH_Exposure Exposure => GH_Exposure.tertiary;
+        public override GH_Exposure Exposure => GH_Exposure.hidden;
+        public override bool Obsolete => true;
+
         protected override System.Drawing.Bitmap Icon
         {
             get

@@ -161,7 +161,7 @@
     <Compile Include="Deprecated\200907_CheckProgram.cs" />
     <Compile Include="Deprecated\200827_AuthTest.cs" />
     <Compile Include="Deprecated\200827_GetLicenseInformation.cs" />
-    <Compile Include="Targets\GH_PlaneOrientations.cs" />
+    <Compile Include="Targets\GH_PlaneOptions.cs" />
     <Compile Include="Online\AxisController.cs" />
     <Compile Include="Online\GH_Connect.cs" />
     <Compile Include="Online\GH_GetModules.cs" />
@@ -209,7 +209,7 @@
     <Compile Include="Targets\GH_CreateJointTarget.cs" />
     <Compile Include="Properties\AxisInfo.cs" />
     <Compile Include="Targets\GH_CreateTarget_Multithreaded.cs" />
-    <Compile Include="Targets\GH_FlipPlane.cs" />
+    <Compile Include="Deprecated\200909_GH_FlipPlane.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Targets\GH_CoordinateSystem.cs" />
     <Compile Include="Targets\GH_DefineSpeed.cs" />
