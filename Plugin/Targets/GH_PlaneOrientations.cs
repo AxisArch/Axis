@@ -10,7 +10,7 @@ using Rhino.Geometry;
 
 namespace Axis.Geometry
 {
-    public class PlaneOrientations : GH_Component
+    public class GH_PlaneOrientations : GH_Component
     {
         Opperation currentState = Opperation.QuaternionToPlane;
         Opperation previouseState = Opperation.PlaneToEuler;
@@ -19,10 +19,10 @@ namespace Axis.Geometry
         /// <summary>
         /// Initializes a new instance of the MyComponent1 class.
         /// </summary>
-        public PlaneOrientations()
+        public GH_PlaneOrientations()
           : base("Plane Orientations", "Plane Orientations",
               "This porvides accsess to different conversion methods for plain oriemtations, such as Quaternions and Euler angles",
-              AxisInfo.Plugin, AxisInfo.TabCore)
+              AxisInfo.Plugin, AxisInfo.TabConfiguration)
         {
         }
 

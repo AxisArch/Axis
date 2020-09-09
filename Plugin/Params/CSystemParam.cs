@@ -17,7 +17,7 @@ namespace Axis.Params
         public override GH_Exposure Exposure => GH_Exposure.hidden; // <--- Make it hidden when it is working.
 
         public CSystemParam()
-          : base("Coordinate System", "CSystem", "Axis coordinate system type.", Axis.AxisInfo.Plugin, Axis.AxisInfo.TabCore)
+          : base("Coordinate System", "CSystem", "Axis coordinate system type.", Axis.AxisInfo.Plugin, Axis.AxisInfo.TabParam)
         { }
 
         public override Guid ComponentGuid => new Guid("832EE3A9-4550-41C1-B960-DCB74DE4632A");

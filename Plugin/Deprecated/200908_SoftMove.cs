@@ -11,7 +11,7 @@ namespace Axis.RAPID
     /// </summary>
     public class SoftMove_Obsolete : GH_Component
     {
-        public SoftMove_Obsolete() : base("SoftMove", "Soft", "Control the ABB SoftMove option.", AxisInfo.Plugin, AxisInfo.TabCode)
+        public SoftMove_Obsolete() : base("SoftMove", "Soft", "Control the ABB SoftMove option.", AxisInfo.Plugin, AxisInfo.TabDepricated)
         {
         }
 

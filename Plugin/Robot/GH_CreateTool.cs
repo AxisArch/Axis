@@ -14,7 +14,7 @@ namespace Axis.Robot
     /// <summary>
     /// Create custom robotic end effectors.
     /// </summary>
-    public class CreateTool : GH_Component, IGH_VariableParameterComponent
+    public class GH_CreateTool : GH_Component, IGH_VariableParameterComponent
     {
         // Sticky context menu toggles
         Manufacturer manufacturer = Manufacturer.ABB;
@@ -22,7 +22,7 @@ namespace Axis.Robot
         bool declaration = false;
         bool relTool = false;
 
-        public CreateTool() : base("Tool", "Tool", "Define a custom robot tool object.", AxisInfo.Plugin, AxisInfo.TabRobot)
+        public GH_CreateTool() : base("Tool", "Tool", "Define a custom robot tool object.", AxisInfo.Plugin, AxisInfo.TabConfiguration)
         {
         }
 

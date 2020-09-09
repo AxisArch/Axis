@@ -20,7 +20,7 @@ namespace Axis.Core
     /// <summary>
     /// Stepwise simulation of a robotic program.
     /// </summary>
-    public class Simulation : GH_Component, IGH_VariableParameterComponent
+    public class GH_Simulation : GH_Component, IGH_VariableParameterComponent
     {
         // Global variables.
         Manipulator c_Robot = null;
@@ -41,7 +41,7 @@ namespace Axis.Core
         bool showMotion = false;
         bool showExternal = false;
 
-        public Simulation() : base("Simulation", "Program", "Simulate a robotic toolpath.", AxisInfo.Plugin, AxisInfo.TabCore)
+        public GH_Simulation() : base("Simulation", "Program", "Simulate a robotic toolpath.", AxisInfo.Plugin, AxisInfo.TabMain)
         {
         }
 

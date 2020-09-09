@@ -11,7 +11,7 @@ namespace Axis.RAPID
     /// </summary>
     public class CallProcedure_Obsolete : GH_Component
     {
-        public CallProcedure_Obsolete() : base("Call Procedure", "Call", "Call a custom RAPID procedure.", AxisInfo.Plugin, AxisInfo.TabCode)
+        public CallProcedure_Obsolete() : base("Call Procedure", "Call", "Call a custom RAPID procedure.", AxisInfo.Plugin, AxisInfo.TabDepricated)
         {
         }
 

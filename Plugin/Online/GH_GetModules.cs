@@ -19,9 +19,9 @@ namespace Axis.Online
     /// <summary>
     /// Get all of the available modules from a robot controller.
     /// </summary>
-    public class GetModules : GH_Component
+    public class GH_GetModules : GH_Component
     {
-        public GetModules() : base("Get Modules", "Get Mods", "Get all available modules from a robot controller.", AxisInfo.Plugin, AxisInfo.TabOnline)
+        public GH_GetModules() : base("Get Modules", "Get Mods", "Get all available modules from a robot controller.", AxisInfo.Plugin, AxisInfo.TabLive)
         {
         }
 
@@ -51,6 +51,10 @@ namespace Axis.Online
         }
 
         #region Component Settings
+
+        public override GH_Exposure Exposure => GH_Exposure.secondary;
+
+
         protected override System.Drawing.Bitmap Icon
         {
             get

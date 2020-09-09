@@ -161,14 +161,14 @@
     <Compile Include="Deprecated\200907_CheckProgram.cs" />
     <Compile Include="Deprecated\200827_AuthTest.cs" />
     <Compile Include="Deprecated\200827_GetLicenseInformation.cs" />
-    <Compile Include="Targets\PlaneOrientations.cs" />
+    <Compile Include="Targets\GH_PlaneOrientations.cs" />
     <Compile Include="Online\AxisController.cs" />
-    <Compile Include="Online\Connect.cs" />
-    <Compile Include="Online\GetModules.cs" />
-    <Compile Include="Online\Monitoring.cs" />
-    <Compile Include="Online\SetModule.cs" />
-    <Compile Include="Online\StartStop.cs" />
-    <Compile Include="Online\Streaming.cs" />
+    <Compile Include="Online\GH_Connect.cs" />
+    <Compile Include="Online\GH_GetModules.cs" />
+    <Compile Include="Online\GH_Monitoring.cs" />
+    <Compile Include="Online\GH_SetModule.cs" />
+    <Compile Include="Online\GH_StartStop.cs" />
+    <Compile Include="Online\GH_Streaming.cs" />
     <Compile Include="Online\Toolbox.cs" />
     <Compile Include="Params\MotionTypeParam.cs" />
     <Compile Include="Params\SpeedParam.cs" />
@@ -178,11 +178,11 @@
     <Compile Include="Params\ZoneParam.cs" />
     <Compile Include="Params\ToolParam.cs" />
     <Compile Include="Params\RobotParam.cs" />
-    <Compile Include="Core\Simulation.cs" />
-    <Compile Include="Core\Engine.cs" />
+    <Compile Include="Core\GH_Simulation.cs" />
+    <Compile Include="Core\GH_Engine.cs" />
     <Compile Include="Deprecated\200908_SurfaceFrame.cs" />
     <Compile Include="Deprecated\200907_GetDI.cs" />
-    <Compile Include="RAPID\RAPID_Instructions.cs" />
+    <Compile Include="RAPID\GH_RAPID_Instructions.cs" />
     <Compile Include="Deprecated\200908_SetDO.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -202,20 +202,20 @@
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
     <Compile Include="Deprecated\200908_SetVelocity.cs" />
-    <Compile Include="Robot\CreateTool.cs" />
-    <Compile Include="Robot\CreateRobot.cs" />
-    <Compile Include="Core\CodeGenerator.cs" />
+    <Compile Include="Robot\GH_CreateTool.cs" />
+    <Compile Include="Robot\GH_CreateRobot.cs" />
+    <Compile Include="Core\GH_CodeGenerator.cs" />
     <Compile Include="Styles.cs" />
-    <Compile Include="Targets\CreateJointTarget.cs" />
+    <Compile Include="Targets\GH_CreateJointTarget.cs" />
     <Compile Include="Properties\AxisInfo.cs" />
-    <Compile Include="Targets\CreateTarget_multithreaded.cs" />
-    <Compile Include="Targets\FlipPlane.cs" />
+    <Compile Include="Targets\GH_CreateTarget_Multithreaded.cs" />
+    <Compile Include="Targets\GH_FlipPlane.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Targets\CoordinateSystem.cs" />
-    <Compile Include="Targets\DefineSpeed.cs" />
-    <Compile Include="Targets\CreateTarget.cs" />
+    <Compile Include="Targets\GH_CoordinateSystem.cs" />
+    <Compile Include="Targets\GH_DefineSpeed.cs" />
+    <Compile Include="Targets\GH_CreateTarget.cs" />
     <Compile Include="Robot\System.cs" />
-    <Compile Include="Targets\DefineZone.cs" />
+    <Compile Include="Targets\GH_DefineZone.cs" />
     <Compile Include="Targets\Target.cs" />
     <Compile Include="Deprecated\200908_PlaneToQuat.cs" />
     <Compile Include="Deprecated\200908_QuatToPlane.cs" />

@@ -5,11 +5,11 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 
-using Rhino.Geometry;
-using Grasshopper;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
 using Grasshopper.Kernel.Parameters;
+
+using Rhino.Geometry;
 
 using ABB.Robotics;
 using ABB.Robotics.Controllers;
@@ -23,33 +23,26 @@ using Axis.Targets;
 namespace Axis.Online
 {
     /// <summary>
-    /// Online monitoring of an IRC5 controller object.
+    /// Set a module to an online IRC5 controller.
     /// </summary>
-    public class Monitoring : GH_Component, IGH_VariableParameterComponent
+    public class GH_SetModule : GH_Component, IGH_VariableParameterComponent
     {
-        // Optionable Log
-        bool logOption = false;
-        bool logOptionOut = false;
-        bool autoUpdate = false;
+        public List<string> Status { get; set; }
+        //public Controller controller = null;
+        private Task[] tasks = null;
 
-        List<string> Status { get; set; }
-
-        Controller controller = null;
-        Task[] tasks = null;
-
-        // State switch variables for TCP monitoring.
-        int ioMonitoringOn = 0; int ioMonitoringOff = 0;
-        int tcpMonitoringOn = 0; int tcpMonitoringOff = 0;
-
-        ABB.Robotics.Controllers.RapidDomain.RobTarget cRobTarg;
-        System.Byte[] data;
+        private bool send = false;
+        private bool logOption = false;
+        private bool logOptionOut = false;
+        private bool sending = false;
 
         // Create a list of string to store a log of the connection status.
-        List<string> log = new List<string>();
-        List<string> IOstatus = new List<string>();
-        Plane tcp = new Plane();
+        private List<string> log = new List<string>();
 
-        public Monitoring() : base("Monitoring  ", "Monitoring", "This will monitor the robots position and IO's", AxisInfo.Plugin, AxisInfo.TabOnline)
+        public GH_SetModule()
+          : base("Set Module", "Set Mod",
+              "Set the main module on the robot controller",
+              AxisInfo.Plugin, AxisInfo.TabLive)
         {
         }
 
@@ -57,128 +50,130 @@ namespace Axis.Online
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddGenericParameter("Controller", "Controller", "Recives the output from a controller module", GH_ParamAccess.item);
+            pManager.AddBooleanParameter("Send", "Send", "Send to module", GH_ParamAccess.item, false);
+            pManager.AddTextParameter("Module", "Module", "Module to be wtritten to the controller.", GH_ParamAccess.list);
+            pManager[1].Optional = true;
         }
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddTextParameter("IO", "IO", "IO status.", GH_ParamAccess.list);
-            pManager.AddPlaneParameter("TCP", "TCP", "TCP status.", GH_ParamAccess.item);
         }
         #endregion
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             GH_ObjectWrapper controller = new GH_ObjectWrapper();
+            List<string> modFile = new List<string>();
             Controller abbController = null;
+            bool clear = false;
 
             if (!DA.GetData("Controller", ref controller)) ;
+            if (!DA.GetData("Send", ref send)) ;
+            if (!DA.GetDataList("Module", modFile)){ return; }
+            if (logOption)
+            {
+                if (!DA.GetData("Clear", ref clear)) ;
+            }
 
             //Check for valid input, else top execuion
             AxisController myAxisController = controller.Value as AxisController;
             if ((myAxisController != null) && (myAxisController.axisControllerState == true))
+            {
                 abbController = myAxisController;
-            else { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No active controller connected."); return; }
-
-            bool monitorTCP = true;
-            bool monitorIO = true;
-            bool clear = false;
-
-            // Current Robot task
-            tasks = abbController.Rapid.GetTasks();
-
-            // Current robot positions and rotations
-            double cRobX = 0; double cRobY = 0; double cRobZ = 0;
-            double cRobQ1 = 0; double cRobQ2 = 0; double cRobQ3 = 0; double cRobQ4 = 0;
-            Quaternion cRobQuat = new Quaternion();
-
-            // Update TCP
-            if (monitorTCP)
-            {
-                if (tcpMonitoringOn == 0)
-                    log.Add("TCP monitoring started.");
-
-                cRobTarg = tasks[0].GetRobTarget();
-
-                cRobX = Math.Round(cRobTarg.Trans.X, 3);
-                cRobY = Math.Round(cRobTarg.Trans.Y, 3);
-                cRobZ = Math.Round(cRobTarg.Trans.Z, 3);
-
-                Point3d cRobPos = new Point3d(cRobX, cRobY, cRobZ);
-
-                cRobQ1 = Math.Round(cRobTarg.Rot.Q1, 5);
-                cRobQ2 = Math.Round(cRobTarg.Rot.Q2, 5);
-                cRobQ3 = Math.Round(cRobTarg.Rot.Q3, 5);
-                cRobQ4 = Math.Round(cRobTarg.Rot.Q4, 5);
-
-                cRobQuat = new Quaternion(cRobQ1, cRobQ2, cRobQ3, cRobQ4);
-
-                tcp = Util.QuaternionToPlane(cRobPos, cRobQuat);
-
-                tcpMonitoringOn += 1; tcpMonitoringOff = 0;
             }
-            else if (tcpMonitoringOn > 0)
-            {
-                if (tcpMonitoringOff == 0)
-                    log.Add("TCP monitoring stopped.");
+            else { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No active controller connected"); return;}
 
-                tcpMonitoringOff += 1; tcpMonitoringOn = 0;
-            }
-
-            // If active, update the status of the IO system.
-            if (monitorIO)
+            if ((abbController != null) && send)
             {
-                if (ioMonitoringOn == 0)
+                
+                var filename = "MyModule";
+                var tempFile = Path.GetTempPath() + @"\" + filename + ".mod";
+
+                using (StreamWriter writer = new StreamWriter(tempFile, false))
                 {
-                    log.Add("Signal monitoring started.");
+                    for (int i = 0; i < modFile.Count; i++)
+                    {
+                        writer.WriteLine(modFile[i]);
+                    }
                 }
 
-                // Filter only the digital IO system signals.
-                IOFilterTypes dSignalFilter = IOFilterTypes.Common;
-                SignalCollection dSignals = abbController.IOSystem.GetSignals(dSignalFilter);
-
-                IOstatus.Clear();
-                // Iterate through the found collection and print them to the IO monitoring list.
-                foreach (Signal signal in dSignals)
+                // Not working perfectly yet
+                if (sending == false)
                 {
-                    string sigVal = signal.ToString() + ": " + signal.Value.ToString();
-                    IOstatus.Add(sigVal);
-                }
+                    sending = true;
+                    log.Add("Sending Module to controller");
+                    try
+                    {
+                        using (Mastership m = Mastership.Request(abbController.Rapid))
+                        {
+                            if (abbController.IsVirtual)
+                            {
+                                // Load program to virtual controller
+                                tasks = abbController.Rapid.GetTasks();
+                                tasks[0].LoadModuleFromFile(tempFile, RapidLoadMode.Replace);
 
-                ioMonitoringOn += 1; ioMonitoringOff = 0; // Update state switch variables for IO monitoring.
-                //ExpireSolution(true);
-            }
-            else if (ioMonitoringOn > 0)
-            {
-                if (ioMonitoringOff == 0)
-                {
-                    log.Add("Signal monitoring stopped.");
-                }
+                                if (File.Exists(tempFile)) { File.Delete(tempFile); }
+                                log.Add("Program has been loaded to virtual controler");
+                                sending = false;
+                            }
+                            else
+                            {
+                                // Load program to physical controller
+                                tasks = abbController.Rapid.GetTasks();
 
-                ioMonitoringOff += 1; ioMonitoringOn = 0;
+                                // Missing Check if file and directory exist
+                                if (abbController.FileSystem.DirectoryExists(@"Axis"))
+                                {
+                                    if (abbController.FileSystem.FileExists(@"Axis/AxisModule.mod"))
+                                    {
+                                        abbController.FileSystem.RemoveFile(@"Axis/AxisModule.mod");
+                                    }
+                                }
+                                else
+                                {
+                                    abbController.FileSystem.CreateDirectory(@"Axis");
+                                }
+
+                                //Delete all previouse tasks
+                                for (int i=0; i < tasks.Length; ++i) { tasks[i].DeleteProgram(); }
+
+                                //Code 
+                                abbController.FileSystem.PutFile(tempFile, @"Axis/AxisModule.mod");
+                                var sucsess = tasks[0].LoadModuleFromFile(@"Axis/AxisModule.mod", RapidLoadMode.Replace);
+
+                                if (sucsess)
+                                {
+                                    log.Add("Program has been loaded to controler");
+                                }
+                                else
+                                {
+                                    log.Add("The program contains at least one error and cannot be loaded");
+                                }
+
+                                if (File.Exists(tempFile)) { File.Delete(tempFile); }
+
+                                sending = false;
+                            }
+
+                        }
+                    }
+                    catch (Exception e) { log.Add("Can't write to controller"); log.Add(e.ToString()); sending = false; if (File.Exists(tempFile)) { File.Delete(tempFile); }; return; }
+                    //log.Add("Program has been loaded");
+                }
             }
-          
-            // Clear log
+
             if (clear)
             {
                 log.Clear();
                 log.Add("Log cleared.");
             }
 
-            //Output log
             if (logOptionOut)
             {
                 Status = log;
                 DA.SetDataList("Log", log);
             }
-
-            // Output IO & TCP
-            DA.SetDataList("IO", IOstatus);
-            DA.SetData("TCP", new GH_Plane(tcp));
-
-            if (autoUpdate)
-            {
-                ExpireSolution(true);
-            }
+            //ExpireSolution(true);
         }
 
         #region UI
@@ -190,7 +185,7 @@ namespace Axis.Online
         // Build a list of optional output parameters
         IGH_Param[] outputParams = new IGH_Param[1]
         {
-            new Param_String() { Name = "Log", NickName = "Log", Description = "Log checking the connection status"},
+        new Param_String() { Name = "Log", NickName = "Log", Description = "Log checking the connection status"},
         };
 
         // The following functions append menu items and then handle the item clicked event.
@@ -198,9 +193,6 @@ namespace Axis.Online
         {
             ToolStripMenuItem log = Menu_AppendItem(menu, "Log", log_Click, true, logOption);
             log.ToolTipText = "Activate the log output";
-            ToolStripMenuItem update = Menu_AppendItem(menu, "Auto Update", autoUpdate_Click, true, autoUpdate);
-            log.ToolTipText = "Activate the log output";
-
 
             //ToolStripSeparator seperator = Menu_AppendSeparator(menu);
         }
@@ -222,12 +214,6 @@ namespace Axis.Online
                 logOptionOut = false;
             }
 
-            //ExpireSolution(true);
-        }
-        private void autoUpdate_Click(object sender, EventArgs e)
-        {
-            RecordUndoEvent("AutoUpdate");
-            autoUpdate = !autoUpdate;
             ExpireSolution(true);
         }
 
@@ -290,7 +276,6 @@ namespace Axis.Online
         {
             writer.SetBoolean("LogOptionSetModule", this.logOption);
             writer.SetBoolean("LogOptionSetOutModule", this.logOptionOut);
-            writer.SetBoolean("AutoUpdate", this.autoUpdate);
             return base.Write(writer);
         }
 
@@ -299,7 +284,6 @@ namespace Axis.Online
         {
             this.logOption = reader.GetBoolean("LogOptionSetModule");
             this.logOptionOut = reader.GetBoolean("LogOptionSetOutModule");
-            this.autoUpdate = reader.GetBoolean("AutoUpdate");
             return base.Read(reader);
         }
         #endregion
@@ -311,25 +295,21 @@ namespace Axis.Online
         bool IGH_VariableParameterComponent.DestroyParameter(GH_ParameterSide side, int index) => false;
         void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
 
-        /// <summary>
-        /// Provides an Icon for the component.
-        /// </summary>
+        public override GH_Exposure Exposure => GH_Exposure.secondary;
+
         protected override System.Drawing.Bitmap Icon
         {
             get
             {
                 //You can add image files to your project resources and access them like this:
                 // return Resources.IconForThisComponent;
-                return Properties.Resources.DigitalIn;
+                return Properties.Resources.Set_Module;
             }
         }
 
-        /// <summary>
-        /// Gets the unique ID for this component. Do not change this ID after release.
-        /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("288C0F4E-542A-4A37-A947-4B541436BEFB"); }
+            get { return new Guid("676a28f1-9320-4a02-a9bc-59c617dd04d0"); }
         }
         #endregion
     }

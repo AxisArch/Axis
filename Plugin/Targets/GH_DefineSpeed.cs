@@ -11,7 +11,7 @@ namespace Axis.Targets
     /// <summary>
     /// Define a custom speed object.
     /// </summary>
-    public class DefineSpeed : GH_Component, IGH_VariableParameterComponent
+    public class GH_DefineSpeed : GH_Component, IGH_VariableParameterComponent
     {
         // Sticky context menu item values.
         bool m_Rotation = false;
@@ -21,7 +21,7 @@ namespace Axis.Targets
         bool m_ExtLin = false;
         bool m_ExtRot = false;
 
-        public DefineSpeed() : base("Speed", "S", "Define a list of robot movement speeds.", AxisInfo.Plugin, AxisInfo.TabToolpath)
+        public GH_DefineSpeed() : base("Speed", "S", "Define a list of robot movement speeds.", AxisInfo.Plugin, AxisInfo.TabConfiguration)
         {
         }
 
@@ -414,6 +414,9 @@ namespace Axis.Targets
         IGH_Param IGH_VariableParameterComponent.CreateParameter(GH_ParameterSide side, int index) => null;
         bool IGH_VariableParameterComponent.DestroyParameter(GH_ParameterSide side, int index) => false;
         void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
+
+        public override GH_Exposure Exposure => GH_Exposure.secondary;
+
 
         protected override System.Drawing.Bitmap Icon
         {

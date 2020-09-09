@@ -19,7 +19,7 @@ namespace Axis.Params
     {
         public override GH_Exposure Exposure => GH_Exposure.hidden; // <--- Make it hidden when it is working.
         public RobotParam()
-          : base("Robot", "Robot", "Axis robot type.", Axis.AxisInfo.Plugin, Axis.AxisInfo.TabCore)
+          : base("Robot", "Robot", "Axis robot type.", Axis.AxisInfo.Plugin, Axis.AxisInfo.TabParam)
         { }
 
         public override Guid ComponentGuid => new Guid("17C49BD4-7A54-4471-961A-B5E0E971F7F4");

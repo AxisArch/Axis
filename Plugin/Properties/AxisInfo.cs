@@ -55,14 +55,10 @@ namespace Axis
         }
 
         public static string Plugin { get { return "Axis"; } }
-        public static string TabCore { get { return "1. Core"; } }
-        public static string TabRobot { get { return "2. Robot"; } }
-        public static string TabTargets { get { return "3. Targets"; } }
-        public static string TabToolpath { get { return "4. Toolpath"; } }
-        public static string TabGeometry { get { return "5. Geometry"; } }
-        public static string TabIO { get { return "6. I/O"; } }
-        public static string TabCode { get { return "7. RAPID"; } }
-        public static string TabOnline { get { return "8. Online"; } }
-
+        public static string TabParam { get { return "0. Params"; } } //<--- Should not be visible
+        public static string TabMain { get { return "1. Main"; } }
+        public static string TabLive { get { return "2. Connection"; } }
+        public static string TabConfiguration { get { return "3. Setup"; } }
+        public static string TabDepricated { get { return "4. Depriacted"; } } //<--- Should not be visible
     }
 }

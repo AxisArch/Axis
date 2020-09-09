@@ -11,7 +11,7 @@ namespace Axis.RAPID
     /// </summary>
     public class SetVelocity_Obsolete : GH_Component
     {
-        public SetVelocity_Obsolete() : base("Velocity Override", "Velocity Override", "Override all following programmed velocities to a percentage of their value.", AxisInfo.Plugin, AxisInfo.TabCode)
+        public SetVelocity_Obsolete() : base("Velocity Override", "Velocity Override", "Override all following programmed velocities to a percentage of their value.", AxisInfo.Plugin, AxisInfo.TabDepricated)
         {
         }
 

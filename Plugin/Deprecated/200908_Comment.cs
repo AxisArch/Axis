@@ -11,7 +11,7 @@ namespace Axis.RAPID
     /// </summary>
     public class Comment_Obsolete : GH_Component
     {
-        public Comment_Obsolete() : base("Comment", "C", "Generates a RAPID comment.", AxisInfo.Plugin, AxisInfo.TabCode)
+        public Comment_Obsolete() : base("Comment", "C", "Generates a RAPID comment.", AxisInfo.Plugin, AxisInfo.TabDepricated)
         {
         }
 

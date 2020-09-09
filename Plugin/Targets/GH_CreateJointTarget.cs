@@ -13,13 +13,13 @@ namespace Axis.Targets
     /// <summary>
     /// Define robot end effector joint target positions.
     /// </summary>
-    public class CreateJointTarget : GH_Component, IGH_VariableParameterComponent
+    public class GH_CreateJointTarget : GH_Component, IGH_VariableParameterComponent
     {
         bool manufacturer = false;
         bool useRotary = false;
         bool useLinear = false;
 
-        public CreateJointTarget() : base("Joint Target", "Joint", "Compose an absolute joint target from a list of axis values.", AxisInfo.Plugin, AxisInfo.TabTargets)
+        public GH_CreateJointTarget() : base("Joint Target", "Joint", "Compose an absolute joint target from a list of axis values.", AxisInfo.Plugin, AxisInfo.TabConfiguration)
         {
         }
 

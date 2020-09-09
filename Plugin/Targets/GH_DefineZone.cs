@@ -11,7 +11,7 @@ namespace Axis.Targets
     /// <summary>
     /// Define a custom zone object.
     /// </summary>
-    public class DefineZone : GH_Component, IGH_VariableParameterComponent
+    public class GH_DefineZone : GH_Component, IGH_VariableParameterComponent
     {
         // Sticky context menu item values.
         bool m_Stop = false;
@@ -22,7 +22,7 @@ namespace Axis.Targets
         bool m_LinExt = false;
         bool m_RotExt = false;
 
-        public DefineZone() : base("Zone", "Z", "Define a list of robot interpolation zones.", AxisInfo.Plugin, AxisInfo.TabToolpath)
+        public GH_DefineZone() : base("Zone", "Z", "Define a list of robot interpolation zones.", AxisInfo.Plugin, AxisInfo.TabConfiguration)
         {
         }
 
@@ -496,6 +496,8 @@ namespace Axis.Targets
         IGH_Param IGH_VariableParameterComponent.CreateParameter(GH_ParameterSide side, int index) => null;
         bool IGH_VariableParameterComponent.DestroyParameter(GH_ParameterSide side, int index) => false;
         void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
+
+        public override GH_Exposure Exposure => GH_Exposure.secondary;
 
         protected override System.Drawing.Bitmap Icon
         {

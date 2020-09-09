@@ -20,7 +20,7 @@ namespace Axis.Core
     /// <summary>
     /// Generate the output code for a robot program.
     /// </summary>
-    public class CodeGenerator : GH_Component, IGH_VariableParameterComponent
+    public class GH_CodeGenerator : GH_Component, IGH_VariableParameterComponent
     {
         // Sticky variables for the options.
         bool modName = false;
@@ -31,7 +31,7 @@ namespace Axis.Core
         bool validToken = false;
         Auth auth = null;
 
-        public CodeGenerator() : base("Code Generator", "Code", "Generate manufacturer-specific robot code from a toolpath.", AxisInfo.Plugin, AxisInfo.TabCore)
+        public GH_CodeGenerator() : base("Code Generator", "Code", "Generate manufacturer-specific robot code from a toolpath.", AxisInfo.Plugin, AxisInfo.TabMain)
         {
         }
 

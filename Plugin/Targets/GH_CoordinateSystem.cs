@@ -13,7 +13,7 @@ namespace Axis.Targets
     /// <summary>
     /// Define a coordinate system / work object.
     /// </summary>
-    public class CoordinateSystem : GH_Component, IGH_VariableParameterComponent
+    public class GH_CoordinateSystem : GH_Component, IGH_VariableParameterComponent
     {    
         // Optional context menu toggles
         bool m_dynamicCS = false;
@@ -22,7 +22,7 @@ namespace Axis.Targets
         List<CSystem> m_cSystems = new List<CSystem>();
         BoundingBox m_bBox = new BoundingBox();
 
-        public CoordinateSystem() : base("Work Object", "WObj", "Create a new work object or robot base from geometry or controller calibration values.", AxisInfo.Plugin, AxisInfo.TabRobot)
+        public GH_CoordinateSystem() : base("Work Object", "WObj", "Create a new work object or robot base from geometry or controller calibration values.", AxisInfo.Plugin, AxisInfo.TabConfiguration)
         {
         }
 
@@ -267,7 +267,7 @@ namespace Axis.Targets
         {
             get { return new Guid("{b11f15a4-c0dd-43d6-aecd-d87d2fb05664}"); }
         }
-        public override GH_Exposure Exposure => GH_Exposure.primary;
+        public override GH_Exposure Exposure => GH_Exposure.secondary;
         #endregion
     }
 }

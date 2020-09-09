@@ -25,7 +25,7 @@ namespace Axis.Core
     /// Core engine class that handles
     /// login, system settings etc.
     /// </summary>
-    public class Engine : GH_Component
+    public class GH_Engine : GH_Component
     {
         // Sticky variables for the options.
         bool m_Logout = false;
@@ -41,7 +41,7 @@ namespace Axis.Core
             Browser = new WebBrowserBrowser("Authenticating...", 400, 640)
         };
 
-        public Engine() : base("Axis", "Axis", "Manage the Axis application.", AxisInfo.Plugin, AxisInfo.TabCore)
+        public GH_Engine() : base("Axis", "Axis", "Manage the Axis application.", AxisInfo.Plugin, AxisInfo.TabMain)
         {
         }
 
@@ -118,7 +118,7 @@ namespace Axis.Core
 
         public class CustomAttributes : GH_ComponentAttributes
         {
-            public CustomAttributes(Engine owner) : base(owner) { }
+            public CustomAttributes(GH_Engine owner) : base(owner) { }
 
             #region Custom Layout Logic
             private System.Drawing.RectangleF PathBounds { get; set; }
@@ -140,7 +140,7 @@ namespace Axis.Core
             {
                 if (e.Button == System.Windows.Forms.MouseButtons.Left)
                 {
-                    Engine comp = Owner as Engine;
+                    GH_Engine comp = Owner as GH_Engine;
 
                     // Handle the login click event.
                     if (PathBounds.Contains(e.CanvasLocation))
@@ -201,7 +201,7 @@ namespace Axis.Core
                         // We need to draw everything outselves.
                         base.RenderComponentCapsule(canvas, graphics, true, true, false, true, true, true);
 
-                        Engine comp = Owner as Engine;
+                        GH_Engine comp = Owner as GH_Engine;
 
                         GH_Capsule buttonPath = GH_Capsule.CreateCapsule(PathBounds, GH_Palette.White);
                         buttonPath.Render(graphics, this.Selected, Owner.Locked, Owner.Hidden);

@@ -16,13 +16,13 @@ namespace Axis.Core
     /// Method to check an entire program for issues
     /// without running full geometry for the IK solutions.
     /// </summary>
-    public class CheckProgram : GH_Component
+    public class CheckProgram_Obsolete : GH_Component
     {
         public override bool Obsolete => true;
         public override GH_Exposure Exposure => GH_Exposure.hidden;
 
 
-        public CheckProgram() : base("Check Program", "Check", "Check an entire program for kinematic errors.", AxisInfo.Plugin, AxisInfo.TabCore)
+        public CheckProgram_Obsolete() : base("Check Program", "Check", "Check an entire program for kinematic errors.", AxisInfo.Plugin, AxisInfo.TabDepricated)
         {
         }
 

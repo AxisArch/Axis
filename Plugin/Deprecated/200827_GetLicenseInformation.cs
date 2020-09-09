@@ -13,7 +13,7 @@ namespace Axis.Core
     /// Get license information for creating
     /// unique user hashes from the PC identifiers.
     /// </summary>
-    public class GetLicenseInformation : GH_Component
+    public class GetLicenseInformation_Obsolete : GH_Component
     {
         public override bool Obsolete => true;
         public override GH_Exposure Exposure => GH_Exposure.hidden;
@@ -30,7 +30,7 @@ namespace Axis.Core
             get { return new Guid("c1582c41-3815-4c7b-8965-3272b08450b7"); }
         }
 
-        public GetLicenseInformation() : base("Get License Info", "License", "Generate the information necessary to create a license.", AxisInfo.Plugin, AxisInfo.TabCore)
+        public GetLicenseInformation_Obsolete() : base("Get License Info", "License", "Generate the information necessary to create a license.", AxisInfo.Plugin, AxisInfo.TabDepricated)
         {
         }
 

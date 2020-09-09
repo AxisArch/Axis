@@ -12,7 +12,7 @@ namespace Axis.RAPID
     /// </summary>
     public class DefineProcedure_Obsolete : GH_Component
     {
-        public DefineProcedure_Obsolete() : base("Define Procedure", "Proc", "Creates a custom RAPID procedure", AxisInfo.Plugin, AxisInfo.TabCode)
+        public DefineProcedure_Obsolete() : base("Define Procedure", "Proc", "Creates a custom RAPID procedure", AxisInfo.Plugin, AxisInfo.TabDepricated)
         {
         }
 

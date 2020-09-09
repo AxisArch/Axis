@@ -17,7 +17,7 @@ namespace Axis.Params
         public override GH_Exposure Exposure => GH_Exposure.hidden; // <--- Make it hidden when it is working.
 
         public SpeedParam()
-          : base("Speed", "Target", "Axis target speed type.", Axis.AxisInfo.Plugin, Axis.AxisInfo.TabCore)
+          : base("Speed", "Target", "Axis target speed type.", Axis.AxisInfo.Plugin, Axis.AxisInfo.TabParam)
         { }
 
         public override Guid ComponentGuid => new Guid("F11127E6-F5AE-4E43-BB14-C17B98C931E6");

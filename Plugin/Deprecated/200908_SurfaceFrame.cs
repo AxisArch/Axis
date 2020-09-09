@@ -11,7 +11,7 @@ namespace Axis.Geometry
     /// </summary>
     public class SurfaceFrame_Obsolete : GH_Component
     {
-        public SurfaceFrame_Obsolete() : base("Surface Frame", "Frame", "Reparamaterize a surface and return the frame at U:0.5, V:0.5.", AxisInfo.Plugin, AxisInfo.TabGeometry)
+        public SurfaceFrame_Obsolete() : base("Surface Frame", "Frame", "Reparamaterize a surface and return the frame at U:0.5, V:0.5.", AxisInfo.Plugin, AxisInfo.TabDepricated)
         {
         }
 

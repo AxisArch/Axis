@@ -26,7 +26,7 @@ namespace Axis.Online
     /// <summary>
     /// Handles online connections to an IRC5 controller.
     /// </summary>
-    public class Connect : GH_Component, IGH_VariableParameterComponent
+    public class GH_Connect : GH_Component, IGH_VariableParameterComponent
     {
         public string ControllerID { get; set; }
         public List<string> Status { get; set; }
@@ -58,10 +58,10 @@ namespace Axis.Online
         List<IGH_Param> delInputs = new List<IGH_Param>();
         Grasshopper.Kernel.Special.GH_ValueList vl = new Grasshopper.Kernel.Special.GH_ValueList();
 
-        public Connect()
+        public GH_Connect()
           : base("Controller", "Controller",
               "Connect to an ABB controller",
-              AxisInfo.Plugin, AxisInfo.TabOnline)
+              AxisInfo.Plugin, AxisInfo.TabLive)
         {
         }
 
@@ -388,6 +388,8 @@ namespace Axis.Online
         IGH_Param IGH_VariableParameterComponent.CreateParameter(GH_ParameterSide side, int index) => null;
         bool IGH_VariableParameterComponent.DestroyParameter(GH_ParameterSide side, int index) => false;
         void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
+
+        public override GH_Exposure Exposure => GH_Exposure.primary;
 
         protected override System.Drawing.Bitmap Icon
         {

@@ -11,7 +11,7 @@ namespace Axis.Geometry
     /// </summary>
     public class QuatToPlane_Obsolete : GH_Component
     {
-        public QuatToPlane_Obsolete() : base("Quaternion To Plane", "Q-P", "Convert a point and a quaternion to a geometric plane.", AxisInfo.Plugin, AxisInfo.TabGeometry)
+        public QuatToPlane_Obsolete() : base("Quaternion To Plane", "Q-P", "Convert a point and a quaternion to a geometric plane.", AxisInfo.Plugin, AxisInfo.TabDepricated)
         {
         }
 

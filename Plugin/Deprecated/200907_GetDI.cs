@@ -9,9 +9,9 @@ namespace Axis.IO
     /// <summary>
     /// Get the value of a specific digital input.
     /// </summary>
-    public class GetDI : GH_Component
+    public class GetDI_Obsolete : GH_Component
     {
-        public GetDI() : base("Get Digital Input", "Get DI", "Get the value of a specific digital input.", AxisInfo.Plugin, AxisInfo.TabIO)
+        public GetDI_Obsolete() : base("Get Digital Input", "Get DI", "Get the value of a specific digital input.", AxisInfo.Plugin, AxisInfo.TabDepricated)
         {
         }
 

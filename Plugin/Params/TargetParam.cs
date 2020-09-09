@@ -17,7 +17,7 @@ namespace Axis.Params
         public override GH_Exposure Exposure => GH_Exposure.hidden; // <--- Make it hidden when it is working.
 
         public TargetParam()
-          : base("Target", "Target", "Axis target type.", Axis.AxisInfo.Plugin, Axis.AxisInfo.TabCore)
+          : base("Target", "Target", "Axis target type.", Axis.AxisInfo.Plugin, Axis.AxisInfo.TabParam)
         { }
 
         public override Guid ComponentGuid => new Guid("03DE08A2-D283-4E6D-98D4-07BF9606F34A");

@@ -11,12 +11,12 @@ namespace Axis.Core
     /// <summary>
     /// Test class to verify the auth pipeline.
     /// </summary>
-    public class AuthTest : GH_Component
+    public class AuthTest_Obsolete : GH_Component
     {
         public override bool Obsolete => true;
         public override GH_Exposure Exposure => GH_Exposure.hidden;
 
-        public AuthTest() : base("Auth Test", "Auth", "Test", AxisInfo.Plugin, AxisInfo.TabCore)
+        public AuthTest_Obsolete() : base("Auth Test", "Auth", "Test", AxisInfo.Plugin, AxisInfo.TabDepricated)
         {
         }
 

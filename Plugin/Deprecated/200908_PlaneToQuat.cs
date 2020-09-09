@@ -16,7 +16,7 @@ namespace Axis.Geometry
     {
         bool originOut = false;
 
-        public PlaneToQuat_Obsolete() : base("Plane To Quaternion", "P-Q", "Convert a geometric plane to a quaternion and a point.", AxisInfo.Plugin, AxisInfo.TabGeometry)
+        public PlaneToQuat_Obsolete() : base("Plane To Quaternion", "P-Q", "Convert a geometric plane to a quaternion and a point.", AxisInfo.Plugin, AxisInfo.TabDepricated)
         {
         }
 

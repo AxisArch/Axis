@@ -27,7 +27,7 @@ namespace Axis.Online
     /// <summary>
     /// Stream command instructions to a remote IRC5 controller.
     /// </summary>
-    public class Streaming : GH_Component, IGH_VariableParameterComponent
+    public class GH_Streaming : GH_Component, IGH_VariableParameterComponent
     {
         // Optionable Log
         bool logOption = false;
@@ -68,7 +68,7 @@ namespace Axis.Online
 
         bool validToken = false;
 
-        public Streaming() : base("Live Connection", "Stream", "Stream instructions to a robot controller", AxisInfo.Plugin, AxisInfo.TabOnline)
+        public GH_Streaming() : base("Live Connection", "Stream", "Stream instructions to a robot controller", AxisInfo.Plugin, AxisInfo.TabLive)
         {
         }
 
@@ -448,6 +448,10 @@ namespace Axis.Online
         IGH_Param IGH_VariableParameterComponent.CreateParameter(GH_ParameterSide side, int index) => null;
         bool IGH_VariableParameterComponent.DestroyParameter(GH_ParameterSide side, int index) => false;
         void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
+
+
+        public override GH_Exposure Exposure => GH_Exposure.primary;
+
 
         /// <summary>
         /// Provides an Icon for the component.

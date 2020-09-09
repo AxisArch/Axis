@@ -11,7 +11,7 @@ namespace Axis.RAPID
     /// </summary>
     public class Acceleration_Obsolete : GH_Component
     {
-        public Acceleration_Obsolete() : base("Acceleration", "Acc", "Override the robot acceleration and deceleration settings.", AxisInfo.Plugin, AxisInfo.TabCode)
+        public Acceleration_Obsolete() : base("Acceleration", "Acc", "Override the robot acceleration and deceleration settings.", AxisInfo.Plugin, AxisInfo.TabDepricated)
         {
         }
 

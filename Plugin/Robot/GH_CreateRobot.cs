@@ -25,7 +25,7 @@ namespace Axis.Core
         Manufacturer m_Manufacturer = Manufacturer.ABB;
         bool m_Pose = false;
 
-        public CreateRobot() : base("Robot", "Robot", "Create a kinematic model of a custom robot.", AxisInfo.Plugin, AxisInfo.TabRobot)
+        public CreateRobot() : base("Robot", "Robot", "Create a kinematic model of a custom robot.", AxisInfo.Plugin, AxisInfo.TabConfiguration)
         {
         }
 

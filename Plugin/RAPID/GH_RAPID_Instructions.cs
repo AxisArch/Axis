@@ -10,7 +10,7 @@ using Rhino.Geometry;
 
 namespace Axis.RAPID
 {
-    public class RAPID_Instructions : GH_Component
+    public class GH_RAPID_Instructions : GH_Component
     {
         Opperation currentState = Opperation.Comment;
         Opperation previouseState = Opperation.Acceleration;
@@ -18,10 +18,10 @@ namespace Axis.RAPID
         /// <summary>
         /// Initializes a new instance of the MyComponent1 class.
         /// </summary>
-        public RAPID_Instructions()
+        public GH_RAPID_Instructions()
           : base("RAPID Instruction", "RAPID Instruction",
               "Creates different Rapid instructions",
-              AxisInfo.Plugin, AxisInfo.TabTargets)
+              AxisInfo.Plugin, AxisInfo.TabMain)
         {
         }
 
@@ -255,7 +255,7 @@ namespace Axis.RAPID
         #endregion
 
         #region Component Settings
-        public override GH_Exposure Exposure => GH_Exposure.tertiary;
+        public override GH_Exposure Exposure => GH_Exposure.secondary;
 
         /// <summary>
         /// Provides an Icon for the component.
