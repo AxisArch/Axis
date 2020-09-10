@@ -109,7 +109,7 @@ namespace Axis.Params
             gx.DrawLineFromPoint(plane.Origin, true);
             gx.Get();
             if (gx.CommandResult() != Rhino.Commands.Result.Success) return reset(gx.CommandResult());
-            plane = PlaneFromXZ(plane, gx.Point());
+            plane = PlaneOrientXAxis(plane, gx.Point());
 
 
             Rhino.RhinoDoc.ActiveDoc.Views.ActiveView.ActiveViewport.SetConstructionPlane(new Plane(plane.Origin, plane.YAxis, plane.ZAxis));
@@ -119,11 +119,10 @@ namespace Axis.Params
             gy.DrawLineFromPoint(plane.Origin, true);
             gy.Get();
             if (gy.CommandResult() != Rhino.Commands.Result.Success) return reset(gy.CommandResult());
-            plane = PlanexRotation(plane, gy.Point()) ;
+            plane = PlaneXAxisRotation(plane, gy.Point()) ;
 
             return reset(Rhino.Commands.Result.Success);
         }
-
 
 
         class MoveCPlanePoint : Rhino.Input.Custom.GetPoint
@@ -150,11 +149,11 @@ namespace Axis.Params
                         break;
 
                     case State.PickX:
-                        cPlane.Plane = PlaneFromXZ(bPlane, e.Point);
+                        cPlane.Plane = PlaneOrientXAxis(bPlane, e.Point);
                         break;
 
                     case State.PickY:
-                        cPlane.Plane = PlanexRotation(bPlane, e.Point);
+                        cPlane.Plane = PlaneXAxisRotation(bPlane, e.Point);
                         break;
 
                 }
@@ -166,81 +165,32 @@ namespace Axis.Params
             }
         }
 
-        static Plane PlaneFromXZ(Plane plane, Point3d point)
+        static Plane PlaneOrientXAxis(Plane plane, Point3d point)
         {
             Plane rot1 = plane.Clone();
             var vec = new Vector3d(point - plane.Origin);
-            double x1; double y1;
-            double x2; double y2;
 
 
-            plane.ClosestParameter(point, out x1, out y1);
-            //var angle1 = signedVectorAngle(Vector3d.XAxis, new Vector3d(x1, y1, 0));
             var angle1 = Vector3d.VectorAngle(rot1.XAxis, vec, rot1);
-            var xform1 = Transform.Rotation(angle1, plane.ZAxis, plane.Origin);
-            rot1.Transform(xform1);
+            rot1.Rotate(angle1, rot1.ZAxis, rot1.Origin);
+
 
             Plane rot2 = rot1.Clone();
             if (point.Z != plane.OriginZ)
             {
-                var angle2 = Vector3d.VectorAngle(vec, rot2.XAxis, rot2.YAxis);
-                var xform2 = Transform.Rotation(angle2, rot2.YAxis, rot2.Origin);
-                rot2.Transform(xform2);
+                var angle2 = Vector3d.VectorAngle(rot2.XAxis, vec);
+                rot2.Rotate(angle2, rot2.YAxis, rot2.Origin);
             }
             return rot2;
         }
-        static Plane PlanexRotation(Plane plane, Point3d point)
+        static Plane PlaneXAxisRotation(Plane plane, Point3d point)
         {
-            var yV = new Vector3d(plane.YAxis); yV.Unitize();
-            var zV = new Vector3d(plane.ZAxis); zV.Unitize();
-
-
-            var planeYZ = new Plane(plane.Origin, yV, zV);
-
-            double x1; double y1;
-            planeYZ.ClosestParameter(point, out x1, out y1);
-
-            var p1 = new Point3d(point);
-            var xChangeBase = Transform.ChangeBasis(Plane.WorldXY, planeYZ);
-            p1.Transform(xChangeBase);
-
-            var angle1 = signedVectorAngle(Vector3d.XAxis, new Vector3d(p1.X, p1.Y, p1.Z));
-
+            var vec = new Vector3d(point - plane.Origin);
+            var angle1 = Vector3d.VectorAngle(plane.YAxis, vec, new Plane(plane.Origin, plane.YAxis, plane.ZAxis));
             plane.Rotate(angle1, plane.XAxis, plane.Origin);
             return plane;
         }
 
-
-        /// <summary>
-        /// Calculates the signed vector angle between two
-        /// vectors v1 and v2.
-        /// </summary>
-        /// <param name="v1"></param>
-        /// <param name="v2"></param>
-        /// <returns></returns>
-        static double signedVectorAngle(Vector3d v1, Vector3d v2) 
-        {
-            v1 = new Vector3d(v1);
-            v2 = new Vector3d(v2);
-
-
-            //unitize both input vectors
-            v1.Unitize();
-            v2.Unitize();
-
-            //create reference plane
-            var vXAxis = Vector3d.CrossProduct(v1, v2);
-            var plane = new Plane(Point3d.Origin, v1, v2);
-
-            //change base of vectors to reference plane
-            var xChangeBase = Transform.ChangeBasis(Plane.WorldXY, plane);
-            v1.Transform(xChangeBase);
-            v2.Transform(xChangeBase);
-
-            //signed angle calculation, see:
-            //https://stackoverflow.com/a/33920320
-            return Rhino.RhinoMath.ToDegrees(Math.Atan2(Vector3d.CrossProduct(v1, v2) * plane.ZAxis, v1 * v2)).ToRadians();
-        }
 
         enum State
         {
