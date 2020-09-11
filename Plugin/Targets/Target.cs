@@ -558,7 +558,26 @@ namespace Axis.Targets
         public  string TypeName => "Speed";
         public  string TypeDescription => "Movement speed in mm/s";
 
-        public bool CastFrom(object source) => throw new NotImplementedException();
+        public bool CastFrom(object source) 
+        {
+            if (source.GetType().IsAssignableFrom(typeof(GH_Number))) 
+            {
+                this.Name = $"v{((GH_Number)source).ToString()}";
+                this.TranslationSpeed = (double)(((GH_Number)source).Value);
+                this.RotationSpeed = 30;
+                this.Time = 0;
+                return true;
+            }
+            if (source.GetType().IsAssignableFrom(typeof(GH_Integer)))
+            {
+                this.Name = $"v{((GH_Integer)source).ToString()}";
+                this.TranslationSpeed = (double)(((GH_Integer)source).Value);
+                this.RotationSpeed = 30;
+                this.Time = 0;
+                return true;
+            }
+            return false;
+        }
         public bool CastTo<Q>(out Q target)
         {
             if (typeof(Q).IsAssignableFrom(typeof(GH_ObjectWrapper)))
@@ -664,7 +683,34 @@ namespace Axis.Targets
         public string TypeName => "Zone";
         public string TypeDescription => "Precision zone in mm";
 
-        public bool CastFrom(object source) => throw new NotImplementedException();
+        public bool CastFrom(object source)
+        {
+            if (source.GetType().IsAssignableFrom(typeof(GH_Number)))
+            {
+                this.Name = $"z{((double)((GH_Number)source).Value).ToString("0.00")}";
+                this.PathRadius = (double)((GH_Number)source).Value;
+                this.PathOrient = 25;
+                this.PathExternal = 25;
+                this.Orientation = 15;
+                this.LinearExternal = 35;
+                this.RotaryExternal = 5;
+                this.StopPoint = false;
+                return true;
+            }
+            if (source.GetType().IsAssignableFrom(typeof(GH_Integer)))
+            {
+                this.Name = $"z{((double)((GH_Integer)source).Value).ToString("0.00")}";
+                this.PathRadius = (double)((GH_Integer)source).Value;
+                this.PathOrient = 25;
+                this.PathExternal = 25;
+                this.Orientation = 15;
+                this.LinearExternal = 35;
+                this.RotaryExternal = 5;
+                this.StopPoint = false;
+                return true;
+            }
+            return false;
+        }
         public bool CastTo<Q>(out Q target)
         {
             if (typeof(Q).IsAssignableFrom(typeof(GH_ObjectWrapper)))
