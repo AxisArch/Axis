@@ -1496,19 +1496,29 @@ namespace Axis.Core
                     var plane = new Plane();
                     data.Read(chunk1);
                     GH_Convert.ToPlane(data, ref plane, GH_Conversion.Both);
-                    this.TCP = this.TCP;
+                    this.TCP = plane;
                 }
             }
-            if (reader.ChunkExists("Geometry")) 
-            {
-               var chunk2 = reader.FindChunk("Geometry");
-               if (chunk2 != null) 
+
+            List<Mesh> meshes = new List<Mesh>();
+            if (reader.ItemExists("GeometryCout")) 
+            { 
+                int geometriesCount = reader.GetInt32("GeometryCout");
+                for (int i = 0; i < geometriesCount; ++i)
                 {
-                    var data = new GH_Structure<GH_Mesh>();
-                    data.Read(chunk2);
-                    this.Geometries = data.ToList<Mesh, GH_Mesh>().ToArray();
+                    if (reader.ChunkExists("Geometry", i))
+                    {
+                        Mesh mesh = new Mesh();
+                        GH_Mesh gh_mesh = new GH_Mesh();
+                        var cunckMesh = reader.FindChunk("Geometry", i);
+                        gh_mesh.Read(cunckMesh);
+                        bool sucsess = GH_Convert.ToMesh(gh_mesh, ref mesh, GH_Conversion.Both);
+                        meshes.Add(mesh);
+                    }
                 }
             }
+            this.Geometries = meshes.ToArray();
+
             if (reader.ChunkExists("FlangeOffset")) 
             {
                 var chunk3 = reader.FindChunk("FlangeOffset");
@@ -1517,7 +1527,7 @@ namespace Axis.Core
                     var data = new GH_Vector();
                     var vec = new Vector3d();
                     data.Read(chunk3);
-                    GH_Convert.ToVector3d(chunk3, ref vec, GH_Conversion.Both);
+                    GH_Convert.ToVector3d(data, ref vec, GH_Conversion.Both);
                     this.RelTool = vec;
                 }
             }
@@ -1533,10 +1543,19 @@ namespace Axis.Core
 
             GH_Plane gH_TCP = new GH_Plane(this.TCP);
             gH_TCP.Write(writer.CreateChunk("TCP"));
-            
-            GH_Structure<GH_Mesh> gh_Meshes = this.Geometries.ToList().ToGHStructure<GH_Mesh, Mesh>();
-            gh_Meshes.Write(writer.CreateChunk("Geometry"));
-            
+
+            if (this.Geometries.Length != 0) 
+            {
+                writer.SetInt32("GeometryCout", this.Geometries.Length);
+                for (int i = 0; i < this.Geometries.Length; ++i)
+                {
+                    byte[] meshes;
+                    GH_Mesh mesh = new GH_Mesh(this.Geometries[i]);
+                    mesh.Write(writer.CreateChunk("Geometry", i));
+                } 
+            }
+
+
             GH_Vector gH_relTool = new GH_Vector(this.RelTool);
             gH_relTool.Write(writer.CreateChunk("RelTool"));
 
