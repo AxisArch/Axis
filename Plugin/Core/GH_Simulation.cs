@@ -13,7 +13,9 @@ using Rhino.DocObjects.Custom;
 using Rhino.Geometry;
 using Rhino.Display;
 
+using Axis;
 using Axis.Targets;
+using Canvas;
 
 namespace Axis.Core
 {
@@ -290,7 +292,7 @@ namespace Axis.Core
             RecordUndoEvent("TimelineClick");
             timeline = !timeline;
 
-            if (timeline) { AddInput(0); }
+            if (timeline) { this.AddInput(0, inputParams); }
             else
             {
                 Params.UnregisterInputParameter(Params.Input.FirstOrDefault(x => x.Name == "Timeline"), true);
@@ -303,7 +305,7 @@ namespace Axis.Core
             RecordUndoEvent("SpeedClick");
             showSpeed = !showSpeed;
 
-            if (showSpeed) { AddOutput(0); }
+            if (showSpeed) { this.AddOutput(0, outputParams); }
             else
             {
                 Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Speed"), true);
@@ -316,7 +318,7 @@ namespace Axis.Core
             RecordUndoEvent("AnglesClick");
             showAngles = !showAngles;
 
-            if (showAngles) { AddOutput(1); }
+            if (showAngles) { this.AddOutput(1, outputParams); }
             else
             {
                 Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Angles"), true);
@@ -329,7 +331,7 @@ namespace Axis.Core
             RecordUndoEvent("MotionClick");
             showMotion = !showMotion;
 
-            if (showMotion) { AddOutput(2); }
+            if (showMotion) { this.AddOutput(2, outputParams); }
             else
             {
                 Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Motion"), true);
@@ -342,7 +344,7 @@ namespace Axis.Core
             RecordUndoEvent("ExternalClick");
             showExternal = !showExternal;
 
-            if (showExternal) { AddOutput(3); }
+            if (showExternal) { this.AddOutput(3, outputParams); }
             else
             {
                 Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "External"), true);
@@ -355,66 +357,13 @@ namespace Axis.Core
             RecordUndoEvent("FullCheckClick");
             m_FullErrorLog = !m_FullErrorLog;
 
-            if (m_FullErrorLog) { AddOutput(4); AddOutput(5); }
+            if (m_FullErrorLog) { this.AddOutputs(new[] { 4, 5 }, outputParams);}
             else
             {
                 Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Full Error Log"), true);
                 Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Error Positions"), true);
 
             }
-            ExpireSolution(true);
-        }
-
-
-        // Register the new input parameters to our component.
-        private void AddInput(int index)
-        {
-            IGH_Param parameter = inputParams[index];
-
-            if (Params.Input.Any(x => x.Name == parameter.Name))
-                Params.UnregisterInputParameter(Params.Input.First(x => x.Name == parameter.Name), true);
-            else
-            {
-                int insertIndex = Params.Input.Count;
-                for (int i = 0; i < Params.Input.Count; i++)
-                {
-                    int otherIndex = Array.FindIndex(inputParams, x => x.Name == Params.Input[i].Name);
-                    if (otherIndex > index)
-                    {
-                        insertIndex = i;
-                        break;
-                    }
-                }
-
-                Params.RegisterInputParam(parameter, insertIndex);
-            }
-            Params.OnParametersChanged();
-            ExpireSolution(true);
-        }
-
-        // Register the new output parameters to our component.
-        private void AddOutput(int index)
-        {
-            IGH_Param parameter = outputParams[index];
-
-            if (Params.Output.Any(x => x.Name == parameter.Name))
-                Params.UnregisterOutputParameter(Params.Output.First(x => x.Name == parameter.Name), true);
-            else
-            {
-                int insertIndex = Params.Output.Count;
-                for (int i = 0; i < Params.Output.Count; i++)
-                {
-                    int otherIndex = Array.FindIndex(outputParams, x => x.Name == Params.Output[i].Name);
-                    if (otherIndex > index)
-                    {
-                        insertIndex = i;
-                        break;
-                    }
-                }
-
-                Params.RegisterOutputParam(parameter, insertIndex);
-            }
-            Params.OnParametersChanged();
             ExpireSolution(true);
         }
         #endregion

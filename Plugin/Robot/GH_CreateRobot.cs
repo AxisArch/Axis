@@ -10,6 +10,7 @@ using Grasshopper;
 using Rhino.Geometry;
 using Axis.Targets;
 using Axis.Core;
+using Canvas;
 using Grasshopper.Kernel.Parameters;
 using System.Windows.Forms;
 using System.Linq;
@@ -124,41 +125,12 @@ namespace Axis.Core
 
             if (m_Pose)
             {
-                AddOutput(0);
+                this.AddOutput(0, outputParams);
             }
             else
             {
                 Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Pose"), true);
             }
-            ExpireSolution(true);
-        }
-
-        /// <summary>
-        /// Register the new output parameters to our component.
-        /// </summary>
-        /// <param name="index"></param>
-        private void AddOutput(int index)
-        {
-            IGH_Param parameter = outputParams[index];
-
-            if (Params.Output.Any(x => x.Name == parameter.Name))
-                Params.UnregisterOutputParameter(Params.Output.First(x => x.Name == parameter.Name), true);
-            else
-            {
-                int insertIndex = Params.Output.Count;
-                for (int i = 0; i < Params.Output.Count; i++)
-                {
-                    int otherIndex = Array.FindIndex(outputParams, x => x.Name == Params.Output[i].Name);
-                    if (otherIndex > index)
-                    {
-                        insertIndex = i;
-                        break;
-                    }
-                }
-
-                Params.RegisterOutputParam(parameter, insertIndex);
-            }
-            Params.OnParametersChanged();
             ExpireSolution(true);
         }
         #endregion

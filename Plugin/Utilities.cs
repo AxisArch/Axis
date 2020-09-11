@@ -1150,7 +1150,7 @@ namespace Canvas
         }
 
         // Register the new input parameters to a component.
-        public static void AddInput(this GH_Component gH_Component, int index, IGH_Param[] inputParams)
+        public static void AddInput(this IGH_Component gH_Component, int index, IGH_Param[] inputParams)
         {
             IGH_Param parameter = inputParams[index];
 
@@ -1175,7 +1175,7 @@ namespace Canvas
             gH_Component.ExpireSolution(true);
 
         }
-        public static void AddInputs(this GH_Component gH_Component, int[] indexes, IGH_Param[] inputParams)
+        public static void AddInputs(this IGH_Component gH_Component, int[] indexes, IGH_Param[] inputParams)
         {
             foreach (int index in indexes)
             {
@@ -1206,7 +1206,7 @@ namespace Canvas
 
 
         // Register the new output parameters to a component.
-        public static void AddOutput(this GH_Component gH_Component, int index, IGH_Param[] outputParams)
+        public static void AddOutput(this IGH_Component gH_Component, int index, IGH_Param[] outputParams)
         {
             IGH_Param parameter = outputParams[index];
 
@@ -1230,7 +1230,7 @@ namespace Canvas
             gH_Component.Params.OnParametersChanged();
             gH_Component.ExpireSolution(true);
         }
-        public static void AddOutputs(this GH_Component gH_Component, int[] indexes, IGH_Param[] outputParams)
+        public static void AddOutputs(this IGH_Component gH_Component, int[] indexes, IGH_Param[] outputParams)
         {
             foreach (int index in indexes)
             {

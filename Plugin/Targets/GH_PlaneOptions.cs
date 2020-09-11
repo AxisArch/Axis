@@ -10,7 +10,7 @@ using Rhino.Geometry;
 
 namespace Axis.Geometry
 {
-    public class GH_PlaneOptions : GH_Component
+    public class GH_PlaneOptions : GH_Component, IGH_VariableParameterComponent
     {
         Opperation currentState = Opperation.FlipPlane;
         Opperation previouseState = Opperation.PlaneToQuatertion; // Should not be the same as currentState
@@ -232,6 +232,16 @@ namespace Axis.Geometry
 
         #region Component Settings
         public override GH_Exposure Exposure => GH_Exposure.tertiary;
+
+        /// <summary>
+        /// Implement this interface in your component if you want to enable variable parameter UI.
+        /// </summary>
+        bool IGH_VariableParameterComponent.CanInsertParameter(GH_ParameterSide side, int index) => false;
+        bool IGH_VariableParameterComponent.CanRemoveParameter(GH_ParameterSide side, int index) => false;
+        IGH_Param IGH_VariableParameterComponent.CreateParameter(GH_ParameterSide side, int index) => null;
+        bool IGH_VariableParameterComponent.DestroyParameter(GH_ParameterSide side, int index) => false;
+        void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
+
 
         /// <summary>
         /// Provides an Icon for the component.

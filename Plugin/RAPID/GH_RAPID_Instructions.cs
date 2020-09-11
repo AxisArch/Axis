@@ -10,7 +10,7 @@ using Rhino.Geometry;
 
 namespace Axis.RAPID
 {
-    public class GH_RAPID_Instructions : GH_Component
+    public class GH_RAPID_Instructions : GH_Component, IGH_VariableParameterComponent
     {
         Opperation currentState = Opperation.Comment;
         Opperation previouseState = Opperation.Acceleration;
@@ -257,6 +257,15 @@ namespace Axis.RAPID
 
         #region Component Settings
         public override GH_Exposure Exposure => GH_Exposure.secondary;
+
+        /// <summary>
+        /// Implement this interface in your component if you want to enable variable parameter UI.
+        /// </summary>
+        bool IGH_VariableParameterComponent.CanInsertParameter(GH_ParameterSide side, int index) => false;
+        bool IGH_VariableParameterComponent.CanRemoveParameter(GH_ParameterSide side, int index) => false;
+        IGH_Param IGH_VariableParameterComponent.CreateParameter(GH_ParameterSide side, int index) => null;
+        bool IGH_VariableParameterComponent.DestroyParameter(GH_ParameterSide side, int index) => false;
+        void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
 
         /// <summary>
         /// Provides an Icon for the component.

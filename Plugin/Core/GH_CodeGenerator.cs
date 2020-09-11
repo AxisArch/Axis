@@ -14,6 +14,9 @@ using Rhino.Geometry;
 using Axis.Targets;
 using static Axis.Properties.Settings;
 using RAPID;
+using Canvas;
+
+using Axis;
 
 namespace Axis.Core
 {
@@ -426,7 +429,7 @@ namespace Axis.Core
             // If the option to define the weight of the tool is enabled, add the input.
             if (modName)
             {
-                AddInput(0);
+                this.AddInput(0, inputParams);
             }
             else
             {
@@ -443,7 +446,7 @@ namespace Axis.Core
             // If the option to define the weight of the tool is enabled, add the input.
             if (declarations)
             {
-                AddInput(2);
+                this.AddInput(2, inputParams);
             }
             else
             {
@@ -460,7 +463,7 @@ namespace Axis.Core
             // If the option to define the weight of the tool is enabled, add the input.
             if (overrides)
             {
-                AddInput(1);
+                this.AddInput(1, inputParams);
             }
             else
             {
@@ -482,35 +485,6 @@ namespace Axis.Core
         {
             RecordUndoEvent("Ignore Program Length");
             ignoreLen = !ignoreLen;
-        }
-
-        /// <summary>
-        /// Register the new output parameters to our component.
-        /// </summary>
-        /// <param name="index"></param>
-        private void AddInput(int index)
-        {
-            IGH_Param parameter = inputParams[index];
-
-            if (Params.Input.Any(x => x.Name == parameter.Name))
-                Params.UnregisterInputParameter(Params.Input.First(x => x.Name == parameter.Name), true);
-            else
-            {
-                int insertIndex = Params.Input.Count;
-                for (int i = 0; i < Params.Input.Count; i++)
-                {
-                    int otherIndex = Array.FindIndex(inputParams, x => x.Name == Params.Input[i].Name);
-                    if (otherIndex > index)
-                    {
-                        insertIndex = i;
-                        break;
-                    }
-                }
-
-                Params.RegisterInputParam(parameter, insertIndex);
-            }
-            Params.OnParametersChanged();
-            ExpireSolution(true);
         }
         #endregion
 

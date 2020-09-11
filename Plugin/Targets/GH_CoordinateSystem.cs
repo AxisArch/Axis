@@ -8,6 +8,9 @@ using Grasshopper.Kernel.Parameters;
 using System.Windows.Forms;
 using System.Linq;
 
+using Axis;
+using Canvas;
+
 namespace Axis.Targets
 {
     /// <summary>
@@ -150,7 +153,7 @@ namespace Axis.Targets
 
             if (m_dynamicCS)
             {
-                AddInput(0);
+                this.AddInput(0, inputParams);
             }
             else
             {
@@ -166,64 +169,12 @@ namespace Axis.Targets
 
             if (m_outputDeclarations)
             {
-                AddOutput(0);
+                this.AddOutput(0, outputParams);
             }
             else
             {
                 Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Declarations"), true);
             }
-            ExpireSolution(true);
-        }
-
-        // Register the new input parameters to our component.
-        private void AddInput(int index)
-        {
-            IGH_Param parameter = inputParams[index];
-
-            if (Params.Input.Any(x => x.Name == parameter.Name))
-                Params.UnregisterInputParameter(Params.Input.First(x => x.Name == parameter.Name), true);
-            else
-            {
-                int insertIndex = Params.Input.Count;
-                for (int i = 0; i < Params.Input.Count; i++)
-                {
-                    int otherIndex = Array.FindIndex(inputParams, x => x.Name == Params.Input[i].Name);
-                    if (otherIndex > index)
-                    {
-                        insertIndex = i;
-                        break;
-                    }
-                }
-
-                Params.RegisterInputParam(parameter, insertIndex);
-            }
-            Params.OnParametersChanged();
-            ExpireSolution(true);
-        }
-
-        // Register the new output parameters to our component.
-        private void AddOutput(int index)
-        {
-            IGH_Param parameter = outputParams[index];
-
-            if (Params.Output.Any(x => x.Name == parameter.Name))
-                Params.UnregisterOutputParameter(Params.Output.First(x => x.Name == parameter.Name), true);
-            else
-            {
-                int insertIndex = Params.Output.Count;
-                for (int i = 0; i < Params.Output.Count; i++)
-                {
-                    int otherIndex = Array.FindIndex(outputParams, x => x.Name == Params.Output[i].Name);
-                    if (otherIndex > index)
-                    {
-                        insertIndex = i;
-                        break;
-                    }
-                }
-
-                Params.RegisterOutputParam(parameter, insertIndex);
-            }
-            Params.OnParametersChanged();
             ExpireSolution(true);
         }
         #endregion
