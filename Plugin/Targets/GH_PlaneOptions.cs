@@ -221,11 +221,13 @@ namespace Axis.Geometry
         public override bool Write(GH_IWriter writer)
         {
             writer.SetInt32("ComponentState", (int)this.currentState);
+            writer.SetInt32("PreviouseComponentState", (int)this.previouseState);
             return base.Write(writer);
         }
         public override bool Read(GH_IReader reader)
         {
             this.currentState = (Opperation)reader.GetInt32("ComponentState");
+            this.previouseState = (Opperation)reader.GetInt32("PreviouseComponentState");
             return base.Read(reader);
         }
         #endregion
