@@ -672,13 +672,14 @@ namespace Axis.Core
                             case Targets.MotionType.Linear:
                             case Targets.MotionType.Joint:
 
-                                ////Bring Target to Robot refference
-                                //Rhino.Geometry.Transform reverse = Rhino.Geometry.Transform.PlaneToPlane(this.Robot.AxisPlanes[0], Plane.WorldXY);
-                                //Plane ikPlane = target.Plane.Clone();
-                                //ikPlane.Transform(reverse);
+                                // Compute the flane position by moving the TCP to the base of the tool
+                                Plane flange = target.Plane.Clone();
+                                Rhino.Geometry.Transform t1 = Rhino.Geometry.Transform.PlaneToPlane(flange, Plane.WorldXY);
+                                Rhino.Geometry.Transform t2; t1.TryGetInverse(out t2);
+                                flange.Transform(t2 * target.Tool.FlangeOffset * t1);
 
                                 //double[,] anglesSet = newTargetInverseKinematics(target, out overHeadSig, out outOfReach);
-                                List<List<double>> anglesSet = TargetInverseKinematics(target.Plane, out overHeadSig, out outOfReach);
+                                List<List<double>> anglesSet = TargetInverseKinematics(flange, out overHeadSig, out outOfReach);
 
                                 // Select Solution based on Indecies
                                 //for (int i = 0; i < anglesSet.Length / anglesSet.GetLength(1); ++i) degAngles[i] = anglesSet[i, this.Robot.Indices[i]];
@@ -1364,12 +1365,12 @@ namespace Axis.Core
         }
         public Transform ResetTransform { get; set; } = Rhino.Geometry.Transform.Identity;
 
-        //public Transform FlangeOffset { 
-        //    get 
-        //    {
-        //        return Rhino.Geometry.Transform.PlaneToPlane(TCP, Plane.WorldXY);
-        //    }  
-        //}
+        public Transform FlangeOffset { 
+            get 
+            {
+                return Rhino.Geometry.Transform.PlaneToPlane(TCP, Plane.WorldXY);
+            }  
+        }
         #endregion
 
         #region Constructors
@@ -1475,7 +1476,7 @@ namespace Axis.Core
             return new Tool(this.Name, this.TCP, this.Weight, this.Geometries.Select(m => (Mesh)m.Duplicate()).ToList(), this.Manufacturer, this.RelTool);
         }
         public IGH_GooProxy EmitProxy() => null;
-        public object ScriptVariable() => null;
+        public object ScriptVariable() => this;
         public override string ToString() => $"Tool: {this.Name}";
 
         //GH_ISerializable
