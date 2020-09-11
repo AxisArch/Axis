@@ -470,6 +470,7 @@ namespace Axis
             return inclusiveMinimum;
         }
 
+
         /// <summary>
         /// Convert List to GH_Structure - Extention method
         /// </summary>
@@ -511,7 +512,7 @@ namespace Axis
         /// <typeparam name="Q"></typeparam>
         /// <param name="gh_struct"></param>
         /// <returns></returns>
-        public static T[] ToList<T, Q>(this Grasshopper.Kernel.Data.GH_Structure<Q> gh_struct )  where T : Rhino.Runtime.CommonObject where Q : IGH_Goo
+        public static List<T> ToList<T, Q>(this Grasshopper.Kernel.Data.GH_Structure<Q> gh_struct )  where T : Rhino.Runtime.CommonObject where Q : IGH_Goo
         {
             if (gh_struct == null) return null;
             var list = new List<T>();
@@ -520,21 +521,12 @@ namespace Axis
                 for(int j = 0; j< gh_struct[i].Count; ++j) 
                 {
                     var data = gh_struct[i][j];
-                    //if (data == typeof(T))
-                    //{
-                        var temp = data as T;
-                        list.Add(temp);
-                    //}
-                    //else if () { }
-
-                    //var data = GH_Convert.ByteArrayToCommonObject<T>(byteArray as byte[]);
-                    //list.Add((T)gh_struct[i][j]);
+                        list.Add(data as T);
                 }
-;
-            }
-            return list.ToArray();
-        }
         
+            }
+            return list;
+        } //<--- This is buggy
     }
 
     /// <summary>
