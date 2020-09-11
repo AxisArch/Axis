@@ -960,10 +960,15 @@ namespace Axis.Targets
         {
             get
             {
-                bool valid = false;
+                bool valid = true;
+
+                // Check if all poses are valid
                 foreach (Manipulator.ManipulatorPose p in poses) { valid = valid & p.IsValid; }
-                if (this.totalSec != null) return true;
-                else return false;
+
+                //Make sure all poses are not in place
+                if (this.totalSec == null) valid = false;
+
+                return valid;
             }
         }
         public string IsValidWhyNot => throw new NotImplementedException();
