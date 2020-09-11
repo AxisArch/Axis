@@ -106,7 +106,7 @@ namespace Axis.Core
             else if (timeline && !run) 
             {
                 double tValue = 0;
-                if (!DA.GetData("Timeline", ref tValue)) return;
+                if (!DA.GetData("*Timeline", ref tValue)) return;
                 c_Pose = toolpath.GetPose(tValue);
             }
             else c_Pose = toolpath.StartPose; // DA.SetData("Target", targets[0]);
@@ -238,7 +238,7 @@ namespace Axis.Core
             IGH_Param param = e.Parameter;
 
             //Only add value list to the first input
-            if (param.Name !=  "Timeline") return;
+            if (param.Name !=  "*Timeline") return;
 
             //Only change value lists
             var extractedItems = param.Sources.Where(p => p.Name == "Number Slider");
@@ -253,7 +253,7 @@ namespace Axis.Core
         // Build a list of optional input parameters
         IGH_Param[] inputParams = new IGH_Param[1]
         {
-        new Param_Number() { Name = "Timeline", NickName = "Timeline", Description = "A timeline slider describing the position in the robot program to simulate. (0 = Beginning, 1 = End)" },
+        new Param_Number() { Name = "*Timeline", NickName = "*Timeline", Description = "A timeline slider describing the position in the robot program to simulate. (0 = Beginning, 1 = End)" },
         };
 
         // Build a list of optional output parameters
@@ -295,7 +295,7 @@ namespace Axis.Core
             if (timeline) { this.AddInput(0, inputParams); }
             else
             {
-                Params.UnregisterInputParameter(Params.Input.FirstOrDefault(x => x.Name == "Timeline"), true);
+                Params.UnregisterInputParameter(Params.Input.FirstOrDefault(x => x.Name == "*Timeline"), true);
             }
             ExpireSolution(true);
         }
