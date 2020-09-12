@@ -161,6 +161,11 @@
     <Compile Include="Deprecated\200907_CheckProgram.cs" />
     <Compile Include="Deprecated\200827_AuthTest.cs" />
     <Compile Include="Deprecated\200827_GetLicenseInformation.cs" />
+    <Compile Include="Online\RAPID-Modules.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>RAPID-Modules.resx</DependentUpon>
+    </Compile>
     <Compile Include="Targets\GH_PlaneOptions.cs" />
     <Compile Include="Online\AxisController.cs" />
     <Compile Include="Online\GH_Connect.cs" />
@@ -189,7 +194,6 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Icons.resx</DependentUpon>
     </Compile>
-    <Content Include="Online\moduleFile.mod" />
     <Content Include="Robot\RobotBinaries\ExampleCode for generating binary.txt" />
     <Compile Include="Robot\RobotSystems.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -237,6 +241,11 @@
     <None Include="Robot\RobotBinaries\IRB6620mesh.bin" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Online\RAPID-Modules.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>RAPID-Modules.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Icons.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Icons.Designer.cs</LastGenOutput>

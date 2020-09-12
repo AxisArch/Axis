@@ -128,6 +128,25 @@ namespace Axis.Online
             // Exit if we don't have a valid login token.
             if (!validToken) { return; }
 
+            //Output module file to prime controller for straming
+            if (modOption)
+            {
+                List<string> ModFile = new List<string>();
+
+                string test = Folders.AppDataFolder;
+
+                // Use file from resource
+                using (TextReader reader = new StreamReader(new System.IO.MemoryStream(Online.RAPID_Modules.moduleFile)))
+                {
+                    string line;
+                    while ((line = reader.ReadLine()) != null)
+                    {
+                        ModFile.Add(line);
+                    }
+                }
+                DA.SetDataList("Steaming Module", ModFile);
+            }
+
             // Current robot positions and rotations
             double cRobX = 0; double cRobY = 0; double cRobZ = 0;
             double cRobQ1 = 0; double cRobQ2 = 0; double cRobQ3 = 0; double cRobQ4 = 0;
@@ -274,6 +293,17 @@ namespace Axis.Online
                 List<string> ModFile = new List<string>();
 
                 string test = Folders.AppDataFolder;
+
+                // Use resource
+                List<string> modfile;
+                System.Runtime.Serialization.Formatters.Binary.BinaryFormatter deserializer = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
+
+                using (System.IO.MemoryStream ms = new System.IO.MemoryStream(Online.RAPID_Modules.moduleFile))
+                {
+                    System.Runtime.Serialization.IFormatter br = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
+                    modfile = (List<string>)br.Deserialize(ms);
+                }
+
                 using (TextReader reader = File.OpenText(Folders.AppDataFolder + @"Libraries\Axis\Online\moduleFile.mod"))
                 {
                     string line;
