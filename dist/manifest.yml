@@ -1,7 +1,8 @@
 ---
-name: <name>
-version: <version>
+name: axis-robot
+version: 0.0.1-beta
 authors:
-- <author>
-description: <description>
-url: <url>
+- Ryan Hughes
+- Povl Filip Sonne-Frederiksen
+description: A plugin for intuitive robot control
+url: https://github.com/AxisArch/Axis/
