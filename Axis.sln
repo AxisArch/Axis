@@ -20,6 +20,9 @@ Global
 		UnitTest|Any CPU = UnitTest|Any CPU
 		UnitTest|x64 = UnitTest|x64
 		UnitTest|x86 = UnitTest|x86
+		Yak|Any CPU = Yak|Any CPU
+		Yak|x64 = Yak|x64
+		Yak|x86 = Yak|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{64497AB0-4C22-4403-807A-A5A2AA8E0616}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -39,6 +42,12 @@ Global
 		{64497AB0-4C22-4403-807A-A5A2AA8E0616}.UnitTest|x64.ActiveCfg = UnitTest|x64
 		{64497AB0-4C22-4403-807A-A5A2AA8E0616}.UnitTest|x64.Build.0 = UnitTest|x64
 		{64497AB0-4C22-4403-807A-A5A2AA8E0616}.UnitTest|x86.ActiveCfg = UnitTest|x86
+		{64497AB0-4C22-4403-807A-A5A2AA8E0616}.Yak|Any CPU.ActiveCfg = Yak|Any CPU
+		{64497AB0-4C22-4403-807A-A5A2AA8E0616}.Yak|Any CPU.Build.0 = Yak|Any CPU
+		{64497AB0-4C22-4403-807A-A5A2AA8E0616}.Yak|x64.ActiveCfg = Yak|x64
+		{64497AB0-4C22-4403-807A-A5A2AA8E0616}.Yak|x64.Build.0 = Yak|x64
+		{64497AB0-4C22-4403-807A-A5A2AA8E0616}.Yak|x86.ActiveCfg = Yak|x86
+		{64497AB0-4C22-4403-807A-A5A2AA8E0616}.Yak|x86.Build.0 = Yak|x86
 		{E032560D-E5AD-4F82-809D-FF1549C8191D}.Debug|Any CPU.ActiveCfg = Debug|x86
 		{E032560D-E5AD-4F82-809D-FF1549C8191D}.Debug|x64.ActiveCfg = Debug|x86
 		{E032560D-E5AD-4F82-809D-FF1549C8191D}.Debug|x86.ActiveCfg = Debug|x86
@@ -50,7 +59,12 @@ Global
 		{E032560D-E5AD-4F82-809D-FF1549C8191D}.UnitTest|Any CPU.ActiveCfg = Release|x86
 		{E032560D-E5AD-4F82-809D-FF1549C8191D}.UnitTest|x64.ActiveCfg = Release|x86
 		{E032560D-E5AD-4F82-809D-FF1549C8191D}.UnitTest|x86.ActiveCfg = Release|x86
-		{4FAE9AA2-DA77-4524-AE9E-3F3815E4A7DB}.Debug|Any CPU.ActiveCfg = Release|x64
+		{E032560D-E5AD-4F82-809D-FF1549C8191D}.Yak|Any CPU.ActiveCfg = Debug|x64
+		{E032560D-E5AD-4F82-809D-FF1549C8191D}.Yak|x64.ActiveCfg = Debug|x64
+		{E032560D-E5AD-4F82-809D-FF1549C8191D}.Yak|x64.Build.0 = Debug|x64
+		{E032560D-E5AD-4F82-809D-FF1549C8191D}.Yak|x86.ActiveCfg = UnitTest|x86
+		{E032560D-E5AD-4F82-809D-FF1549C8191D}.Yak|x86.Build.0 = UnitTest|x86
+		{4FAE9AA2-DA77-4524-AE9E-3F3815E4A7DB}.Debug|Any CPU.ActiveCfg = Debug|x64
 		{4FAE9AA2-DA77-4524-AE9E-3F3815E4A7DB}.Debug|x64.ActiveCfg = Release|x64
 		{4FAE9AA2-DA77-4524-AE9E-3F3815E4A7DB}.Debug|x86.ActiveCfg = Release|x64
 		{4FAE9AA2-DA77-4524-AE9E-3F3815E4A7DB}.Release|Any CPU.ActiveCfg = Release|x64
@@ -61,6 +75,9 @@ Global
 		{4FAE9AA2-DA77-4524-AE9E-3F3815E4A7DB}.UnitTest|x64.ActiveCfg = Release|x64
 		{4FAE9AA2-DA77-4524-AE9E-3F3815E4A7DB}.UnitTest|x64.Build.0 = Release|x64
 		{4FAE9AA2-DA77-4524-AE9E-3F3815E4A7DB}.UnitTest|x86.ActiveCfg = Release|x64
+		{4FAE9AA2-DA77-4524-AE9E-3F3815E4A7DB}.Yak|Any CPU.ActiveCfg = Yak|x64
+		{4FAE9AA2-DA77-4524-AE9E-3F3815E4A7DB}.Yak|x64.ActiveCfg = Yak|x64
+		{4FAE9AA2-DA77-4524-AE9E-3F3815E4A7DB}.Yak|x86.ActiveCfg = Yak|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
