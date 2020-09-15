@@ -12,7 +12,7 @@ namespace Axis
         public override string Description => "A toolkit for industrial robot programming and simulation.";
         public override Guid Id => new Guid("011021d1-f033-4815-9ada-a12ad574343a");
 
-        public override string AuthorName => "Ryan Hughes \n Povl Filip Sonne-Frederiksen";
+        public override string AuthorName => "Ryan Hughes, Povl Filip Sonne-Frederiksen";
         public override string AuthorContact => "https://github.com/AxisArch/Axis/";
 
         public static string Plugin { get { return "Axis"; } }
