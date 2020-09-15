@@ -4,5 +4,7 @@ version: 0.0.1-beta
 authors:
 - Ryan Hughes
 - Povl Filip Sonne-Frederiksen
-description: A plugin for intuitive robot control
+description: A toolkit for industrial robot programming and simulation.
 url: https://github.com/AxisArch/Axis/
+secret:
+  id: 011021d1-f033-4815-9ada-a12ad574343a

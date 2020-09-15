@@ -156,11 +156,48 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'UnitTest|x86'">
     <OutputPath>bin\x86\UnitTest\</OutputPath>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Yak|AnyCPU'">
+    <OutputPath>..\dist\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Yak|x64'">
+    <OutputPath>bin\x64\Yak\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumrecommendededRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Yak|x86'">
+    <OutputPath>bin\x86\Yak\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumrecommendededRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
   <ItemGroup>
     <Compile Include="Core\Authentification.cs" />
     <Compile Include="Deprecated\200907_CheckProgram.cs" />
     <Compile Include="Deprecated\200827_AuthTest.cs" />
     <Compile Include="Deprecated\200827_GetLicenseInformation.cs" />
+    <Compile Include="Online\RAPID-Modules.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>RAPID-Modules.resx</DependentUpon>
+    </Compile>
     <Compile Include="Targets\GH_PlaneOptions.cs" />
     <Compile Include="Online\AxisController.cs" />
     <Compile Include="Online\GH_Connect.cs" />
@@ -189,7 +226,6 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Icons.resx</DependentUpon>
     </Compile>
-    <Content Include="Online\moduleFile.mod" />
     <Content Include="Robot\RobotBinaries\ExampleCode for generating binary.txt" />
     <Compile Include="Robot\RobotSystems.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -206,14 +242,14 @@
     <Compile Include="Robot\GH_CreateRobot.cs" />
     <Compile Include="Core\GH_CodeGenerator.cs" />
     <Compile Include="Styles.cs" />
-    <Compile Include="Targets\GH_CreateJointTarget.cs" />
+    <Compile Include="Deprecated\200915_GH_CreateJointTarget.cs" />
     <Compile Include="Properties\AxisInfo.cs" />
     <Compile Include="Targets\GH_CreateTarget_Multithreaded.cs" />
     <Compile Include="Deprecated\200909_GH_FlipPlane.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Targets\GH_CoordinateSystem.cs" />
     <Compile Include="Targets\GH_DefineSpeed.cs" />
-    <Compile Include="Targets\GH_CreateTarget.cs" />
+    <Compile Include="Deprecated\200915_GH_CreateTarget.cs" />
     <Compile Include="Robot\System.cs" />
     <Compile Include="Targets\GH_DefineZone.cs" />
     <Compile Include="Targets\Target.cs" />
@@ -237,6 +273,11 @@
     <None Include="Robot\RobotBinaries\IRB6620mesh.bin" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Online\RAPID-Modules.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>RAPID-Modules.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Icons.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Icons.Designer.cs</LastGenOutput>
@@ -421,7 +462,8 @@
   </Target>
   -->
   <PropertyGroup>
-    <PostBuildEvent>Copy "$(TargetPath)" "$(TargetDir)$(ProjectName).gha"</PostBuildEvent>
+    <PostBuildEvent>Copy "$(TargetPath)" "$(TargetDir)$(ProjectName).gha"
+Erase "$(TargetPath)"</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug32|AnyCPU' ">
     <StartArguments>
