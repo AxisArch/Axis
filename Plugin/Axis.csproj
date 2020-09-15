@@ -10,9 +10,7 @@
     <FallbackCulture>en-US</FallbackCulture>
   </PropertyGroup>
 
-  <!--
-  Platform build configurations
--->
+  <!-- Platform build configurations -->
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
     <OutputPath>bin\x86\Release\</OutputPath>
     <CodeAnalysisRuleSet>MinimumrecommendededRules.ruleset</CodeAnalysisRuleSet>
@@ -220,4 +218,5 @@
   		<ReferenceCopyLocalPaths Remove="@(ReferenceCopyLocalPaths)" Condition="'%(ReferenceCopyLocalPaths.NuGetPackageId)' == 'Grasshopper'" />
   	</ItemGroup>
   </Target>
+
 </Project>
