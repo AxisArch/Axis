@@ -16,8 +16,8 @@ jobs:
       with:
         dotnet-version: '3.1.x'
     - name: Install dependencies
-      run: dotnet restore .\Axis.sln
+      run: dotnet restore .\Axis.sln -v d
     - name: Build
-      run: dotnet build --configuration Yak --no-restore
+      run: dotnet build --configuration Yak --no-restore -v d
 #     - name: Test
 #      run: dotnet test --no-restore --verbosity normal
