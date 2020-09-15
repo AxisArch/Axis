@@ -245,3 +245,5 @@ ModelManifest.xml
 # Yak
 dist/
 dist/*
+!dist/manifest.yml
+!dist/misc/*
