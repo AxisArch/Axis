@@ -284,7 +284,7 @@ namespace Axis.Core
         {
             get
             {
-                return null;
+                return Properties.Icons.LogIn;
             }
         }
 

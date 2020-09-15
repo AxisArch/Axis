@@ -67,5 +67,7 @@ namespace Axis.Params
             PersistentData.Append(new GH_Integer((int)MotionType.Linear), new GH_Path(0));
             ExpireSolution(true);
         }
+        protected override System.Drawing.Bitmap Icon => Properties.Icons.MovmentParam;
+
     }
 }

@@ -254,10 +254,11 @@ namespace Axis.Geometry
             {
                 switch (currentState) 
                 {
-                    case Opperation.EulerToPlane: return null;
-                    case Opperation.PlaneToEuler: return null;
-                    case Opperation.PlaneToQuatertion: return null;
-                    case Opperation.QuaternionToPlane: return null;
+                    case Opperation.EulerToPlane:
+                    case Opperation.PlaneToEuler:
+                    case Opperation.PlaneToQuatertion:
+                    case Opperation.QuaternionToPlane:
+                        return Properties.Icons.Core;
                     case Opperation.SurfaceFrame: return Properties.Icons.SurfaceFrame;
                     case Opperation.FlipPlane: return Properties.Icons.Flip;
                     default: return null;

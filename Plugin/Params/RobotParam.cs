@@ -191,6 +191,7 @@ namespace Axis.Params
             return plane;
         }
 
+        protected override System.Drawing.Bitmap Icon => Properties.Icons.RobotParam;
 
         enum State
         {

@@ -226,6 +226,17 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Icons.resx</DependentUpon>
     </Compile>
+    <None Include="Resources\AxisDark.png" />
+    <None Include="Resources\AxisLight.png" />
+    <None Include="Resources\LogIn.png" />
+    <None Include="Resources\MovmentParam.png" />
+    <None Include="Resources\RobotParam.png" />
+    <None Include="Resources\SpeedParam.png" />
+    <None Include="Resources\TargetParam.png" />
+    <None Include="Resources\ToolParam.png" />
+    <None Include="Resources\ToolPathParam.png" />
+    <None Include="Resources\ZoneParam.png" />
+    <None Include="Resources\CSystemParam.png" />
     <Content Include="Robot\RobotBinaries\ExampleCode for generating binary.txt" />
     <Compile Include="Robot\RobotSystems.Designer.cs">
       <AutoGen>True</AutoGen>
