@@ -71,5 +71,7 @@ namespace Axis.Params
             PersistentData.Append(Speed.Default, new GH_Path(0));
             ExpireSolution(true);
         }
+        protected override System.Drawing.Bitmap Icon => Properties.Icons.SpeedParam;
+
     }
 }
