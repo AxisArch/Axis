@@ -17,13 +17,13 @@ namespace Axis.Targets
     /// <summary>
     /// Define robot end effector joint target positions.
     /// </summary>
-    public class GH_CreateJointTarget : GH_Component, IGH_VariableParameterComponent
+    public class GH_CreateJointTarget_Obsolete : GH_Component, IGH_VariableParameterComponent
     {
         bool manufacturer = false;
         bool useRotary = false;
         bool useLinear = false;
 
-        public GH_CreateJointTarget() : base("Joint Target", "Joint", "Compose an absolute joint target from a list of axis values.", AxisInfo.Plugin, AxisInfo.TabConfiguration)
+        public GH_CreateJointTarget_Obsolete() : base("Joint Target", "Joint", "Compose an absolute joint target from a list of axis values.", AxisInfo.Plugin, AxisInfo.TabConfiguration)
         {
         }
 
@@ -226,7 +226,8 @@ namespace Axis.Targets
         bool IGH_VariableParameterComponent.DestroyParameter(GH_ParameterSide side, int index) => false;
         void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
 
-        public override GH_Exposure Exposure => GH_Exposure.primary;
+        public override GH_Exposure Exposure => GH_Exposure.hidden;
+        public override bool Obsolete => true;
         protected override System.Drawing.Bitmap Icon
         {
             get
