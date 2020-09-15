@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.28803.202
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Axis", "Plugin\Axis.csproj", "{64497AB0-4C22-4403-807A-A5A2AA8E0616}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Axis", "Plugin\Axis.csproj", "{64497AB0-4C22-4403-807A-A5A2AA8E0616}"
 EndProject
 Project("{930C7802-8A8C-48F9-8165-68863BCCD9DD}") = "AxisInstaller", "Installer\AxisInstaller.wixproj", "{E032560D-E5AD-4F82-809D-FF1549C8191D}"
 EndProject
@@ -37,8 +37,8 @@ Global
 		{64497AB0-4C22-4403-807A-A5A2AA8E0616}.Release|x64.Build.0 = Release|x64
 		{64497AB0-4C22-4403-807A-A5A2AA8E0616}.Release|x86.ActiveCfg = Release|x86
 		{64497AB0-4C22-4403-807A-A5A2AA8E0616}.Release|x86.Build.0 = Release|x86
-		{64497AB0-4C22-4403-807A-A5A2AA8E0616}.UnitTest|Any CPU.ActiveCfg = UnitTest|x64
-		{64497AB0-4C22-4403-807A-A5A2AA8E0616}.UnitTest|Any CPU.Build.0 = UnitTest|x64
+		{64497AB0-4C22-4403-807A-A5A2AA8E0616}.UnitTest|Any CPU.ActiveCfg = Release|Any CPU
+		{64497AB0-4C22-4403-807A-A5A2AA8E0616}.UnitTest|Any CPU.Build.0 = Release|Any CPU
 		{64497AB0-4C22-4403-807A-A5A2AA8E0616}.UnitTest|x64.ActiveCfg = UnitTest|x64
 		{64497AB0-4C22-4403-807A-A5A2AA8E0616}.UnitTest|x64.Build.0 = UnitTest|x64
 		{64497AB0-4C22-4403-807A-A5A2AA8E0616}.UnitTest|x86.ActiveCfg = UnitTest|x86
