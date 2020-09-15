@@ -1,152 +1,61 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
   <PropertyGroup>
+    <TargetFramework>net471</TargetFramework>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug32</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>8.0.30703</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{64497AB0-4C22-4403-807A-A5A2AA8E0616}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Axis</RootNamespace>
-    <AssemblyName>Axis</AssemblyName>
-    <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
     <IsWebBootstrapper>false</IsWebBootstrapper>
-    <TargetFrameworkProfile />
-    <NuGetPackageImportStamp>
-    </NuGetPackageImportStamp>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug32|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>..\..\..\..\AppData\Roaming\Grasshopper\Libraries\Axis\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+
+  <PropertyGroup>
+    <FallbackCulture>en-US</FallbackCulture>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug64|AnyCPU'">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>..\..\..\..\AppData\Roaming\Grasshopper\Libraries\Axis\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>..\..\..\..\AppData\Roaming\Grasshopper\Libraries\Axis\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+
+  <!-- Platform build configurations -->
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <OutputPath>bin\$(Platform)\Release\</OutputPath>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <WarningLevel>0</WarningLevel>
-    <DebugType>full</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>BasicCorrectnessRules.ruleset</CodeAnalysisRuleSet>
-    <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
-    <DocumentationFile>
-    </DocumentationFile>
-    <CodeAnalysisIgnoreGeneratedCode>true</CodeAnalysisIgnoreGeneratedCode>
-    <RunCodeAnalysis>false</RunCodeAnalysis>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug32|x64'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x64\Debug32\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <DebugType>full</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumrecommendededRules.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug64|x64'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>..\..\..\..\Desktop\Axis\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <WarningLevel>0</WarningLevel>
-    <DebugType>full</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumrecommendededRules.ruleset</CodeAnalysisRuleSet>
-    <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
-    <OutputPath>..\..\..\..\Desktop\Axis\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumrecommendededRules.ruleset</CodeAnalysisRuleSet>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x64\amdDebug64\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <WarningLevel>0</WarningLevel>
-    <DebugType>full</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumrecommendededRules.ruleset</CodeAnalysisRuleSet>
-    <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug32|x86'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x86\Debug32\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <DebugType>full</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumrecommendededRules.ruleset</CodeAnalysisRuleSet>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug64|x86'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x86\Debug64\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <WarningLevel>0</WarningLevel>
-    <DebugType>full</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumrecommendededRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
     <OutputPath>bin\x86\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumrecommendededRules.ruleset</CodeAnalysisRuleSet>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x86\amdDebug64\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <OutputPath>bin\x64\Release\</OutputPath>
+    <CodeAnalysisRuleSet>MinimumrecommendededRules.ruleset</CodeAnalysisRuleSet>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <OutputPath>..\..\..\..\AppData\Roaming\Grasshopper\Libraries\Axis\</OutputPath>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <WarningLevel>0</WarningLevel>
-    <DebugType>full</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>BasicCorrectnessRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64' ">
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <OutputPath>..\..\..\..\AppData\Roaming\Grasshopper\Libraries\Axis\</OutputPath>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <WarningLevel>0</WarningLevel>
     <CodeAnalysisRuleSet>MinimumrecommendededRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <OutputPath>..\..\..\..\AppData\Roaming\Grasshopper\Libraries\Axis\</OutputPath>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <WarningLevel>0</WarningLevel>
+    <CodeAnalysisRuleSet>MinimumrecommendededRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'UnitTest|AnyCPU'">
     <OutputPath>bin\UnitTest\</OutputPath>
   </PropertyGroup>
@@ -156,144 +65,71 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'UnitTest|x86'">
     <OutputPath>bin\x86\UnitTest\</OutputPath>
   </PropertyGroup>
+
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Yak|AnyCPU'">
     <OutputPath>..\dist\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
     <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <LangVersion>7.3</LangVersion>
-    <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Yak|x64'">
     <OutputPath>bin\x64\Yak\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
-    <LangVersion>7.3</LangVersion>
-    <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumrecommendededRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Yak|x86'">
     <OutputPath>bin\x86\Yak\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
-    <LangVersion>7.3</LangVersion>
-    <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumrecommendededRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Core\Authentification.cs" />
-    <Compile Include="Deprecated\200907_CheckProgram.cs" />
-    <Compile Include="Deprecated\200827_AuthTest.cs" />
-    <Compile Include="Deprecated\200827_GetLicenseInformation.cs" />
-    <Compile Include="Online\RAPID-Modules.Designer.cs">
+    <Compile Remove="packages\**" />
+    <EmbeddedResource Remove="packages\**" />
+    <None Remove="packages\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Online\RAPID-Modules.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>RAPID-Modules.resx</DependentUpon>
     </Compile>
-    <Compile Include="Targets\GH_PlaneOptions.cs" />
-    <Compile Include="Online\AxisController.cs" />
-    <Compile Include="Online\GH_Connect.cs" />
-    <Compile Include="Online\GH_GetModules.cs" />
-    <Compile Include="Online\GH_Monitoring.cs" />
-    <Compile Include="Online\GH_SetModule.cs" />
-    <Compile Include="Online\GH_StartStop.cs" />
-    <Compile Include="Online\GH_Streaming.cs" />
-    <Compile Include="Online\Toolbox.cs" />
-    <Compile Include="Params\MotionTypeParam.cs" />
-    <Compile Include="Params\SpeedParam.cs" />
-    <Compile Include="Params\TargetParam.cs" />
-    <Compile Include="Params\CSystemParam.cs" />
-    <Compile Include="Params\ToolpathParam.cs" />
-    <Compile Include="Params\ZoneParam.cs" />
-    <Compile Include="Params\ToolParam.cs" />
-    <Compile Include="Params\RobotParam.cs" />
-    <Compile Include="Core\GH_Simulation.cs" />
-    <Compile Include="Core\GH_Engine.cs" />
-    <Compile Include="Deprecated\200908_SurfaceFrame.cs" />
-    <Compile Include="Deprecated\200907_GetDI.cs" />
-    <Compile Include="RAPID\GH_RAPID_Instructions.cs" />
-    <Compile Include="Deprecated\200908_SetDO.cs" />
-    <Compile Include="Properties\Icons.Designer.cs">
+    <Compile Update="Properties\Icons.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Icons.resx</DependentUpon>
     </Compile>
-    <None Include="Resources\AxisDark.png" />
-    <None Include="Resources\AxisLight.png" />
-    <None Include="Resources\LogIn.png" />
-    <None Include="Resources\MovmentParam.png" />
-    <None Include="Resources\RobotParam.png" />
-    <None Include="Resources\SpeedParam.png" />
-    <None Include="Resources\TargetParam.png" />
-    <None Include="Resources\ToolParam.png" />
-    <None Include="Resources\ToolPathParam.png" />
-    <None Include="Resources\ZoneParam.png" />
-    <None Include="Resources\CSystemParam.png" />
     <Content Include="Robot\RobotBinaries\ExampleCode for generating binary.txt" />
-    <Compile Include="Robot\RobotSystems.Designer.cs">
+    <Compile Update="Robot\RobotSystems.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>RobotSystems.resx</DependentUpon>
     </Compile>
-    <Compile Include="Properties\Settings.Designer.cs">
+    <Compile Update="Properties\Settings.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-    <Compile Include="Deprecated\200908_SetVelocity.cs" />
-    <Compile Include="Robot\GH_CreateTool.cs" />
-    <Compile Include="Robot\GH_CreateRobot.cs" />
-    <Compile Include="Core\GH_CodeGenerator.cs" />
-    <Compile Include="Styles.cs" />
-    <Compile Include="Deprecated\200915_GH_CreateJointTarget.cs" />
-    <Compile Include="Properties\AxisInfo.cs" />
-    <Compile Include="Targets\GH_CreateTarget_Multithreaded.cs" />
-    <Compile Include="Deprecated\200909_GH_FlipPlane.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Targets\GH_CoordinateSystem.cs" />
-    <Compile Include="Targets\GH_DefineSpeed.cs" />
-    <Compile Include="Deprecated\200915_GH_CreateTarget.cs" />
-    <Compile Include="Robot\System.cs" />
-    <Compile Include="Targets\GH_DefineZone.cs" />
-    <Compile Include="Targets\Target.cs" />
-    <Compile Include="Deprecated\200908_PlaneToQuat.cs" />
-    <Compile Include="Deprecated\200908_QuatToPlane.cs" />
-    <Compile Include="Utilities.cs" />
-    <Compile Include="Deprecated\200908_Acceleration.cs" />
-    <Compile Include="Deprecated\200908_CallProcedure.cs" />
-    <Compile Include="Deprecated\200908_Comment.cs" />
-    <Compile Include="Deprecated\200908_DefineProcedure.cs" />
-    <Compile Include="Deprecated\200908_SoftMove.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
-    <None Include="Deprecated\README.md" />
-    <None Include="Robot\RobotBinaries\IRB120mesh.bin" />
-    <None Include="Properties\Settings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-    </None>
-    <None Include="Robot\RobotBinaries\IRB6620mesh.bin" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Online\RAPID-Modules.resx">
+    <EmbeddedResource Update="Online\RAPID-Modules.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>RAPID-Modules.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
     </EmbeddedResource>
-    <EmbeddedResource Include="Properties\Icons.resx">
+    <EmbeddedResource Update="Properties\Icons.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Icons.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <EmbeddedResource Include="Robot\RobotSystems.resx">
+    <EmbeddedResource Update="Robot\RobotSystems.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>RobotSystems.Designer.cs</LastGenOutput>
     </EmbeddedResource>
@@ -314,197 +150,40 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\AlignOrigin.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\CheckProgram.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\CodeGen.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Collision.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Core.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\CSystem.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\DigitalIn.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\DigitalOut.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Export.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\FK.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Flip.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\IK.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\JointTarget.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\KRL.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Layers.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Lerp.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\License.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\MethodControl.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Online.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\OpenFolder.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Play.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\RAPID.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Robot.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Robot_1.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\SelectFolder.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\ShowTarget.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\ShowToolpath.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\ShowZone.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\SigmaS.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Simulation.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Snap.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Speed.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\SpeedControl.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\SurfaceFrame.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Target.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Tool.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Vision.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Zone.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\ZoneControl.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Star Stop.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Connect.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Get Module.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Set Module.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Streaming.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\EmergencyStop.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\MotorOff.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\UnknownMotorState.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Reference Include="ABB.Robotics.Controllers.PC">
       <HintPath>..\..\..\..\..\..\Program Files (x86)\ABB Industrial IT\Robotics IT\SDK\PCSDK 6.08\ABB.Robotics.Controllers.PC.dll</HintPath>
     </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Drawing" />
     <Reference Include="System.Management" />
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
-  <ItemGroup />
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
+  <ItemGroup>
+    <Compile Remove="Deprecated\200129_Simulation.cs" />
+    <Compile Remove="Deprecated\200827_HomePose.cs" />
+    <Compile Remove="Deprecated\200902_InverseKinematics.cs" />
+    <Compile Remove="Deprecated\200908_ABBComunication.cs" />
+    <Compile Remove="Params\ExtValParam.cs" />
+    <Compile Remove="Params\GH_Manipulator.cs" />
+    <Compile Remove="Robot\OffsetWristKinematics.cs" />
+    <Compile Remove="Targets\LinearInterpolation.cs" />
+  </ItemGroup>
+
+
+
+  <!-- Pre build Task-->
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command="Erase $(TargetPath) $(TargetDir)$(TargetName)&quot;.gha&quot;" />
   </Target>
-  <Target Name="AfterBuild">
+
+  <!-- Post build task-->
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="Copy $(TargetPath) $(TargetDir)$(TargetName)&quot;.gha&quot; &amp;&amp; Erase $(TargetPath)" />
   </Target>
-  -->
-  <PropertyGroup>
-    <PostBuildEvent>Copy "$(TargetPath)" "$(TargetDir)$(ProjectName).gha"
-Erase "$(TargetPath)"</PostBuildEvent>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug32|AnyCPU' ">
-    <StartArguments>
-    </StartArguments>
-    <StartAction>Program</StartAction>
-    <StartProgram>C:\Program Files (x86)\Rhinoceros 5\System\Rhino4.exe</StartProgram>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup>
-    <FallbackCulture>en-US</FallbackCulture>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug64|AnyCPU'">
-    <StartProgram>C:\Program Files\Rhinoceros 5 (64-bit)\System\Rhino.exe</StartProgram>
-    <StartArguments>
-    </StartArguments>
-    <StartAction>Program</StartAction>
-    <Prefer32Bit>false</Prefer32Bit>
-    <WarningLevel>0</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
-  <PropertyGroup>
-    <PreBuildEvent>Erase "$(TargetPath)" "$(TargetDir)$(ProjectName).gha"</PreBuildEvent>
-  </PropertyGroup>
-  <Import Project="packages\RhinoCommon.6.8.18240.20051\build\net45\RhinoCommon.targets" Condition="Exists('packages\RhinoCommon.6.8.18240.20051\build\net45\RhinoCommon.targets')" />
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('packages\RhinoCommon.6.8.18240.20051\build\net45\RhinoCommon.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\RhinoCommon.6.8.18240.20051\build\net45\RhinoCommon.targets'))" />
-    <Error Condition="!Exists('packages\Grasshopper.6.8.18240.20051\build\net45\Grasshopper.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\Grasshopper.6.8.18240.20051\build\net45\Grasshopper.targets'))" />
+
+  <!-- Added to prevent Grasshopper fiels to be copied to build folder-->
+  <Target Name="PreventGrasshopperCopyLocal" AfterTargets="ResolveReferences">
+  	<ItemGroup>
+  		<ReferenceCopyLocalPaths Remove="@(ReferenceCopyLocalPaths)" Condition="'%(ReferenceCopyLocalPaths.NuGetPackageId)' == 'Grasshopper'" />
+  	</ItemGroup>
   </Target>
-  <Import Project="packages\Grasshopper.6.8.18240.20051\build\net45\Grasshopper.targets" Condition="Exists('packages\Grasshopper.6.8.18240.20051\build\net45\Grasshopper.targets')" />
+
 </Project>
