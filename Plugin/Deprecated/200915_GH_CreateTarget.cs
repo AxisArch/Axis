@@ -18,7 +18,7 @@ namespace Axis
     /// <summary>
     /// Define robot end effector plane target positions.
     /// </summary>
-    public class CreateTarget : GH_Component, IGH_VariableParameterComponent
+    public class CreateTarget_Obsolete : GH_Component, IGH_VariableParameterComponent
     {
         // Boolean toggle for context menu items.
         bool m_outputCode = false;
@@ -33,7 +33,7 @@ namespace Axis
         bool extRotary = false;
         bool extLinear = false;
         
-        public CreateTarget() : base("Plane Target", "Target", "Create custom robot targets from planes.", AxisInfo.Plugin, AxisInfo.TabConfiguration)
+        public CreateTarget_Obsolete() : base("Plane Target", "Target", "Create custom robot targets from planes.", AxisInfo.Plugin, AxisInfo.TabConfiguration)
         {
         }
 
@@ -451,7 +451,8 @@ namespace Axis
         bool IGH_VariableParameterComponent.DestroyParameter(GH_ParameterSide side, int index) => false;
         void IGH_VariableParameterComponent.VariableParameterMaintenance() { }
 
-        public override GH_Exposure Exposure => GH_Exposure.primary;
+        public override GH_Exposure Exposure => GH_Exposure.hidden;
+        public override bool Obsolete => true;
         protected override System.Drawing.Bitmap Icon
         {
             get

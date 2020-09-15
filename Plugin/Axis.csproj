@@ -242,14 +242,14 @@
     <Compile Include="Robot\GH_CreateRobot.cs" />
     <Compile Include="Core\GH_CodeGenerator.cs" />
     <Compile Include="Styles.cs" />
-    <Compile Include="Targets\GH_CreateJointTarget.cs" />
+    <Compile Include="Deprecated\200915_GH_CreateJointTarget.cs" />
     <Compile Include="Properties\AxisInfo.cs" />
     <Compile Include="Targets\GH_CreateTarget_Multithreaded.cs" />
     <Compile Include="Deprecated\200909_GH_FlipPlane.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Targets\GH_CoordinateSystem.cs" />
     <Compile Include="Targets\GH_DefineSpeed.cs" />
-    <Compile Include="Targets\GH_CreateTarget.cs" />
+    <Compile Include="Deprecated\200915_GH_CreateTarget.cs" />
     <Compile Include="Robot\System.cs" />
     <Compile Include="Targets\GH_DefineZone.cs" />
     <Compile Include="Targets\Target.cs" />
