@@ -421,7 +421,7 @@ namespace Axis
 
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddNumberParameter("Angles", "Angles", "Joint angles as list/tree", GH_ParamAccess.tree);
+            pManager.AddNumberParameter("Angles", "Angles", "Joint angles as list/tree", GH_ParamAccess.tree, new List<double>() {0,0,0,0,0,0});
             IGH_Param speed = new Axis.Params.SpeedParam();
             pManager.AddParameter(speed, "Speed", "Speed", "List of speed objects per plane.", GH_ParamAccess.list);
             IGH_Param zone = new Axis.Params.ZoneParam();
