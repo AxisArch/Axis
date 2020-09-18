@@ -265,7 +265,6 @@ namespace Axis.Core
         #region Interfaces
         //IGH_GeometricGoo
         public BoundingBox Boundingbox { get; private set; }
-
         public Guid ReferenceID { 
             get
             {
@@ -454,7 +453,6 @@ namespace Axis.Core
             return true;
 
         }
-
         public bool Write(GH_IWriter writer)
         {
             GH_IO.Types.GH_Plane gH_RobBasePlane = new GH_IO.Types.GH_Plane(

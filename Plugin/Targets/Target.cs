@@ -7,6 +7,7 @@ using Rhino.Geometry;
 
 using Axis.Core;
 using GH_IO.Serialization;
+using System.Linq;
 
 namespace Axis.Targets
 {
@@ -16,6 +17,7 @@ namespace Axis.Targets
     public class Target : IGH_GeometricGoo
     {
         #region Class Fields
+        private Guid Guid;
         public Plane Plane { get; set; } // Position in World Coordinates
 
         public Plane TargetPlane; // Position in local coordinates
@@ -30,8 +32,10 @@ namespace Axis.Targets
 
         public ExtVal ExtRot { get; set; }
         public ExtVal ExtLin { get; set; }
-        #endregion
         public Manufacturer Manufacturer { get; private set; }
+        public MotionType Method { get; private set; }
+
+        #endregion
 
         public string StrRob
         { get
@@ -148,7 +152,6 @@ namespace Axis.Targets
             }
         }
         public Point3d Position { get =>  this.TargetPlane.Origin; }
-        public MotionType Method { get; private set; }
 
         #region Constructors
 
@@ -156,7 +159,12 @@ namespace Axis.Targets
         /// Default target object.
         /// </summary>
         public static Target Default { get => new Target(new List<double> { 0, 0, 0, 0, 0, 0 }, Speed.Default, Zone.Default, Tool.Default, 0, 0, Manufacturer.ABB); }
-        
+
+        /// <summary>
+        /// Empty target Constructor;
+        /// </summary>
+        public Target() { }
+
         /// <summary>
         /// Default target constructor from a plane.
         /// </summary>
@@ -223,13 +231,25 @@ namespace Axis.Targets
         #region Interfaces
 
         //IGH_GeometricGoo
-        public BoundingBox Boundingbox { get => throw new NotImplementedException(); } //Cached boundingbox
-        public Guid ReferenceID { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public BoundingBox Boundingbox { get; private set; } //Cached boundingbox
+        public Guid ReferenceID { 
+            get 
+            {
+                if (this.Guid != Guid.Empty) return this.Guid;
+                this.Guid = Guid.NewGuid();
+                return this.Guid;
+            } 
+            set 
+            {
+                if (value.GetType() == typeof(Guid)) this.Guid = value;
+            } 
+        }
         public bool IsReferencedGeometry { get => false; }
         public bool IsGeometryLoaded { get => throw new NotImplementedException(); }
 
         public void ClearCaches() 
         {
+            this.Guid = Guid.Empty;
             this.Plane = Plane.Unset;
             this.TargetPlane = Plane.Unset;
             this.Quaternion = Quaternion.Zero;
@@ -242,7 +262,21 @@ namespace Axis.Targets
             this.Method = 0;
             this.Manufacturer = 0;
         }
-        public IGH_GeometricGoo DuplicateGeometry() => throw new NotImplementedException();
+        public IGH_GeometricGoo DuplicateGeometry()
+        {
+            var target = default(Target);
+            switch (this.Method)
+            {
+                case MotionType.Joint:
+                case MotionType.Linear:
+                    target = new Target(this.Plane.Clone(), this.Method, (Speed)this.Speed.Duplicate(), (Zone)this.Zone.Duplicate(), (Tool)this.Tool.Duplicate(), (CSystem)this.CSystem.Duplicate(), this.ExtRot, this.ExtLin, this.Manufacturer);
+                    break;
+                case MotionType.AbsoluteJoint:
+                    target = new Target(this.JointAngles, (Speed)this.Speed.Duplicate(), (Zone)this.Zone.Duplicate(), (Tool)this.Tool.Duplicate(), this.ExtRot, this.ExtLin, this.Manufacturer);
+                    break;
+            }
+            return target;
+        }
         public BoundingBox GetBoundingBox(Transform xform) => throw new NotImplementedException();
         public bool LoadGeometry() => throw new NotImplementedException();
         public bool LoadGeometry(Rhino.RhinoDoc doc) => throw new NotImplementedException();
@@ -297,17 +331,160 @@ namespace Axis.Targets
             }
             return target;
         }
-        public IGH_GooProxy EmitProxy() => throw new NotImplementedException();
-        public object ScriptVariable() => throw new NotImplementedException();
+        public IGH_GooProxy EmitProxy() => null;
+        public object ScriptVariable() => null;
         public override string ToString() => (Method != null) ? $"Target ({Method.ToString()})" : $"Target ({Position})";
 
 
         //GH_ISerializable
-        public bool Read(GH_IReader reader) => throw new NotImplementedException();
-        public bool Write(GH_IWriter writer) => throw new NotImplementedException();
+        public bool Read(GH_IReader reader) 
+        {
+            if (reader.ItemExists("Guid")) this.Guid = reader.GetGuid("Guid");
+            if (reader.ItemExists("Manufacturer")) this.Manufacturer = (Manufacturer)reader.GetInt32("Manufacturer");
+            if (reader.ItemExists("MovementType")) this.Method = (MotionType)reader.GetInt32("MovementType");
+
+            if (reader.ChunkExists("Plane")) 
+            {
+                var ghPlane = new GH_Plane();
+                var plane = Plane.Unset;
+                ghPlane.Read(reader.FindChunk("Plane"));
+                if(GH_Convert.ToPlane(ghPlane, ref plane, GH_Conversion.Both))
+                    this.Plane = plane;
+            }
+            if (reader.ChunkExists("PlaneTarget")) 
+            {
+                var ghPlaneTarget = new GH_Plane();
+                var targetPlane = Plane.Unset;
+                ghPlaneTarget.Read(reader.FindChunk("Plane"));
+                GH_Convert.ToPlane(ghPlaneTarget, ref targetPlane, GH_Conversion.Both);
+                this.TargetPlane = targetPlane;
+            }
+
+            if (reader.ItemExists("Quaternion"))
+            {
+                int[] Q = new int[4];
+                for (int i = 0; i < 4; ++i) Q[i] = reader.GetInt32("Quaternion", i);
+                this.Quaternion = new Quaternion(Q[0], Q[1], Q[2], Q[3]);
+            }
+            if (reader.ItemExists("JointAnglesCount"))
+            {
+                var JointAnglesCount = reader.GetInt32("JointAnglesCount");
+                if (reader.ItemExists("JointAngles"))
+                { 
+                    this.JointAngles = new double[JointAnglesCount].ToList();
+                    for (int i = 0; i < JointAnglesCount; ++i) 
+                        this.JointAngles[i] = reader.GetDouble("JointAngles", i);
+                }
+            }
+            if (reader.ChunkExists("Speed"))
+            {
+                this.Speed = new Speed();
+                var speedChunk = reader.FindChunk("Speed");
+                this.Speed.Read(speedChunk);
+            }
+            if (reader.ChunkExists("Zone")) 
+            {
+                this.Zone = new Zone();
+                var zoneChunk = reader.FindChunk("Zone");
+                this.Zone.Read(zoneChunk);
+            }
+            if (reader.ChunkExists("Tool")) 
+            {
+                this.Tool = new Tool();
+                var toolChunk = reader.FindChunk("Tool");
+                this.Tool.Read(toolChunk);
+            }
+            if (reader.ChunkExists("CSystem")) 
+            {
+                this.CSystem = new CSystem();
+                var cystemChunk = reader.FindChunk("CSystem");
+                this.CSystem.Read(cystemChunk);
+            }
+
+            if (reader.ItemExists("ExtRot")) this.ExtRot = reader.GetDouble("ExtRot");
+            if (reader.ItemExists("ExtLin")) this.ExtLin = reader.GetDouble("ExtLin");
+
+            return true;
+        }
+        public bool Write(GH_IWriter writer)
+        {
+
+            if (this.Guid != Guid.Empty)
+                writer.SetGuid("Guid", this.Guid);
+            if (this.Manufacturer != null) 
+                writer.SetInt32("Manufacturer", (int)this.Manufacturer);
+            if (this.Method != null) 
+                writer.SetInt32("MovementType", (int)this.Method);
+
+            if (this.Plane != null) 
+            {
+                var ghPlane = new GH_Plane(this.Plane);
+                ghPlane.Write(writer.CreateChunk("Plane"));
+            }
+            if (this.TargetPlane != null) 
+            {
+                var ghPlaneTarget = new GH_Plane(this.TargetPlane);
+                ghPlaneTarget.Write(writer.CreateChunk("PlaneTarget"));
+            }
+
+            if (this.Quaternion != null) 
+            {
+                for (int i = 0; i < 4; ++i)
+                {
+                    switch (i)
+                    {
+                        case 0:
+                            writer.SetInt32("Quaternion", i, (int)this.Quaternion.A); break;
+                        case 1:
+                            writer.SetInt32("Quaternion", i, (int)this.Quaternion.B); break;
+                        case 2:
+                            writer.SetInt32("Quaternion", i, (int)this.Quaternion.C); break;
+                        case 3:
+                            writer.SetInt32("Quaternion", i, (int)this.Quaternion.D); break;
+                    }
+                }
+            }
+            if (this.JointAngles != null)
+            {
+                writer.SetInt32("JointAnglesCount", this.JointAngles.Count);
+                for (int i = 0; i < this.JointAngles.Count; ++i)
+                {
+                    writer.SetDouble("JointAngles", i, this.JointAngles[i]);
+                }
+            }
+            if (this.Speed != null) 
+            {
+                var speedChunk = writer.CreateChunk("Speed");
+                this.Speed.Write(speedChunk);
+            }
+            if (this.Zone != null) 
+            {
+                var zoneChunk = writer.CreateChunk("Zone");
+                this.Zone.Write(zoneChunk);
+            }
+            if (this.Tool != null) 
+            {
+                var toolChunk = writer.CreateChunk("Tool");
+                this.Tool.Write(toolChunk);
+            }
+            if (this.CSystem != null) 
+            {
+              var cystemChunk = writer.CreateChunk("CSystem");
+              this.CSystem.Write(cystemChunk);
+            }
+
+            if (this.ExtRot != null) 
+                writer.SetDouble("ExtRot", this.ExtRot);
+            if (this.ExtLin != null)  
+                writer.SetDouble("ExtLin", this.ExtLin);
+
+            return true;
+        }
 
         #endregion
     }
+
+
 
     /// <summary>
     /// Class handlining the conversion for different types to the spesific manufacturere string representation
@@ -453,7 +630,12 @@ namespace Axis.Targets
         public bool IsReferencedGeometry { get => throw new NotImplementedException(); }
         public bool IsGeometryLoaded { get => throw new NotImplementedException(); }
 
-        public void ClearCaches() => throw new NotImplementedException();
+        public void ClearCaches() 
+        {
+            this.isNull = true;
+            this.val = double.NaN;
+
+        }
         public IGH_GeometricGoo DuplicateGeometry() => throw new NotImplementedException();
         public BoundingBox GetBoundingBox(Transform xform) => throw new NotImplementedException();
         public bool LoadGeometry() => throw new NotImplementedException();
@@ -519,7 +701,7 @@ namespace Axis.Targets
         /// <summary>
         /// Default constructor.
         /// </summary>
-        static Speed() {}
+        public Speed() {}
 
         /// <summary>
         /// Standard speed constructor.
@@ -544,7 +726,13 @@ namespace Axis.Targets
         public bool IsReferencedGeometry { get => throw new NotImplementedException(); }
         public bool IsGeometryLoaded { get => throw new NotImplementedException(); }
 
-        public void ClearCaches() => throw new NotImplementedException();
+        public void ClearCaches() 
+        {
+            this.Name = string.Empty;
+            this.TranslationSpeed = double.NaN;
+            this.RotationSpeed = double.NaN;
+            this.Time = double.NaN;
+        }
         public IGH_GeometricGoo DuplicateGeometry() => throw new NotImplementedException();
         public BoundingBox GetBoundingBox(Transform xform) => throw new NotImplementedException();
         public bool LoadGeometry() => throw new NotImplementedException();
@@ -606,8 +794,22 @@ namespace Axis.Targets
         public  override string ToString() => (Name != null) ? $"Speed ({Name})" : $"Speed ({TranslationSpeed:0.0} mm/s)";
 
         //GH_ISerializable
-        public bool Read(GH_IReader reader) => throw new NotImplementedException();
-        public bool Write(GH_IWriter writer) => throw new NotImplementedException();
+        public bool Read(GH_IReader reader) 
+        {
+            this.Name = reader.GetString("Name");
+            this.TranslationSpeed = reader.GetDouble("TranslationSpeed");
+            this.RotationSpeed = reader.GetDouble("RotationSpeed");
+            this.Time = reader.GetDouble("Time");
+            return true;
+        }
+        public bool Write(GH_IWriter writer) 
+        {
+            if (this.Name != string.Empty) writer.SetString("Name", this.Name);
+            if (this.TranslationSpeed != null) writer.SetDouble("TranslationSpeed", this.TranslationSpeed);
+            if (this.RotationSpeed != null) writer.SetDouble("RotationSpeed", this.RotationSpeed);
+            if (this.Time != null) writer.SetDouble("Time", this.Time);
+            return true;
+        }
         #endregion
     }
 
@@ -635,7 +837,7 @@ namespace Axis.Targets
         /// <summary>
         /// Default constructor.
         /// </summary>
-        static Zone(){}
+        public Zone() { }
 
         /// <summary>
         /// Standard constructor.
@@ -669,7 +871,17 @@ namespace Axis.Targets
         public bool IsReferencedGeometry { get => throw new NotImplementedException(); }
         public bool IsGeometryLoaded { get => throw new NotImplementedException(); }
 
-        public void ClearCaches() => throw new NotImplementedException();
+        public void ClearCaches() 
+        {
+            this.Name = string.Empty;
+            this.PathRadius = double.NaN;
+            this.PathOrient = double.NaN;
+            this.PathExternal = double.NaN;
+            this.Orientation = double.NaN;
+            this.LinearExternal = double.NaN;
+            this.RotaryExternal = double.NaN;
+            this.StopPoint = false;
+        }
         public IGH_GeometricGoo DuplicateGeometry() => throw new NotImplementedException();
         public BoundingBox GetBoundingBox(Transform xform) => throw new NotImplementedException();
         public bool LoadGeometry() => throw new NotImplementedException();
@@ -739,8 +951,30 @@ namespace Axis.Targets
         public override string ToString() => (Name != null) ? $"Zone ({Name})" : $"Zone ({PathRadius:0.0} mm)";
 
         //GH_ISerializable
-        public bool Read(GH_IReader reader) => throw new NotImplementedException();
-        public bool Write(GH_IWriter writer) => throw new NotImplementedException();
+        public bool Read(GH_IReader reader) 
+        {
+            this.Name = reader.GetString("Name");
+            this.PathRadius = reader.GetDouble("PathRadius");
+            this.PathOrient = reader.GetDouble("PathOrient");
+            this.PathExternal = reader.GetDouble("PathExternal");
+            this.Orientation = reader.GetDouble("Orientation");
+            this.LinearExternal = reader.GetDouble("LinearExternal");
+            this.RotaryExternal = reader.GetDouble("RotaryExternal");
+            this.StopPoint = reader.GetBoolean("StopPoint");
+            return true;
+        }
+        public bool Write(GH_IWriter writer) 
+        {
+            if(this.Name != string.Empty ) writer.SetString("Name", this.Name);
+            if(this.PathRadius != null ) writer.SetDouble("PathRadius", this.PathRadius);
+            if(this.PathOrient != null ) writer.SetDouble("PathOrient", this.PathOrient);
+            if(this.PathExternal != null ) writer.SetDouble("PathExternal", this.PathExternal);
+            if(this.Orientation != null ) writer.SetDouble("Orientation", this.Orientation);
+            if(this.LinearExternal != null ) writer.SetDouble("LinearExternal", this.LinearExternal);
+            if(this.RotaryExternal != null ) writer.SetDouble("RotaryExternal", this.RotaryExternal);
+            if(this.StopPoint != null ) writer.SetBoolean("StopPoint", this.StopPoint);
+            return true;
+        }
         #endregion
     }
 
@@ -763,7 +997,7 @@ namespace Axis.Targets
         /// <summary>
         /// Default constructor.
         /// </summary>
-        static CSystem(){}
+        public CSystem() { }
 
         /// <summary>
         /// Standard coordinate system constructor.
@@ -789,7 +1023,13 @@ namespace Axis.Targets
         public bool IsReferencedGeometry { get => throw new NotImplementedException(); }
         public bool IsGeometryLoaded { get => throw new NotImplementedException(); }
 
-        public void ClearCaches() => throw new NotImplementedException();
+        public void ClearCaches() 
+        {
+            this.Name = string.Empty;
+            this.CSPlane = Plane.Unset;
+            this.Dynamic = false;
+            this.ExternalAxis = Plane.Unset;
+    }
         public IGH_GeometricGoo DuplicateGeometry() => throw new NotImplementedException();
         public BoundingBox GetBoundingBox(Transform xform) => throw new NotImplementedException();
         public bool LoadGeometry() => throw new NotImplementedException();
@@ -842,11 +1082,48 @@ namespace Axis.Targets
         }
         public IGH_GooProxy EmitProxy() => throw new NotImplementedException();
         public object ScriptVariable() => throw new NotImplementedException();
-        public  override string ToString() => $"CSystem at: {CSPlane.ToString()}";
+        public override string ToString() => $"CSystem at: {CSPlane.ToString()}";
 
         //GH_ISerializable
-        public bool Read(GH_IReader reader) => throw new NotImplementedException();
-        public bool Write(GH_IWriter writer) => throw new NotImplementedException();
+        public bool Read(GH_IReader reader) 
+        {
+            if (reader.ItemExists("Name")) this.Name = reader.GetString("Name");
+            if (reader.ChunkExists("CSPlane")) 
+            {
+                var gh_CSPlane = new GH_Plane();
+                Plane csPlane = Plane.Unset;
+                gh_CSPlane.Read(reader.FindChunk("CSPlane"));
+                GH_Convert.ToPlane(gh_CSPlane, ref csPlane, GH_Conversion.Both);
+                this.CSPlane = csPlane;
+            }
+            if (reader.ItemExists("Dynamic")) this.Dynamic = reader.GetBoolean("Dynamic");
+            if (reader.ItemExists("ExternalAxis")) 
+            {
+                var gh_ExternalAxis = new GH_Plane();
+                Plane eaPlane = Plane.Unset;
+                gh_ExternalAxis.Read(reader.FindChunk("ExternalAxis"));
+                GH_Convert.ToPlane(gh_ExternalAxis, ref eaPlane, GH_Conversion.Both);
+                this.CSPlane = eaPlane;
+            }
+
+            return true;
+        }
+        public bool Write(GH_IWriter writer) 
+        {
+            if (this.Name != string.Empty) writer.SetString("Name", this.Name);
+            if (this.CSPlane != null) 
+            {
+                var gh_CSPlane = new GH_Plane(this.CSPlane);
+                gh_CSPlane.Write(writer.CreateChunk("CSPlane"));
+            }
+            if (this.Dynamic != null) writer.SetBoolean("Dynamic", this.Dynamic);
+            if (this.ExternalAxis != null) 
+            {
+                var gh_ExternalAxis = new GH_Plane(this.ExternalAxis);
+                gh_ExternalAxis.Write(writer.CreateChunk("ExternalAxis"));
+            }
+            return true;
+        }
         #endregion
     }
 
@@ -993,7 +1270,13 @@ namespace Axis.Targets
         public bool IsReferencedGeometry { get => throw new NotImplementedException(); }
         public bool IsGeometryLoaded { get => throw new NotImplementedException(); }
 
-        public void ClearCaches() => throw new NotImplementedException();
+        public void ClearCaches() 
+        {
+            this.duration = TimeSpan.Zero;
+            this.totalSec = double.NaN;
+            this.poses = null;
+            this.targetProgress = null;
+        }
         public IGH_GeometricGoo DuplicateGeometry() => throw new NotImplementedException();
         public BoundingBox GetBoundingBox(Transform xform) => throw new NotImplementedException();
         public bool LoadGeometry() => throw new NotImplementedException();
