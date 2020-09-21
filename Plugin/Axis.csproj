@@ -158,6 +158,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Deprecated\200129_Simulation.cs" />
+    <Compile Remove="Deprecated\200827_AuthTest.cs" />
     <Compile Remove="Deprecated\200827_HomePose.cs" />
     <Compile Remove="Deprecated\200902_InverseKinematics.cs" />
     <Compile Remove="Deprecated\200908_ABBComunication.cs" />

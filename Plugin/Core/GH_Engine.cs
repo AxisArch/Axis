@@ -30,7 +30,6 @@ namespace Axis.Core
         // Sticky variables for the options.
         bool m_Logout = false;
         public List<string> log = new List<string>();
-        public bool logged_In = false;
         public Auth0Client client = null;
 
         // Set up our client to handle the login.
@@ -98,14 +97,19 @@ namespace Axis.Core
             RecordUndoEvent("Logout");
 
             client.LogoutAsync();
-            logged_In = false;
-            Axis.Properties.Settings.Default.LoggedIn = logged_In;
+
+            //logged_In = false;
+            Axis.Properties.Settings.Default.LoggedIn = false;
+
+            Auth.RaiseEvent(false);
 
             this.Message = "Logged Out";
             log.Add("Logged out of Axis at " + System.DateTime.Now.ToShortDateString());
 
-            ExpireSolution(true);
+            // Porbmen seems to be that this does not expire the specific components
+            this.ExpireSolution(true);
         }
+
 
         private void clear_Click(object sender, EventArgs e)
         {
@@ -147,7 +151,7 @@ namespace Axis.Core
                     {
                         comp.RecordUndoEvent("Login");
                         comp.Login();
-                        comp.ExpireSolution(true);
+                        //comp.ExpireSolution(true);
                         return GH_ObjectResponse.Handled;
                     }
 
@@ -229,11 +233,9 @@ namespace Axis.Core
         /// </summary>
         protected void Login()
         {
-            // Validate the login token.
-            Auth auth = new Auth();
 
             // If it's not valid, offer a login.
-            if (!auth.IsValid)
+            if (!Auth.AuthCheck())
             {
                 Dictionary<string, string> extra = new Dictionary<string, string>()
                 {
@@ -251,33 +253,46 @@ namespace Axis.Core
                         DateTime validTo = DateTime.Now.AddDays(2);
                         log.Add("Login valid to: " + validTo.ToLongDateString() + ", " + validTo.ToShortTimeString());
                         Message = "OK";
-                        logged_In = true;
+                        Axis.Properties.Settings.Default.LoggedIn = true;
+                        Axis.Auth.RaiseEvent(true);
+
+                        var doc = OnPingDocument();
+                        if (doc != null) doc.ScheduleSolution(10, LocalExpire);
+
+                        void LocalExpire(GH_Document document) => ExpireSolution(false);
+
                     }
                     else
                     {
                         Debug.WriteLine("Error logging in: " + t.Result.Error);
                         log.Add(t.Result.ToString());
                         log.Add("Error logging in: " + t.Result.Error);
-                        logged_In = false;
+                        Axis.Properties.Settings.Default.LoggedIn = false;
+                        Axis.Auth.RaiseEvent(false);
+
+                        var doc = OnPingDocument();
+                        if (doc != null) doc.ScheduleSolution(10, LocalExpire);
+
+                        void LocalExpire(GH_Document document) => ExpireSolution(false);
                     }
                     t.Dispose();
                 });
 
                 // Update our login time.
                 Default.LastLoggedIn = DateTime.Now;
-                Default.LoggedIn = logged_In;
             }
             else
             {
-                logged_In = true;
                 log.Add("Already logged in.");
+                ExpireSolution(true);
+
             }
 
-            if (logged_In) Message = "Logged In";
+            if (Axis.Properties.Settings.Default.LoggedIn) Message = "Logged In";
             else Message = "Error";
 
-            ExpireSolution(true);
         }
+
 
         #region Component Settings
         protected override System.Drawing.Bitmap Icon

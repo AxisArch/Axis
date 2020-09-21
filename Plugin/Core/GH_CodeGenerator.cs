@@ -17,13 +17,14 @@ using RAPID;
 using Canvas;
 
 using Axis;
+using System.Runtime.CompilerServices;
 
 namespace Axis.Core
 {
     /// <summary>
     /// Generate the output code for a robot program.
     /// </summary>
-    public class GH_CodeGenerator : GH_Component, IGH_VariableParameterComponent
+    public class GH_CodeGenerator : AxisLogin_Component, IGH_VariableParameterComponent
     {
         // Sticky variables for the options.
         bool modName = false;
@@ -31,8 +32,6 @@ namespace Axis.Core
         bool overrides = false;
         Manufacturer m_Manufacturer = Manufacturer.ABB;
         bool ignoreLen = false;
-        bool validToken = false;
-        Auth auth = null;
 
         public GH_CodeGenerator() : base("Code Generator", "Code", "Generate manufacturer-specific robot code from a toolpath.", AxisInfo.Plugin, AxisInfo.TabMain)
         {
@@ -55,22 +54,12 @@ namespace Axis.Core
         }
         #endregion
 
-        /// <summary>
-        /// Check the authentification status.
-        /// </summary>
-        protected override void BeforeSolveInstance()
+        void LocalExpire(GH_Document document) 
         {
-            // Validate the login token.
-            auth = new Auth();
-            validToken = auth.IsValid;
-
-            if (!validToken)
-            {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Please log in to Axis.");
-            }
+            this.ExpireSolution(false);
         }
 
-        protected override void SolveInstance(IGH_DataAccess DA)
+        protected override void SolveInternal(IGH_DataAccess DA)
         {
             string strModName = "MainModule";
             string path = Environment.SpecialFolder.Desktop.ToString();
@@ -107,8 +96,6 @@ namespace Axis.Core
                 if (!DA.GetDataList("Overrides", strOverrides)) ;
             if (declarations)
                 if (!DA.GetDataList("Declarations", strDeclarations)) ;
-
-            if (!validToken) return;
 
             // New RAPID module
             Module module = new Module(name: strModName);
@@ -383,6 +370,7 @@ namespace Axis.Core
                 }
             }
         }
+
 
         #region UI
         // Build a list of optional input and output parameters

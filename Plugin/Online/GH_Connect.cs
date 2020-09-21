@@ -28,7 +28,7 @@ namespace Axis.Online
     /// <summary>
     /// Handles online connections to an IRC5 controller.
     /// </summary>
-    public class GH_Connect : GH_Component, IGH_VariableParameterComponent
+    public class GH_Connect : AxisLogin_Component, IGH_VariableParameterComponent
     {
         public string ControllerID { get; set; }
         public List<string> Status { get; set; }
@@ -46,7 +46,6 @@ namespace Axis.Online
         private string command;
         private bool logOption;
         private bool logOptionOut;
-        public bool validToken = false;
 
         NetworkScanner scanner = new NetworkScanner();
         ControllerInfo[] controllers = null;
@@ -89,25 +88,9 @@ namespace Axis.Online
         }
         #endregion
 
-        #region Auth
-        /// <summary>
-        /// Handle the authentification.
-        /// </summary>
-        protected override void BeforeSolveInstance()
+        protected override void SolveInternal(IGH_DataAccess DA)
         {
-            Auth auth = new Auth();
-            validToken = auth.IsValid;
 
-            if (!validToken)
-            {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Please log in to Axis.");
-                return;
-            }
-        }
-        #endregion
-
-        protected override void SolveInstance(IGH_DataAccess DA)
-        {
             bool activate = false;
             bool scan = false;
             bool kill = false;
@@ -269,6 +252,7 @@ namespace Axis.Online
                 }
                 else { DA.SetData(0, "No active connection"); }
             }
+
         }
 
         #region UI

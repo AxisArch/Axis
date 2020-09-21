@@ -16,7 +16,7 @@ namespace Axis.Core
     /// Method to check an entire program for issues
     /// without running full geometry for the IK solutions.
     /// </summary>
-    public class CheckProgram_Obsolete : GH_Component
+    public class CheckProgram_Obsolete : AxisLogin_Component
     {
         public override bool Obsolete => true;
         public override GH_Exposure Exposure => GH_Exposure.hidden;
@@ -43,26 +43,8 @@ namespace Axis.Core
         }
         #endregion
 
-        // License token variable.
-        bool validToken = false;
-        Auth auth = null;
 
-        /// <summary>
-        /// Check the authentification status.
-        /// </summary>
-        protected override void BeforeSolveInstance()
-        {
-            // Validate the login token.
-            auth = new Auth();
-            validToken = auth.IsValid;
-
-            if (!validToken)
-            {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Please log in to Axis.");
-            }
-        }
-
-        protected override void SolveInstance(IGH_DataAccess DA)
+        protected override void SolveInternal(IGH_DataAccess DA)
         {
             // Initialize variables to store the incoming data.
             List<GH_ObjectWrapper> program = new List<GH_ObjectWrapper>();
@@ -89,9 +71,6 @@ namespace Axis.Core
             if (robot.Indices.Count == 6) indices = robot.Indices;
 
             List<Point3d> errorPositions = new List<Point3d>();
-
-            // Exit if we don't have a valid login token.
-            if (!validToken) { return; }
 
             if (run)
             {

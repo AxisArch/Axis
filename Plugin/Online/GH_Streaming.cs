@@ -29,7 +29,7 @@ namespace Axis.Online
     /// <summary>
     /// Stream command instructions to a remote IRC5 controller.
     /// </summary>
-    public class GH_Streaming : GH_Component, IGH_VariableParameterComponent
+    public class GH_Streaming : AxisLogin_Component, IGH_VariableParameterComponent
     {
         // Optionable Log
         bool logOption = false;
@@ -68,8 +68,6 @@ namespace Axis.Online
         Speed speed = new Speed();
         Zone zone = new Zone();
 
-        bool validToken = false;
-
         public GH_Streaming() : base("Live Connection", "Stream", "Stream instructions to a robot controller", AxisInfo.Plugin, AxisInfo.TabLive)
         {
         }
@@ -89,24 +87,8 @@ namespace Axis.Online
         }
         #endregion
 
-        #region Auth
-        /// <summary>
-        /// Check that we are logged in before continuing.
-        /// </summary>
-        protected override void BeforeSolveInstance()
-        {
-            Auth auth = new Auth();
-            validToken = auth.IsValid;
 
-            if (!validToken)
-            {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Please log in to Axis.");
-                return;
-            }
-        }
-        #endregion
-
-        protected override void SolveInstance(IGH_DataAccess DA)
+        protected override void SolveInternal(IGH_DataAccess DA)
         {
             bool clear = false;
             bool lqclear = false;
@@ -125,8 +107,6 @@ namespace Axis.Online
             if (lQOption)
                 if (!DA.GetData("Clear Local Queue", ref lqclear)) ;
 
-            // Exit if we don't have a valid login token.
-            if (!validToken) { return; }
 
             //Output module file to prime controller for straming
             if (modOption)
