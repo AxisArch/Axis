@@ -8,7 +8,7 @@ namespace Axis
     public class AxisInfo : GH_AssemblyInfo
     {
         public override string Name => "Axis";
-        public override Bitmap Icon => Axis.Properties.Icons.Robot;
+        public override Bitmap Icon => Axis.Properties.Icons.Robot_2;
         public override string Description => "A toolkit for industrial robot programming and simulation.";
         public override Guid Id => new Guid("011021d1-f033-4815-9ada-a12ad574343a");
 

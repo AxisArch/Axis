@@ -233,7 +233,7 @@ namespace Axis.Geometry
         #endregion
 
         #region Component Settings
-        public override GH_Exposure Exposure => GH_Exposure.tertiary;
+        public override GH_Exposure Exposure => GH_Exposure.quarternary;
 
         /// <summary>
         /// Implement this interface in your component if you want to enable variable parameter UI.

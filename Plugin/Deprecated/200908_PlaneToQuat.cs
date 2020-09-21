@@ -145,7 +145,7 @@ namespace Axis.Geometry
         {
             get
             {
-                return Axis.Properties.Icons.Robot;
+                return Axis.Properties.Icons.Robot_2;
             }
         }
         public override Guid ComponentGuid

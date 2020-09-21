@@ -173,7 +173,7 @@ namespace Axis.Targets
             }
             else
             {
-                Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Declarations"), true);
+                Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Dec"), true);
             }
             ExpireSolution(true);
         }

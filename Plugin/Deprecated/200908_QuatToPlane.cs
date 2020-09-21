@@ -50,7 +50,7 @@ namespace Axis.Geometry
         {
             get
             {
-                return Properties.Icons.Robot;
+                return Properties.Icons.Robot_2;
             }
         }
         public override Guid ComponentGuid

@@ -133,7 +133,7 @@
   <data name="Core" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Core.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="CSystem" type="System.Resources.ResXFileRef, System.Windows.Forms">
+  <data name="CSystem_2" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\CSystem.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="DigitalIn" type="System.Resources.ResXFileRef, System.Windows.Forms">
@@ -184,7 +184,7 @@
   <data name="RAPID" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\RAPID.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="Robot" type="System.Resources.ResXFileRef, System.Windows.Forms">
+  <data name="Robot_2" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Robot.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="Robot_1" type="System.Resources.ResXFileRef, System.Windows.Forms">
@@ -291,5 +291,11 @@
   </data>
   <data name="ZoneParam" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\ZoneParam.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="CSystem" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\CSystem_1.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Robot" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Robot_3.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>

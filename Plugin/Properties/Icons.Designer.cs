@@ -153,6 +153,16 @@ namespace Axis.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap CSystem_2 {
+            get {
+                object obj = ResourceManager.GetObject("CSystem_2", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap CSystemParam {
             get {
                 object obj = ResourceManager.GetObject("CSystemParam", resourceCulture);
@@ -386,6 +396,16 @@ namespace Axis.Properties {
         internal static System.Drawing.Bitmap Robot_1 {
             get {
                 object obj = ResourceManager.GetObject("Robot_1", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Robot_2 {
+            get {
+                object obj = ResourceManager.GetObject("Robot_2", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
