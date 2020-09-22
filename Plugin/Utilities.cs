@@ -1,33 +1,15 @@
-﻿using System;
-using static System.Math;
-using System.Collections.Generic;
-using System.Linq;
-using System.IO;
-using System.Data;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Drawing;
-using System.Windows.Forms;
-using System.Text;
-using System.Threading.Tasks;
-
-using Rhino;
-using Rhino.Commands;
-using Rhino.Display;
-using Rhino.Geometry;
-using Rhino.Input.Custom;
-using Rhino.DocObjects;
-
+﻿using Axis.Types;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Types;
-using Grasshopper.Kernel.Special;
-using Grasshopper.Kernel.Parameters;
-
-using Axis.Targets;
-
-using Newtonsoft.Json;
+using Rhino.DocObjects;
+using Rhino.Geometry;
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Windows.Forms;
+using static System.Math;
 
 namespace Axis
 {
@@ -38,10 +20,11 @@ namespace Axis
     {
         // Public constants across the plugin.
         public const int DefaultSpeed = 200;
+
         public const int DefaultZone = 1;
         public const int DefaultTime = 5;
         public const double ExAxisTol = 0.00001;
-        const double SingularityTol = 0.0001;
+        private const double SingularityTol = 0.0001;
 
         /// <summary>
         /// List of standard ABB zones as a dictionary.
@@ -300,7 +283,6 @@ namespace Axis
             return remappedValue;
         }
 
-
         /// <summary>
         /// Compute the standard deviation for a set of values.
         /// </summary>
@@ -372,7 +354,6 @@ namespace Axis
             else if (oType == ObjectType.Mesh) { return 3; }
             else if (oType == ObjectType.Curve) { return 4; }
             else if (oType == ObjectType.Point) { return 5; }
-
             else // If the geoemtry type is not found, return -1.
                 return -1;
         }
@@ -405,9 +386,10 @@ namespace Axis
         /// </summary>
         public class AutoClosingMessageBox
         {
-            System.Threading.Timer _timeoutTimer;
-            string _caption;
-            AutoClosingMessageBox(string text, string caption, int timeout)
+            private System.Threading.Timer _timeoutTimer;
+            private string _caption;
+
+            private AutoClosingMessageBox(string text, string caption, int timeout)
             {
                 _caption = caption;
                 _timeoutTimer = new System.Threading.Timer(OnTimerElapsed,
@@ -415,22 +397,27 @@ namespace Axis
                 using (_timeoutTimer)
                     MessageBox.Show(text, caption);
             }
+
             public static void Show(string text, string caption, int timeout)
             {
                 new AutoClosingMessageBox(text, caption, timeout);
             }
-            void OnTimerElapsed(object state)
+
+            private void OnTimerElapsed(object state)
             {
                 IntPtr mbWnd = FindWindow("#32770", _caption); // lpClassName is #32770 for MessageBox
                 if (mbWnd != IntPtr.Zero)
                     SendMessage(mbWnd, WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
                 _timeoutTimer.Dispose();
             }
-            const int WM_CLOSE = 0x0010;
+
+            private const int WM_CLOSE = 0x0010;
+
             [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true)]
-            static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
+            private static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
+
             [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto)]
-            static extern IntPtr SendMessage(IntPtr hWnd, UInt32 Msg, IntPtr wParam, IntPtr lParam);
+            private static extern IntPtr SendMessage(IntPtr hWnd, UInt32 Msg, IntPtr wParam, IntPtr lParam);
         }
 
         /// <summary>
@@ -456,10 +443,9 @@ namespace Axis
         /// <returns>Limited Value</returns>
         public static T LimitToRange<T>(IComparable<T> value, T inclusiveMinimum, T inlusiveMaximum)
         {
-
             if (value.CompareTo(inclusiveMinimum) == 0 | value.CompareTo(inclusiveMinimum) == 1)
             {
-                if (value.CompareTo(inlusiveMaximum) ==  -1 | value.CompareTo(inlusiveMaximum) == 0)
+                if (value.CompareTo(inlusiveMaximum) == -1 | value.CompareTo(inlusiveMaximum) == 0)
                 {
                     return (T)value;
                 }
@@ -469,7 +455,6 @@ namespace Axis
 
             return inclusiveMinimum;
         }
-
 
         /// <summary>
         /// Convert List to GH_Structure - Extention method
@@ -512,755 +497,19 @@ namespace Axis
         /// <typeparam name="Q"></typeparam>
         /// <param name="gh_struct"></param>
         /// <returns></returns>
-        public static List<T> ToList<T, Q>(this Grasshopper.Kernel.Data.GH_Structure<Q> gh_struct )  where T : Rhino.Runtime.CommonObject where Q : IGH_Goo
+        public static List<T> ToList<T, Q>(this Grasshopper.Kernel.Data.GH_Structure<Q> gh_struct) where T : Rhino.Runtime.CommonObject where Q : IGH_Goo
         {
             if (gh_struct == null) return null;
             var list = new List<T>();
             for (int i = 0; i < gh_struct.Branches.Count; ++i)
             {
-                for(int j = 0; j< gh_struct[i].Count; ++j) 
+                for (int j = 0; j < gh_struct[i].Count; ++j)
                 {
                     var data = gh_struct[i][j];
-                        list.Add(data as T);
+                    list.Add(data as T);
                 }
-        
             }
             return list;
         } //<--- This is buggy
-    }
-
-    /// <summary>
-    /// Axis web communications class.
-    /// </summary>
-    public static class AxisWebServices
-    {
-        private static readonly HttpClient Client = new HttpClient();
-        public static string SendSmif(List<string> messages, string projectId, string token)
-        {
-            string json = JsonConvert.SerializeObject(messages);
-            try
-            {
-                string url = $"emptyURL";
-                var result = PostJson(url, json, token);
-                return result.ReasonPhrase;
-            }
-            catch (Exception e) { }
-            return "Unknown failure.";
-        }
-
-        private static HttpResponseMessage PostJson(string url, string json, string token)
-        {
-            Uri uri = new Uri(url);
-            Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
-            var responseTask = Client.PostAsync(url, content);
-            return responseTask.Result;
-        }
-    }
-
-}
-
-/// <summary>
-/// This namesspcae proviedes fuctions for
-/// the modification of RAPID instructions.
-/// </summary>
-namespace RAPID
-{
-    /// <summary>
-    /// RAPID program
-    /// </summary>
-    public class Program : GH_Goo<Program>, IEnumerable<string>
-    {
-        public List<string> code { get; private set; }
-        public bool IsMain { get; private set; }
-
-
-        private string Name = "ProcName";
-        private bool conL_J = false;
-        private List<string> comment = new List<string>();
-        private List<string> overrides = new List<string>();
-        private List<string> ljHeader = new List<string>
-                {
-                    @"ConfL \Off;",
-                    @"ConfJ \Off;",
-                    "",
-                };
-        private List<string> ljFooter = new List<string>
-                {
-                    " ",
-                    @"ConfL \On;",
-                    @"ConfJ \On;",
-                };
-
-
-        public Program(List<string> code = null, List<string> overrides = null, string progName = "ProcName", bool LJ = false, List<string> comments = null)
-        {
-            if (code != null) this.code = code;
-            this.Name = progName;
-            this.conL_J = LJ;
-            if (overrides != null) { this.overrides = overrides; }
-            if (progName == "main") { this.IsMain = true; }
-            if (comment != null) { this.comment = comment; }
-        }
-        public void AddOverrides(List<string> overrides)
-        {
-            this.overrides.AddRange(overrides);
-        }
-
-        public List<string> Code()
-        {
-            var prog = new List<string>();
-
-            prog.AddRange(comment);
-            prog.Add($"PROC {Name}()");
-            if (this.overrides != null) { prog.AddRange(overrides); }
-            prog.AddRange(comment);
-            if (conL_J) { prog.AddRange(ljHeader); }
-            prog.AddRange(this.code);
-            if (conL_J) { prog.AddRange(ljFooter); }
-
-            prog.Add("ENDPROC");
-
-            return prog;
-        }
-        public List<Program> ToList()
-        {
-            return new List<Program> { this };
-        }
-
-        public void Add(string item)
-        {
-            code.Add(item);
-        }
-        public IEnumerator<string> GetEnumerator()
-        {
-            return code.GetEnumerator();
-        }
-        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
-
-        public override string TypeName => "RAPID Proc";
-        public override string TypeDescription => "Represents a RAPID procedure that can be combined to a RAPID module";
-        public override bool IsValid => true;
-        public override string ToString()
-        {
-            return $"RAPID Proc: {Name}";
-        }
-        public override IGH_Goo Duplicate()
-        {
-            return this;
-        }
-    }
-
-    /// <summary>
-    /// RAPID module
-    /// </summary>
-    public class Module : GH_Goo<Module>
-    {
-        private bool isValid;
-
-        private string Name;
-        private List<string> tag = new List<string>
-        {
-            "! ABB Robot Code",
-            $"! Generated with Axis {Assembly.GetExecutingAssembly().GetName().Version}",
-            "! File Created: " + DateTime.Now.ToString(),
-            "! Author: " + Environment.UserName.ToString(),
-            " ",
-        };
-        private List<string> declarations = new List<string>
-                {
-                    "! Declarations",
-                    "VAR confdata cData := [0,-1,-1,0];",
-                    "VAR extjoint eAxis := [9E9,9E9,9E9,9E9,9E9,9E9];",
-                };
-        private List<Program> main = new List<Program>();
-        private List<Program> progs = new List<Program>();
-        private List<string> legacyProgs = new List<string>();
-
-        public List<Program> extraProg = new List<Program>();
-
-        public Module(List<Program> progs = null, List<string> declarations = null, string name = "Submodule")
-        {
-            if (progs != null)
-            {
-                foreach (Program prog in progs)
-                {
-                    if (prog.IsMain)
-                    {
-                        this.AddMain(prog);
-                    }
-                    else
-                    {
-                        if (this.progs == null)
-                        {
-                            this.progs = new List<Program>();
-
-                        }
-                        this.progs.Add(prog);
-                    }
-                }
-            }
-            this.Name = name;
-            if (declarations != null) { this.declarations = declarations; }
-            this.isValid = this.validate();
-        }
-        public void AddDeclarations(List<string> declaration)
-        {
-            if (this.declarations == null)
-            {
-                this.declarations = declaration;
-            }
-            else
-            {
-                this.declarations.AddRange(declaration);
-            }
-        }
-        public void AddPrograms(List<Program> progs)
-        {
-            if (progs == null)
-            {
-                this.progs = progs;
-            }
-            else
-            {
-                this.progs.AddRange(progs);
-            }
-        }
-        public void AddPrograms(List<string> progs)
-        {
-            legacyProgs.AddRange(progs);
-        }
-        public void AddMain(Program main)
-        {
-            if (this.main == null)
-            {
-                this.main = new List<Program>() { main };
-            }
-            else
-            {
-                this.main.Add(main);
-            }
-            this.isValid = this.validate();
-        }
-        public void AddOverrides(List<string> overrides)
-        {
-            foreach (Program prog in this.main)
-            {
-                prog.AddOverrides(overrides);
-            }
-        }
-        bool ExtraProg(List<Program> extraProg)
-        {
-            foreach (Program prog in extraProg)
-            {
-                if (prog.IsMain == true)
-                {
-                    return false;
-                }
-            }
-
-            this.extraProg = extraProg;
-            return true;
-        }
-
-        public List<string> Code()
-        {
-            List<string> mod = new List<string>();
-            mod.Add($"MODULE {Name}");
-            mod.AddRange(this.tag);
-            mod.AddRange(this.declarations);
-            mod.Add("");
-            mod.Add("! Main Program");
-            foreach (Program prog in main)
-            {
-                mod.AddRange(prog.Code());
-            }
-            if (legacyProgs.Count > 0) { mod.AddRange(legacyProgs); }
-            if (progs.Count > 0)
-            {
-                mod.Add("! Additional Programs");
-                foreach (Program prog in progs)
-                {
-                    mod.AddRange(prog.Code());
-                }
-            }
-            mod.Add("ENDMODULE");
-
-            return mod;
-        }
-
-        private bool validate()
-        {
-            bool v = false;
-            int c = 0;
-            foreach (Program prog in this.main)
-            {
-                if (prog.IsMain == true) { ++c; }
-            }
-            if (c == 1) { return true; }
-            else { return false; }
-        }
-
-        public override string TypeName => "RAPID Module";
-        public override string TypeDescription => "Represents a RAPID mudule consisting of RAPID procedures";
-        public override bool IsValid => isValid;
-        public override string ToString()
-        {
-            return $"RAPID Module: {Name}";
-        }
-        public override IGH_Goo Duplicate()
-        {
-           return this;
-        }
-
-    }
-}
-
-/// <summary>
-/// This namespace provides functions for canvas manipulation in Grasshopper
-/// </summary
-namespace Canvas
-{
-    /// <summary>
-    /// This class provides functions for components
-    /// </summary>
-    class Component
-    {
-        static public void SetValueList(GH_Document doc, GH_Component comp, int InputIndex, List<KeyValuePair<string, string>> valuePairs, string name)
-        {
-            if (valuePairs.Count == 0) return;
-            doc = doc;
-            comp = comp;
-            GH_DocumentIO docIO = new GH_DocumentIO();
-            docIO.Document = new GH_Document();
-
-            if (docIO.Document == null) return;
-            doc.MergeDocument(docIO.Document);
-
-            docIO.Document.SelectAll();
-            docIO.Document.ExpireSolution();
-            docIO.Document.MutateAllIds();
-            IEnumerable<IGH_DocumentObject> objs = docIO.Document.Objects;
-            doc.DeselectAll();
-            doc.UndoUtil.RecordAddObjectEvent("Create Accent List", objs);
-            doc.MergeDocument(docIO.Document);
-
-            doc.ScheduleSolution(10, chanegValuelist);
-
-
-            void chanegValuelist(GH_Document document)
-            {
-
-                IList<IGH_Param> sources = comp.Params.Input[InputIndex].Sources;
-                int inputs = sources.Count;
-
-
-                // If nothing has been conected create a new component
-                if (inputs == 0)
-                {
-                    //instantiate  new value list and clear it
-                    GH_ValueList vl = new GH_ValueList();
-                    vl.ListItems.Clear();
-                    vl.NickName = name;
-                    vl.Name = name;
-
-                    //Create values for list and populate it
-                    for (int i = 0; i < valuePairs.Count; ++i)
-                    {
-                        var item = new GH_ValueListItem(valuePairs[i].Key, valuePairs[i].Value);
-                        vl.ListItems.Add(item);
-                    }
-
-                    //Add value list to the document
-                    document.AddObject(vl, false, 1);
-
-                    //get the pivot of the "accent" param
-                    System.Drawing.PointF currPivot = comp.Params.Input[InputIndex].Attributes.Pivot;
-                    //set the pivot of the new object
-                    vl.Attributes.Pivot = new System.Drawing.PointF(currPivot.X - 210, currPivot.Y - 11);
-
-                    // Connect to input
-                    comp.Params.Input[InputIndex].AddSource(vl);
-                }
-
-                // If inputs exist replace the existing ones
-                else
-                {
-                    for (int i = 0; i < inputs; ++i)
-                    {
-                        if (sources[i].Name == "Value List" | sources[i].Name == name)
-                        {
-                            //instantiate  new value list and clear it
-                            GH_ValueList vl = new GH_ValueList();
-                            vl.ListItems.Clear();
-                            vl.NickName = name;
-                            vl.Name = name;
-
-                            //Create values for list and populate it
-                            for (int j = 0; j < valuePairs.Count; ++j)
-                            {
-                                var item = new GH_ValueListItem(valuePairs[j].Key, valuePairs[j].Value);
-                                vl.ListItems.Add(item);
-                            }
-
-                            document.AddObject(vl, false, 1);
-                            //set the pivot of the new object
-                            vl.Attributes.Pivot = sources[i].Attributes.Pivot;
-
-                            var currentSource = sources[i];
-                            comp.Params.Input[InputIndex].RemoveSource(sources[i]);
-
-                            currentSource.IsolateObject();
-                            document.RemoveObject(currentSource, false);
-
-                            //Connect new vl
-                            comp.Params.Input[InputIndex].AddSource(vl);
-                        }
-                        else
-                        {
-                            //Do nothing if it dosent mach any of the above
-                        }
-                    }
-                }
-            }
-        }
-
-        public static void ChangeObjects(IEnumerable<IGH_Param> items, IGH_Param newObject)
-        {
-            foreach (IGH_Param item in items)
-            {
-                //get the input it is connected to
-                if (item.Recipients.Count == 0) return;
-                var parrent = item.Recipients[0];
-
-                GH_DocumentIO docIO = new GH_DocumentIO();
-                docIO.Document = new GH_Document();
-
-                //get active GH doc
-                GH_Document doc = item.OnPingDocument();
-                if (doc == null) return;
-                if (docIO.Document == null) return;
-
-                Component.AddObject(docIO, newObject, parrent, item.Attributes.Pivot);
-                Component.MergeDocuments(docIO, doc, $"Create {newObject.Name}");
-
-                doc.RemoveObject(item, false);
-                parrent.AddSource(newObject);
-            }
-        }
-
-        public static GH_ValueList CreateValueList(string name, Dictionary<string, string> valuePairs)
-        {
-            //initialize object
-            Grasshopper.Kernel.Special.GH_ValueList vl = new Grasshopper.Kernel.Special.GH_ValueList();
-            //clear default contents
-            vl.ListItems.Clear();
-
-            //set component nickname
-            vl.NickName = name;
-            vl.Name = name;
-
-            foreach (KeyValuePair<string, string> entety in valuePairs)
-            {
-                GH_ValueListItem vi = new GH_ValueListItem(entety.Key, entety.Value);
-                vl.ListItems.Add(vi);
-            }
-
-            return vl;
-        }
-        public static GH_NumberSlider CreateNumbersilder(string name, decimal min, decimal max, int precision = 0, int length = 174)
-        {
-            var nS = new GH_NumberSlider();
-            nS.ClearData();
-
-            //Naming
-            nS.Name = name;
-            nS.NickName = name;
-
-            nS.Slider.Minimum = min;
-            nS.Slider.Maximum = max;
-
-            nS.Slider.DecimalPlaces = Axis.Util.LimitToRange(precision, 0,12);
-
-            if (precision == 0)
-                nS.Slider.Type = Grasshopper.GUI.Base.GH_SliderAccuracy.Integer;
-            else
-                nS.Slider.Type = Grasshopper.GUI.Base.GH_SliderAccuracy.Float;
-
-            nS.CreateAttributes();
-            var bounds = nS.Attributes.Bounds;
-            bounds.Width = length;
-            nS.Attributes.Bounds = bounds;
-
-            nS.SetSliderValue(min);
-            return nS;
-        }
-
-        // private methods to magee the placement of ne objects
-        static void AddObject(GH_DocumentIO docIO, IGH_Param Object, IGH_Param param, PointF location = new PointF())
-        {
-            // place the object
-            docIO.Document.AddObject(Object, false, 1);
-
-            //get the pivot of the "accent" param
-            System.Drawing.PointF currPivot = param.Attributes.Pivot;
-
-            if (location == new PointF()) Object.Attributes.Pivot = new System.Drawing.PointF(currPivot.X - 120, currPivot.Y - 11);
-            //set the pivot of the new object
-            else Object.Attributes.Pivot = location;
-        }
-        static void MergeDocuments(GH_DocumentIO docIO, GH_Document doc, string name = "Merge")
-        {
-            docIO.Document.SelectAll();
-            docIO.Document.ExpireSolution();
-            docIO.Document.MutateAllIds();
-            IEnumerable<IGH_DocumentObject> objs = docIO.Document.Objects;
-            doc.DeselectAll();
-            doc.UndoUtil.RecordAddObjectEvent(name, objs);
-            doc.MergeDocument(docIO.Document);
-            //doc.ScheduleSolution(10);
-        }
-
-        #region Display Methods
-
-        static public void DisplayPlane(Plane plane, IGH_PreviewArgs args, double sizeLine = 70, double sizeArrow = 30, int thickness = 3)
-        {
-            args.Display.DrawLineArrow(
-                new Line(plane.Origin, plane.XAxis, sizeLine),
-                Axis.Styles.Pink,
-                thickness,
-                sizeArrow);
-            args.Display.DrawLineArrow(new Line(plane.Origin, plane.YAxis, sizeLine),
-                Axis.Styles.LightBlue,
-                thickness,
-                sizeArrow);
-            args.Display.DrawLineArrow(new Line(plane.Origin, plane.ZAxis, sizeLine),
-                Axis.Styles.LightGrey,
-                thickness,
-                sizeArrow);
-        }
-        static public void DisplayRobotLines(Axis.Core.Manipulator robot, IGH_PreviewArgs args, int thickness = 3)
-        {
-            //List<Point3d> points = new List<Point3d>();
-            //foreach (Plane p in robot.ikPlanes) { points.Add(p.Origin); }
-            //
-            //Polyline pLine = new Polyline(points);
-            //
-            //Line[] lines = pLine.GetSegments();
-            //
-            //// Draw lines
-            //for (int i = 0; i < lines.Length; ++i)
-            //{
-            //    int cID = i;
-            //    if (i >= lines.Length) cID = robot.ikColors.Count - 1;
-            //    args.Display.DrawLine(lines[i], robot.ikColors[cID], thickness);
-            //}
-            //
-            ////Draw Sphers
-            //
-            ////Draw Plane
-            //DisplayPlane(robot.ikPlanes[0], args);
-        }
-        static public void DisplayTool(Axis.Core.Tool tool, IGH_PreviewArgs args)
-        {
-            //int cC = tool.ikColors.Count;
-            //int tC = tool.ikGeometry.Count;
-            //
-            //for (int i = 0; i < tC; ++i)
-            //{
-            //    int cID = i;
-            //
-            //    if (i >= cC) cID = cC - 1;
-            //    args.Display.DrawMeshShaded(tool.ikGeometry[i], new DisplayMaterial(tool.ikColors[cID]));
-            //}
-        }
-        static public void DisplayToolLines(Axis.Core.Tool tool, IGH_PreviewArgs args, int thickness = 3)
-        {
-            //Line line = new Line(tool.ikBase.Origin, tool.ikTCP.Origin);
-            //args.Display.DrawLine(line, tool.ikColors[0], thickness);
-            //
-            ////Draw Plane
-            //DisplayPlane(tool.ikTCP, args);
-        }
-        static public void DisplayToolPath(Axis.Targets.Toolpath toolpath, IGH_PreviewArgs args, int thickness = 3, double radius = 2 )
-        {
-            List<Line> lines = new List<Line>();
-            List<Color> colors = new List<Color>();
-
-            Dictionary<Line, Color> pairs = lines.Zip(colors, (k, v) => new { k, v })
-              .ToDictionary(x => x.k, x => x.v);
-
-            //Draw line segments
-            foreach (KeyValuePair<Line, Color> pair in pairs)
-            {
-                args.Display.DrawLine(pair.Key, pair.Value, thickness);
-            }
-
-            List<Point3d> points = new List<Point3d>();
-            List<Sphere> spheres = points.Select(p => new Sphere(p, radius)).ToList();
-
-            //Draw Commants
-            foreach (Sphere sphere in spheres)
-            {
-                //IF bitmats are to be used
-                //args.Display.DrawSprites();
-                args.Display.DrawSphere(sphere, Axis.Styles.LightOrange);
-            }
-
-        }
-        
-        #endregion
-    }
-
-    static class Menu
-    {
-        /// <summary>
-        /// Uncheck other dropdown menu items
-        /// </summary>
-        /// <param name="selectedMenuItem"></param>
-        public static void UncheckOtherMenuItems(ToolStripMenuItem selectedMenuItem)
-        {
-            selectedMenuItem.Checked = true;
-
-            // Select the other MenuItens from the ParentMenu(OwnerItens) and unchecked this,
-            // The current Linq Expression verify if the item is a real ToolStripMenuItem
-            // and if the item is a another ToolStripMenuItem to uncheck this.
-            foreach (var ltoolStripMenuItem in (from object
-                                                    item in selectedMenuItem.Owner.Items
-                                                let ltoolStripMenuItem = item as ToolStripMenuItem
-                                                where ltoolStripMenuItem != null
-                                                where !item.Equals(selectedMenuItem)
-                                                select ltoolStripMenuItem))
-                (ltoolStripMenuItem).Checked = false;
-
-            // This line is optional, for show the mainMenu after click
-            //selectedMenuItem.Owner.Show();
-        }
-
-        // Register the new input parameters to a component.
-        public static void AddInput(this IGH_Component gH_Component, int index, IGH_Param[] inputParams)
-        {
-            IGH_Param parameter = inputParams[index];
-
-            if (gH_Component.Params.Input.Any(x => x.Name == parameter.Name))
-                gH_Component.Params.UnregisterInputParameter(gH_Component.Params.Input.First(x => x.Name == parameter.Name), true);
-            else
-            {
-                int insertIndex = gH_Component.Params.Input.Count;
-                for (int i = 0; i < gH_Component.Params.Input.Count; i++)
-                {
-                    int otherIndex = Array.FindIndex(inputParams, x => x.Name == gH_Component.Params.Input[i].Name);
-                    if (otherIndex > index)
-                    {
-                        insertIndex = i;
-                        break;
-                    }
-                }
-
-                gH_Component.Params.RegisterInputParam(parameter, insertIndex);
-            }
-            gH_Component.Params.OnParametersChanged();
-            gH_Component.ExpireSolution(true);
-
-        }
-        public static void AddInputs(this IGH_Component gH_Component, int[] indexes, IGH_Param[] inputParams)
-        {
-            foreach (int index in indexes)
-            {
-                IGH_Param parameter = inputParams[index];
-
-                if (gH_Component.Params.Input.Any(x => x.Name == parameter.Name))
-                    gH_Component.Params.UnregisterInputParameter(gH_Component.Params.Input.First(x => x.Name == parameter.Name), true);
-                else
-                {
-                    int insertIndex = gH_Component.Params.Input.Count;
-                    for (int i = 0; i < gH_Component.Params.Input.Count; i++)
-                    {
-                        int otherIndex = Array.FindIndex(inputParams, x => x.Name == gH_Component.Params.Input[i].Name);
-                        if (otherIndex > index)
-                        {
-                            insertIndex = i;
-                            break;
-                        }
-                    }
-
-                    gH_Component.Params.RegisterInputParam(parameter, insertIndex);
-                }
-                gH_Component.Params.OnParametersChanged();
-
-            }
-            gH_Component.ExpireSolution(true);
-        }
-
-
-        // Register the new output parameters to a component.
-        public static void AddOutput(this IGH_Component gH_Component, int index, IGH_Param[] outputParams)
-        {
-            IGH_Param parameter = outputParams[index];
-
-            if (gH_Component.Params.Output.Any(x => x.Name == parameter.Name))
-                gH_Component.Params.UnregisterOutputParameter(gH_Component.Params.Output.First(x => x.Name == parameter.Name), true);
-            else
-            {
-                int insertIndex = gH_Component.Params.Output.Count;
-                for (int i = 0; i < gH_Component.Params.Output.Count; i++)
-                {
-                    int otherIndex = Array.FindIndex(outputParams, x => x.Name == gH_Component.Params.Output[i].Name);
-                    if (otherIndex > index)
-                    {
-                        insertIndex = i;
-                        break;
-                    }
-                }
-
-                gH_Component.Params.RegisterOutputParam(parameter, insertIndex);
-            }
-            gH_Component.Params.OnParametersChanged();
-            gH_Component.ExpireSolution(true);
-        }
-        public static void AddOutputs(this IGH_Component gH_Component, int[] indexes, IGH_Param[] outputParams)
-        {
-            foreach (int index in indexes)
-            {
-                IGH_Param parameter = outputParams[index];
-
-                if (gH_Component.Params.Output.Any(x => x.Name == parameter.Name))
-                    gH_Component.Params.UnregisterOutputParameter(gH_Component.Params.Output.First(x => x.Name == parameter.Name), true);
-                else
-                {
-                    int insertIndex = gH_Component.Params.Output.Count;
-                    for (int i = 0; i < gH_Component.Params.Output.Count; i++)
-                    {
-                        int otherIndex = Array.FindIndex(outputParams, x => x.Name == gH_Component.Params.Output[i].Name);
-                        if (otherIndex > index)
-                        {
-                            insertIndex = i;
-                            break;
-                        }
-                    }
-
-                    gH_Component.Params.RegisterOutputParam(parameter, insertIndex);
-                }
-                gH_Component.Params.OnParametersChanged();
-            }
-                gH_Component.ExpireSolution(true);
-        }
-
-        public static void RemoveAllInputs(this GH_ComponentParamServer Params) 
-        {
-            int count = Params.Input.Count;
-            for (int i = 0; i < count; ++i) Params.UnregisterInputParameter(Params.Input[0]);
-        }
-        public static void RemoveAllOutputs(this GH_ComponentParamServer Params)
-        {
-            int count = Params.Output.Count;
-            for (int i = 0; i < count; ++i) Params.UnregisterOutputParameter(Params.Output[0]);
-        }
-
-
     }
 }

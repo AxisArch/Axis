@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-
+﻿using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
-using Grasshopper;
-using Grasshopper.Kernel.Types;
-
-using Axis;
-
-
+using System;
+using System.Collections.Generic;
 using Xunit;
 
 namespace Axis.Tests.Xunit
@@ -29,26 +23,25 @@ namespace Axis.Tests.Xunit
             Axis.Targets.Zone zone;
             Axis.Util.ABBZones().TryGetValue(0, out zone);
 
-            Axis.Targets.Target linearTarget = new Axis.Targets.Target( 
+            Axis.Targets.Target linearTarget = new Axis.Targets.Target(
                 Plane.WorldXY,
                 Axis.Targets.MotionType.Linear,
                 speed,
                 zone,
                 Axis.Core.Tool.Default,
-                new Axis.Targets.CSystem("wobj0",Plane.WorldXY,false, Plane.WorldXY),
+                new Axis.Targets.CSystem("wobj0", Plane.WorldXY, false, Plane.WorldXY),
                 0, //Ext Rot
                 0, //Ext Lin
                 Axis.Core.Manufacturer.ABB);
 
-
             Assert.Equal(linearTargetABBExpexted, linearTarget.StrRob);
         }
+
         [Fact]
         public void RAPIDCodeMoveJ()
         {
             string jointTargetABBExpexted = "MoveJ [[0,0,0],[1,0,0,0],cData,[0,0,9E9,9E9,9E9,9E9]], v5, z0, tool0 \\WObj:=wobj0;";
             //string linearTargetABBExpexted = "MoveJ [[0,0,0],[1,0,0,0],[0,0,0,0],[0,0,9E9,9E9,9E9,9E9]], v5, z0, tool0 \\WObj:=wobj0;";
-
 
             Axis.Targets.Speed speed;
             Axis.Util.ABBSpeeds().TryGetValue(5, out speed);
@@ -67,12 +60,12 @@ namespace Axis.Tests.Xunit
                 Axis.Core.Manufacturer.ABB);
             Assert.Equal(jointTargetABBExpexted, joinTarget.StrRob);
         }
+
         [Fact]
         public void RAPIDCodeMoveAbsJ()
         {
             string absJointTargetABBExpexted = "MoveAbsJ [[0,0,0,0,0,0],[0,0,9E9,9E9,9E9,9E9]], v5, z0, tool0;";
             //string linearTargetABBExpexted = "MoveAbsJ [[0,0,0,0,0,0],[0,0,9E9,9E9,9E9,9E9]], v5, z0, tool0;";
-
 
             Axis.Targets.Speed speed;
             Axis.Util.ABBSpeeds().TryGetValue(5, out speed);
@@ -96,7 +89,6 @@ namespace Axis.Tests.Xunit
     [Collection("Rhino Collection")]
     public class XunitExampleTests
     {
-
         /// <summary>
         /// Xunit Test to Transform a brep using a translation
         /// </summary>
@@ -143,14 +135,13 @@ namespace Axis.Tests.Xunit
             // Arrange
             var myBox = new GH_Box(new Box());
 
-            // Act 
+            // Act
             var result = myBox.Boundingbox.Center;
 
             // Assert
             Assert.IsType<Point3d>(result);
         }
-
     }
-    
-    #endregion
+
+    #endregion Example Code
 }

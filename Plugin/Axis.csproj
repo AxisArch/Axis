@@ -35,7 +35,7 @@
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <OutputPath>..\..\..\..\AppData\Roaming\Grasshopper\Libraries\Axis\</OutputPath>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <WarningLevel>0</WarningLevel>
+    <WarningLevel>4</WarningLevel>
     <CodeAnalysisRuleSet>BasicCorrectnessRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
   </PropertyGroup>
@@ -97,7 +97,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="Online\RAPID-Modules.Designer.cs">
+    <Compile Update="Resources\RAPID-Modules.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>RAPID-Modules.resx</DependentUpon>
@@ -107,11 +107,11 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Icons.resx</DependentUpon>
     </Compile>
-    <Content Include="Robot\RobotBinaries\ExampleCode for generating binary.txt" />
-    <Compile Update="Robot\RobotSystems.Designer.cs">
+    <Content Include="Resources\RobotBinaries\ExampleCode for generating binary.txt" />
+    <Compile Update="Resources\RobotMehes.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
-      <DependentUpon>RobotSystems.resx</DependentUpon>
+      <DependentUpon>RobotMehes.resx</DependentUpon>
     </Compile>
     <Compile Update="Properties\Settings.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -120,7 +120,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Update="Online\RAPID-Modules.resx">
+    <EmbeddedResource Update="Resources\RAPID-Modules.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>RAPID-Modules.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
@@ -129,9 +129,9 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Icons.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <EmbeddedResource Update="Robot\RobotSystems.resx">
+    <EmbeddedResource Update="Resources\RobotMehes.resx">
       <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>RobotSystems.Designer.cs</LastGenOutput>
+      <LastGenOutput>RobotMehes.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
@@ -157,15 +157,14 @@
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Remove="Deprecated\200129_Simulation.cs" />
-    <Compile Remove="Deprecated\200827_AuthTest.cs" />
-    <Compile Remove="Deprecated\200827_HomePose.cs" />
-    <Compile Remove="Deprecated\200902_InverseKinematics.cs" />
-    <Compile Remove="Deprecated\200908_ABBComunication.cs" />
-    <Compile Remove="Params\ExtValParam.cs" />
-    <Compile Remove="Params\GH_Manipulator.cs" />
-    <Compile Remove="Robot\OffsetWristKinematics.cs" />
-    <Compile Remove="Targets\LinearInterpolation.cs" />
+    <Compile Remove="GH_Deprecated\200129_Simulation.cs" />
+    <Compile Remove="GH_Deprecated\200827_AuthTest.cs" />
+    <Compile Remove="GH_Deprecated\200827_HomePose.cs" />
+    <Compile Remove="GH_Deprecated\200902_InverseKinematics.cs" />
+    <Compile Remove="GH_Deprecated\200908_ABBComunication.cs" />
+    <Compile Remove="GH_Params\ExtValParam.cs" />
+    <Compile Remove="GH_Params\GH_Manipulator.cs" />
+    <Compile Remove="GH_Components\Targets\LinearInterpolation.cs" />
   </ItemGroup>
 
 

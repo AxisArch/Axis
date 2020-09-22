@@ -2,7 +2,10 @@
   "profiles": {
     "Axis": {
       "commandName": "Executable",
-      "executablePath": "C:\\Program Files\\Rhino 6\\System\\Rhino.exe"
+      "executablePath": "C:\\Program Files\\Rhino 6\\System\\Rhino.exe",
+      "environmentVariables": {
+        "AUTHID": "bDiJKd5tM8eqHsTX01ovqyFvOSBnC4mE"
+      }
     }
   }
 }

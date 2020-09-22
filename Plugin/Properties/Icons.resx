@@ -119,183 +119,222 @@
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="AlignOrigin" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\AlignOrigin.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="CheckProgram" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\CheckProgram.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="CodeGen" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\CodeGen.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Collision" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Collision.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Core" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Core.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="CSystem_2" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\CSystem.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="DigitalIn" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\DigitalIn.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="DigitalOut" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\DigitalOut.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Export" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Export.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="FK" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\FK.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Flip" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Flip.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="IK" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\IK.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="JointTarget" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\JointTarget.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="KRL" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\KRL.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Layers" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Layers.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Lerp" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Lerp.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="License" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\License.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="MethodControl" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\MethodControl.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Online" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Online.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="OpenFolder" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\OpenFolder.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Play" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Play.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="RAPID" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\RAPID.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Robot_2" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Robot.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Robot_1" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Robot_1.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="SelectFolder" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\SelectFolder.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="ShowTarget" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\ShowTarget.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="ShowToolpath" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\ShowToolpath.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="ShowZone" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\ShowZone.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="SigmaS" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\SigmaS.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Simulation" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Simulation.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Snap" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Snap.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Speed" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Speed.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="SpeedControl" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\SpeedControl.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="SurfaceFrame" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\SurfaceFrame.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Target" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Target.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Tool" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Tool.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Vision" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Vision.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Zone" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Zone.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="ZoneControl" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\ZoneControl.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Connect" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Connect.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Get_Module" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Get Module.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Set_Module" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Set Module.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Start_Stop" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Star Stop.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Streaming" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Streaming.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="EmergencyStop" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\EmergencyStop.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="MotorOff" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\MotorOff.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="UnknownMotorState" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\UnknownMotorState.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+    <value>..\Resources\Icons\AlignOrigin.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="AxisDark" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\AxisDark.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+    <value>..\Resources\Icons\AxisDark.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="AxisLight" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\AxisLight.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+    <value>..\Resources\Icons\AxisLight.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="CSystemParam" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\CSystemParam.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="Axis_Logo_Black" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Icons\Axis Logo Black.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="LogIn" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\LogIn.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="Axis_Logo_White" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Icons\Axis Logo White.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="MovmentParam" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\MovmentParam.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="CheckProgram" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\CheckProgram.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="RobotParam" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\RobotParam.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="CodeGen" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\CodeGen.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="SpeedParam" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\SpeedParam.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="Collision" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\Collision.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="TargetParam" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\TargetParam.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="Connect" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\Connect.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="ToolParam" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\ToolParam.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="ToolPathParam" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\ToolPathParam.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="ZoneParam" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\ZoneParam.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="Core" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\Core.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="CSystem" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\CSystem_1.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+    <value>..\Resources\Icons\CSystem.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="CSystemParam" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\CSystemParam.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="CSystem_1" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\CSystem_1.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="CSystem_11" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Icons\CSystem_1.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="DigitalIn" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\DigitalIn.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="DigitalOut" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\DigitalOut.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="EmergencyStop" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\EmergencyStop.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Export" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\Export.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="FK" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\FK.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Flip" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\Flip.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Get_Module" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\Get Module.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="iconCore" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Icons\iconCore.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="iconHome" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Icons\iconHome.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="iconPrint" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Icons\iconPrint.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="iconRapid" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Icons\iconRapid.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="iconRGen" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Icons\iconRGen.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="iconRobot" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Icons\iconRobot.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="iconSwitch" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Icons\iconSwitch.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="iconWarning" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Icons\iconWarning.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="IK" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\IK.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="JointTarget" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\JointTarget.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="KRL" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\KRL.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Layers" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\Layers.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Lerp" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\Lerp.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="License" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\License.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="LogIn" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\LogIn.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="MethodControl" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\MethodControl.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Milling" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Icons\Milling.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="MotorOff" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\MotorOff.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="MovmentParam" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\MovmentParam.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Online" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\Online.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="OpenFolder" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\OpenFolder.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Play" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\Play.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="RAPID" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\RAPID.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="Robot" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Robot_3.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+    <value>..\Resources\Icons\Robot.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="RobotParam" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\RobotParam.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Robot_1" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\Robot_1.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Robot_3" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\Robot_3.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Robot_31" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Icons\Robot_3.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="SelectFolder" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\SelectFolder.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Set_Module" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\Set Module.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="ShowTarget" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\ShowTarget.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="ShowToolpath" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\ShowToolpath.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="ShowZone" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\ShowZone.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="SigmaS" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\SigmaS.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Simulation" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\Simulation.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Snap" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\Snap.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Speed" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\Speed.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="SpeedControl" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\SpeedControl.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="SpeedParam" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\SpeedParam.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Start_Stop" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\Start Stop.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Streaming" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\Streaming.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="SurfaceFrame" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\SurfaceFrame.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Target" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\Target.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="TargetParam" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\TargetParam.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Tool" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\Tool.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="ToolParam" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\ToolParam.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="ToolPathParam" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\ToolPathParam.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="UnknownMotorState" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\UnknownMotorState.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Vision" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\Vision.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Zone" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\Zone.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="ZoneControl" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\ZoneControl.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="ZoneParam" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Icons\ZoneParam.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>

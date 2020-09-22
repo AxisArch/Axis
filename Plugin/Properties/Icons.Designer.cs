@@ -73,6 +73,26 @@ namespace Axis.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Axis_Logo_Black {
+            get {
+                object obj = ResourceManager.GetObject("Axis_Logo_Black", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Axis_Logo_White {
+            get {
+                object obj = ResourceManager.GetObject("Axis_Logo_White", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap AxisDark {
             get {
                 object obj = ResourceManager.GetObject("AxisDark", resourceCulture);
@@ -153,9 +173,19 @@ namespace Axis.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap CSystem_2 {
+        internal static System.Drawing.Bitmap CSystem_1 {
             get {
-                object obj = ResourceManager.GetObject("CSystem_2", resourceCulture);
+                object obj = ResourceManager.GetObject("CSystem_1", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap CSystem_11 {
+            get {
+                object obj = ResourceManager.GetObject("CSystem_11", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -243,6 +273,86 @@ namespace Axis.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap iconCore {
+            get {
+                object obj = ResourceManager.GetObject("iconCore", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap iconHome {
+            get {
+                object obj = ResourceManager.GetObject("iconHome", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap iconPrint {
+            get {
+                object obj = ResourceManager.GetObject("iconPrint", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap iconRapid {
+            get {
+                object obj = ResourceManager.GetObject("iconRapid", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap iconRGen {
+            get {
+                object obj = ResourceManager.GetObject("iconRGen", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap iconRobot {
+            get {
+                object obj = ResourceManager.GetObject("iconRobot", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap iconSwitch {
+            get {
+                object obj = ResourceManager.GetObject("iconSwitch", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap iconWarning {
+            get {
+                object obj = ResourceManager.GetObject("iconWarning", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap IK {
             get {
                 object obj = ResourceManager.GetObject("IK", resourceCulture);
@@ -316,6 +426,16 @@ namespace Axis.Properties {
         internal static System.Drawing.Bitmap MethodControl {
             get {
                 object obj = ResourceManager.GetObject("MethodControl", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Milling {
+            get {
+                object obj = ResourceManager.GetObject("Milling", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -403,9 +523,19 @@ namespace Axis.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap Robot_2 {
+        internal static System.Drawing.Bitmap Robot_3 {
             get {
-                object obj = ResourceManager.GetObject("Robot_2", resourceCulture);
+                object obj = ResourceManager.GetObject("Robot_3", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Robot_31 {
+            get {
+                object obj = ResourceManager.GetObject("Robot_31", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

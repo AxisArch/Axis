@@ -4,7 +4,6 @@ using System.Runtime.InteropServices;
 
 using Xunit;
 
-
 namespace Axis.Tests.Xunit
 {
     /// <summary>
@@ -12,11 +11,9 @@ namespace Axis.Tests.Xunit
     /// </summary>
     public class XunitTestInitFixture : IDisposable
     {
-        static bool initialized = false;
-        static string systemDir = null;
-        static string systemDirOld = null;
-
-
+        private static bool initialized = false;
+        private static string systemDir = null;
+        private static string systemDirOld = null;
 
         public XunitTestInitFixture()
         {
@@ -29,7 +26,6 @@ namespace Axis.Tests.Xunit
 
             // Make surte we are running the tests as 64x
             Assert.True(Environment.Is64BitProcess, "Tests must be run as x64");
-
 
             // Set path to rhino system directory
             string envPath = Environment.GetEnvironmentVariable("path");
