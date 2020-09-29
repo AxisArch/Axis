@@ -334,9 +334,9 @@ namespace Axis
         /// <param name="program"></param>
         /// <param name="nSize"></param>
         /// <returns></returns>
-        public static List<List<string>> SplitProgram(List<string> program, int nSize = 5000)
+        public static List<List<T>> SplitProgram<T>(List<T> program, int nSize = 5000)
         {
-            var list = new List<List<string>>();
+            var list = new List<List<T>>();
             for (int i = 0; i < program.Count; i += nSize)
                 list.Add(program.GetRange(i, Math.Min(nSize, program.Count - i)));
 

@@ -52,7 +52,7 @@ namespace Axis.GH_Components
             List<double> angles = new List<double>();
             double lin = 0;
             double rot = 0;
-            Tool tool = Tool.Default;
+            Tool tool = ABBTool.Default;
             GH_ObjectWrapper speedIn = new GH_ObjectWrapper();
             GH_ObjectWrapper zoneIn = new GH_ObjectWrapper();
 
@@ -128,7 +128,7 @@ namespace Axis.GH_Components
                 rType = Manufacturer.Kuka;
             }
 
-            Target jointTarget = new Target(angles, speed, zone, tool, rot, lin, rType);
+            Target jointTarget = new ABBTarget(angles, speed, zone, tool, rot, lin);
 
             DA.SetData(0, jointTarget);
         }

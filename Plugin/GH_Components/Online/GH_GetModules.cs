@@ -1,4 +1,5 @@
-﻿using Grasshopper.Kernel;
+﻿using Axis.Kernal;
+using Grasshopper.Kernel;
 using System;
 
 namespace Axis.GH_Components
@@ -6,10 +7,19 @@ namespace Axis.GH_Components
     /// <summary>
     /// Get all of the available modules from a robot controller.
     /// </summary>
-    public class GH_GetModules : GH_Component
+    public class GH_GetModules : Axis_Component
     {
         public GH_GetModules() : base("Get Modules", "Get Mods", "Get all available modules from a robot controller.", AxisInfo.Plugin, AxisInfo.TabLive)
         {
+            var attr = this.Attributes as AxisComponentAttributes;
+
+            IsMutiManufacture = false;
+
+            this.UI_Elements = new IComponentUiElement[]
+            {
+            };
+
+            attr.Update(UI_Elements);
         }
 
         #region IO

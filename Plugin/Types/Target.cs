@@ -6,168 +6,129 @@ using Rhino.Geometry;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Drawing;
 
 namespace Axis.Types
 {
     /// <summary>
     /// Construct a robot target position.
     /// </summary>
-    public class Target : IGH_GeometricGoo
+    public class ABBTarget : Target
     {
-        #region Class Fields
-
-        private Guid Guid;
-        public Plane Plane { get; set; } // Position in World Coordinates
-
-        public Plane TargetPlane; // Position in local coordinates
-        public Quaternion Quaternion { get; set; }
-        public List<double> JointAngles { get; set; }
-
-        public Speed Speed { get; private set; }
-        public Zone Zone { get; private set; }
-
-        public Tool Tool { get; private set; }
-        public CSystem CSystem { get; set; }
-
-        public ExtVal ExtRot { get; set; }
-        public ExtVal ExtLin { get; set; }
-        public Manufacturer Manufacturer { get; private set; }
-        public MotionType Method { get; private set; }
-
-        #endregion Class Fields
-
-        public string StrRob
+        public override string RobStr(Manufacturer manufacturer) 
         {
-            get
+            string robtarget = string.Empty;
+            Plane plane = Plane.WorldXY;
+            Point3d position = Point3d.Origin;
+            Quaternion quat = Quaternion.I;
+
+
+            if (this.Method == MotionType.Linear | this.Method == MotionType.Joint)
             {
-                string robtarget = string.Empty;
-                Plane plane = Plane.WorldXY;
-                Point3d position = Point3d.Origin;
-                Quaternion quat = Quaternion.I;
+                // Offset with the CSystem to get the right program code.
+                Transform xForm = Rhino.Geometry.Transform.PlaneToPlane(this.CSystem.CSPlane, Plane.WorldXY);
 
-                if (this.Method == MotionType.Linear | this.Method == MotionType.Joint)
-                {
-                    // Offset with the CSystem to get the right program code.
-                    Transform xForm = Rhino.Geometry.Transform.PlaneToPlane(this.CSystem.CSPlane, Plane.WorldXY);
+                plane = new Plane(this.TargetPlane);
+                plane.Transform(xForm);
 
-                    plane = new Plane(this.TargetPlane);
-                    plane.Transform(xForm);
+                position = this.TargetPlane.Origin;
+                quat = Util.QuaternionFromPlane(this.TargetPlane);
 
-                    position = this.TargetPlane.Origin;
-                    quat = Util.QuaternionFromPlane(this.TargetPlane);
-
-                    robtarget = $"[[{position.CodeStrFor(this.Manufacturer)}],[{quat.CodeStrFor(this.Manufacturer)}],cData,[{this.ExtRot.CodeStrFor(this.Manufacturer)},{this.ExtLin.CodeStrFor(this.Manufacturer)},9E9,9E9,9E9,9E9]]";
-                }
-
-                switch (this.Manufacturer)
-                {
-                    #region ABB
-
-                    case Manufacturer.ABB:
-                        switch (this.Method)
-                        {
-                            #region Linear
-
-                            case MotionType.Linear:
-
-                                if (this.Tool.RelTool != Vector3d.Zero)
-                                {
-                                    //MoveL RelTool ([[416.249, -110.455, 0],[0, 0, 1, 0], cData, eAxis], 0, 0,-120), v50, z1, tool0 \Wobj:=wobj0;
-                                    string offset = $"[{this.Tool.RelTool.X.ToString()}, {this.Tool.RelTool.Y.ToString()}, {this.Tool.RelTool.Z.ToString()}]";
-                                    return $"MoveL RelTool ({robtarget},{offset}),{this.Speed.CodeStrFor(this.Manufacturer)},{this.Zone.CodeStrFor(this.Manufacturer)},{this.Tool.CodeStrFor(this.Manufacturer)} {this.CSystem.CodeStrFor(this.Manufacturer)};";
-                                }
-                                else
-                                {
-                                    return $"MoveL {robtarget}, {this.Speed.CodeStrFor(this.Manufacturer)}, {this.Zone.CodeStrFor(this.Manufacturer)}, {this.Tool.CodeStrFor(this.Manufacturer)} {this.CSystem.CodeStrFor(this.Manufacturer)};";
-                                }
-
-                            #endregion Linear
-
-                            #region Joint
-
-                            case MotionType.Joint:
-
-                                if (this.Tool.RelTool != Vector3d.Zero)
-                                {
-                                    string offset = $"[{this.Tool.RelTool.X.ToString()}, {this.Tool.RelTool.Y.ToString()}, {this.Tool.RelTool.Z.ToString()}]";
-                                    return $"MoveJ RelTool ({robtarget},{offset}),{this.Speed.CodeStrFor(this.Manufacturer)},{this.Zone.CodeStrFor(this.Manufacturer)},{this.Tool.CodeStrFor(this.Manufacturer)} {this.CSystem.CodeStrFor(this.Manufacturer)};";
-                                }
-                                else
-                                {
-                                    return $"MoveJ {robtarget}, {this.Speed.CodeStrFor(this.Manufacturer)}, {this.Zone.CodeStrFor(this.Manufacturer)}, {this.Tool.CodeStrFor(this.Manufacturer)} {this.CSystem.CodeStrFor(this.Manufacturer)};";
-                                }
-
-                            #endregion Joint
-
-                            #region Absolute
-
-                            case MotionType.AbsoluteJoint:
-                                string jTarg = $"[{this.JointAngles[0].ToString()},{this.JointAngles[1].ToString()},{this.JointAngles[2].ToString()},{this.JointAngles[3].ToString()},{this.JointAngles[4].ToString()},{this.JointAngles[5].ToString()}]";
-                                return $"MoveAbsJ [{jTarg},[{this.ExtRot.CodeStrFor(this.Manufacturer)},{this.ExtLin.CodeStrFor(this.Manufacturer)},9E9,9E9,9E9,9E9]], {this.Speed.CodeStrFor(this.Manufacturer)}, {this.Zone.CodeStrFor(this.Manufacturer)}, {this.Tool.CodeStrFor(this.Manufacturer)};";
-
-                            #endregion Absolute
-
-                            case MotionType.NoMovement:
-                                return "! No Movement";
-                        }
-                        throw new NotImplementedException($"{this.Method.ToString()} not implemented for ABB");
-
-                    #endregion ABB
-
-                    #region Kuka
-
-                    case Manufacturer.Kuka:
-
-                        string KUKAposition = position.CodeStrFor(this.Manufacturer);
-
-                        List<double> eulers = Util.QuaternionToEuler(quat);
-
-                        double E1 = eulers[0] * 180 / Math.PI;
-                        E1 = Math.Round(E1, 3);
-                        double E2 = eulers[1] * 180 / Math.PI;
-                        E2 = Math.Round(E2, 3);
-                        double E3 = eulers[2] * 180 / Math.PI;
-                        E3 = Math.Round(E3, 3);
-
-                        string strEuler = "A " + E3.ToString() + ", B " + E2.ToString() + ", C " + E1.ToString();
-                        string strExtAxis = "E1 0, E2 0, E3 0, E4 0"; // Default values for the external axis.
-
-                        switch (this.Method)
-                        {
-                            #region Linear
-
-                            case MotionType.Linear:
-                                return $"LIN  {{E6POS:  {KUKAposition}, {strEuler}, {strExtAxis}}} C_VEL";
-
-                            #endregion Linear
-
-                            case MotionType.Joint:
-                                return $"PTP  {{E6POS:  {KUKAposition}, {strEuler}, {strExtAxis}}} C_PTP";
-
-                            case MotionType.NoMovement:
-                                return "! No Movement";
-                        }
-                        throw new NotImplementedException($"{this.Method.ToString()} not implemented for Kuka");
-
-                        #endregion Kuka
-                }
-                throw new NotImplementedException($"The target string repersentation for {this.Manufacturer.ToString()} is not implemented");
+                robtarget = $"[[{position.CodeStrFor(manufacturer)}],[{quat.CodeStrFor(manufacturer)}],cData,[{this.ExtRot.CodeStrFor(manufacturer)},{this.ExtLin.CodeStrFor(manufacturer)},9E9,9E9,9E9,9E9]]";
             }
+
+            switch (this.Method)
+            {
+                #region Linear
+
+                case MotionType.Linear:
+
+                    if (this.tool.RelTool != Vector3d.Zero)
+                    {
+                        //MoveL RelTool ([[416.249, -110.455, 0],[0, 0, 1, 0], cData, eAxis], 0, 0,-120), v50, z1, tool0 \Wobj:=wobj0;
+                        string offset = $"[{this.tool.RelTool.X.ToString()}, {this.tool.RelTool.Y.ToString()}, {this.tool.RelTool.Z.ToString()}]";
+                        return $"MoveL RelTool ({robtarget},{offset}),{this.Speed.CodeStrFor(manufacturer)},{this.Zone.CodeStrFor(manufacturer)},{this.Tool.CodeStrFor(manufacturer)} {this.CSystem.CodeStrFor(manufacturer)};";
+                    }
+                    else
+                    {
+                        return $"MoveL {robtarget}, {this.Speed.CodeStrFor(manufacturer)}, {this.Zone.CodeStrFor(manufacturer)}, {this.Tool.CodeStrFor(manufacturer)} {this.CSystem.CodeStrFor(manufacturer)};";
+                    }
+
+                #endregion Linear
+
+                #region Joint
+
+                case MotionType.Joint:
+
+                    if (this.tool.RelTool != Vector3d.Zero)
+                    {
+                        string offset = $"[{this.tool.RelTool.X.ToString()}, {this.tool.RelTool.Y.ToString()}, {this.tool.RelTool.Z.ToString()}]";
+                        return $"MoveJ RelTool ({robtarget},{offset}),{this.Speed.CodeStrFor(manufacturer)},{this.Zone.CodeStrFor(manufacturer)},{this.Tool.CodeStrFor(manufacturer)} {this.CSystem.CodeStrFor(manufacturer)};";
+                    }
+                    else
+                    {
+                        return $"MoveJ {robtarget}, {this.Speed.CodeStrFor(manufacturer)}, {this.Zone.CodeStrFor(manufacturer)}, {this.Tool.CodeStrFor(manufacturer)} {this.CSystem.CodeStrFor(manufacturer)};";
+                    }
+
+                #endregion Joint
+
+                #region Absolute
+
+                case MotionType.AbsoluteJoint:
+                    string jTarg = $"[{this.JointAngles[0].ToString()},{this.JointAngles[1].ToString()},{this.JointAngles[2].ToString()},{this.JointAngles[3].ToString()},{this.JointAngles[4].ToString()},{this.JointAngles[5].ToString()}]";
+                    return $"MoveAbsJ [{jTarg},[{this.ExtRot.CodeStrFor(manufacturer)},{this.ExtLin.CodeStrFor(manufacturer)},9E9,9E9,9E9,9E9]], {this.Speed.CodeStrFor(manufacturer)}, {this.Zone.CodeStrFor(manufacturer)}, {this.Tool.CodeStrFor(manufacturer)};";
+
+                #endregion Absolute
+
+                case MotionType.NoMovement:
+                    return "! No Movement";
+            }
+            throw new NotImplementedException($"{this.Method.ToString()} not implemented for ABB");
+
         }
 
-        public Point3d Position { get => this.TargetPlane.Origin; }
+        #region Variables
+        private ABBTool tool;
+        private Zone zone;
+        private Speed speed;
+        private MotionType method;
+
+        #endregion Variables
+
+        #region Class Fields
+
+        public override Quaternion Quaternion { get; set; }
+        public override List<double> JointAngles { get; set; }
+
+        public override Speed Speed { get => speed; }
+        public override Zone Zone { get => zone; }
+
+        public override Tool Tool {
+            get => tool as Tool; 
+            set 
+            {
+                if (value is ABBTool) tool = value as ABBTool;
+            }
+        }
+        public override CSystem CSystem { get; set; }
+
+        public override ExtVal ExtRot { get; set; }
+        public override ExtVal ExtLin { get; set; }
+        public override  MotionType Method { get => method; }
+
+        #endregion Class Fields
 
         #region Constructors
 
         /// <summary>
         /// Default target object.
         /// </summary>
-        public static Target Default { get => new Target(new List<double> { 0, 0, 0, 0, 0, 0 }, Speed.Default, Zone.Default, Tool.Default, 0, 0, Manufacturer.ABB); }
+        public static Target Default { get => new ABBTarget(new List<double> { 0, 0, 0, 0, 0, 0 }, Speed.Default, Zone.Default, ABBTool.Default, 0, 0); }
 
         /// <summary>
         /// Empty target Constructor;
         /// </summary>
-        public Target() { }
+        public ABBTarget() { }
 
         /// <summary>
         /// Default target constructor from a plane.
@@ -181,7 +142,7 @@ namespace Axis.Types
         /// <param name="extRot"></param>
         /// <param name="extLin"></param>
         /// <param name="robot"></param>
-        public Target(Plane target, MotionType method, Speed speed, Zone zone, Tool tool, CSystem wobj, double extRot, double extLin, Manufacturer robot)
+        public ABBTarget(Plane target, MotionType method, Speed speed, Zone zone, Tool tool, CSystem wobj, double extRot, double extLin)
         {
             // Adjust plane to comply with robot programming convetions.
             Quaternion realQuat = Util.QuaternionFromPlane(target);
@@ -198,10 +159,10 @@ namespace Axis.Types
             this.Quaternion = realQuat;
             this.ExtRot = extRot;
             this.ExtLin = extLin;
-            this.Method = method;
+            this.method = method;
             this.Tool = tool;
-            this.Speed = speed;
-            this.Zone = zone;
+            this.speed = speed;
+            this.zone = zone;
             this.ExtRot = extRot;
             this.ExtLin = extLin;
             this.CSystem = wobj;
@@ -217,288 +178,307 @@ namespace Axis.Types
         /// <param name="extRot"></param>
         /// <param name="extLin"></param>
         /// <param name="robot"></param>
-        public Target(List<double> axisVals, Speed speed, Zone zone, Tool tool, double extRot, double extLin, Manufacturer robot)
+        public ABBTarget(List<double> axisVals, Speed speed, Zone zone, Tool tool, double extRot, double extLin)
         {
             this.JointAngles = axisVals;
             this.Tool = tool;
-            this.Speed = speed;
-            this.Zone = zone;
+            this.speed = speed;
+            this.zone = zone;
             this.ExtRot = extRot;
             this.ExtLin = extLin;
 
-            this.Method = MotionType.AbsoluteJoint;
-            this.Manufacturer = robot;
+            this.method = MotionType.AbsoluteJoint;
         }
 
         #endregion Constructors
 
         #region Interfaces
-
-        //IGH_GeometricGoo
-        public BoundingBox Boundingbox { get; private set; } //Cached boundingbox
-
-        public Guid ReferenceID
+        public override void ClearCaches()
         {
-            get
-            {
-                if (this.Guid != Guid.Empty) return this.Guid;
-                this.Guid = Guid.NewGuid();
-                return this.Guid;
-            }
-            set
-            {
-                if (value.GetType() == typeof(Guid)) this.Guid = value;
-            }
+            this.speed = null;
+            this.zone = null;
+            this.method = 0;
+
+            base.ClearCaches();
         }
-
-        public bool IsReferencedGeometry { get => false; }
-        public bool IsGeometryLoaded { get => throw new NotImplementedException(); }
-
-        public void ClearCaches()
-        {
-            this.Guid = Guid.Empty;
-            this.Plane = Plane.Unset;
-            this.TargetPlane = Plane.Unset;
-            this.Quaternion = Quaternion.Zero;
-            this.JointAngles = null;
-            this.Tool = null;
-            this.Speed = null;
-            this.Zone = null;
-            this.ExtRot = null;
-            this.ExtLin = null;
-            this.Method = 0;
-            this.Manufacturer = 0;
-        }
-
-        public IGH_GeometricGoo DuplicateGeometry()
+        public override IGH_Goo Duplicate()
         {
             var target = default(Target);
             switch (this.Method)
             {
                 case MotionType.Joint:
                 case MotionType.Linear:
-                    target = new Target(this.Plane.Clone(), this.Method, (Speed)this.Speed.Duplicate(), (Zone)this.Zone.Duplicate(), (Tool)this.Tool.Duplicate(), (CSystem)this.CSystem.Duplicate(), this.ExtRot, this.ExtLin, this.Manufacturer);
+                    target = new ABBTarget(this.Plane.Clone(), this.Method, (Speed)this.Speed.Duplicate(), (Zone)this.Zone.Duplicate(), (Tool)this.Tool.Duplicate(), (CSystem)this.CSystem.Duplicate(), this.ExtRot, this.ExtLin);
                     break;
 
                 case MotionType.AbsoluteJoint:
-                    target = new Target(this.JointAngles, (Speed)this.Speed.Duplicate(), (Zone)this.Zone.Duplicate(), (Tool)this.Tool.Duplicate(), this.ExtRot, this.ExtLin, this.Manufacturer);
+                    target = new ABBTarget(this.JointAngles, (Speed)this.Speed.Duplicate(), (Zone)this.Zone.Duplicate(), (Tool)this.Tool.Duplicate(), this.ExtRot, this.ExtLin);
                     break;
             }
             return target;
         }
 
-        public BoundingBox GetBoundingBox(Transform xform) => throw new NotImplementedException();
-
-        public bool LoadGeometry() => throw new NotImplementedException();
-
-        public bool LoadGeometry(Rhino.RhinoDoc doc) => throw new NotImplementedException();
-
-        public IGH_GeometricGoo Morph(SpaceMorph xmorph) => throw new NotImplementedException();
-
-        public IGH_GeometricGoo Transform(Transform xform) => throw new NotImplementedException();
-
-        // IGH_Goo
-        public bool IsValid => true;
-
-        public string IsValidWhyNot => throw new NotImplementedException();
-        public string TypeName => "Target";
-        public string TypeDescription => "Robot target";
-
-        public bool CastFrom(object source) => throw new NotImplementedException();
-
-        public bool CastTo<Q>(out Q target)
+        public override bool Read(GH_IReader reader)
         {
-            if (typeof(Q).IsAssignableFrom(typeof(GH_ObjectWrapper)))
-            {
-                string name = typeof(Q).Name;
-                object value = new GH_ObjectWrapper(this);
-                target = (Q)value;
-                return true;
-            }
-
-            if (typeof(Q).IsAssignableFrom(typeof(GH_Plane)) && (this.Plane != null))
-            {
-                object _Plane = new GH_Plane(this.Plane);
-                target = (Q)_Plane;
-                return true;
-            }
-            if (typeof(Q).IsAssignableFrom(typeof(GH_Point)) && (this.Plane != null))
-            {
-                object _Point = new GH_Point(this.Plane.Origin);
-                target = (Q)_Point;
-                return true;
-            }
-            target = default(Q);
-            return false;
-        }
-
-        public IGH_Goo Duplicate()
-        {
-            var target = default(Target);
-            switch (this.Method)
-            {
-                case MotionType.Joint:
-                case MotionType.Linear:
-                    target = new Target(this.Plane.Clone(), this.Method, (Speed)this.Speed.Duplicate(), (Zone)this.Zone.Duplicate(), (Tool)this.Tool.Duplicate(), (CSystem)this.CSystem.Duplicate(), this.ExtRot, this.ExtLin, this.Manufacturer);
-                    break;
-
-                case MotionType.AbsoluteJoint:
-                    target = new Target(this.JointAngles, (Speed)this.Speed.Duplicate(), (Zone)this.Zone.Duplicate(), (Tool)this.Tool.Duplicate(), this.ExtRot, this.ExtLin, this.Manufacturer);
-                    break;
-            }
-            return target;
-        }
-
-        public IGH_GooProxy EmitProxy() => null;
-
-        public object ScriptVariable() => null;
-
-        public override string ToString() => $"Target ({Method.ToString()})";
-
-        //GH_ISerializable
-        public bool Read(GH_IReader reader)
-        {
-            if (reader.ItemExists("Guid")) this.Guid = reader.GetGuid("Guid");
-            if (reader.ItemExists("Manufacturer")) this.Manufacturer = (Manufacturer)reader.GetInt32("Manufacturer");
-            if (reader.ItemExists("MovementType")) this.Method = (MotionType)reader.GetInt32("MovementType");
-
-            if (reader.ChunkExists("Plane"))
-            {
-                var ghPlane = new GH_Plane();
-                var plane = Plane.Unset;
-                ghPlane.Read(reader.FindChunk("Plane"));
-                if (GH_Convert.ToPlane(ghPlane, ref plane, GH_Conversion.Both))
-                    this.Plane = plane;
-            }
-            if (reader.ChunkExists("PlaneTarget"))
-            {
-                var ghPlaneTarget = new GH_Plane();
-                var targetPlane = Plane.Unset;
-                ghPlaneTarget.Read(reader.FindChunk("Plane"));
-                GH_Convert.ToPlane(ghPlaneTarget, ref targetPlane, GH_Conversion.Both);
-                this.TargetPlane = targetPlane;
-            }
-
-            if (reader.ItemExists("Quaternion"))
-            {
-                int[] Q = new int[4];
-                for (int i = 0; i < 4; ++i) Q[i] = reader.GetInt32("Quaternion", i);
-                this.Quaternion = new Quaternion(Q[0], Q[1], Q[2], Q[3]);
-            }
-            if (reader.ItemExists("JointAnglesCount"))
-            {
-                var JointAnglesCount = reader.GetInt32("JointAnglesCount");
-                if (reader.ItemExists("JointAngles"))
-                {
-                    this.JointAngles = new double[JointAnglesCount].ToList();
-                    for (int i = 0; i < JointAnglesCount; ++i)
-                        this.JointAngles[i] = reader.GetDouble("JointAngles", i);
-                }
-            }
             if (reader.ChunkExists("Speed"))
             {
-                this.Speed = new Speed();
+                this.speed = new Speed();
                 var speedChunk = reader.FindChunk("Speed");
                 this.Speed.Read(speedChunk);
             }
             if (reader.ChunkExists("Zone"))
             {
-                this.Zone = new Zone();
+                this.zone = new Zone();
                 var zoneChunk = reader.FindChunk("Zone");
                 this.Zone.Read(zoneChunk);
             }
+            if (reader.ItemExists("MovementType")) this.method = (MotionType)reader.GetInt32("MovementType");
             if (reader.ChunkExists("Tool"))
             {
-                this.Tool = new Tool();
+                this.tool = new ABBTool();
                 var toolChunk = reader.FindChunk("Tool");
                 this.Tool.Read(toolChunk);
             }
-            if (reader.ChunkExists("CSystem"))
-            {
-                this.CSystem = new CSystem();
-                var cystemChunk = reader.FindChunk("CSystem");
-                this.CSystem.Read(cystemChunk);
-            }
-
-            if (reader.ItemExists("ExtRot")) this.ExtRot = reader.GetDouble("ExtRot");
-            if (reader.ItemExists("ExtLin")) this.ExtLin = reader.GetDouble("ExtLin");
-
-            return true;
+            return base.Read(reader);
         }
-
-        public bool Write(GH_IWriter writer)
+        public override bool Write(GH_IWriter writer)
         {
-            if (this.Guid != Guid.Empty)
-                writer.SetGuid("Guid", this.Guid);
-            writer.SetInt32("Manufacturer", (int)this.Manufacturer);
-            writer.SetInt32("MovementType", (int)this.Method);
-
-            if (this.Plane != null)
-            {
-                var ghPlane = new GH_Plane(this.Plane);
-                ghPlane.Write(writer.CreateChunk("Plane"));
-            }
-            if (this.TargetPlane != null)
-            {
-                var ghPlaneTarget = new GH_Plane(this.TargetPlane);
-                ghPlaneTarget.Write(writer.CreateChunk("PlaneTarget"));
-            }
-
-            if (this.Quaternion != null)
-            {
-                for (int i = 0; i < 4; ++i)
-                {
-                    switch (i)
-                    {
-                        case 0:
-                            writer.SetInt32("Quaternion", i, (int)this.Quaternion.A); break;
-                        case 1:
-                            writer.SetInt32("Quaternion", i, (int)this.Quaternion.B); break;
-                        case 2:
-                            writer.SetInt32("Quaternion", i, (int)this.Quaternion.C); break;
-                        case 3:
-                            writer.SetInt32("Quaternion", i, (int)this.Quaternion.D); break;
-                    }
-                }
-            }
-            if (this.JointAngles != null)
-            {
-                writer.SetInt32("JointAnglesCount", this.JointAngles.Count);
-                for (int i = 0; i < this.JointAngles.Count; ++i)
-                {
-                    writer.SetDouble("JointAngles", i, this.JointAngles[i]);
-                }
-            }
             if (this.Speed != null)
             {
                 var speedChunk = writer.CreateChunk("Speed");
-                this.Speed.Write(speedChunk);
+                this.speed.Write(speedChunk);
             }
             if (this.Zone != null)
             {
                 var zoneChunk = writer.CreateChunk("Zone");
-                this.Zone.Write(zoneChunk);
+                this.zone.Write(zoneChunk);
             }
+            writer.SetInt32("MovementType", (int)this.method);
             if (this.Tool != null)
             {
                 var toolChunk = writer.CreateChunk("Tool");
                 this.Tool.Write(toolChunk);
             }
-            if (this.CSystem != null)
+            return base.Write(writer);
+        }
+        #endregion Interfaces
+
+    }
+
+    public class KUKATarget : Target
+    {
+        public override string RobStr(Manufacturer manufacturer)
+        {
+            string robtarget = string.Empty;
+            Plane plane = Plane.WorldXY;
+            Point3d position = Point3d.Origin;
+            Quaternion quat = Quaternion.I;
+
+
+            if (this.Method == MotionType.Linear | this.Method == MotionType.Joint)
             {
-                var cystemChunk = writer.CreateChunk("CSystem");
-                this.CSystem.Write(cystemChunk);
+                // Offset with the CSystem to get the right program code.
+                Transform xForm = Rhino.Geometry.Transform.PlaneToPlane(this.CSystem.CSPlane, Plane.WorldXY);
+
+                plane = new Plane(this.TargetPlane);
+                plane.Transform(xForm);
+
+                position = this.TargetPlane.Origin;
+                quat = Util.QuaternionFromPlane(this.TargetPlane);
+
+                robtarget = $"[[{position.CodeStrFor(manufacturer)}],[{quat.CodeStrFor(manufacturer)}],cData,[{this.ExtRot.CodeStrFor(manufacturer)},{this.ExtLin.CodeStrFor(manufacturer)},9E9,9E9,9E9,9E9]]";
             }
 
-            if (this.ExtRot != null)
-                writer.SetDouble("ExtRot", this.ExtRot);
-            if (this.ExtLin != null)
-                writer.SetDouble("ExtLin", this.ExtLin);
+            string KUKAposition = position.CodeStrFor(manufacturer);
 
-            return true;
+            List<double> eulers = Util.QuaternionToEuler(quat);
+
+            double E1 = eulers[0] * 180 / Math.PI;
+            E1 = Math.Round(E1, 3);
+            double E2 = eulers[1] * 180 / Math.PI;
+            E2 = Math.Round(E2, 3);
+            double E3 = eulers[2] * 180 / Math.PI;
+            E3 = Math.Round(E3, 3);
+
+            string strEuler = "A " + E3.ToString() + ", B " + E2.ToString() + ", C " + E1.ToString();
+            string strExtAxis = "E1 0, E2 0, E3 0, E4 0"; // Default values for the external axis.
+
+            switch (this.Method)
+            {
+                #region Linear
+
+                case MotionType.Linear:
+                    return $"LIN  {{E6POS:  {KUKAposition}, {strEuler}, {strExtAxis}}} C_VEL";
+
+                #endregion Linear
+
+                case MotionType.Joint:
+                    return $"PTP  {{E6POS:  {KUKAposition}, {strEuler}, {strExtAxis}}} C_PTP";
+
+                case MotionType.NoMovement:
+                    return "! No Movement";
+            }
+            throw new NotImplementedException($"{this.Method.ToString()} not implemented for Kuka");
         }
 
-        #endregion Interfaces
+        #region Variables
+        private ABBTool tool;
+        private Zone zone;
+        private Speed speed;
+        private MotionType method;
+
+        #endregion Variables
+
+
+        public override Quaternion Quaternion { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public override List<double> JointAngles { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+        public override Speed Speed => throw new NotImplementedException();
+
+        public override Zone Zone => throw new NotImplementedException();
+
+        public override Tool Tool { get => tool as Tool; set => throw new NotImplementedException(); }
+        public override CSystem CSystem { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public override ExtVal ExtRot { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public override ExtVal ExtLin { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+        public override MotionType Method => throw new NotImplementedException();
+
+        public override IGH_Goo Duplicate()
+        {
+            throw new NotImplementedException();
+        }
+
+
+        #region Constructors
+
+        /// <summary>
+        /// Default target object.
+        /// </summary>
+        public static Target Default { get => new KUKATarget(new List<double> { 0, 0, 0, 0, 0, 0 }, Speed.Default, Zone.Default, ABBTool.Default, 0, 0); }
+
+        /// <summary>
+        /// Empty target Constructor;
+        /// </summary>
+        public KUKATarget() { }
+
+        /// <summary>
+        /// Default target constructor from a plane.
+        /// </summary>
+        /// <param name="target"></param>
+        /// <param name="method"></param>
+        /// <param name="speed"></param>
+        /// <param name="zone"></param>
+        /// <param name="tool"></param>
+        /// <param name="wobj"></param>
+        /// <param name="extRot"></param>
+        /// <param name="extLin"></param>
+        /// <param name="robot"></param>
+        public KUKATarget(Plane target, MotionType method, Speed speed, Zone zone, Tool tool, CSystem wobj, double extRot, double extLin)
+        {
+            // Adjust plane to comply with robot programming convetions.
+            Quaternion realQuat = Util.QuaternionFromPlane(target);
+
+            // Set publicly accessible property values based on the manufacturer data.
+            this.Plane = target;
+
+            //Transform Plane To Location in CSystem
+            var tP = target.Clone();
+            Rhino.Geometry.Transform xform = Rhino.Geometry.Transform.PlaneToPlane(wobj.CSPlane, Plane.WorldXY);
+            tP.Transform(xform);
+
+            this.TargetPlane = tP;
+            this.Quaternion = realQuat;
+            this.ExtRot = extRot;
+            this.ExtLin = extLin;
+            this.method = method;
+            this.Tool = tool;
+            this.speed = speed;
+            this.zone = zone;
+            this.ExtRot = extRot;
+            this.ExtLin = extLin;
+            this.CSystem = wobj;
+        }
+
+        /// <summary>
+        /// Default target constructor from joint values.
+        /// </summary>
+        /// <param name="axisVals"></param>
+        /// <param name="speed"></param>
+        /// <param name="zone"></param>
+        /// <param name="tool"></param>
+        /// <param name="extRot"></param>
+        /// <param name="extLin"></param>
+        /// <param name="robot"></param>
+        public KUKATarget(List<double> axisVals, Speed speed, Zone zone, Tool tool, double extRot, double extLin)
+        {
+            this.JointAngles = axisVals;
+            this.Tool = tool;
+            this.speed = speed;
+            this.zone = zone;
+            this.ExtRot = extRot;
+            this.ExtLin = extLin;
+
+            this.method = MotionType.AbsoluteJoint;
+        }
+
+        #endregion Constructors
+
+    }
+
+    public class Command : Instruction
+    {
+        string command;
+
+        public Command() {}
+        public Command(string command, Manufacturer manufacturer) { this.manufacturer = manufacturer; this.command = command; }
+
+        public override string RobStr(Manufacturer manufacturer)
+        {
+            if (manufacturer == this.manufacturer) return command;
+            else throw new NotImplementedException($"This is the wrong type if Instuction.\nThe instruction is for {this.manufacturer}");
+        }
+
+        #region Interfaces
+        public override bool IsValid => (command != null);
+        public override string IsValidWhyNot => "Command can not be empty";
+
+        public override bool CastFrom(object source)
+        {
+            if (source.GetType().IsAssignableFrom(typeof(string))) 
+            {
+                command = source as string;
+                return true;
+            }
+            return false;
+        }
+
+        public override bool CastTo<T>(out T target)
+        {
+            target = default;
+
+            return false;
+        }
+
+        public override IGH_Goo Duplicate() => new Command() { command = this.command, manufacturer = this.manufacturer };
+
+
+        public override object ScriptVariable() => null;
+
+        public override string ToString() => $"{manufacturer} Instruction: {command}";
+
+        // Serialisation
+        public override bool Write(GH_IWriter writer)
+        {
+            writer.SetString("Command", command);
+            return base.Write(writer);
+        }
+        public override bool Read(GH_IReader reader)
+        {
+            command = reader.GetString("Command");
+            return base.Read(reader);
+        }
+        #endregion
     }
 
     /// <summary>
@@ -939,7 +919,7 @@ namespace Axis.Types
     /// <summary>
     /// Coordinate system.
     /// </summary>
-    public class CSystem : IGH_Goo
+    public class CSystem : IGH_Goo, Axis_IDisplayable
     {
         public string Name { get; set; }
         public Plane CSPlane { get; set; }
@@ -1099,7 +1079,37 @@ namespace Axis.Types
             return true;
         }
 
+
+
+        // Display
+
+        public void DrawViewportWires(IGH_PreviewArgs args)
+        {
+            double sizeLine = 70; double sizeArrow = 30; int thickness = 3;
+
+            args.Display.DrawLineArrow(
+                new Line(this.CSPlane.Origin, this.CSPlane.XAxis, sizeLine),
+                Axis.Styles.Pink,
+                thickness,
+                sizeArrow);
+            args.Display.DrawLineArrow(new Line(this.CSPlane.Origin, this.CSPlane.YAxis, sizeLine),
+                Axis.Styles.LightBlue,
+                thickness,
+                sizeArrow);
+            args.Display.DrawLineArrow(new Line(this.CSPlane.Origin, this.CSPlane.ZAxis, sizeLine),
+                Axis.Styles.LightGrey,
+                thickness,
+                sizeArrow);
+        }
+
+        public void DrawViewportMeshes(IGH_PreviewArgs args)
+        {
+            throw new NotImplementedException();
+        }
+
         #endregion Interfaces
+
+
     }
 
     /// <summary>
@@ -1118,23 +1128,28 @@ namespace Axis.Types
     /// <summary>
     /// Tool path class allowing for approximated time-based simulation.
     /// </summary>
-    public class Toolpath : IGH_Goo
+    public class Toolpath : IGH_Goo, Axis_IDisplayable
     {
+        #region Variables
         public TimeSpan duration { get; private set; }
         private double totalSec;
-        private List<Robot.ManipulatorPose> poses;
+        private Instruction[] instructions;
+        private Robot.Pose[] poses;
         private List<double> targetProgress;
+        private Tuple< Command, Point3d>[] commands;
+        private Robot robot;
+        #endregion Variables
 
         #region Propperties
 
-        public Robot.ManipulatorPose StartPose => poses[0];
+        public Robot.Pose StartPose => poses[0];
 
         public List<string> ErrorLog
         {
             get
             {
                 var list = new List<string>();
-                for (int i = 0; i < poses.Count; ++i)
+                for (int i = 0; i < poses.Length; ++i)
                 {
                     if (!poses[i].IsValid)
                     {
@@ -1156,7 +1171,7 @@ namespace Axis.Types
             get
             {
                 var points = new List<Point3d>();
-                foreach (Robot.ManipulatorPose pose in poses) if (!pose.IsValid) points.Add(pose.Target.Origin);
+                foreach (Robot.Pose pose in poses) if (!pose.IsValid) points.Add(pose.TargetPlane.Origin);
                 return points;
             }
         }
@@ -1173,10 +1188,44 @@ namespace Axis.Types
         /// Toolpath constructor.
         /// </summary>
         /// <param name="targets"></param>
-        public Toolpath(List<Robot.ManipulatorPose> targets)
+        public Toolpath(List<Instruction> instructions, Robot robot)
         {
-            Times(targets);
-            this.poses = targets;
+            this.instructions = instructions.ToArray();
+            List<Target> targets = new List<Target>();
+            List<Tuple<Command, Point3d>> commands = new List<Tuple<Command, Point3d>>();
+            Point3d lastPoint = robot.GetPose(ABBTarget.Default).TargetPlane.Origin;
+
+            foreach (Instruction inst in instructions) 
+            {
+                /*
+                 * @ todo Make switch statement
+                 * @ body With the upgrade of C# new type based switch statements will be possible.
+                switch (inst) 
+                {
+                    case Target:
+                        break;
+                    case Command:
+                        break;
+                }*/
+                if (inst is Target) 
+                {
+                    var targ = inst as Target;
+                    targets.Add(targ);
+                    lastPoint = targ.TargetPlane.Origin;
+                }
+                else if (inst is Command) 
+                {
+                    commands.Add(new Tuple<Command, Point3d>( inst as Command, new Point3d(lastPoint)));
+                }
+            }
+
+
+            this.commands = commands.ToArray();
+            this.robot = robot;
+            var poses = robot.GetPoses(targets);
+
+            Times(poses);
+            this.poses = poses;
         }
 
         #endregion Constructor
@@ -1195,10 +1244,10 @@ namespace Axis.Types
             if (passedSec < this.totalSec)
             {
                 var val = -this.targetProgress.BinarySearch(passedSec);
-                if (val >= poses.Count) val = poses.Count - 1;
+                if (val >= poses.Length) val = poses.Length - 1;
                 return val;
             }
-            else return poses.Count - 1;
+            else return poses.Length - 1;
         }
 
         /// <summary>
@@ -1206,18 +1255,18 @@ namespace Axis.Types
         /// </summary>
         /// <param name="timePassed"></param>
         /// <returns></returns>
-        public Robot.ManipulatorPose GetPose(TimeSpan timePassed)
+        public Robot.Pose GetPose(TimeSpan timePassed)
         {
             return this.poses[this.GetProgress(timePassed)];
         }
 
-        public Robot.ManipulatorPose GetPose(double value)
+        public Robot.Pose GetPose(double value)
         {
             // Ensure value is between 0 and 1
             value = (value > 0) ? value : 0;
             value = (value < 1) ? value : 1;
 
-            double total = poses.Count - 1;
+            double total = poses.Length - 1;
 
             int position = (int)Math.Round((total / 100) * value * 100);
 
@@ -1225,17 +1274,18 @@ namespace Axis.Types
         }
 
         //private
-        private void Times(List<Robot.ManipulatorPose> poses)
+        private void Times(IReadOnlyList<Robot.Pose> poses)
         {
             double timeTotal = 0;
 
             List<double> tProgress = new List<double>();
             tProgress.Add(0);
 
+
             for (int i = 0; i < poses.Count - 1; ++i)
             {
                 var targets = poses[i].Target;
-                double distance = new Line(poses[i].Target.Origin, poses[i + 1].Target.Origin).Length;
+                double distance = new Line(poses[i].TargetPlane.Origin, poses[i + 1].TargetPlane.Origin).Length;
                 double speed = poses[i + 1].Speed.TranslationSpeed;
                 timeTotal += distance / speed;
                 tProgress.Add(timeTotal);
@@ -1277,6 +1327,7 @@ namespace Axis.Types
 
         public IGH_GeometricGoo Transform(Transform xform) => throw new NotImplementedException();
 
+
         // IGH_Goo
         public bool IsValid
         {
@@ -1285,10 +1336,11 @@ namespace Axis.Types
                 bool valid = true;
 
                 // Check if all poses are valid
-                foreach (Robot.ManipulatorPose p in poses) { valid = valid & p.IsValid; }
+                foreach (Robot.Pose p in poses) { valid = valid & p.IsValid; }
 
                 //Make sure all poses are not in place
                 if (this.totalSec == double.NaN) valid = false;
+                if (poses.Length == 0) valid = false;
 
                 return valid;
             }
@@ -1314,11 +1366,11 @@ namespace Axis.Types
             {
                 List<Point3d> points = new List<Point3d>();
 
-                foreach (Robot.ManipulatorPose p in this.poses)
+                foreach (Robot.Pose p in this.poses)
                 {
-                    if (p.Target.Origin != null)
+                    if (p.TargetPlane.Origin != null)
                     {
-                        points.Add(p.Target.Origin);
+                        points.Add(p.TargetPlane.Origin);
                     }
                 }
 
@@ -1337,16 +1389,57 @@ namespace Axis.Types
 
         public object ScriptVariable() => throw new NotImplementedException();
 
-        public override string ToString() => $"Toolpath of length: {this.poses.Count}";
+        public override string ToString() => $"Toolpath of length: {this.poses.Length}";
+
 
         //GH_ISerializable
         public bool Read(GH_IReader reader) => throw new NotImplementedException();
 
         public bool Write(GH_IWriter writer) => throw new NotImplementedException();
 
+
+        //Display
+        public void DrawViewportWires(IGH_PreviewArgs args)
+        {
+            int thickness = 3;
+
+            Line[] lines = new Polyline(poses.Select(p => p.TargetPlane.Origin).ToList()).GetSegments();
+            Grasshopper.GUI.Gradient.GH_Gradient colors = new Grasshopper.GUI.Gradient.GH_Gradient(
+                new List<double>() { 5, 150, 1000 }, 
+                new List<Color>() { Color.Green, Color.Yellow, Color.Red}
+                );
+
+            if (lines != null) for (int i = 0; i < lines.Length; ++i) args.Display.DrawLine(lines[i], colors.ColourAt(poses[i + 1].Target.Speed.TranslationSpeed), thickness);
+            for (int i = 0; i < commands.Length; ++i)
+            {
+                var raisedPoint = new Point3d() { 
+                    X = commands[i].Item2.X, 
+                    Y = commands[i].Item2.Y, 
+                    Z = commands[i].Item2.Z + 20 };
+                args.Display.DrawArrow(new Line( raisedPoint, commands[i].Item2), Styles.Blue);
+
+                //Get the viewport plane
+                var textPLane = new Plane();
+                args.Viewport.GetFrustumFarPlane(out textPLane);
+                textPLane.Origin = raisedPoint;
+                
+                args.Display.Draw3dText(commands[i].Item1.RobStr(robot.Manufacturer), Styles.Blue, textPLane, 10, "Arial") ;
+            }
+            
+
+        }
+        public void DrawViewportMeshes(IGH_PreviewArgs args)
+        {
+            throw new NotImplementedException();
+        }
+
         #endregion Interfaces
     }
 
+    /*
+     * @todo Move StringConvrsion
+     * @body Move StringConvrsion methods in to the respective classes
+     */
     /// <summary>
     /// Class handlining the conversion for different types to the spesific manufacturere string representation
     /// </summary>

@@ -130,7 +130,7 @@ namespace Axis.Types
                         return true;
                     }
                 }
-                else; //("Automatic mode is required to start execution from a remote client.");
+                else log.Add("Automatic mode is required to start execution from a remote client.");
 
             }
             catch (System.InvalidOperationException ex) { log.Add($"Mastership is held by another client {ex.Message}.");}
@@ -159,8 +159,8 @@ namespace Axis.Types
                     log.Add("Automatic mode is required to stop execution from a remote client.");
                 }
             }
-            catch (System.InvalidOperationException ex) { }// log.Add("Mastership is held by another client." + ex.Message);
-            catch (System.Exception e) { }//log.Add("Unexpected error occurred: " + ex.Message); 
+            catch (System.InvalidOperationException ex) { log.Add("Mastership is held by another client." + ex.Message);}
+            catch (System.Exception e) { log.Add("Unexpected error occurred: " + e.Message); }
 
 
             return false;

@@ -1,11 +1,9 @@
-﻿using Axis.Types;
+﻿using Axis.Kernal;
 using Canvas;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
-using Grasshopper.Kernel.Types;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -14,60 +12,43 @@ namespace Axis.GH_Components
     /// <summary>
     /// Set a module to an online IRC5 controller.
     /// </summary>
-    public class GH_SetModule : GH_Component, IGH_VariableParameterComponent
+    public class GH_SetModule : Axis_Component, IGH_VariableParameterComponent
     {
-        public List<string> Status { get; set; }
-
-
-        private bool send = false;
-        private bool logOption = false;
-        private bool logOptionOut = false;
-
-
-        // Create a list of string to store a log of the connection status.
-        private List<string> log = new List<string>();
-
         public GH_SetModule()
           : base("Set Module", "Set Mod",
               "Set the main module on the robot controller",
               AxisInfo.Plugin, AxisInfo.TabLive)
         {
+            var attr = this.Attributes as AxisComponentAttributes;
+
+            IsMutiManufacture = false;
+
+            this.UI_Elements = new Kernal.IComponentUiElement[]
+            {
+                new Kernal.UIElements.ComponentButton("Send"){ LeftClickAction = Send },
+            };
+
+            attr.Update(UI_Elements);
+
+            logOption = new ToolStripMenuItem("Log", null, log_Click) 
+            {
+                ToolTipText = "Activate the log output",
+            };
+            RegularToolStripItems = new ToolStripMenuItem[] { logOption };
         }
-
-        #region IO
-
-        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
-        {
-            IGH_Param controllerParam = new GH_Params.ContollerParam();
-            pManager.AddParameter( controllerParam, "Controller", "Controller", "Recives the output from a controller module", GH_ParamAccess.list);
-            pManager.AddBooleanParameter("Send", "Send", "Send to module", GH_ParamAccess.item, false);
-            pManager.AddTextParameter("Module", "Module", "Module to be wtritten to the controller.", GH_ParamAccess.list);
-            pManager[1].Optional = true;
-        }
-
-        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
-        {
-        }
-
-        #endregion IO
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            List<Kernal.Controller> controllers = new List<Kernal.Controller>();
-
-            List<string> modFile = new List<string>();
             bool clear = false;
 
-            DA.GetDataList("Controller", controllers);
-            DA.GetData("Send", ref send);
-            if (!DA.GetDataList("Module", modFile)) { return; }
-            if (logOption) DA.GetData("Clear", ref clear);
+            controllers.Clear();
+            modFile.Clear();
 
+            DA.GetDataList("Controller", controllers);
+            if (!DA.GetDataList("Module", modFile)) { return; }
+            if (logOption.Checked) DA.GetData("Clear", ref clear);
 
             if (controllers == null) { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No active controller connected"); return; }
-
-
-            if (send) foreach (var controller in controllers) controller.SetProgram(modFile);
 
             if (clear)
             {
@@ -75,13 +56,48 @@ namespace Axis.GH_Components
                 log.Add("Log cleared.");
             }
 
-            if (logOptionOut)
+            if (logOption.Checked)
             {
-                Status = log;
                 DA.SetDataList("Log", log);
             }
-            //ExpireSolution(true);
         }
+
+        #region Methods
+
+        private void Send(object sender, object e)
+        {
+            foreach (var controller in controllers) controller.SetProgram(modFile);
+        }
+
+        #endregion Methods
+
+        #region Variables
+
+        ToolStripMenuItem logOption;
+
+        // Create a list of string to store a log of the connection status.
+        private List<string> log = new List<string>();
+
+        private List<Kernal.Controller> controllers = new List<Kernal.Controller>();
+        private List<string> modFile = new List<string>();
+
+        #endregion Variables
+
+        #region IO
+
+        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
+        {
+            IGH_Param controllerParam = new GH_Params.ContollerParam();
+            pManager.AddParameter(controllerParam, "Controller", "Controller", "Recives the output from a controller module", GH_ParamAccess.list);
+            IGH_Param programParam = new GH_Params.ProgramParam();
+            pManager.AddParameter(programParam, "Module", "Module", "Module to be wtritten to the controller.", GH_ParamAccess.list);
+        }
+
+        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
+        {
+        }
+
+        #endregion IO
 
         #region UI
 
@@ -97,31 +113,22 @@ namespace Axis.GH_Components
         new Param_String() { Name = "Log", NickName = "Log", Description = "Log checking the connection status"},
         };
 
-        // The following functions append menu items and then handle the item clicked event.
-        protected override void AppendAdditionalComponentMenuItems(System.Windows.Forms.ToolStripDropDown menu)
-        {
-            ToolStripMenuItem log = Menu_AppendItem(menu, "Log", log_Click, true, logOption);
-            log.ToolTipText = "Activate the log output";
-
-            //ToolStripSeparator seperator = Menu_AppendSeparator(menu);
-        }
 
         private void log_Click(object sender, EventArgs e)
         {
+            var button = (ToolStripMenuItem)sender;
             RecordUndoEvent("Log");
-            logOption = !logOption;
+            button.Checked = !button.Checked;
 
-            if (logOption)
+            if (button.Checked)
             {
                 this.AddInput(0, inputParams);
                 this.AddOutput(0, outputParams);
-                logOptionOut = true;
             }
             else
             {
                 Params.UnregisterInputParameter(Params.Input.FirstOrDefault(x => x.Name == "Clear"), true);
                 Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Log"), true);
-                logOptionOut = false;
             }
 
             ExpireSolution(true);
@@ -134,22 +141,21 @@ namespace Axis.GH_Components
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
-            writer.SetBoolean("LogOptionSetModule", this.logOption);
-            writer.SetBoolean("LogOptionSetOutModule", this.logOptionOut);
+            writer.SetBoolean("LogOption", this.logOption.Checked);
             return base.Write(writer);
         }
 
         // Deserialize this instance from a Grasshopper reader object.
         public override bool Read(GH_IO.Serialization.GH_IReader reader)
         {
-            this.logOption = reader.GetBoolean("LogOptionSetModule");
-            this.logOptionOut = reader.GetBoolean("LogOptionSetOutModule");
+            if(reader.ItemExists("LogOption"))this.logOption.Checked = reader.GetBoolean("LogOption");
             return base.Read(reader);
         }
 
         #endregion Serialization
 
         #region Component Settings
+
         public override GH_Exposure Exposure => GH_Exposure.secondary;
 
         bool IGH_VariableParameterComponent.CanInsertParameter(GH_ParameterSide side, int index) => false;
@@ -163,7 +169,6 @@ namespace Axis.GH_Components
         void IGH_VariableParameterComponent.VariableParameterMaintenance()
         {
         }
-
 
         protected override System.Drawing.Bitmap Icon
         {

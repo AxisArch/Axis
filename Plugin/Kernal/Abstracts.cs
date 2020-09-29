@@ -1,22 +1,30 @@
 ﻿using Axis.Types;
 using GH_IO.Serialization;
 using Grasshopper.Kernel;
+using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Types;
+using Grasshopper.Kernel.Attributes;
+using Grasshopper.GUI.Canvas;
+using Rhino;
 using Rhino.Geometry;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
+using System.Windows.Forms;
 
 namespace Axis.Kernal
 {
     /// <summary>
     /// Base class for components that require login
     /// </summary>
-    public abstract class AxisLogin_Component : GH_Component
+    public abstract class AxisLogin_Component : Axis_Component
     {
         private bool IsTokenValid { get; set; }
         private string WarningMessage = "Please log in to Axis.";
+        
+        
 
         public AxisLogin_Component(string name, string nickname, string discription, string plugin, string tab) : base(name, nickname, discription, plugin, tab)
         {
@@ -71,14 +79,206 @@ namespace Axis.Kernal
         }
     }
 
+    public abstract class Axis_Component : GH_Component
+    {
+        public bool IsMutiManufacture { get; set; } = false;
+        protected Manufacturer Manufacturer { get; set; } = Manufacturer.ABB;
+        public Axis_Component(string name, string nickname, string discription, string plugin, string tab) : base(name, nickname, discription, plugin, tab)
+        {
+            var attr = this.Attributes as AxisComponentAttributes;
+            attr.Update(UI_Elements);
+        }
+
+        protected ToolStripItem[] RegularToolStripItems;
+        protected ToolStripItem[] ABBToolStripItems;
+        protected ToolStripItem[] KukaToolStripItems;
+        protected ToolStripItem[] UniversalToolStripItems;
+        protected IComponentUiElement[] UI_Elements;
+
+
+        protected override sealed void AppendAdditionalComponentMenuItems(ToolStripDropDown menu) //sealed
+        {
+            // Add menue if this component supposts different manufactures
+            Menu_AppendSeparator(menu);
+            if (IsMutiManufacture)
+            {
+
+                ToolStripMenuItem robotManufacturers = Menu_AppendItem(menu, "Manufacturer");
+                robotManufacturers.ToolTipText = "Select the robot manufacturer";
+                foreach (string name in typeof(Manufacturer).GetEnumNames())
+                {
+                    ToolStripMenuItem item = new ToolStripMenuItem(name, null, manufacturer_Click);
+
+                    if (name == this.Manufacturer.ToString()) item.Checked = true;
+                    robotManufacturers.DropDownItems.Add(item);
+                }
+
+                Menu_AppendSeparator(menu);
+            }
+
+            // Add menue Items that are not manufacture spesific
+            if (RegularToolStripItems != null)
+            {
+                menu.Items.AddRange(RegularToolStripItems);
+                Menu_AppendSeparator(menu);
+            }
+
+            // Add manufacturer spesific items
+            if (IsMutiManufacture)
+            {
+                switch (Manufacturer) 
+                {
+                    case Manufacturer.ABB:
+                        if (ABBToolStripItems != null) menu.Items.AddRange(ABBToolStripItems);
+                        break;
+                    case Manufacturer.Kuka:
+                        if (KukaToolStripItems != null) menu.Items.AddRange(KukaToolStripItems);
+                        break;
+                    case Manufacturer.Universal:
+                        if (UniversalToolStripItems != null) menu.Items.AddRange(UniversalToolStripItems);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
+        public override void CreateAttributes()
+        {
+            base.CreateAttributes();
+            m_attributes = MakeAtributes();
+        }
+        private GH_ComponentAttributes MakeAtributes() 
+        {
+            IGH_Component component = this as IGH_Component;
+            GH_ComponentAttributes attributes = new AxisComponentAttributes(component, UI_Elements);
+            return attributes;
+        }
+
+        internal class AxisComponentAttributes : GH_ComponentAttributes
+        {
+            public AxisComponentAttributes(IGH_Component comp, IComponentUiElement[] elements) : base(comp) 
+            {
+                this.comp = comp;
+                this.elements = elements;
+            }
+
+            private IComponentUiElement[] elements { get; set; }
+            private IGH_Component comp { get; set; }
+
+            public void Update(IComponentUiElement[] elements) 
+            {
+                this.elements = elements;
+                Layout();
+            }
+
+            protected override void Layout()
+            {
+                base.Layout();
+
+                // Add main Component Button
+                if (elements != null) foreach (IComponentUiElement element in elements.Where(e => e.Type == UIElementType.ComponentButton) ) 
+                {
+                    element.Bounds = new System.Drawing.RectangleF(Bounds.X, Bounds.Bottom, Bounds.Width, 20);
+                    // We'll extend the basic layout by adding two regions to the bottom of this component,
+                    Bounds = new System.Drawing.RectangleF(Bounds.X, Bounds.Y, Bounds.Width, Bounds.Height + 20);
+                }      
+            }
+
+            public override GH_ObjectResponse RespondToMouseDown(GH_Canvas sender, Grasshopper.GUI.GH_CanvasMouseEvent e)
+            {
+
+                if (elements != null)  switch (e.Button) 
+                {
+                    case MouseButtons.Left:
+                        foreach (IComponentUiElement element in elements)
+                        {
+                            if (element.Bounds.Contains(e.CanvasLocation))
+                            {
+                                comp.RecordUndoEvent(element.Name);
+                                element.LeftClickAction.Invoke(element, e);
+                                comp.ExpireSolution(true);
+                                return Grasshopper.GUI.Canvas.GH_ObjectResponse.Handled;
+                            }
+                        }
+                        break;
+                    default:
+                        break;
+                }
+
+                return base.RespondToMouseDown(sender, e);
+            }
+
+            protected override void Render(GH_Canvas canvas, Graphics graphics, GH_CanvasChannel channel)
+            {
+                switch (channel)
+                {
+                    case GH_CanvasChannel.Objects:
+
+                        // We need to draw everything outselves.
+                        base.RenderComponentCapsule(canvas, graphics, true, true, false, true, true, true);
+
+                        if (elements != null) foreach (IComponentUiElement element in elements.Where(e => e.Type == UIElementType.ComponentButton && e is IButton))
+                        {
+
+                            GH_Capsule button = GH_Capsule.CreateCapsule(element.Bounds, GH_Palette.White);
+                            button.Render(graphics, this.Selected, Owner.Locked, Owner.Hidden);
+                            button.Dispose();
+
+                            graphics.DrawString(element.Name, GH_FontServer.Small, Brushes.Black, element.Bounds, Grasshopper.GUI.GH_TextRenderingConstants.CenterCenter);
+                        }
+                        if (elements != null) foreach (IComponentUiElement element in elements.Where(e => e.Type == UIElementType.ComponentButton && e is IToggle))
+                            {
+
+                                var toggel = element as IToggle;
+                                GH_Capsule button = GH_Capsule.CreateCapsule(element.Bounds, toggel.State? GH_Palette.Blue: GH_Palette.White);
+                                button.Render(graphics, this.Selected, Owner.Locked, Owner.Hidden);
+                                button.Dispose();
+
+                                if (toggel.Toggle != null) graphics.DrawString(
+                                    toggel.State ? toggel.Toggle.Item2 : toggel.Toggle.Item1, 
+                                    GH_FontServer.Small,
+                                    (toggel.State) ? Brushes.Black: Brushes.Black,
+                                    element.Bounds, 
+                                    Grasshopper.GUI.GH_TextRenderingConstants.CenterCenter);
+                            }
+
+                        break;
+
+                    default:
+                        base.Render(canvas, graphics, channel);
+                        break;
+                }
+            }
+        }
+
+
+
+        private void manufacturer_Click(object sender, EventArgs e)
+        {
+            RecordUndoEvent("Manufacturer");
+            ToolStripMenuItem currentItem = (ToolStripMenuItem)sender;
+            Canvas.Menu.UncheckOtherMenuItems(currentItem);
+            this.Manufacturer = (Manufacturer)currentItem.Owner.Items.IndexOf(currentItem);
+            this.ExpireSolution(true);
+        }
+    }
+
     /// <summary>
     /// Base calss for all robot systems
     /// </summary>
-    public abstract class Robot : IGH_GeometricGoo
+    public abstract class Robot : IGH_GeometricGoo, Axis_IDisplayable
     {
-        public string Name = "Wall-E"; // This variable can hold the model number
+        #region Variables
         private Guid id = Guid.Empty;
-        public Manufacturer Manufacturer { get; protected set; }
+        #endregion Variables
+
+        #region Propperties
+
+        public abstract Manufacturer Manufacturer { get; }
+        public string Name { get; set; } = "Wall-E";
+
+
         public Plane RobBasePlane { get; protected set; }
         public List<Plane> AxisPlanes { get; protected set; }
         public List<double> MinAngles { get; protected set; }
@@ -86,16 +286,12 @@ namespace Axis.Kernal
         public List<int> Indices { get; protected set; }
         public List<Mesh> RobMeshes { get; protected set; }
 
-        public ManipulatorPose CurrentPose { get; private set; }
-        public double WristOffsetLength { get => this.AxisPlanes[5].Origin.DistanceTo(this.AxisPlanes[4].Origin); }
-        public double LowerArmLength { get => this.AxisPlanes[1].Origin.DistanceTo(this.AxisPlanes[2].Origin); }
-        public double UpperArmLength { get => this.AxisPlanes[2].Origin.DistanceTo(this.AxisPlanes[4].Origin); }
-        public double AxisFourOffsetAngle { get => Math.Atan2(this.AxisPlanes[4].Origin.Z - this.AxisPlanes[2].Origin.Z, this.AxisPlanes[4].Origin.X - this.AxisPlanes[2].Origin.X); }  // =>0.22177 for IRB 6620 //This currently limitting the robot to be in a XZ configuration
 
-        public Plane Flange { get => this.AxisPlanes[5].Clone(); }
+        public abstract Plane Flange { get; }
+
+
         private Transform[] resetTransform = null;
-
-        public Transform[] ResetTransform
+        private Transform[] ResetTransform
         {
             get
             {
@@ -110,67 +306,23 @@ namespace Axis.Kernal
             set => resetTransform = value;
         }
 
+
         //Used for Axis display pipeline
-        public Color[] Colors { get => CurrentPose.Colors; }
-
         public Mesh[] Geometries { get => RobMeshes.ToArray(); }
+        public class SimpleModle { public Line[] Lines; public Brep[] Joints; public Curve[] Arrows; public Line Tool; }
+        public SimpleModle LineModle { get; set; }
 
-        #region Constructors
-
-        /// <summary>
-        /// Default constructor.
-        /// </summary>
-        public Robot() { }
-
-        #endregion Constructors
+        #endregion Propperties
 
         #region Methods
 
-        /// <summary>
-        /// Set the default robot pose.
-        /// </summary>
-        public void SetPose()
+        public abstract Pose GetPose();
+        public abstract Pose GetPose(Target target);
+        public Pose[] GetPoses(IEnumerable<Target> targets)
         {
-            this.SetPose(Types.Target.Default);
+            return targets.Select(t => this.GetPose(t)).ToArray();
         }
 
-        /// <summary>
-        /// Set the pose based on a target TCP/flange position.
-        /// </summary>
-        /// <param name="target"></param>
-        public void SetPose(Types.Target target)
-        {
-            this.CurrentPose = new Robot.ManipulatorPose(this, target);
-        }
-
-        /// <summary>
-        /// Set the pose for a given robot based on a target TCP/flange position.
-        /// </summary>
-        /// <param name="pose"></param>
-        /// <param name="checkValidity"></param>
-        public void SetPose(ManipulatorPose pose, bool checkValidity = false)
-        {
-            if (checkValidity)
-            {
-                if (pose.IsValid)
-                {
-                    pose.UpdateRobot(this); // <-- this oen should not have been nessesary if the class had been propperly persistant.
-                    this.CurrentPose = pose;
-                }
-                else if (pose.JointStates != null) this.CurrentPose.JointStates = pose.JointStates;
-            }
-            else this.CurrentPose = pose; ;
-        }
-
-        /// <summary>
-        /// Update the current pose.
-        /// </summary>
-        public void UpdatePose()
-        {
-            var xform = this.CurrentPose.GetPose().ToList();
-            for (int i = 0; i < this.RobMeshes.Count - 1; ++i) this.RobMeshes[i + 1].Transform(xform[i]);
-            this.ResetTransform = this.CurrentPose.Reverse;
-        }
 
         /// <summary>
         /// Update the locattion of the robot
@@ -192,6 +344,72 @@ namespace Axis.Kernal
             this.RobMeshes = tempMesh;
 
             this.RobBasePlane = plane;
+        }
+
+        protected SimpleModle LineDrawing()
+        {
+            double offsetDistanc = 100;
+            double arrowDistance = 20;
+            double circleoffsetDistanc = 20;
+
+            double bPlaneSize = 360;
+            double minLength = 5;
+
+
+            Line[] lines = new Polyline(AxisPlanes.Select(plane => plane.Origin).ToList()).GetSegments();
+            Circle[] circles = AxisPlanes.Select(p => new Circle(p, 1)).ToArray();
+
+
+            double[] offsetDistancArray = lines.Select(l => (l.Length > offsetDistanc + minLength) ? offsetDistanc : l.Length).ToArray();
+            double[] arrowDistanceArray = offsetDistancArray.Select(v => v - arrowDistance).Append(offsetDistanc - arrowDistance).ToArray();
+            double[] circleoffsetDistancArray = arrowDistanceArray.Select(v => v - circleoffsetDistanc).ToArray();
+
+
+            double[] t1 = new double[lines.Length];
+            double[] t2 = new double[lines.Length];
+            Point3d[] p1 = new Point3d[lines.Length];
+            Point3d[] p2 = new Point3d[lines.Length];
+
+            lines.Select((line, i) => Rhino.Geometry.Intersect.Intersection.LineCircle(line, circles[i], out t1[i], out p1[i], out t2[i], out p2[i]));
+            bool[] startIntersect = t1.Select((t, i) => t != double.NaN | t2[i] != double.NaN).ToArray();
+
+            lines.Select((line, i) => Rhino.Geometry.Intersect.Intersection.LineCircle(line, circles[i + 1], out t1[i + 1], out p1[i + 1], out t2[i + 1], out p2[i + 1]));
+            bool[] endIntersect = t1.Select((t, i) => t != double.NaN | t2[i] != double.NaN).ToArray();
+
+
+            Brep bplane = Brep.CreateEdgeSurface(new List<NurbsCurve>() { new Circle(this.RobBasePlane, bPlaneSize).ToNurbsCurve() });
+
+            lines.Select((l, i) => l.Extend((startIntersect[i]) ? offsetDistancArray[i] : 0, (startIntersect[i]) ? offsetDistancArray[i] : 0));
+
+            Brep[] jointPlanes = AxisPlanes.Select((p, index) => 
+            Brep.CreatePlanarBreps(
+                new Circle(p, circleoffsetDistancArray[index]).ToNurbsCurve(), 0.10)[0]
+                ).ToArray();
+
+            double Unwind(double value) 
+            {
+                while (value > 360) 
+                {
+                    value -= 360;
+                }
+                while (value < -360)
+                {
+                    value += 360;
+                }
+                return value;
+            }
+
+            Curve[] arrorsCurves = AxisPlanes.Select((p, i) => 
+            new Arc(
+                new Circle(p, arrowDistanceArray[i]), 
+                new Interval(
+                    Unwind(MinAngles[i]).ToRadians(),
+                    Unwind(MaxAngles[i]).ToRadians()
+                    )
+                ).ToNurbsCurve()
+            ).ToArray();
+
+            return new SimpleModle() { Lines = lines, Joints = jointPlanes, Arrows = arrorsCurves };
         }
 
         #endregion Methods
@@ -216,19 +434,17 @@ namespace Axis.Kernal
         }
 
         public bool IsReferencedGeometry { get => false; }
-        public bool IsGeometryLoaded { get => throw new NotImplementedException(); }
+        public bool IsGeometryLoaded { get => false; }
 
         public void ClearCaches()
         {
             this.Name = null;
-            this.Manufacturer = 0;
             this.RobBasePlane = Plane.Unset;
             this.AxisPlanes = null;
             this.MinAngles = null;
             this.MaxAngles = null;
             this.Indices = null;
             this.RobMeshes = null;
-            this.CurrentPose = null;
         }
 
         public abstract IGH_GeometricGoo DuplicateGeometry();
@@ -242,16 +458,16 @@ namespace Axis.Kernal
             return box;
         }
 
-        public bool LoadGeometry() => throw new NotImplementedException();
+        public bool LoadGeometry() => false;
 
-        public bool LoadGeometry(Rhino.RhinoDoc doc) => throw new NotImplementedException();
+        public bool LoadGeometry(Rhino.RhinoDoc doc) => false;
 
         public IGH_GeometricGoo Morph(SpaceMorph xmorph) => throw new NotImplementedException();
 
         public IGH_GeometricGoo Transform(Transform xform) => throw new NotImplementedException();
 
         //IGH_Goo
-        public bool IsValid { get => (this.CurrentPose != null) ? this.CurrentPose.IsValid : false; }
+        public bool IsValid { get => true; }
 
         public string IsValidWhyNot => "Since no or no valid poes has been set there is no representation possible for this robot";
         public string TypeName => "Manipulator";
@@ -263,7 +479,6 @@ namespace Axis.Kernal
             {
                 Robot manipulator = source as Robot;
                 this.Name = manipulator.Name;
-                this.Manufacturer = manipulator.Manufacturer;
                 this.AxisPlanes = manipulator.AxisPlanes;
                 this.MinAngles = manipulator.MinAngles;
                 this.MaxAngles = manipulator.MaxAngles;
@@ -303,10 +518,9 @@ namespace Axis.Kernal
         }
 
         //GH_ISerializable
-        public bool Read(GH_IReader reader)
+        public virtual bool Read(GH_IReader reader)
         {
             this.Name = reader.GetString("RobotName");
-            this.Manufacturer = (Manufacturer)reader.GetInt32("Manufacturer");
             this.id = reader.GetGuid("GUID");
 
             Plane bPlane = new Plane();
@@ -388,11 +602,11 @@ namespace Axis.Kernal
             }
             this.RobMeshes = robMeshes;
 
-            this.SetPose();
+            //this.SetPose();
             return true;
         }
 
-        public bool Write(GH_IWriter writer)
+        public virtual bool Write(GH_IWriter writer)
         {
             GH_IO.Types.GH_Plane gH_RobBasePlane = new GH_IO.Types.GH_Plane(
                 this.RobBasePlane.Origin.X,
@@ -407,7 +621,6 @@ namespace Axis.Kernal
                 );
 
             writer.SetString("RobotName", this.Name);
-            writer.SetInt32("Manufacturer", (int)this.Manufacturer);
             writer.SetPlane("RobBasePlane", gH_RobBasePlane);
             writer.SetGuid("GUID", id);
 
@@ -447,83 +660,83 @@ namespace Axis.Kernal
             return true;
         }
 
+
         #endregion Interfaces
+
+        #region Display
+
+        public void DrawViewportMeshes(IGH_PreviewArgs args)
+        {
+            foreach (var mesh in this.Geometries) args.Display.DrawMeshShaded(mesh, new Rhino.Display.DisplayMaterial(Axis.Styles.DarkGrey));
+        }
+
+        public void DrawViewportWires(IGH_PreviewArgs args)
+        {
+            var linecolor = Styles.DarkGrey;
+            var surfacecolor = new Rhino.Display.DisplayMaterial(Styles.LightGrey);
+            int lineThickness = 17;
+            int arrowThickness = 3;
+            int arrowHeadSize = 20;
+
+            // Lines
+            for (int i = 0; i < LineModle.Lines.Length; ++i) args.Display.DrawCurve(LineModle.Lines[i].ToNurbsCurve(), linecolor, lineThickness - (i * 2));
+            for (int i = 0; i < LineModle.Joints.Length; ++i) args.Display.DrawBrepShaded(LineModle.Joints[i], surfacecolor);
+            for (int i = 0; i < LineModle.Arrows.Length; ++i) args.Display.DrawCurve(LineModle.Arrows[i], linecolor, arrowThickness);
+
+            //int j = 5;
+            //args.Display.DrawBrepShaded(LineModle.Joints[j], surfacecolor[j]);
+
+            // Arrowheads
+            for (int i = 0; i < LineModle.Arrows.Length; ++i) args.Display.DrawArrowHead(LineModle.Arrows[i].PointAtStart,
+                LineModle.Arrows[i].TangentAt(LineModle.Arrows[i].Domain.T0) * -1, linecolor, 0, arrowHeadSize);
+
+            for (int i = 0; i < LineModle.Arrows.Length; ++i) args.Display.DrawArrowHead(LineModle.Arrows[i].PointAtEnd,
+                LineModle.Arrows[i].TangentAt(LineModle.Arrows[i].Domain.T1), linecolor, 0, arrowHeadSize);
+        }
+
+        #endregion Display
 
         /// <summary>
         /// Class to hold the values describing the tansformation of a tool
         /// </summary>
-        public class ManipulatorPose : IGH_Goo
+        public abstract class Pose : IGH_GeometricGoo, Axis_IDisplayable
         {
-            private Robot robot;
-            private Axis.Types.Target target;
-            private double[] radAngles;
-            private JointState[] jointStates;
+            #region Variables
+            private Guid id = Guid.Empty;
+            protected Axis.Kernal.Target target;
+            protected double[] radAngles;
+            protected JointState[] jointStates;
+            protected Color[] jointColors;
+            private SimpleModle lineModle;
 
-            private bool outOfReach = false;
-            private bool outOfRoation = false;
-            private bool overHeadSig = false;
-            private bool wristSing = false;
+            #endregion Variables
 
+            #region Prooperties
+            // Public
+            public abstract Robot Robot { get; }
             public double[] Angles { get => this.radAngles.Select(d => d.ToDegrees()).ToArray(); }
+            public Target Target { get => target; }
+            public JointState[] JointStates { get => jointStates; }
+            public Transform[] Forward { get; protected set; }
 
-            public JointState[] JointStates
-            {
-                get => jointStates;
-                set { jointStates = value; }
-            }
+            #region Signals
+            public bool OutOfReach { get => jointStates.Any(js => js == JointState.OutOfReach); }
+            public bool OutOfRoation { get => jointStates.Any(js => js == JointState.OutOfRotation); }
+            public bool OverHeadSig { get => jointStates.Any(js => js == JointState.OverHeadSing); }
+            public bool WristSing { get => jointStates.Any(js => js == JointState.WristSing); }
+            #endregion Signal 
 
-            public bool OutOfReach { get => outOfReach; }
-            public bool OutOfRoation { get => outOfRoation; }
-            public bool OverHeadSig { get => overHeadSig; }
-            public bool WristSing { get => wristSing; }
-
-            // Mesh transformations
-            private Transform[] Forward;
-
-            private Transform[] reverse = null;
-
-            public Transform[] Reverse
-            {
-                get
-                {
-                    if (reverse != null) return reverse;
-                    GetPose();
-                    return reverse; //<-- Not sure if this code is ever gonna be called.
-                }
-                set => reverse = value;
-            }
-
-            // Mesh colours
-            private static Dictionary<JointState, Color> JointColours = new Dictionary<JointState, Color>()
-            {
-                { JointState.Normal, Axis.Styles.DarkGrey },
-                { JointState.OutOfReach, Axis.Styles.Pink },
-                { JointState.OutOfRotation, Axis.Styles.Pink },
-                { JointState.WristSing, Axis.Styles.Blue },
-                { JointState.OverHeadSing, Axis.Styles.Blue },
-            };
-
+            public abstract Plane Flange {get; }
             public Plane[] Planes
             {
                 get
                 {
-                    Plane[] planes = this.robot.AxisPlanes.Select(plane => plane.Clone()).ToArray();
-                    for (int i = 0; i < planes.Length; ++i) planes[i].Transform(this.robot.ResetTransform[i] * this.Forward[i]);
+                    Plane[] planes = this.Robot.AxisPlanes.Select(plane => plane.Clone()).ToArray();
+                    for (int i = 0; i < planes.Length; ++i) planes[i].Transform(this.Robot.ResetTransform[i] * this.Forward[i]);
                     return planes;
                 }
             }
-
-            public Plane Flange
-            {
-                get
-                {
-                    Plane flange = this.robot.AxisPlanes[5].Clone();
-                    flange.Transform(Forward[5]);
-                    return flange;
-                }
-            }
-
-            public Plane Target
+            public Plane TargetPlane
             {
                 get
                 {
@@ -543,155 +756,90 @@ namespace Axis.Kernal
                 }
             }
 
-            public Types.Tool Tool => this.target.Tool;
-            public Types.Speed Speed => this.target.Speed;
+            /*
+             * @ todo Transform the tool
+             * @ body Ensure the tool is moved the the propper location
+             */
+            public Tool Tool => this.target.Tool;
+            public Speed Speed => this.target.Speed;
+
 
             public Mesh[] Geometries
             {
                 get
                 {
-                    Mesh[] meshes = new Mesh[this.robot.RobMeshes.Count + this.target.Tool.Geometries.Length];
+                    Mesh[] meshes = new Mesh[this.Robot.RobMeshes.Count + this.target.Tool.Geometries.Length];
 
-                    var rob = this.robot.RobMeshes.Select(mesh => mesh.DuplicateMesh()).ToArray();
-                    for (int i = 0; i < rob.Length - 1; ++i) rob[i + 1].Transform(this.robot.ResetTransform[i] * this.Forward[i]);
+                    var rob = this.Robot.RobMeshes.Select(mesh => mesh.DuplicateMesh()).ToArray();
+                    for (int i = 0; i < rob.Length - 1; ++i) rob[i + 1].Transform(this.Forward[i]);
 
                     var tool = this.target.Tool.Geometries.Select(mesh => mesh.DuplicateMesh()).ToArray();
-                    foreach (Mesh m in tool) m.Transform(this.target.Tool.ResetTransform * Rhino.Geometry.Transform.PlaneToPlane(Plane.WorldXY, this.Flange));
+                    foreach (Mesh m in tool) m.Transform(Rhino.Geometry.Transform.PlaneToPlane(Plane.WorldXY, this.Flange));
 
                     for (int i = 0; i < rob.Length; ++i) meshes[i] = rob[i];
-                    for (int i = rob.Length; i < this.robot.RobMeshes.Count + tool.Length; ++i) meshes[i] = tool[i - rob.Length];
+                    for (int i = rob.Length; i < this.Robot.RobMeshes.Count + tool.Length; ++i) meshes[i] = tool[i - rob.Length];
 
                     //Maybe a list based implementation is easier.
                     // But this way I'm sure that the out put of "Geometies" has the identical length of "Colors"
                     return meshes;
                 }
-            }
+            }  // Combined 
+            public SimpleModle LineModle { 
+                get 
+                {
+                    if (lineModle != null) return lineModle;
 
+                    var planes = Robot.AxisPlanes.Select(p => p.Clone()).ToArray();
+                    for (int i = 0; i < planes.Length; ++i) planes[i].Transform(this.Forward[i]);
+
+
+                    Line[] lines = (Line[])Robot.LineModle.Lines.Clone();
+                    for(int i = 0; i < lines.Length; ++i) lines[i].Transform(this.Forward[i]);
+
+                    Brep[] joints = Robot.LineModle.Joints.Select(b => b.DuplicateBrep()).ToArray();
+                    for (int i = 0; i < joints.Length; ++i) joints[i].Transform(this.Forward[i]);
+
+                    Curve[] arrows = Robot.LineModle.Arrows.Select(c => c.DuplicateCurve()).ToArray();
+                    for (int i = 0; i < arrows.Length; ++i) arrows[i].Transform(this.Forward[i]);
+
+                    for (int i = 0; i < arrows.Length; ++i) 
+                        arrows[i].Transform(Rhino.Geometry.Transform.Rotation(-radAngles[i], planes[i].ZAxis, planes[i].Origin));
+
+                    Line tool = this.Tool.SimpleTool.Line;
+                    tool.Transform(Rhino.Geometry.Transform.PlaneToPlane(Plane.WorldXY, this.Flange));
+
+                    lineModle = new SimpleModle() { Lines = lines, Joints = joints, Arrows = arrows, Tool = tool };
+                    return lineModle;
+                } 
+            }
             public Color[] Colors
             {
                 get
                 {
-                    if (this.jointStates == null) return null;
+                    if (this.jointColors != null) return this.jointColors;
 
-                    var jointColors = this.jointStates.Select(state => GetColour(state)).ToArray();
-                    var tool = this.target.Tool.Colors;
+                    Color[] rob = this.jointStates.Select(state => GetColour(state)).Prepend(Axis.Styles.DarkGrey).ToArray();
+                    Color[] tool = Enumerable.Range(0, this.Tool.Geometries.Length).Select(_ => Styles.DarkGrey).ToArray();
 
-                    Color[] colors = new Color[this.robot.Geometries.Length + this.target.Tool.Geometries.Length];
-
-                    colors[0] = Axis.Styles.DarkGrey; //Base Color
-                    for (int i = 1; i < jointColors.Length + 1; ++i) colors[i] = jointColors[i - 1]; // Joint Colours
-                    for (int i = 1 + jointColors.Length; i < this.robot.Geometries.Length; ++i) colors[i] = Axis.Styles.DarkGrey; //Left over Colors
-
-                    for (int i = this.robot.Geometries.Length; i < this.robot.Geometries.Length + this.target.Tool.Geometries.Length; ++i) colors[i] = tool[i - this.robot.Geometries.Length]; // Tool Color
-
-                    //Maybe a list based implementation is easier.
-                    // But this way I'm sure that the out put of "Geometies" has the identical length of "Colors"
-
-                    return colors;
+                    this.jointColors = rob.Concat(tool).ToArray();
+                    return jointColors;
                 }
+                set => this.jointColors = value;
             }
 
-            #region Constructors
 
-            public ManipulatorPose(Robot robot)
-            {
-                this.robot = robot;
-            }
 
-            public ManipulatorPose(Robot robot, Axis.Types.Target target)
-            {
-                this.robot = robot;
-                this.SetPose(target);
-            }
-
-            #endregion Constructors
+            #endregion Propperties
 
             #region Methods
-
             //Public
-            public void SetPose(Types.Target target)
-            {
-                this.target = target;
-
-                double[] radAngles = new double[6];
-                double[] degAngles = new double[6];
-                JointState[] jointStates = new JointState[6];
-
-                //Invers and farward kinematics devided by manufacturar
-                switch (this.robot.Manufacturer)
-                {
-                    case Manufacturer.ABB:
-                        switch (target.Method)
-                        {
-                            case MotionType.Linear:
-                            case MotionType.Joint:
-
-                                // Compute the flane position by moving the TCP to the base of the tool
-                                Plane flange = target.Plane.Clone();
-                                Rhino.Geometry.Transform t1 = Rhino.Geometry.Transform.PlaneToPlane(flange, Plane.WorldXY);
-                                Rhino.Geometry.Transform t2; t1.TryGetInverse(out t2);
-                                flange.Transform(t2 * target.Tool.FlangeOffset * t1);
-
-                                //double[,] anglesSet = newTargetInverseKinematics(target, out overHeadSig, out outOfReach);
-                                List<List<double>> anglesSet = TargetInverseKinematics(flange, out overHeadSig, out outOfReach);
-
-                                // Select Solution based on Indecies
-                                //for (int i = 0; i < anglesSet.Length / anglesSet.GetLength(1); ++i) degAngles[i] = anglesSet[i, this.Robot.Indices[i]];
-                                radAngles = anglesSet.Zip<List<double>, int, double>(this.robot.Indices, (solutions, selIdx) => solutions[selIdx]).ToArray();
-                                degAngles = radAngles.Select(a => a.ToDegrees()).ToArray();
-
-                                jointStates = CheckJointAngles(degAngles, this.robot, checkSingularity: true);
-
-                                break;
-
-                            case MotionType.AbsoluteJoint:
-                                degAngles = target.JointAngles.ToArray();
-                                radAngles = degAngles.Select(a => a.ToRadians()).ToArray();
-
-                                jointStates = CheckJointAngles(degAngles, this.robot);
-
-                                break;
-
-                            default:
-                                throw new NotImplementedException($"This movment: {target.Method.ToString()} has not jet been implemented for {this.robot.Manufacturer.ToString()}"); ;
-                        }
-                        break;
-
-                    case Manufacturer.Kuka:
-                        switch (target.Method)
-                        {
-                            case MotionType.AbsoluteJoint:
-
-                                degAngles = target.JointAngles.ToArray();
-                                jointStates = CheckJointAngles(degAngles, this.robot);
-
-                                radAngles = degAngles.Select(value => value.ToRadians()).ToArray();
-                                break;
-
-                            default:
-                                throw new NotImplementedException($"This movment: {target.Method.ToString()} has not jet been implemented for {this.robot.Manufacturer.ToString()}");
-                        }
-                        break;
-                }
-
-                SetSignals(jointStates, out this.outOfReach, out this.outOfRoation, out this.wristSing, out this.overHeadSig);
-                this.JointStates = jointStates;
-
-                this.radAngles = radAngles;
-
-                this.Forward = ForwardKinematics(radAngles, this.robot);
-
-                this.IsValid = (!outOfReach && !outOfRoation && !overHeadSig && !wristSing) ? true : false;
-            }
-
-            public void UpdateRobot(Robot robot) => this.robot = robot;
-
+            public abstract void SetPose(Kernal.Target target);
             public Transform[] GetPose()
             {
                 if (this.Forward == null) throw new Exception("Unable to transfromation for empty pose please first call SetPost");
 
                 // Set Transform in relation to current position
-                this.Forward = this.Forward.Zip(this.robot.ResetTransform, (forward, reverse) => reverse * forward).ToArray();
+                this.Forward = this.Forward.Zip(this.Robot.ResetTransform, (forward, reverse) => reverse * forward).ToArray();
 
                 // Update inverse of current position
 
@@ -702,10 +850,63 @@ namespace Axis.Kernal
                     var sucsess = this.Forward[i].TryGetInverse(out rXform[i]);
                 }
                 //var sucsess = this.Forward.Select((xform, idx) => xform.TryGetInverse(out rXform[idx]));
-                this.Reverse = rXform;
+                //this.Reverse = rXform;
 
                 return this.Forward;
             }
+
+            // Display
+            public virtual void DrawViewportMeshes(IGH_PreviewArgs args)
+            {
+                if (this.Colors == null) return;
+
+                var meshColorPairRobot = this.Geometries.Zip(this.Colors, (mesh, color) => new { Mesh = mesh, Color = color });
+                foreach (var pair in meshColorPairRobot) args.Display.DrawMeshShaded(pair.Mesh, new Rhino.Display.DisplayMaterial(pair.Color));
+
+                if (this.Tool.Geometries.Length == 0) 
+                {
+                    var toolcolor = Styles.Orange;
+                    args.Display.DrawArrow(LineModle.Tool, toolcolor, 0, 0.2);
+                }
+            }
+            public virtual void DrawViewportWires(IGH_PreviewArgs args)
+            {
+                Rhino.Display.DisplayMaterial[] Gradient(double[] min, double[] max, double[] value) 
+                {
+                    var gripPositions = new List<double> { 0, 0.25,0.5,0.75, 1 };
+                    var gripColors = new List<Color> { Color.Red, Color.Yellow, Color.Green, Color.Yellow, Color.Red };
+                    Grasshopper.GUI.Gradient.GH_Gradient gH_Gradient = new Grasshopper.GUI.Gradient.GH_Gradient(gripPositions, gripColors);
+                    var position = value.Select((v, i) => Util.Remap(v, min[i], max[i], 0, 1)).ToArray();
+                    return position.Select(d => new Rhino.Display.DisplayMaterial(gH_Gradient.ColourAt(d))).ToArray();
+                    
+                }
+                var linecolor = Styles.DarkGrey;
+                var toolcolor = Styles.Orange;
+                var surfacecolor = Gradient(Robot.MinAngles.ToArray(), Robot.MaxAngles.ToArray(), Angles);
+                int lineThickness = 17;
+                int arrowThickness = 3;
+                int arrowHeadSize = 20;
+
+                // Lines
+                for (int i = 0; i < LineModle.Lines.Length; ++i) args.Display.DrawCurve(LineModle.Lines[i].ToNurbsCurve(), linecolor, lineThickness - (i*2));
+                for (int i = 0; i < LineModle.Joints.Length; ++i) args.Display.DrawBrepShaded(LineModle.Joints[i], surfacecolor[i]);
+                for (int i = 0; i < LineModle.Arrows.Length; ++i) args.Display.DrawCurve(LineModle.Arrows[i], linecolor, arrowThickness);
+                
+                //Tool
+                args.Display.DrawArrow(LineModle.Tool, toolcolor, 0, 0.2);
+
+                //int j = 5;
+                //args.Display.DrawBrepShaded(LineModle.Joints[j], surfacecolor[j]);
+
+                // Arrowheads
+                for (int i = 0; i < LineModle.Arrows.Length; ++i) args.Display.DrawArrowHead(LineModle.Arrows[i].PointAtStart,
+                    LineModle.Arrows[i].TangentAt(LineModle.Arrows[i].Domain.T0)*-1, linecolor, 0, arrowHeadSize);
+
+                for (int i = 0; i < LineModle.Arrows.Length; ++i) args.Display.DrawArrowHead(LineModle.Arrows[i].PointAtEnd,
+                    LineModle.Arrows[i].TangentAt(LineModle.Arrows[i].Domain.T1), linecolor, 0, arrowHeadSize);
+            }
+
+
 
             //Private
             /// <summary>
@@ -715,186 +916,10 @@ namespace Axis.Kernal
             /// <param name="overheadSing"></param>
             /// <param name="outOfReach"></param>
             /// <returns></returns>
-            private List<List<double>> TargetInverseKinematics(Plane target, out bool overheadSing, out bool outOfReach, double singularityTol = 5)
-            {
-                //////////////////////////////////////////////////////////////
-                //// Setup of the vartiables needed for Iverse Kinematics ////
-                //////////////////////////////////////////////////////////////
+            protected abstract List<List<double>> TargetInverseKinematics(Plane target, out bool overheadSing, out bool outOfReach, double singularityTol = 5);
 
-                //Setting up Planes
-                Plane P0 = this.robot.AxisPlanes[0].Clone();
-                Plane P1 = this.robot.AxisPlanes[1].Clone();
-                Plane P2 = this.robot.AxisPlanes[2].Clone();
-                Plane P3 = this.robot.AxisPlanes[3].Clone();
-                Plane P4 = this.robot.AxisPlanes[4].Clone();
-                Plane P5 = this.robot.AxisPlanes[5].Clone();
-                Plane flange = target.Clone();
 
-                // Setting Up Lengths
-                double wristOffsetLength = this.robot.WristOffsetLength;
-                double lowerArmLength = this.robot.LowerArmLength;
-                double upperArmLength = this.robot.UpperArmLength;
-                double axisFourOffsetAngle = this.robot.AxisFourOffsetAngle;
-
-                //////////////////////////////////////////////////////////////
-                //// Everything past this should be local to the Function ////
-                //////////////////////////////////////////////////////////////
-
-                double UnWrap(double value)
-                {
-                    while (value >= Math.PI) value -= 2 * Math.PI;
-                    while (value < -Math.PI) value += 2 * Math.PI;
-
-                    return value;
-                }
-                double AngleOnPlane(Plane plane, Point3d point)
-                {
-                    double outX, outY;
-                    plane.ClosestParameter(point, out outX, out outY);
-
-                    return Math.Atan2(outY, outX);
-                }
-
-                // Validity checks
-                bool unreachable = true;
-                bool singularity = false;
-
-                // Lists of doubles to hold our axis values and our output log.
-                List<double> a1list = new List<double>(),
-                    a2list = new List<double>(),
-                    a3list = new List<double>(),
-                    a4list = new List<double>(),
-                    a5list = new List<double>(),
-                    a6list = new List<double>();
-
-                // Find the wrist position by moving back along the robot flange the distance of the wrist link.
-                Point3d WristLocation = new Point3d(flange.PointAt(0, 0, -wristOffsetLength));
-
-                // Check for overhead singularity and add message to log if needed
-                bool checkForOverheadSingularity(Point3d wristLocation, Point3d bPlane)
-                {
-                    if ((bPlane.Y - WristLocation.Y) < singularityTol && (bPlane.Y - WristLocation.Y) > -singularityTol &&
-                         (bPlane.X - WristLocation.X) < singularityTol && (bPlane.X - WristLocation.X) > -singularityTol)
-                        return true;
-                    else return false;
-                }
-                singularity = checkForOverheadSingularity(WristLocation, P0.Origin);
-
-                double angle1 = AngleOnPlane(P0, WristLocation);
-
-                // Standard cases for axis one.
-                if (angle1 > Math.PI) angle1 -= 2 * Math.PI;
-                for (int j = 0; j < 4; j++)
-                    a1list.Add(angle1);
-
-                // Other cases for axis one.
-                angle1 += Math.PI;
-                if (angle1 > Math.PI) angle1 -= 2 * Math.PI;
-                for (int j = 0; j < 4; j++)
-                    a1list.Add(1 * angle1);
-
-                // Generate four sets of values for each option of axis one
-                for (int j = 0; j < 2; j++)
-                {
-                    angle1 = a1list[j * 4];
-
-                    // Rotate all of our points based on axis one.
-                    Transform Rotation1 = Rhino.Geometry.Transform.Rotation(angle1, P0.ZAxis, P0.Origin);
-
-                    Plane P1A = new Plane(P1); P1A.Transform(Rotation1);
-                    Plane P2A = new Plane(P2); P2A.Transform(Rotation1);
-                    Plane P3A = new Plane(P3); P3A.Transform(Rotation1);
-                    Plane P4A = new Plane(P4); P4A.Transform(Rotation1);
-                    Plane P5A = new Plane(P5); P5A.Transform(Rotation1);
-
-                    // Create our spheres for doing the intersections.
-                    Sphere Sphere1 = new Sphere(P1A, lowerArmLength);
-                    Sphere Sphere2 = new Sphere(WristLocation, upperArmLength);
-                    Circle Circ = new Circle();
-
-                    double Par1 = new double(), Par2 = new double();
-
-                    // Do the intersections and store them as pars.
-                    Rhino.Geometry.Intersect.Intersection.SphereSphere(Sphere1, Sphere2, out Circ);
-                    Rhino.Geometry.Intersect.Intersection.PlaneCircle(P1A, Circ, out Par1, out Par2);
-
-                    // Logic to check if the target is unreachable.
-                    if (unreachable)
-                        if (Par1 != double.NaN || Par2 != double.NaN)
-                            unreachable = false;
-
-                    // Get the points.
-                    Point3d IntersectPt1 = Circ.PointAt(Par1), IntersectPt2 = Circ.PointAt(Par2);
-
-                    // Solve IK for the remaining axes using these points.
-                    for (int k = 0; k < 2; k++)
-                    {
-                        Point3d ElbowPt = new Point3d();
-
-                        if (k == 0) ElbowPt = IntersectPt1;
-                        else ElbowPt = IntersectPt2;
-
-                        double angle2 = AngleOnPlane(P1A, ElbowPt);
-
-                        Transform Rotation2 = Rhino.Geometry.Transform.Rotation(angle2, P1A.ZAxis, P1A.Origin);
-                        Plane P2B = P2A.Clone(); P2B.Transform(Rotation2);
-                        Plane P3B = P3A.Clone(); P3B.Transform(Rotation2);
-                        Plane P4B = P4A.Clone(); P4B.Transform(Rotation2);
-                        Plane P5B = P5A.Clone(); P5B.Transform(Rotation2);
-
-                        double angle3 = AngleOnPlane(P2B, WristLocation) + axisFourOffsetAngle;
-
-                        // Add Twice to list
-                        for (int n = 0; n < 2; n++)
-                        {
-                            a2list.Add(angle2);
-                            a3list.Add(UnWrap(angle3));
-                        }
-
-                        for (int n = 0; n < 2; n++)
-                        {
-                            Transform Rotation3 = Rhino.Geometry.Transform.Rotation(angle3, P2B.ZAxis, P2B.Origin);
-                            Plane P3C = P3B.Clone(); P3C.Transform(Rotation3);
-                            Plane P4C = P4B.Clone(); P4C.Transform(Rotation3);
-                            Plane P5C = P5B.Clone(); P5C.Transform(Rotation3);
-
-                            double angle4 = AngleOnPlane(P3C, flange.Origin);
-                            if (n == 1) angle4 += Math.PI;
-                            a4list.Add(UnWrap(angle4));
-
-                            Transform Rotation4 = Rhino.Geometry.Transform.Rotation(angle4, P3C.ZAxis, P3C.Origin);
-                            Plane P4D = P4C.Clone(); P4D.Transform(Rotation4);
-                            Plane P5D = P5C.Clone(); P5D.Transform(Rotation4);
-
-                            double angle5 = AngleOnPlane(P4D, flange.Origin);
-                            a5list.Add(angle5);
-
-                            Transform Rotation5 = Rhino.Geometry.Transform.Rotation(angle5, P4D.ZAxis, P4D.Origin);
-
-                            Plane P5E = P5D.Clone(); P5E.Transform(Rotation5);
-
-                            double angle6 = AngleOnPlane(P5E, flange.PointAt(1, 0));
-                            a6list.Add(angle6);
-                        }
-                    }
-                }
-
-                //////////////////////////////////////////////////////////////////////
-                ////// Cleaning up and preping returning the angles //////////////////
-                //////////////////////////////////////////////////////////////////////
-
-                // Compile our list of all axis angle value lists.
-                List<List<double>> angles = new List<List<double>>();
-                angles.Add(a1list); angles.Add(a2list); angles.Add(a3list); angles.Add(a4list); angles.Add(a5list); angles.Add(a6list);
-
-                // Update validity based on flags
-                outOfReach = unreachable;
-                overheadSing = singularity;
-
-                return angles; // Return the angles.
-            }
-
-            private static Rhino.Geometry.Transform[] ForwardKinematics(double[] radAngles, Robot robot)
+            protected static Rhino.Geometry.Transform[] ForwardKinematics(double[] radAngles, Robot robot)
             {
                 // Create an array of identety matrices
                 Transform[] transforms = new Transform[radAngles.Length];
@@ -920,7 +945,7 @@ namespace Axis.Kernal
             /// <param name="checkSingularity"></param>
             /// <param name="singularityTol"></param>
             /// <returns>Returns a list of JointStates</returns>
-            private static JointState[] CheckJointAngles(double[] angeles, Robot robot, bool checkSingularity = false, double singularityTol = 5)
+            protected static JointState[] CheckJointAngles(double[] angeles, Robot robot, bool checkSingularity = false, double singularityTol = 5)
             {
                 // Check for out of rotation
                 JointState[] states = new JointState[angeles.Length];
@@ -947,7 +972,7 @@ namespace Axis.Kernal
             /// <param name="OutOfReach"></param>
             /// <param name="WristSing"></param>
             /// <param name="OutOfRoation"></param>
-            private static void SetSignals(JointState[] states, out bool OverHeadSig, out bool OutOfReach, out bool WristSing, out bool OutOfRoation)
+            protected static void SetSignals(JointState[] states, out bool OverHeadSig, out bool OutOfReach, out bool WristSing, out bool OutOfRoation)
             {
                 bool overHeadSig = false;
                 bool outOfReach = false;
@@ -983,7 +1008,7 @@ namespace Axis.Kernal
             /// </summary>
             /// <param name="state"></param>
             /// <returns>Colour</returns>
-            private static Color GetColour(JointState state)
+            protected static Color GetColour(JointState state)
             {
                 Color color = new Color();
                 JointColours.TryGetValue(state, out color);
@@ -994,32 +1019,126 @@ namespace Axis.Kernal
 
             #region Interfaces
 
-            public bool IsValid { get; private set; } = false;
+            public bool IsValid => jointStates.All(js => js == JointState.Normal);
             public string IsValidWhyNot => "Pose does not have a valid solution";
-            public string TypeName => "Robot Pose";
+            public string TypeName => "RobotPose";
             public string TypeDescription => "This describes a robots position at a given moment";
+
+            public Guid ReferenceID
+            {
+                get
+                {
+                    if (id != Guid.Empty) return id;
+                    id = System.Guid.NewGuid();
+                    return id;
+                }
+                set
+                {
+                    if (typeof(Guid) == value.GetType()) id = value;
+                }
+            }
+
+            public BoundingBox Boundingbox { get; private set; }
+
+            public bool IsReferencedGeometry => false;
+
+            public bool IsGeometryLoaded => false;
 
             public bool CastFrom(object source) => throw new NotImplementedException();
 
             public bool CastTo<T>(out T target) => throw new NotImplementedException();
 
-            public IGH_Goo Duplicate()
-            {
-                if (this.target == null) return new ManipulatorPose(this.robot);
-                else return new ManipulatorPose(this.robot, this.target);
-            }
+            public abstract IGH_Goo Duplicate();
 
-            public IGH_GooProxy EmitProxy() => throw new NotImplementedException();
+            public IGH_GooProxy EmitProxy() => null;
 
             public object ScriptVariable() => this;
 
-            public override string ToString() => $"Position for {this.robot.Name} [{string.Join(";", this.radAngles.Select(a => a.ToDegrees().ToString("0.00")).ToArray())}]";
+            public override string ToString() => $"Position for {this.Robot.Name} [{string.Join(";", this.radAngles.Select(a => a.ToDegrees().ToString("0.00")).ToArray())}]";
 
-            public bool Read(GH_IReader reader) => throw new NotImplementedException();
 
-            public bool Write(GH_IWriter writer) => throw new NotImplementedException();
 
+
+            public BoundingBox GetBoundingBox(Transform xform)
+            {
+                BoundingBox box = BoundingBox.Empty;
+                this.Geometries.ToList().ForEach(m => m.Transform(xform));
+                this.Geometries.ToList().ForEach(m => box.Union(m.GetBoundingBox(false)));
+                this.Boundingbox = box;
+                return box;
+            }
+
+            public IGH_GeometricGoo DuplicateGeometry()
+            {
+                GH_Structure<GH_Mesh> geo = new GH_Structure<GH_Mesh>();
+                foreach (Mesh m in this.Geometries) 
+                {
+                    GH_Mesh mesh = new GH_Mesh();
+                    GH_Convert.ToGHMesh(m, GH_Conversion.Both, ref mesh);
+                    geo.Append(mesh);    
+                }
+
+                return (IGH_GeometricGoo)geo;
+            }
+
+            public IGH_GeometricGoo Transform(Transform xform)
+            {
+                GH_Structure<GH_Mesh> geo = new GH_Structure<GH_Mesh>();
+                foreach (Mesh m in this.Geometries)
+                {
+                    m.Transform(xform);
+                    GH_Mesh mesh = new GH_Mesh();
+                    GH_Convert.ToGHMesh(m, GH_Conversion.Both, ref mesh);
+                    geo.Append(mesh);
+                }
+                return (IGH_GeometricGoo)geo;
+            }
+
+            public IGH_GeometricGoo Morph(SpaceMorph xmorph)
+            {
+                GH_Structure<GH_Mesh> geo = new GH_Structure<GH_Mesh>();
+                foreach (Mesh m in this.Geometries)
+                {
+                    xmorph.Morph(m);
+                    GH_Mesh mesh = new GH_Mesh();
+                    GH_Convert.ToGHMesh(m, GH_Conversion.Both, ref mesh);
+                    geo.Append(mesh);
+                }
+                return (IGH_GeometricGoo)geo;
+            }
+
+            public bool LoadGeometry() => false;
+
+            public bool LoadGeometry(RhinoDoc doc) => false;
+
+            public void ClearCaches()
+            {
+                throw new NotImplementedException();
+            }
+
+
+            // Serialisation
+            public virtual bool Read(GH_IReader reader)
+            {
+                return true;
+            }
+            public virtual bool Write(GH_IWriter writer)
+            {
+                return true;
+            }
             #endregion Interfaces
+
+            /// <summary>
+            /// Dictionary for the ´colors repersenting the joint states
+            /// </summary>
+            private static Dictionary<JointState, Color> JointColours = new Dictionary<JointState, Color>()
+            {
+                { JointState.Normal, Axis.Styles.DarkGrey },
+                { JointState.OutOfReach, Axis.Styles.Pink },
+                { JointState.OutOfRotation, Axis.Styles.Pink },
+                { JointState.WristSing, Axis.Styles.Blue },
+                { JointState.OverHeadSing, Axis.Styles.Blue },
+            };
 
             /// <summary>
             /// A list of different joint states.
@@ -1161,4 +1280,608 @@ namespace Axis.Kernal
 
         #endregion Interfaces
     }
+
+    /// <summary>
+    /// Represents a robot ptogramm
+    /// </summary>
+    public abstract class Program : IGH_Goo
+    {
+        protected string name;
+        protected string type;
+        protected Manufacturer manufacturer;
+
+
+        public abstract bool SetInstructions(List<Instruction> targets);
+        public abstract List<string> GetInstructions();
+        public abstract bool Export(string filepath);
+
+        #region Interfaces
+        public override string ToString() => $"{manufacturer} {type}: {name}";
+        public abstract bool IsValid { get; }
+        public abstract string IsValidWhyNot { get; }
+        public string TypeName => $"{manufacturer}RobotProgram";
+        public string TypeDescription => $"";
+
+
+        public virtual bool CastFrom(object source) => false;
+        public virtual bool CastTo<T>(out T target) 
+        {
+            target = default(T);
+            return false;
+        }
+
+
+        public abstract IGH_Goo Duplicate();
+        public object ScriptVariable() => null;
+        public IGH_GooProxy EmitProxy() => null;
+
+        public virtual bool Read(GH_IReader reader)
+        {
+            name = reader.GetString("Name");
+            type = reader.GetString("ProgramType");
+            manufacturer = (Manufacturer)reader.GetInt32("Manufacturer");
+
+
+            return true;
+        }
+        public virtual bool Write(GH_IWriter writer)
+        {
+            writer.SetString("Name",name);
+            writer.SetString("ProgramType",type);
+            writer.SetInt32("Manufacturer", (int)manufacturer);
+            return true;
+        }
+        #endregion
+    }
+
+    /// <summary>
+    /// A single instruction in a Program
+    /// </summary>
+    public abstract class Procedure  : IGH_Goo
+    {
+        protected string name;
+        protected string type;
+        protected Manufacturer manufacturer;
+
+
+        #region Interfaces
+        public override string ToString() => $"{manufacturer} {type} Prcecdure: {name}";
+        public abstract bool IsValid { get; }
+        public abstract string IsValidWhyNot { get; }
+        public string TypeName => $"{manufacturer}RobotProcedure";
+        public string TypeDescription => $"";
+
+
+        public virtual bool CastFrom(object source) => false;
+        public virtual bool CastTo<T>(out T target)
+        {
+            target = default(T);
+            return false;
+        }
+
+
+        public abstract IGH_Goo Duplicate();
+        public object ScriptVariable() => null;
+        public IGH_GooProxy EmitProxy() => null;
+
+        public virtual bool Read(GH_IReader reader)
+        {
+            name = reader.GetString("Name");
+            type = reader.GetString("ProcedureType");
+            manufacturer = (Manufacturer)reader.GetInt32("Manufacturer");
+
+
+            return true;
+        }
+        public virtual bool Write(GH_IWriter writer)
+        {
+            writer.SetString("Name", name);
+            writer.SetString("ProcedureType", type);
+            writer.SetInt32("Manufacturer", (int)manufacturer);
+            return true;
+        }
+        #endregion
+    }
+
+    /// <summary>
+    /// Single robot instruction
+    /// </summary>
+    public abstract class Instruction : IGH_Goo
+    {
+        protected Manufacturer manufacturer;
+
+        public abstract string RobStr(Manufacturer manufacturer);
+
+        #region Interfaces
+        public abstract override string ToString();
+        public abstract bool IsValid { get; }
+        public abstract string IsValidWhyNot { get; }
+        public string TypeName => $"{manufacturer}Instruction";
+        public string TypeDescription => $"Single {manufacturer} robot instruction";
+
+        public abstract bool CastFrom(object source);
+        public abstract bool CastTo<T>(out T target);
+
+
+        public abstract IGH_Goo Duplicate();
+        public IGH_GooProxy EmitProxy() => null;
+        public abstract object ScriptVariable();
+
+
+        // Serialisation
+        public virtual bool Read(GH_IReader reader)
+        {
+            return true;
+        }
+
+        public virtual bool Write(GH_IWriter writer)
+        {
+            return true;
+        }
+        #endregion
+    }
+
+    /// <summary>
+    /// Robot movement instruction
+    /// </summary>
+    public abstract class Target : Instruction, IGH_GeometricGoo, Axis_IDisplayable
+    {
+        #region Class Fields
+
+        private Guid Guid;
+        public Plane Plane { get; set; } // Position in World Coordinates
+
+        public Plane TargetPlane; // Position in local coordinates
+        public abstract Quaternion Quaternion { get; set; }
+        public abstract List<double> JointAngles { get; set; }
+
+        public abstract Speed Speed { get; }
+        public abstract Zone Zone { get;  }
+
+        public abstract Tool Tool { get; set; }
+        public abstract CSystem CSystem { get; set; }
+
+        public abstract ExtVal ExtRot { get; set; }
+        public abstract ExtVal ExtLin { get; set; }
+        public abstract MotionType Method { get; }
+
+        #endregion Class Fields
+
+        public Point3d Position { get => this.TargetPlane.Origin; }
+
+        #region Interfaces
+
+        //IGH_GeometricGoo
+        public BoundingBox Boundingbox { get; private set; } //Cached boundingbox
+
+        public Guid ReferenceID
+        {
+            get
+            {
+                if (this.Guid != Guid.Empty) return this.Guid;
+                this.Guid = Guid.NewGuid();
+                return this.Guid;
+            }
+            set
+            {
+                if (value.GetType() == typeof(Guid)) this.Guid = value;
+            }
+        }
+
+        public bool IsReferencedGeometry { get => false; }
+        public bool IsGeometryLoaded { get => throw new NotImplementedException(); }
+
+        public virtual void ClearCaches()
+        {
+            this.Guid = Guid.Empty;
+            this.Plane = Plane.Unset;
+            this.TargetPlane = Plane.Unset;
+            this.Quaternion = Quaternion.Zero;
+            this.JointAngles = null;
+            this.Tool = null;
+            this.ExtRot = null;
+            this.ExtLin = null;
+
+        }
+
+        public IGH_GeometricGoo DuplicateGeometry()
+        {
+            throw new NotImplementedException();
+        }
+
+
+        public bool LoadGeometry() => false;
+
+        public bool LoadGeometry(Rhino.RhinoDoc doc) => false;
+
+        public BoundingBox GetBoundingBox(Transform xform) => throw new NotImplementedException();
+
+        public IGH_GeometricGoo Morph(SpaceMorph xmorph) => throw new NotImplementedException();
+
+        public IGH_GeometricGoo Transform(Transform xform) => throw new NotImplementedException();
+
+
+
+        // IGH_Goo
+        public override bool IsValid => true;
+
+        public override string IsValidWhyNot => throw new NotImplementedException();
+
+        public override bool CastFrom(object source) => throw new NotImplementedException();
+
+        public override bool CastTo<Q>(out Q target)
+        {
+            if (typeof(Q).IsAssignableFrom(typeof(GH_ObjectWrapper)))
+            {
+                string name = typeof(Q).Name;
+                object value = new GH_ObjectWrapper(this);
+                target = (Q)value;
+                return true;
+            }
+
+            if (typeof(Q).IsAssignableFrom(typeof(GH_Plane)) && (this.Plane != null))
+            {
+                object _Plane = new GH_Plane(this.Plane);
+                target = (Q)_Plane;
+                return true;
+            }
+            if (typeof(Q).IsAssignableFrom(typeof(GH_Point)) && (this.Plane != null))
+            {
+                object _Point = new GH_Point(this.Plane.Origin);
+                target = (Q)_Point;
+                return true;
+            }
+            target = default(Q);
+            return false;
+        }
+
+        public abstract override IGH_Goo Duplicate();
+
+        public override object ScriptVariable() => this;
+
+        public override string ToString() => $"Target ({Method.ToString()})";
+
+        //GH_ISerializable
+        public override bool Read(GH_IReader reader)
+        {
+            base.Read(reader);
+            if (reader.ItemExists("Guid")) this.Guid = reader.GetGuid("Guid");
+
+            if (reader.ChunkExists("Plane"))
+            {
+                var ghPlane = new GH_Plane();
+                var plane = Plane.Unset;
+                ghPlane.Read(reader.FindChunk("Plane"));
+                if (GH_Convert.ToPlane(ghPlane, ref plane, GH_Conversion.Both))
+                    this.Plane = plane;
+            }
+            if (reader.ChunkExists("PlaneTarget"))
+            {
+                var ghPlaneTarget = new GH_Plane();
+                var targetPlane = Plane.Unset;
+                ghPlaneTarget.Read(reader.FindChunk("Plane"));
+                GH_Convert.ToPlane(ghPlaneTarget, ref targetPlane, GH_Conversion.Both);
+                this.TargetPlane = targetPlane;
+            }
+
+            if (reader.ItemExists("Quaternion"))
+            {
+                int[] Q = new int[4];
+                for (int i = 0; i < 4; ++i) Q[i] = reader.GetInt32("Quaternion", i);
+                this.Quaternion = new Quaternion(Q[0], Q[1], Q[2], Q[3]);
+            }
+            if (reader.ItemExists("JointAnglesCount"))
+            {
+                var JointAnglesCount = reader.GetInt32("JointAnglesCount");
+                if (reader.ItemExists("JointAngles"))
+                {
+                    this.JointAngles = new double[JointAnglesCount].ToList();
+                    for (int i = 0; i < JointAnglesCount; ++i)
+                        this.JointAngles[i] = reader.GetDouble("JointAngles", i);
+                }
+            }
+
+
+            if (reader.ChunkExists("CSystem"))
+            {
+                this.CSystem = new CSystem();
+                var cystemChunk = reader.FindChunk("CSystem");
+                this.CSystem.Read(cystemChunk);
+            }
+
+            if (reader.ItemExists("ExtRot")) this.ExtRot = reader.GetDouble("ExtRot");
+            if (reader.ItemExists("ExtLin")) this.ExtLin = reader.GetDouble("ExtLin");
+
+            return true;
+        }
+
+        public override bool Write(GH_IWriter writer)
+        {
+            base.Write(writer);
+
+            if (this.Guid != Guid.Empty)
+                writer.SetGuid("Guid", this.Guid);
+
+            if (this.Plane != null)
+            {
+                var ghPlane = new GH_Plane(this.Plane);
+                ghPlane.Write(writer.CreateChunk("Plane"));
+            }
+            if (this.TargetPlane != null)
+            {
+                var ghPlaneTarget = new GH_Plane(this.TargetPlane);
+                ghPlaneTarget.Write(writer.CreateChunk("PlaneTarget"));
+            }
+
+            if (this.Quaternion != null)
+            {
+                for (int i = 0; i < 4; ++i)
+                {
+                    switch (i)
+                    {
+                        case 0:
+                            writer.SetInt32("Quaternion", i, (int)this.Quaternion.A); break;
+                        case 1:
+                            writer.SetInt32("Quaternion", i, (int)this.Quaternion.B); break;
+                        case 2:
+                            writer.SetInt32("Quaternion", i, (int)this.Quaternion.C); break;
+                        case 3:
+                            writer.SetInt32("Quaternion", i, (int)this.Quaternion.D); break;
+                    }
+                }
+            }
+            if (this.JointAngles != null)
+            {
+                writer.SetInt32("JointAnglesCount", this.JointAngles.Count);
+                for (int i = 0; i < this.JointAngles.Count; ++i)
+                {
+                    writer.SetDouble("JointAngles", i, this.JointAngles[i]);
+                }
+            }
+
+
+            if (this.CSystem != null)
+            {
+                var cystemChunk = writer.CreateChunk("CSystem");
+                this.CSystem.Write(cystemChunk);
+            }
+
+            if (this.ExtRot != null)
+                writer.SetDouble("ExtRot", this.ExtRot);
+            if (this.ExtLin != null)
+                writer.SetDouble("ExtLin", this.ExtLin);
+
+            return true;
+        }
+
+
+        //Display
+        public void DrawViewportWires(IGH_PreviewArgs args)
+        {
+
+            double sizeLine = 70; double sizeArrow = 30; int thickness = 3;
+
+            args.Display.DrawLineArrow(
+                new Line(this.Plane.Origin, this.Plane.XAxis, sizeLine),
+                Axis.Styles.Pink,
+                thickness,
+                sizeArrow);
+            args.Display.DrawLineArrow(new Line(this.Plane.Origin, this.Plane.YAxis, sizeLine),
+                Axis.Styles.LightBlue,
+                thickness,
+                sizeArrow);
+            args.Display.DrawLineArrow(new Line(this.Plane.Origin, this.Plane.ZAxis, sizeLine),
+                Axis.Styles.LightGrey,
+                thickness,
+                sizeArrow);
+        }
+        public void DrawZone(IGH_PreviewArgs args) 
+        {
+            args.Display.DrawSphere(new Sphere(this.Plane, this.Zone.PathRadius), Styles.MediumWhite);
+        }
+        public void DrawViewportMeshes(IGH_PreviewArgs args)
+        {
+            throw new NotImplementedException();
+        }
+
+        #endregion Interfaces
+
+    }
+
+    /// <summary>
+    /// Robot code instruction
+    /// </summary>
+    public abstract class Tool: IGH_GeometricGoo, Axis_IDisplayable
+    {
+        #region Variables
+        private SimpleGeo simpleTool;
+        #endregion Variables
+
+        #region Propperties 
+        private Guid ID { get; set; }
+        public string Name { get; set; }
+        public Plane TCP { get; set; }
+        public abstract Manufacturer Manufacturer { get; }
+        public abstract string Declaration { get; }
+        
+
+        /* @ todo Change Geometries to ToolMesh
+         * @ body Geometries will be reserved for the robot class where it discribes a copy of both rob and tool mesh.
+         */
+        public Mesh[] Geometries { get; set; }
+        public class SimpleGeo { public Line Line; }
+        public SimpleGeo SimpleTool { 
+            get 
+            {
+                if (simpleTool != null) return simpleTool;
+                simpleTool = DrawSimpleTool();
+                return simpleTool;   
+            } 
+            private set 
+            {
+                simpleTool = value;
+            } 
+        }
+
+
+        public Transform FlangeOffset
+        {
+            get
+            {
+                return Rhino.Geometry.Transform.PlaneToPlane(TCP, Plane.WorldXY);
+            }
+        }
+
+
+        #endregion Propperties 
+
+        #region Methods
+        //Display
+        private SimpleGeo DrawSimpleTool()
+        {
+            return new SimpleGeo() { Line = new Line(Plane.WorldXY.Origin, this.TCP.Origin) };
+        }
+        public void DrawViewportWires(IGH_PreviewArgs args)
+        {
+            Color color = Styles.DarkGrey;
+            args.Display.DrawLineArrow(SimpleTool.Line, color, 10, 10);
+        }
+        public void DrawViewportMeshes(IGH_PreviewArgs args)
+        {
+            var color = new Rhino.Display.DisplayMaterial(Axis.Styles.MediumGrey);
+            foreach (var geo in Geometries) args.Display.DrawMeshShaded(geo, color);
+        }
+        #endregion Methods
+
+        #region Interfaces
+
+        //IGH_GeometricGoo
+        public BoundingBox Boundingbox { get; private set; }
+
+        public bool IsGeometryLoaded { get; }
+        public bool IsReferencedGeometry { get; }
+
+        //IGH_Goo
+        public bool IsValid => true;
+
+        public string IsValidWhyNot { get { return ""; } }
+        public Guid ReferenceID { get; set; }
+        public string TypeDescription => "Robot end effector";
+
+        public string TypeName => "Tool";
+        public override string ToString() => $"Tool: {this.Name}";
+
+
+        public bool CastFrom(object o) => false;
+
+        public bool CastTo<T>(out T target)
+        {
+            target = default(T);
+
+            if (typeof(T).IsAssignableFrom(typeof(GH_ObjectWrapper)))
+            {
+                string name = typeof(T).Name;
+                object value = new GH_ObjectWrapper(this);
+                target = (T)value;
+                return true;
+            }
+
+            return false;
+        }
+
+        public virtual void ClearCaches()
+        {
+            this.Name = string.Empty;
+            this.ID = Guid.Empty;
+            this.TCP = Plane.Unset;
+            this.Geometries = null;
+        }
+
+        public abstract IGH_Goo Duplicate();
+
+        public IGH_GeometricGoo DuplicateGeometry() => throw new NotImplementedException();
+
+        public IGH_GooProxy EmitProxy() => null;
+
+        public BoundingBox GetBoundingBox(Transform xform)
+        {
+            BoundingBox box = BoundingBox.Empty;
+            foreach (Mesh m in this.Geometries) m.Transform(xform);
+            foreach (Mesh m in this.Geometries) box.Union(m.GetBoundingBox(false));
+            this.Boundingbox = box;
+            return box;
+        }
+
+        public bool LoadGeometry() => false;
+        public object ScriptVariable() => this;
+
+        public bool LoadGeometry(Rhino.RhinoDoc doc) => false;
+
+        public IGH_GeometricGoo Morph(SpaceMorph xmorph) => throw new NotImplementedException();
+        public IGH_GeometricGoo Transform(Transform xform) => throw new NotImplementedException();
+
+
+        //GH_ISerializable
+        public virtual bool Read(GH_IReader reader)
+        {
+            if (reader.ItemExists("Name")) this.Name = reader.GetString("Name");
+            if (reader.ItemExists("GUID")) this.ID = reader.GetGuid("GUID");
+            if (reader.ChunkExists("TCP"))
+            {
+                var chunk1 = reader.FindChunk("TCP");
+                if (chunk1 != null)
+                {
+                    var data = new GH_Plane();
+                    var plane = new Plane();
+                    data.Read(chunk1);
+                    GH_Convert.ToPlane(data, ref plane, GH_Conversion.Both);
+                    this.TCP = plane;
+                }
+            }
+
+            List<Mesh> meshes = new List<Mesh>();
+            if (reader.ItemExists("GeometryCout"))
+            {
+                int geometriesCount = reader.GetInt32("GeometryCout");
+                for (int i = 0; i < geometriesCount; ++i)
+                {
+                    if (reader.ChunkExists("Geometry", i))
+                    {
+                        Mesh mesh = new Mesh();
+                        GH_Mesh gh_mesh = new GH_Mesh();
+                        var cunckMesh = reader.FindChunk("Geometry", i);
+                        gh_mesh.Read(cunckMesh);
+                        bool sucsess = GH_Convert.ToMesh(gh_mesh, ref mesh, GH_Conversion.Both);
+                        meshes.Add(mesh);
+                    }
+                }
+            }
+            this.Geometries = meshes.ToArray();
+            return true;
+        }
+
+        public virtual bool Write(GH_IWriter writer)
+        {
+            writer.SetString("Name", this.Name);
+            writer.SetGuid("GUID", ID);
+
+            GH_Plane gH_TCP = new GH_Plane(this.TCP);
+            gH_TCP.Write(writer.CreateChunk("TCP"));
+
+            if (this.Geometries.Length != 0)
+            {
+                writer.SetInt32("GeometryCout", this.Geometries.Length);
+                for (int i = 0; i < this.Geometries.Length; ++i)
+                {
+                    GH_Mesh mesh = new GH_Mesh(this.Geometries[i]);
+                    mesh.Write(writer.CreateChunk("Geometry", i));
+                }
+            }
+
+            return true;
+        }
+
+        #endregion Interfaces
+    }
+
 }

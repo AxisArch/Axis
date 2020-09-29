@@ -6,10 +6,11 @@ using Rhino.Geometry;
 using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
+using Grasshopper.Kernel.Types;
 
 namespace Axis.GH_Params
 {
-    public class ContollerParam : GH_PersistentParam<Controller>
+    public class ContollerParam : GH_PersistentParam<IGH_Goo>
     {
         public override GH_Exposure Exposure => GH_Exposure.hidden; // <--- Make it hidden when it is working.
 
@@ -19,17 +20,17 @@ namespace Axis.GH_Params
 
         public override Guid ComponentGuid => new Guid("2E7E0CBA-4F94-4EB2-9B73-998B4732EC0F");
 
-        protected override Controller InstantiateT()
+        protected override IGH_Goo InstantiateT()
         {
             return null; // new AbbIRC5Contoller();
         }
 
-        protected override GH_GetterResult Prompt_Singular(ref Controller value)
+        protected override GH_GetterResult Prompt_Singular(ref IGH_Goo value)
         {
             return GH_GetterResult.cancel;
         }
 
-        protected override GH_GetterResult Prompt_Plural(ref List<Controller> values)
+        protected override GH_GetterResult Prompt_Plural(ref List<IGH_Goo> values)
         {
             return GH_GetterResult.cancel;
         }
@@ -38,6 +39,34 @@ namespace Axis.GH_Params
         {
             //Menu_AppendItem(menu, "Set the default value", SetDefaultHandler, SourceCount == 0);
             base.AppendAdditionalMenuItems(menu);
+        }
+
+        protected override void OnVolatileDataCollected()
+        {
+            for (int p = 0; p < m_data.PathCount; p++)
+            {
+                List<IGH_Goo> branch = m_data.Branches[p];
+                for (int i = 0; i < branch.Count; i++)
+                {
+                    IGH_Goo goo = branch[i];
+
+                    //We accept existing nulls.
+                    if (goo == null) continue;
+
+                    //We accept colours.
+                    if (goo is Controller) continue;
+
+
+                    //Tough luck, the data is beyond repair. We'll set a runtime error and insert a null.
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error,
+                      string.Format("Data of type {0} could not be converted into a Robot", goo.TypeName));
+                    branch[i] = null;
+
+                    //As a side-note, we are not using the CastTo methods here on goo. If goo is of some unknown 3rd party type
+                    //which knows how to convert itself into a curve then this parameter will not work with that. 
+                    //If you want to know how to do this, ask.
+                }
+            }
         }
 
         protected override System.Drawing.Bitmap Icon => Properties.Icons.Connect;

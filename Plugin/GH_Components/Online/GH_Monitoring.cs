@@ -2,7 +2,6 @@
 using Canvas;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
-using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
 using System;
 using System.Collections.Generic;
@@ -14,13 +13,81 @@ namespace Axis.GH_Components
     /// <summary>
     /// Online monitoring of an IRC5 controller object.
     /// </summary>
-    public class GH_Monitoring : GH_Component, IGH_VariableParameterComponent
+    public class GH_Monitoring : Axis_Component, IGH_VariableParameterComponent
     {
-        // Optionable Log
-        private bool logOption = false;
+        public GH_Monitoring() : base("Monitoring  ", "Monitoring", "This will monitor the robots position and IO's", AxisInfo.Plugin, AxisInfo.TabLive)
+        {
+            var attr = this.Attributes as AxisComponentAttributes;
 
-        private bool logOptionOut = false;
-        private bool autoUpdate = false;
+            IsMutiManufacture = false;
+
+            this.UI_Elements = new Kernal.IComponentUiElement[]
+            {
+            };
+
+            attr.Update(UI_Elements);
+
+
+            logOption = new ToolStripMenuItem("Log",null, log_Click) 
+            {
+                ToolTipText = "Activate the log output",
+            };
+            update = new ToolStripMenuItem("Auto Update", null, autoUpdate_Click) 
+            {
+                ToolTipText = "Activate the log output",
+            };
+
+            RegularToolStripItems = new ToolStripMenuItem[]
+            {
+                logOption,
+                update,
+            };
+        }
+        protected override void SolveInstance(IGH_DataAccess DA)
+        {
+            List<Controller> controllers = new List<Controller>();
+
+            DA.GetDataList("Controller", controllers);
+
+            if (controllers == null) { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No active controller connected."); return; }
+
+            bool monitorTCP = true;
+            bool monitorIO = true;
+            bool clear = false;
+
+            // Update TCP
+            if (monitorTCP) tcp = controllers.Select(c => c.GetTCP()).ToList();
+
+            // If active, update the status of the IO system.
+            if (monitorIO) controllers.ForEach(c => c.GetIO());
+
+            // Clear log
+            if (clear)
+            {
+                log.Clear();
+                log.Add("Log cleared.");
+            }
+
+            //Output log
+            if (logOption.Checked)
+            {
+                Status = log;
+                DA.SetDataList("Log", log);
+            }
+
+            // Output IO & TCP
+            DA.SetDataList("IO", IOstatus);
+            DA.SetDataList("TCP", tcp);
+
+            if (update.Checked)
+            {
+                ExpireSolution(true);
+            }
+        }
+
+        #region Variables
+
+        //private bool autoUpdate = false;
 
         private List<string> Status { get; set; }
 
@@ -30,9 +97,10 @@ namespace Axis.GH_Components
         private List<string> IOstatus = new List<string>();
         private List<Plane> tcp = new List<Plane>();
 
-        public GH_Monitoring() : base("Monitoring  ", "Monitoring", "This will monitor the robots position and IO's", AxisInfo.Plugin, AxisInfo.TabLive)
-        {
-        }
+        ToolStripMenuItem logOption;
+        ToolStripMenuItem update;
+
+        #endregion Variables
 
         #region IO
 
@@ -50,51 +118,6 @@ namespace Axis.GH_Components
 
         #endregion IO
 
-        protected override void SolveInstance(IGH_DataAccess DA)
-        {
-            List<Controller> controllers = new List<Controller>();
-
-            DA.GetDataList("Controller", controllers);
-
-
-            if (controllers == null) { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No active controller connected."); return; }
-
-            bool monitorTCP = true;
-            bool monitorIO = true;
-            bool clear = false;
-
-
-            // Update TCP
-            if (monitorTCP) tcp = controllers.Select(c => c.GetTCP()).ToList();
-
-            // If active, update the status of the IO system.
-            if (monitorIO) controllers.ForEach(c => c.GetIO());
-
-
-            // Clear log
-            if (clear)
-            {
-                log.Clear();
-                log.Add("Log cleared.");
-            }
-
-            //Output log
-            if (logOptionOut)
-            {
-                Status = log;
-                DA.SetDataList("Log", log);
-            }
-
-            // Output IO & TCP
-            DA.SetDataList("IO", IOstatus);
-            DA.SetDataList("TCP", tcp);
-
-            if (autoUpdate)
-            {
-                ExpireSolution(true);
-            }
-        }
-
         #region UI
 
         // Build a list of optional input parameters
@@ -109,42 +132,32 @@ namespace Axis.GH_Components
             new Param_String() { Name = "Log", NickName = "Log", Description = "Log checking the connection status"},
         };
 
-        // The following functions append menu items and then handle the item clicked event.
-        protected override void AppendAdditionalComponentMenuItems(System.Windows.Forms.ToolStripDropDown menu)
-        {
-            ToolStripMenuItem log = Menu_AppendItem(menu, "Log", log_Click, true, logOption);
-            log.ToolTipText = "Activate the log output";
-            ToolStripMenuItem update = Menu_AppendItem(menu, "Auto Update", autoUpdate_Click, true, autoUpdate);
-            log.ToolTipText = "Activate the log output";
-
-            //ToolStripSeparator seperator = Menu_AppendSeparator(menu);
-        }
 
         private void log_Click(object sender, EventArgs e)
         {
+            var button = (ToolStripMenuItem)sender;
             RecordUndoEvent("Log");
-            logOption = !logOption;
+            button.Checked = !button.Checked;
 
-            if (logOption)
+            if (button.Checked)
             {
                 this.AddInput(0, inputParams);
                 this.AddOutput(0, outputParams);
-                logOptionOut = true;
             }
             else
             {
                 Params.UnregisterInputParameter(Params.Input.FirstOrDefault(x => x.Name == "Clear"), true);
                 Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Log"), true);
-                logOptionOut = false;
             }
 
-            //ExpireSolution(true);
+            ExpireSolution(true);
         }
 
         private void autoUpdate_Click(object sender, EventArgs e)
         {
+            var button = (ToolStripMenuItem)sender;
             RecordUndoEvent("AutoUpdate");
-            autoUpdate = !autoUpdate;
+            button.Checked = !button.Checked;
             ExpireSolution(true);
         }
 
@@ -155,18 +168,16 @@ namespace Axis.GH_Components
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
-            writer.SetBoolean("LogOptionSetModule", this.logOption);
-            writer.SetBoolean("LogOptionSetOutModule", this.logOptionOut);
-            writer.SetBoolean("AutoUpdate", this.autoUpdate);
+            writer.SetBoolean("LogOption", this.logOption.Checked);
+            writer.SetBoolean("AutoUpdate", this.update.Checked);
             return base.Write(writer);
         }
 
         // Deserialize this instance from a Grasshopper reader object.
         public override bool Read(GH_IO.Serialization.GH_IReader reader)
         {
-            this.logOption = reader.GetBoolean("LogOptionSetModule");
-            this.logOptionOut = reader.GetBoolean("LogOptionSetOutModule");
-            this.autoUpdate = reader.GetBoolean("AutoUpdate");
+            if(reader.ItemExists("LogOption")) this.logOption.Checked = reader.GetBoolean("LogOption");
+            if(reader.ItemExists("AutoUpdate")) this.update.Checked = reader.GetBoolean("AutoUpdate");
             return base.Read(reader);
         }
 

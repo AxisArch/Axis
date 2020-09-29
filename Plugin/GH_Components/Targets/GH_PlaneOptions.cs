@@ -1,4 +1,5 @@
-﻿using Canvas;
+﻿using Axis.Kernal;
+using Canvas;
 using GH_IO.Serialization;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
@@ -9,10 +10,8 @@ using System.Windows.Forms;
 
 namespace Axis.GH_Components
 {
-    public class GH_PlaneOptions : GH_Component, IGH_VariableParameterComponent
+    public class GH_PlaneOptions : Axis_Component, IGH_VariableParameterComponent
     {
-        private Opperation currentState = Opperation.FlipPlane;
-        private Opperation previouseState = Opperation.PlaneToQuatertion; // Should not be the same as currentState
 
         /// <summary>
         /// Initializes a new instance of the MyComponent1 class.
@@ -22,32 +21,23 @@ namespace Axis.GH_Components
               "This porvides accsess to different conversion methods for plain oriemtations, such as Quaternions and Euler angles",
               AxisInfo.Plugin, AxisInfo.TabConfiguration)
         {
+            ToolStripMenuItem selectState = new ToolStripMenuItem("Select the function") 
+            {
+                ToolTipText = "Select the function to component should perform"
+            };
+            foreach (string name in typeof(Opperation).GetEnumNames())
+            {
+                ToolStripMenuItem item = new ToolStripMenuItem(name, null, state_Click);
+
+                if (name == this.currentState.ToString()) item.Checked = true;
+                selectState.DropDownItems.Add(item);
+            }
+
+            RegularToolStripItems = new ToolStripMenuItem[]
+            {
+                selectState,
+            };
         }
-
-        #region IO
-
-        /// <summary>
-        /// Registers all the input parameters for this component.
-        /// </summary>
-        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
-        {
-        }
-
-        /// <summary>
-        /// Registers all the output parameters for this component.
-        /// </summary>
-        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
-        {
-        }
-
-        #endregion IO
-
-
-
-        /// <summary>
-        /// This is the method that actually does the work.
-        /// </summary>
-        /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             Plane plane = Plane.Unset;
@@ -116,7 +106,28 @@ namespace Axis.GH_Components
             }
         }
 
+        #region Variales
+        private Opperation currentState = Opperation.FlipPlane;
+        private Opperation previouseState = Opperation.PlaneToQuatertion; // Should not be the same as currentState
+        #endregion Variales
 
+        #region IO
+
+        /// <summary>
+        /// Registers all the input parameters for this component.
+        /// </summary>
+        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
+        {
+        }
+
+        /// <summary>
+        /// Registers all the output parameters for this component.
+        /// </summary>
+        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
+        {
+        }
+
+        #endregion IO
 
         #region UI
 
@@ -135,23 +146,6 @@ namespace Axis.GH_Components
             new Param_Plane() { Name = "Plane", NickName = "Plane", Description = "" , Access = GH_ParamAccess.item},
             new Param_String() { Name = "List", NickName = "List", Description = "", Access = GH_ParamAccess.list},
         };
-
-        // The following functions append menu items and then handle the item clicked event.
-        protected override void AppendAdditionalComponentMenuItems(System.Windows.Forms.ToolStripDropDown menu)
-        {
-            ToolStripMenuItem selectState = Menu_AppendItem(menu, "Select the function");
-            selectState.ToolTipText = "Select the function to component should perform";
-
-            foreach (string name in typeof(Opperation).GetEnumNames())
-            {
-                ToolStripMenuItem item = new ToolStripMenuItem(name, null, state_Click);
-
-                if (name == this.currentState.ToString()) item.Checked = true;
-                selectState.DropDownItems.Add(item);
-            }
-
-            ToolStripSeparator seperator = Menu_AppendSeparator(menu);
-        }
 
         private void state_Click(object sender, EventArgs e)
         {

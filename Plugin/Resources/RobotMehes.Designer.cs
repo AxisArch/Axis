@@ -73,9 +73,239 @@ namespace Axis.Resources {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
+        internal static byte[] IRB140_6kg_081mmesh {
+            get {
+                object obj = ResourceManager.GetObject("IRB140_6kg_081mmesh", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] IRB1520ID_4kg_150mmesh {
+            get {
+                object obj = ResourceManager.GetObject("IRB1520ID_4kg_150mmesh", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] IRB1600_6kg_120mmesh {
+            get {
+                object obj = ResourceManager.GetObject("IRB1600_6kg_120mmesh", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] IRB1660ID_4kg_155mmesh {
+            get {
+                object obj = ResourceManager.GetObject("IRB1660ID_4kg_155mmesh", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] IRB2600_12kg_185mmesh {
+            get {
+                object obj = ResourceManager.GetObject("IRB2600_12kg_185mmesh", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] IRB2600_12kg_20kg_165mmesh {
+            get {
+                object obj = ResourceManager.GetObject("IRB2600_12kg_20kg_165mmesh", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] IRB2600ID_15kg_185mmesh {
+            get {
+                object obj = ResourceManager.GetObject("IRB2600ID_15kg_185mmesh", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] IRB2600ID_8kg_200mmesh {
+            get {
+                object obj = ResourceManager.GetObject("IRB2600ID_8kg_200mmesh", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] IRB4600_20kg_250mmesh {
+            get {
+                object obj = ResourceManager.GetObject("IRB4600_20kg_250mmesh", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] IRB4600_40kg_255mmesh {
+            get {
+                object obj = ResourceManager.GetObject("IRB4600_40kg_255mmesh", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] IRB4600_45kg_60kg_205mmesh {
+            get {
+                object obj = ResourceManager.GetObject("IRB4600_45kg_60kg_205mmesh", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
         internal static byte[] IRB6620mesh {
             get {
                 object obj = ResourceManager.GetObject("IRB6620mesh", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] IRB6650S_100kg_350mmesh {
+            get {
+                object obj = ResourceManager.GetObject("IRB6650S_100kg_350mmesh", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] IRB6650S_125kg_350mmesh {
+            get {
+                object obj = ResourceManager.GetObject("IRB6650S_125kg_350mmesh", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] IRB6650S_190kg_300mmesh {
+            get {
+                object obj = ResourceManager.GetObject("IRB6650S_190kg_300mmesh", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] IRB6650S_200kg_300mmesh {
+            get {
+                object obj = ResourceManager.GetObject("IRB6650S_200kg_300mmesh", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] IRB6650S_90kg_390mmesh {
+            get {
+                object obj = ResourceManager.GetObject("IRB6650S_90kg_390mmesh", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] IRB6700_150kg_320mmesh {
+            get {
+                object obj = ResourceManager.GetObject("IRB6700_150kg_320mmesh", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] IRB6700_155kg_285mmesh {
+            get {
+                object obj = ResourceManager.GetObject("IRB6700_155kg_285mmesh", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] IRB6700_175kg_305mmesh {
+            get {
+                object obj = ResourceManager.GetObject("IRB6700_175kg_305mmesh", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] IRB6700_200kg_260mmesh {
+            get {
+                object obj = ResourceManager.GetObject("IRB6700_200kg_260mmesh", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] IRB6700_205kg_280mmesh {
+            get {
+                object obj = ResourceManager.GetObject("IRB6700_205kg_280mmesh", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] IRB6790_205kg_280mmesh {
+            get {
+                object obj = ResourceManager.GetObject("IRB6790_205kg_280mmesh", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] IRB6790_235kg_265mmesh {
+            get {
+                object obj = ResourceManager.GetObject("IRB6790_235kg_265mmesh", resourceCulture);
                 return ((byte[])(obj));
             }
         }

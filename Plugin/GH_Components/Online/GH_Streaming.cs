@@ -1,16 +1,11 @@
 ﻿using Axis.Kernal;
-using Axis.Types;
 using Canvas;
-using Grasshopper;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
-using Grasshopper.Kernel.Types;
-using Rhino.Geometry;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Windows.Forms;
 
 namespace Axis.GH_Components
@@ -20,72 +15,55 @@ namespace Axis.GH_Components
     /// </summary>
     public class GH_Streaming : AxisLogin_Component, IGH_VariableParameterComponent
     {
-        // Optionable Log
-        private bool logOption = false;
-
-        private bool logOptionOut = false;
-        private bool lQOption = false;
-
-        private List<string> Status { get; set; }
-
-        private bool modOption = false;
-        private bool stream;
-
-        private Controller controller = null;
-
-        
-
-        // Create a list of string to store a log of the connection status.
-        private List<string> log = new List<string>();
-
-        private List<string> IOstatus = new List<string>();
-        private Plane tcp = new Plane();
-
-
         public GH_Streaming() : base("Live Connection", "Stream", "Stream instructions to a robot controller", AxisInfo.Plugin, AxisInfo.TabLive)
         {
+            var attr = this.Attributes as AxisComponentAttributes;
+
+            IsMutiManufacture = false;
+
+            this.UI_Elements = new Kernal.IComponentUiElement[]
+            {
+                new Kernal.UIElements.ComponentToggle("Stream"){ LeftClickAction = Stream, Toggle = new Tuple<string, string>("Start","Stop") },
+            };
+
+            attr.Update(UI_Elements);
+
+
+
+            modFile = new ToolStripMenuItem("Steaming Module", null, mod_Click) 
+            {
+                ToolTipText = "Activate the module file output",
+            };
+            logOption = new ToolStripMenuItem("Log", null, log_Click) 
+            {
+                ToolTipText = "Activate the log output",
+            };
+
+            RegularToolStripItems = new ToolStripMenuItem[]
+            {
+                modFile,
+                logOption,
+            };
         }
-
-        #region IO
-
-        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
-        {
-            IGH_Param controller = new GH_Params.ContollerParam();
-            pManager.AddParameter(controller, "Controller", "Controller", "Recives the output from a controller module", GH_ParamAccess.list);
-            pManager.AddBooleanParameter("Stream", "Stream", "Begin streaming to the robot.", GH_ParamAccess.item, false);
-            pManager.AddGenericParameter("Target", "Target", "Target for robot positioning.", GH_ParamAccess.item);
-            // Inputs optional
-            for (int i = 1; i < 3; ++i) { pManager[i].Optional = true; }
-        }
-
-        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
-        {
-        }
-
-        #endregion IO
 
         protected override void SolveInternal(IGH_DataAccess DA)
         {
             bool clear = false;
             bool lqclear = false;
-            bool stream = false;
 
-            List<Kernal.Controller> controllers = new List<Kernal.Controller>();
+            controllers.Clear();
+            targ = null;
 
-            Target targ = null;
-
-            DA.GetDataList("Controller",  controllers);
-            DA.GetData("Stream", ref stream);
+            DA.GetDataList("Controller", controllers);
             DA.GetData("Target", ref targ);
-            if (logOption) DA.GetData("Clear", ref clear);
-            if (lQOption) DA.GetData("Clear Local Queue", ref lqclear);
+
+            if (logOption.Checked) DA.GetData("Clear", ref clear);
+            if (logOption.Checked) DA.GetData("Clear Local Queue", ref lqclear);
 
             //Output module file to prime controller for straming
-            if (modOption)
+            if (modFile.Checked)
             {
                 List<string> ModFile = new List<string>();
-
-                string test = Folders.AppDataFolder;
 
                 // Use file from resource
                 using (TextReader reader = new StreamReader(new System.IO.MemoryStream(Resources.RAPID_Modules.moduleFile)))
@@ -96,23 +74,14 @@ namespace Axis.GH_Components
                         ModFile.Add(line);
                     }
                 }
+
                 DA.SetDataList("Steaming Module", ModFile);
             }
 
-
             //Check for valid input, else top execuion
-            if (controllers != null) { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No active controller connected."); return; }
+            if (controllers != null) if (controllers.Count == 0) { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No active controller connected."); return; }
 
-            // Stream a target to a controller
-            if (stream)
-            {
-                for (int i =0; i< controllers.Count; ++i)
-                {
-                    if (targ != null) controllers[i].Stream(targ);
-                }
-            }
-
-
+            if (stream) for (int i = 0; i < controllers.Count; ++i) if (targ != null) controllers[i].Stream(targ);
             // Clear log
             if (clear)
             {
@@ -121,40 +90,59 @@ namespace Axis.GH_Components
             }
 
             //Output log
-            if (logOptionOut)
+            if (logOption.Checked)
             {
-                Status = log;
                 DA.SetDataList("Log", log);
             }
-
-            //Output module file to prime controller for straming
-            if (modOption)
-            {
-                List<string> ModFile = new List<string>();
-
-                string test = Folders.AppDataFolder;
-
-                // Use resource
-                List<string> modfile;
-                System.Runtime.Serialization.Formatters.Binary.BinaryFormatter deserializer = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
-
-                using (System.IO.MemoryStream ms = new System.IO.MemoryStream(Resources.RAPID_Modules.moduleFile))
-                {
-                    System.Runtime.Serialization.IFormatter br = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
-                    modfile = (List<string>)br.Deserialize(ms);
-                }
-
-                using (TextReader reader = File.OpenText(Folders.AppDataFolder + @"Libraries\Axis\Online\moduleFile.mod"))
-                {
-                    string line;
-                    while ((line = reader.ReadLine()) != null)
-                    {
-                        ModFile.Add(line);
-                    }
-                }
-                DA.SetDataList("Steaming Module", ModFile);
-            }
         }
+
+        #region Method
+
+        private void Stream(object sender, object e)
+        {
+            var toggel = sender as IToggle;
+            toggel.State = !toggel.State;
+            stream = toggel.State;
+        }
+
+        #endregion Method
+
+        #region Variables
+        ToolStripMenuItem modFile;
+        ToolStripMenuItem logOption;
+
+
+
+        private bool stream = false;
+
+        private List<string> Status { get; set; }
+
+
+        private Target targ = null;
+
+        // Create a list of string to store a log of the connection status.
+        private List<string> log = new List<string>();
+
+        private List<Controller> controllers = new List<Kernal.Controller>();
+
+        #endregion Variables
+
+        #region IO
+
+        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
+        {
+            IGH_Param controller = new GH_Params.ContollerParam();
+            pManager.AddParameter(controller, "Controller", "Controller", "Recives the output from a controller module", GH_ParamAccess.list);
+            IGH_Param instruction = new GH_Params.InstructionParam();
+            pManager.AddParameter(instruction, "Target", "Target", "Target for robot positioning.", GH_ParamAccess.item);
+            pManager[1].Optional = true;
+        }
+
+        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
+        {
+        }
+
+        #endregion IO
 
         #region UI
 
@@ -172,46 +160,34 @@ namespace Axis.GH_Components
             new Param_String() { Name = "Log", NickName = "Log", Description = "Log checking the connection status"},
         };
 
-        // The following functions append menu items and then handle the item clicked event.
-        protected override void AppendAdditionalComponentMenuItems(System.Windows.Forms.ToolStripDropDown menu)
-        {
-            ToolStripMenuItem LQueue = Menu_AppendItem(menu, "Local Queue", lQueue_Click, true, lQOption);
-            LQueue.ToolTipText = "This will enable a local queue";
-            ToolStripMenuItem modFile = Menu_AppendItem(menu, "Steaming Module", mod_Click, true, modOption);
-            modFile.ToolTipText = "Activate the module file output";
-            ToolStripMenuItem log = Menu_AppendItem(menu, "Log", log_Click, true, logOption);
-            log.ToolTipText = "Activate the log output";
-
-            //ToolStripSeparator seperator = Menu_AppendSeparator(menu);
-        }
-
         private void log_Click(object sender, EventArgs e)
         {
+            var button = (ToolStripMenuItem)sender;
             RecordUndoEvent("Log");
-            logOption = !logOption;
+            button.Checked = !button.Checked;
 
-            if (logOption)
+            if (button.Checked)
             {
                 this.AddInput(0, inputParams);
                 this.AddOutput(1, outputParams);
-                logOptionOut = true;
             }
             else
             {
                 Params.UnregisterInputParameter(Params.Input.FirstOrDefault(x => x.Name == "Clear"), true);
                 Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Log"), true);
-                logOptionOut = false;
             }
 
-            //ExpireSolution(true);
+            ExpireSolution(true);
         }
 
         private void mod_Click(object sender, EventArgs e)
         {
-            RecordUndoEvent("Steaming Module");
-            modOption = !modOption;
+            var button = (ToolStripMenuItem)sender;
 
-            if (modOption)
+            RecordUndoEvent("Steaming Module");
+            button.Checked = !button.Checked;
+
+            if (button.Checked)
             {
                 this.AddOutput(0, outputParams);
             }
@@ -220,24 +196,7 @@ namespace Axis.GH_Components
                 Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Steaming Module"), true);
             }
 
-            //ExpireSolution(true);
-        }
-
-        private void lQueue_Click(object sender, EventArgs e)
-        {
-            RecordUndoEvent("Local Queue");
-            lQOption = !lQOption;
-
-            if (lQOption)
-            {
-                this.AddInput(1, inputParams);
-            }
-            else
-            {
-                Params.UnregisterInputParameter(Params.Output.FirstOrDefault(x => x.Name == "Steaming Module"), true);
-            }
-
-            //ExpireSolution(true);
+            ExpireSolution(true);
         }
 
         #endregion UI
@@ -247,20 +206,16 @@ namespace Axis.GH_Components
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
-            writer.SetBoolean("LogOptionSetModule", this.logOption);
-            writer.SetBoolean("LogOptionSetOutModule", this.logOptionOut);
-            writer.SetBoolean("ModFileOption", this.modOption);
-            writer.SetBoolean("Local Queue", this.lQOption);
+            writer.SetBoolean("LogOption", this.logOption.Checked);
+            writer.SetBoolean("ModFileOption", this.modFile.Checked);
             return base.Write(writer);
         }
 
         // Deserialize this instance from a Grasshopper reader object.
         public override bool Read(GH_IO.Serialization.GH_IReader reader)
         {
-            this.logOption = reader.GetBoolean("LogOptionSetModule");
-            this.logOptionOut = reader.GetBoolean("LogOptionSetOutModule");
-            this.modOption = reader.GetBoolean("ModFileOption");
-            this.lQOption = reader.GetBoolean("Local Queue");
+            if(reader.ItemExists("LogOption")) this.logOption.Checked = reader.GetBoolean("LogOption");
+            if(reader.ItemExists("ModFileOption")) this.modFile.Checked = reader.GetBoolean("ModFileOption");
             return base.Read(reader);
         }
 

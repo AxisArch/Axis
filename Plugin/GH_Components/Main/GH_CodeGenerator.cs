@@ -1,13 +1,11 @@
-﻿using Axis.Kernal;
+﻿using Axis.GH_Params;
+using Axis.Kernal;
 using Axis.Types;
-using Axis.Types.RAPID;
 using Canvas;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
-using Grasshopper.Kernel.Types;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -18,28 +16,137 @@ namespace Axis.GH_Components
     /// </summary>
     public class GH_CodeGenerator : AxisLogin_Component, IGH_VariableParameterComponent
     {
-        // Sticky variables for the options.
-        private bool modName = false;
-
-        private bool declarations = false;
-        private bool overrides = false;
-        private Manufacturer m_Manufacturer = Manufacturer.ABB;
-        private bool ignoreLen = false;
-
         public GH_CodeGenerator() : base("Code Generator", "Code", "Generate manufacturer-specific robot code from a toolpath.", AxisInfo.Plugin, AxisInfo.TabMain)
         {
+            var attr = this.Attributes as AxisComponentAttributes;
+
+            IsMutiManufacture = true;
+
+            this.UI_Elements = new Kernal.IComponentUiElement[]
+            {
+                new Kernal.UIElements.ComponentButton("Export"){ LeftClickAction = Export },
+            };
+
+            attr.Update(UI_Elements);
+
+            moduleName = new ToolStripMenuItem("Custom Module Name", null, modName_Click) 
+            {
+                ToolTipText = "Provide a custom name for the module and overwrite the default."
+            };
+            declarationsCheck = new ToolStripMenuItem("Custom Declarations", null, declarations_Click) 
+            {
+                ToolTipText = "Add custom declarations to the headers of the code [zone, tool, speed data etc]."
+            };
+            overrideCheck = new ToolStripMenuItem("Custom Overrides", null, overrides_Click) 
+            {
+                ToolTipText = "Provide custom overrides at the beginning of the main program."
+            };
+            ignore = new ToolStripMenuItem("Ignore Program Length", null, ignoreLen_Click) 
+            {
+                ToolTipText = "Ignore the length of the program and avoid spliting the main program in subprocedures."
+            };
+
+            RegularToolStripItems = new ToolStripItem[]
+            {
+                moduleName,
+                declarationsCheck,
+                overrideCheck,
+                ignore,
+            };
         }
+
+        protected override void SolveInternal(IGH_DataAccess DA)
+        {
+            program = null;
+            filePath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+
+            string strModName = "MainModule";
+            string filename = "RobotProgram";
+
+            List<Instruction> instructions = new List<Instruction>();
+
+            List<string> strHeaders = new List<string>();
+            List<string> strDeclarations = new List<string>();
+            List<string> strProgram = new List<string>();
+            List<Module.Procedure> procedures = new List<Module.Procedure>(); //<-- might need to become a more general type
+            List<Instruction> overrides = new List<Instruction>();
+
+            string smFileName = "Submodule";
+            string dirHome = "RemovableDisk1:"; //  HOME: or RemovableDisk1:
+
+            // Initialize lists to store the robot export code.
+            this.Message = this.Manufacturer.ToString();
+
+            if (!DA.GetDataList("Instructions", instructions)) return;
+            if (!DA.GetDataList("Procedures", procedures)) ;
+            if (!DA.GetData("Path", ref filePath)) ;
+            if (!DA.GetData("Filename", ref filename)) ;
+
+            // Get the optional inputs.
+            if (moduleName.Checked)
+                if (!DA.GetData("Name", ref strModName)) return;
+            if (overrideCheck.Checked) DA.GetDataList("Overrides", overrides);
+            if (declarationsCheck.Checked) DA.GetDataList("Declarations", strDeclarations);
+
+            switch (Manufacturer)
+            {
+                case Manufacturer.ABB:
+                    var RAPIDprogram = new Module(name: strModName, filename: filename);
+
+                    if (procedures != null) RAPIDprogram.AddRotines(procedures);
+                    if (overrideCheck.Checked && overrides != null) RAPIDprogram.AddOverrides(overrides);
+                    program = RAPIDprogram;
+                    break;
+
+                case Manufacturer.Kuka:
+                    program = new KPL();
+                    break;
+
+                default:
+                    throw new NotImplementedException($"Code generation for {Manufacturer} has not yet been implemented");
+            }
+            program.SetInstructions(instructions);
+
+            DA.SetDataList(0, program.GetInstructions());
+        }
+
+        #region Methods
+
+        private void Export(object sender, object e)
+        {
+            if (program != null) { if (program.Export(filePath)) Util.AutoClosingMessageBox.Show("Export Successful!", "Export", 1300); }
+            else { Util.AutoClosingMessageBox.Show("No program has been created", "Export", 1300); }
+        }
+
+        #endregion Methods
+
+        #region Variables
+
+        private Program program;
+        private string filePath = Environment.SpecialFolder.Desktop.ToString(); // /Axis/LongCode/ or /
+
+        ToolStripMenuItem moduleName;
+        ToolStripMenuItem declarationsCheck;
+        ToolStripMenuItem overrideCheck;
+        ToolStripMenuItem ignore;
+
+        #endregion Variables
 
         #region IO
 
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddGenericParameter("Program", "Program", "Robot program as list of strings.", GH_ParamAccess.list);
-            pManager.AddTextParameter("Procedures", "Procedures", "Custom procedures / functions / routines to be appended to program.", GH_ParamAccess.list, "! No Custom Procedures");
-            pManager.AddTextParameter("Path", "Path", "File path for code generation.", GH_ParamAccess.item, Environment.SpecialFolder.Desktop.ToString());
-            pManager.AddTextParameter("File", "File", "File name for code generation.", GH_ParamAccess.item, "RobotProgram");
-            pManager.AddBooleanParameter("Export", "Export", "Export the file as to the path specified [ABB exports as both a .mod and a .prg file. KUKA exports as a .src file.", GH_ParamAccess.item, false);
-            for (int i = 0; i < 5; i++) pManager[i].Optional = true;
+            IGH_Param instruction = new InstructionParam();
+            pManager.AddParameter(instruction, "Instructions", "Instructions", "Robot program as list of instructions.", GH_ParamAccess.list);
+
+            IGH_Param procedures = new ProcedureParam();
+            pManager.AddParameter(procedures, "Procedures", "Procedures", "Custom procedures / functions / routines to be appended to program.", GH_ParamAccess.list);
+
+            IGH_Param path = new Param_FilePath();
+            pManager.AddParameter(path, "Path", "Path", "File path for code generation.", GH_ParamAccess.item);
+
+            pManager.AddTextParameter("Filename", "Filename", "File name for code generation.", GH_ParamAccess.item, "RobotProgram");
+            for (int i = 0; i < 4; i++) pManager[i].Optional = true;
         }
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
@@ -49,364 +156,25 @@ namespace Axis.GH_Components
 
         #endregion IO
 
-        private void LocalExpire(GH_Document document)
-        {
-            this.ExpireSolution(false);
-        }
-
-        protected override void SolveInternal(IGH_DataAccess DA)
-        {
-            string strModName = "MainModule";
-            string path = Environment.SpecialFolder.Desktop.ToString();
-            string filename = "RobotProgram";
-            bool export = false;
-
-            List<GH_ObjectWrapper> program = new List<GH_ObjectWrapper>();
-
-            List<string> strHeaders = new List<string>();
-            List<string> strDeclarations = new List<string>();
-            List<string> strProgram = new List<string>();
-            List<string> strProcedures = new List<string>();
-            List<string> strOverrides = new List<string>();
-
-            string smFileName = "Submodule";
-            string filePath = ""; // /Axis/LongCode/ or /
-            string dirHome = "RemovableDisk1:"; //  HOME: or RemovableDisk1:
-
-            // Initialize lists to store the robot export code.
-            List<string> rapidCODE = new List<string>();
-            List<string> KRL = new List<string>();
-            this.Message = m_Manufacturer.ToString();
-
-            if (!DA.GetDataList("Program", program)) return;
-            if (!DA.GetDataList("Procedures", strProcedures)) return;
-            if (!DA.GetData("Path", ref path)) return;
-            if (!DA.GetData("File", ref filename)) return;
-            if (!DA.GetData("Export", ref export)) return;
-
-            // Get the optional inputs.
-            if (modName)
-                if (!DA.GetData("Name", ref strModName)) return;
-            if (overrides) DA.GetDataList("Overrides", strOverrides);
-            if (declarations) DA.GetDataList("Declarations", strDeclarations);
-
-            // New RAPID module
-            Module module = new Module(name: strModName);
-
-            // Convert targets to strings.
-            foreach (GH_ObjectWrapper command in program)
-            {
-                Type cType = command.Value.GetType();
-
-                if (cType.Name == "GH_String")
-                {
-                    strProgram.Add(command.Value.ToString() as string);
-                }
-                else
-                {
-                    Target targ = command.Value as Target;
-                    strProgram.Add(targ.StrRob);
-                }
-            }
-
-            // If we have a valid program and we are logged in...
-            if (strProgram != null)
-            {
-                if (m_Manufacturer == Manufacturer.Kuka)
-                {
-                    KRL.Add("&ACCESS RVP");
-                    KRL.Add("&REL 26");
-
-                    // Open Main Proc
-                    KRL.Add("DEF Axis_Program()");
-                    KRL.Add(" ");
-
-                    // Headers
-                    KRL.Add("; KUKA Robot Code");
-                    KRL.Add("; Generated with Axis 1.0");
-                    KRL.Add("; Created: " + DateTime.Now.ToString());
-                    KRL.Add(" ");
-
-                    KRL.Add("DECL AXIS HOME");
-                    KRL.Add("DECL INT i");
-                    KRL.Add(" ");
-
-                    KRL.Add("BAS(#INITMOV, 0)");
-                    KRL.Add(" ");
-
-                    // If we have declarations, then use them, otherwise assign standard base and tool settings.
-                    if (strDeclarations.Count >= 0)
-                    {
-                        KRL.Add("; Custom Declarations");
-                        for (int i = 0; i < strDeclarations.Count; i++)
-                        {
-                            KRL.Add(strDeclarations[i]);
-                        }
-                        KRL.Add(" ");
-                    }
-                    else
-                    {
-                        KRL.Add(" ");
-                        KRL.Add("; No Custom Declarations");
-                        KRL.Add("FDAT_ACT = {TOOL_NO 6,BASE_NO 4,IPO_FRAME #BASE}");
-                        KRL.Add(" ");
-                    }
-
-                    KRL.Add("HOME = {AXIS: A1 -90, A2 -90, A3 90, A4 0, A5 -30.0, A6 0}");
-                    KRL.Add(" ");
-
-                    KRL.Add("$APO.CPTP = 1");
-                    KRL.Add("$APO.CVEL = 100");
-                    KRL.Add("$APO.CDIS = 1");
-
-                    KRL.Add(" ");
-                    KRL.Add("$VEL.CP = 0.5");
-                    KRL.Add("FOR i = 1 TO 6");
-                    KRL.Add(@"   $VEL_AXIS[i] = 100");
-                    KRL.Add(@"   $ACC_AXIS[i] = 30");
-                    KRL.Add("ENDFOR");
-                    KRL.Add(" ");
-
-                    // Commands
-                    KRL.Add("; Programmed Movement");
-                    if (strProgram.Count > 5000)
-                    {
-                        KRL.Add("; Warning: Procedure length exceeds recommended maximum. Advise splitting main proc into sub-procs.");
-                        KRL.Add(" ");
-                        AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Procedure length exceeds recommended maximum. Advise splitting main proc into sub-procs.");
-                        //this.Message = "Large Program";
-                    }
-                    for (int i = 0; i < strProgram.Count; i++)
-                    {
-                        KRL.Add(strProgram[i]);
-                    }
-
-                    KRL.Add("END");
-
-                    DA.SetDataList(0, KRL);
-                }
-
-                // If the user has requested KUKA code...
-                else if (m_Manufacturer == Manufacturer.ABB)
-                {
-                    //Settings for the main Program
-                    int bottomLim = 5000; //ABB limit about 5000
-                    int topLim = 70000 - bottomLim; //ABB limit about 80.000
-                    int progLen = strProgram.Count;
-
-                    if (Enumerable.Range(bottomLim, topLim).Contains(progLen) && !ignoreLen)  // Medium length program. Will be cut into submodules...
-                    {
-                        AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Procedure length exceeds recommended maximum. Program will be split into multiple procedures.");
-                        //this.Message = "Large Program";
-
-                        var subs = Util.SplitProgram(strProgram, 5000);
-                        List<Program> progs = new List<Program>();
-                        List<string> strMain = new List<string>();
-
-                        string subName = "SubProg";
-
-                        for (int i = 0; i < subs.Count; ++i)
-                        {
-                            progs.Add(new Program(subs[i], progName: subName + i.ToString(), comments: new List<string> { "" }));
-                        }
-                        for (int i = 0; i < subs.Count; ++i)
-                        {
-                            strMain.Add(subName + i.ToString() + ";");
-                        }
-
-                        var comment = new List<string> {
-                            "! Warning: Procedure length exceeds recommended maximum. Program will be split into multiple procedures.",
-                            " "
-                        };
-
-                        Program main = new Program(strMain, progName: "main", LJ: true, comments: comment);
-
-                        module.AddMain(main);
-                        module.AddPrograms(progs);
-                    }
-                    else if (progLen > topLim && !ignoreLen) // Long program. Will be split up into seperate files...
-                    {
-                        AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Procedure length exceeds recommended maximum. Program will be split into multiple procedures.");
-                        //this.Message = "Extra Large Program";
-
-                        var progsStr = Util.SplitProgram(strProgram, 5000);
-                        string procname = "progNumber";
-
-                        List<Program> external = new List<Program>();
-                        for (int i = 0; i < progsStr.Count; ++i)
-                        {
-                            external.Add(new Program(progsStr[i], progName: procname + i.ToString()));
-                        }
-
-                        // Write the instructions for the main prog.
-                        List<string> strMain = new List<string>();
-                        strMain.AddRange(new List<string> // Load the first pair
-                        {
-                            $"StartLoad \\Dynamic, sDirHome \\File:= sFile + \"{smFileName}{0}.mod\", load1;",
-                            $"StartLoad \\Dynamic, sDirHome \\File:= sFile + \"{smFileName}{1}.mod\", load2;",
-                            ""
-                        });
-
-                        for (int i = 0; i < external.Count(); i += 2) // Loop through all subprogs
-                        {
-                            strMain.AddRange(new List<string>
-                            {
-                                "WaitLoad load1;",
-                                $"% \"{procname}{i}\" %;",
-                                $"UnLoad sDirHome \\File:= sFile + \"{smFileName}{i}.mod\";",
-                                "",
-                            });
-
-                            if (i + 2 < external.Count())
-                            {
-                                strMain.AddRange(new List<string>
-                            {
-                                $"StartLoad \\Dynamic, sDirHome \\File:= sFile + \"{smFileName}{i+2}.mod\", load1;",
-                            });
-                            }
-
-                            if (i + 1 < external.Count())
-                            {
-                                strMain.AddRange(new List<string>
-                            {
-                                "",
-                                $"WaitLoad load2;",
-                                $"% \"{procname}{i+1}\" %;",
-                                $"UnLoad sDirHome \\File:= sFile + \"{smFileName}{i+1}.mod\";",
-                                ""
-                            });
-                            }
-
-                            if (i + 3 < external.Count())
-                            {
-                                strMain.AddRange(new List<string>
-                            {
-                                $"StartLoad \\Dynamic, sDirHome \\File:= sFile + \"{smFileName}{i+3}.mod\", load2;",
-                                ""
-                            });
-                            }
-                        }
-
-                        List<string> dec = new List<string>
-                        {
-                            "",
-                            "!Set directory for loading",
-                            "VAR loadsession load1;",
-                            "VAR loadsession load2;",
-                            $"CONST string sDirHome:= \"{dirHome}\"; ",
-                            $"CONST string sFile:= \"{filePath}\";",
-                        };
-
-                        var comment = new List<string>
-                        {
-                            "! Warning: Procedure length exceeds recommended maximum. Program will be split into multiple procedures.",
-                            "! That will be loaded successively at runtime",
-                            " "
-                        };
-
-                        var main = new Program(strMain, progName: "main", comments: comment, LJ: true);
-                        module.AddMain(main);
-                        module.extraProg = external;
-                        module.AddDeclarations(dec);
-                    }
-                    else // In case the prgram length should explicetly be ignored
-                    {
-                        module.AddMain(new Program(strProgram, LJ: true, progName: "main"));
-                    }
-
-                    if (ignoreLen) AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Program length is being ignored");
-
-                    module.AddPrograms(strProcedures);
-
-                    if (declarations) module.AddDeclarations(strDeclarations);
-                    if (overrides) module.AddOverrides(strOverrides);
-
-                    if (!module.IsValid) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The program is invalid."); }
-
-                    DA.SetDataList(0, module.Code());
-                }
-                else AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "The selected manufacturer has not yet been implemented.");
-
-                if (export)
-                {
-                    if (m_Manufacturer == Manufacturer.Kuka)
-                    {
-                        using (StreamWriter writer = new StreamWriter(path + @"\" + filename + ".src", false))
-                        {
-                            for (int i = 0; i < KRL.Count; i++)
-                            {
-                                writer.WriteLine(KRL[i]);
-                            }
-                        }
-                        Util.AutoClosingMessageBox.Show("Export Successful!", "Export", 1300);
-                    }
-                    else if (m_Manufacturer == Manufacturer.ABB)
-                    {
-                        File.WriteAllLines($@"{path}\\{filename}.pgf", new List<string>
-                        {
-                            @"<?xml version=""1.0"" encoding=""ISO-8859-1"" ?>",
-                            @"<Program>",
-                            @"	<Module>" + strModName + @".mod</Module>",
-                            @"</Program>",
-                        });
-                        File.WriteAllLines($@"{path}\\{strModName}.mod", module.Code());
-                        for (int i = 0; i < module.extraProg.Count(); ++i)
-                        {
-                            File.WriteAllLines($@"{path}\{smFileName}{i}.mod", module.extraProg[i].Code());
-                        }
-
-                        Util.AutoClosingMessageBox.Show("Export Successful!", "Export", 1300);
-                    }
-                    else return;
-                }
-            }
-        }
-
         #region UI
 
         // Build a list of optional input and output parameters
         private IGH_Param[] inputParams = new IGH_Param[3]
         {
         new Param_String() { Name = "Name", NickName = "Name", Description = "A custom name for the code module." },
-        new Param_String() { Name = "Overrides", NickName = "Overrides", Description = "Custom override code for insertion into the main program.", Access = GH_ParamAccess.list },
+        new InstructionParam() { Name = "Overrides", NickName = "Overrides", Description = "Custom override code for insertion into the main program.", Access = GH_ParamAccess.list },
         new Param_String() { Name = "Declarations", NickName = "Declarations", Description = "Add custom declarations to the headers of the code [zone, tool, speed data etc].", Access = GH_ParamAccess.list },
         };
 
-        // The following functions append menu items and then handle the item clicked event.
-        protected override void AppendAdditionalComponentMenuItems(System.Windows.Forms.ToolStripDropDown menu)
-        {
-            ToolStripMenuItem moduleName = Menu_AppendItem(menu, "Custom Module Name", modName_Click, true, modName);
-            moduleName.ToolTipText = "Provide a custom name for the module and overwrite the default.";
-            ToolStripMenuItem declarationsCheck = Menu_AppendItem(menu, "Custom Declarations", declarations_Click, true, declarations);
-            declarationsCheck.ToolTipText = "Add custom declarations to the headers of the code [zone, tool, speed data etc].";
-            ToolStripMenuItem overrideCheck = Menu_AppendItem(menu, "Custom Overrides", overrides_Click, true, overrides);
-            overrideCheck.ToolTipText = "Provide custom overrides at the beginning of the main program.";
-
-            ToolStripSeparator seperator = Menu_AppendSeparator(menu);
-
-            ToolStripMenuItem robotManufacturers = Menu_AppendItem(menu, "Manufacturer");
-            robotManufacturers.ToolTipText = "Select the robot manufacturer";
-            foreach (string name in typeof(Manufacturer).GetEnumNames())
-            {
-                ToolStripMenuItem item = new ToolStripMenuItem(name, null, manufacturer_Click);
-
-                if (name == this.m_Manufacturer.ToString()) item.Checked = true;
-                robotManufacturers.DropDownItems.Add(item);
-            }
-
-            ToolStripSeparator seperator2 = Menu_AppendSeparator(menu);
-
-            ToolStripMenuItem ignore = Menu_AppendItem(menu, "Ignore Program Length", ignoreLen_Click, true, ignoreLen);
-            ignore.ToolTipText = "Ignore the length of the program and avoid spliting the main program in subprocedures.";
-        }
 
         private void modName_Click(object sender, EventArgs e)
         {
+            var button = (ToolStripMenuItem)sender;
             RecordUndoEvent("ModName");
-            modName = !modName;
+            button.Checked = !button.Checked;
 
             // If the option to define the weight of the tool is enabled, add the input.
-            if (modName)
+            if (button.Checked)
             {
                 this.AddInput(0, inputParams);
             }
@@ -419,11 +187,12 @@ namespace Axis.GH_Components
 
         private void declarations_Click(object sender, EventArgs e)
         {
+            var button = (ToolStripMenuItem)sender;
             RecordUndoEvent("Declarations");
-            declarations = !declarations;
+            button.Checked = !button.Checked;
 
             // If the option to define the weight of the tool is enabled, add the input.
-            if (declarations)
+            if (button.Checked)
             {
                 this.AddInput(2, inputParams);
             }
@@ -436,11 +205,12 @@ namespace Axis.GH_Components
 
         private void overrides_Click(object sender, EventArgs e)
         {
+            var button = (ToolStripMenuItem)sender;
             RecordUndoEvent("Overrides");
-            overrides = !overrides;
+            button.Checked = !button.Checked;
 
             // If the option to define the weight of the tool is enabled, add the input.
-            if (overrides)
+            if (button.Checked)
             {
                 this.AddInput(1, inputParams);
             }
@@ -451,19 +221,12 @@ namespace Axis.GH_Components
             ExpireSolution(true);
         }
 
-        private void manufacturer_Click(object sender, EventArgs e)
-        {
-            RecordUndoEvent("Manufacturer");
-            ToolStripMenuItem currentItem = (ToolStripMenuItem)sender;
-            Canvas.Menu.UncheckOtherMenuItems(currentItem);
-            this.m_Manufacturer = (Manufacturer)currentItem.Owner.Items.IndexOf(currentItem);
-            ExpireSolution(true);
-        }
 
         private void ignoreLen_Click(object sender, EventArgs e)
         {
+            var button = (ToolStripMenuItem)sender;
             RecordUndoEvent("Ignore Program Length");
-            ignoreLen = !ignoreLen;
+            button.Checked = !button.Checked;
         }
 
         #endregion UI
@@ -473,22 +236,22 @@ namespace Axis.GH_Components
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
-            writer.SetBoolean("ModName", this.modName);
-            writer.SetBoolean("Declarations", this.declarations);
-            writer.SetBoolean("Overrides", this.overrides);
-            writer.SetInt32("Manufacturer", (int)this.m_Manufacturer);
-            writer.SetBoolean("IgnoreLen", this.ignoreLen);
+            writer.SetBoolean("ModName", this.moduleName.Checked);
+            writer.SetBoolean("Declarations", this.declarationsCheck.Checked);
+            writer.SetBoolean("Overrides", this.overrideCheck.Checked);
+            writer.SetInt32("Manufacturer", (int)this.Manufacturer);;
+            writer.SetBoolean("IgnoreLen", this.ignore.Checked);
             return base.Write(writer);
         }
 
         // Deserialize this instance from a Grasshopper reader object.
         public override bool Read(GH_IO.Serialization.GH_IReader reader)
         {
-            this.modName = reader.GetBoolean("ModName");
-            this.declarations = reader.GetBoolean("Declarations");
-            this.overrides = reader.GetBoolean("Overrides");
-            this.m_Manufacturer = (Manufacturer)reader.GetInt32("Manufacturer");
-            this.ignoreLen = reader.GetBoolean("IgnoreLen");
+            if(reader.ItemExists("ModName")) this.moduleName.Checked = reader.GetBoolean("ModName");
+            if(reader.ItemExists("Declarations")) this.declarationsCheck.Checked = reader.GetBoolean("Declarations");
+            if(reader.ItemExists("Overrides")) this.overrideCheck.Checked = reader.GetBoolean("Overrides");
+            if(reader.ItemExists("Manufacturer")) this.Manufacturer = (Manufacturer)reader.GetInt32("Manufacturer");
+            if(reader.ItemExists("IgnoreLen")) this.ignore.Checked = reader.GetBoolean("IgnoreLen");
             return base.Read(reader);
         }
 

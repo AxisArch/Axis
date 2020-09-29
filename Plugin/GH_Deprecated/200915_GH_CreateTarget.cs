@@ -89,7 +89,7 @@ namespace Axis
             if (!DA.GetDataList(0, planes)) return;
             if (!DA.GetDataList(1, speedsIn)) hasSpeed = false;
             if (!DA.GetDataList(2, zonesIn)) hasZone = false;
-            if (!DA.GetDataList(3, tools)) tools.Add(Tool.Default);
+            if (!DA.GetDataList(3, tools)) tools.Add(ABBTool.Default);
             if (!DA.GetDataList(4, wobjs)) wobjs.Add(CSystem.Default);
 
             // If interpolation types are specified, get them.
@@ -162,7 +162,7 @@ namespace Axis
             List<string> code = new List<string>();
             Speed speed = Speed.Default;
             Zone zone = Zone.Default;
-            Tool tool = Tool.Default;
+            Tool tool = ABBTool.Default;
             CSystem wobj = CSystem.Default;
             int method = 0;
 
@@ -211,7 +211,7 @@ namespace Axis
                     if (i < tools.Count) { tool = tools[i]; }
                     else { tool = tools[tools.Count - 1]; }
                 }
-                else { tool = Tool.Default; }
+                else { tool = ABBTool.Default; }
 
                 // Wobjs
                 if (wobjs.Count > 0)
@@ -228,10 +228,10 @@ namespace Axis
                 else if (method == 2) { mType = MotionType.AbsoluteJoint; }
 
                 // Create the robot target.
-                Target robTarg = new Target(planes[i], mType, speed, zone, tool, wobj, extRot, extLin, m_Manufacturer);
+                Target robTarg = new ABBTarget(planes[i], mType, speed, zone, tool, wobj, extRot, extLin);
                 targets.Add(robTarg);
 
-                code.Add(robTarg.StrRob);
+                code.Add(robTarg.RobStr(m_Manufacturer));
             }
             DA.SetDataList(0, targets);
 
@@ -405,13 +405,12 @@ namespace Axis
         public override void DrawViewportMeshes(IGH_PreviewArgs args)
         {
             base.DrawViewportMeshes(args);
-            foreach (Target target in m_targets) Canvas.Component.DisplayPlane(target.Plane, args);
         }
 
         public override void DrawViewportWires(IGH_PreviewArgs args)
         {
             base.DrawViewportWires(args);
-            foreach (Target target in m_targets) Canvas.Component.DisplayPlane(target.Plane, args);
+            foreach (Target target in m_targets) target.DrawViewportWires(args);
         }
 
         public override void ClearData()

@@ -95,7 +95,7 @@ namespace Axis.GH_Components
                     {
                         if (targ.Method == MotionType.Linear || targ.Method == MotionType.Joint)
                         {
-                            Axis.Types.Abb6DOFRobot.ManipulatorPose pose = new Axis.Types.Abb6DOFRobot.ManipulatorPose(robot, targ);
+                            Axis.Kernal.Robot.Pose pose = robot.GetPose(targ);
 
                             outOfReach = pose.OutOfReach; overheadSing = pose.OverHeadSig; wristSing = pose.WristSing; outOfRotation = pose.OutOfRoation;
 
@@ -107,7 +107,7 @@ namespace Axis.GH_Components
                         }
                         else if (targ.Method == MotionType.AbsoluteJoint)
                         {
-                            Abb6DOFRobot.ManipulatorPose pose = new Abb6DOFRobot.ManipulatorPose(robot, targ);
+                            var pose = robot.GetPose(targ);
                             outOfReach = pose.OutOfReach; overheadSing = pose.OverHeadSig; wristSing = pose.WristSing; outOfRotation = pose.OutOfRoation;
 
                             if (wristSing) log.Add(counter.ToString() + ": Wrist Singularity");

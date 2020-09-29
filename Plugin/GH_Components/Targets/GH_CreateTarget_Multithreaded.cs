@@ -1,6 +1,6 @@
 ﻿using Axis;
-using Axis.Types;
 using Axis.Kernal;
+using Axis.Types;
 using Canvas;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
@@ -17,26 +17,120 @@ namespace Axis.GH_Components
     /// <summary>
     /// Define robot end effector plane target positions.
     /// </summary>
-    public class GH_CreatePlaneTarget_Multithreaded : GH_Component, IGH_VariableParameterComponent
+    public class GH_CreatePlaneTarget_Multithreaded : Axis_Component, IGH_VariableParameterComponent
     {
-        // Boolean toggle for context menu items.
-        private bool m_outputCode = false;
-
-        private bool m_interpolationTypes = false;
-
-        private Manufacturer m_Manufacturer = Manufacturer.ABB;
-        private List<Target> c_targets = new List<Target>();
-        private BoundingBox c_bBox = new BoundingBox();
-        private MotionType c_motionType = MotionType.Linear;
-
-        // External axis presence.
-        private bool extRotary = false;
-
-        private bool extLinear = false;
 
         public GH_CreatePlaneTarget_Multithreaded() : base("Plane Target", "Target", "Create custom robot targets from planes.", AxisInfo.Plugin, AxisInfo.TabConfiguration)
         {
+            this.IsMutiManufacture = true;
+
+            outputCode = new ToolStripMenuItem("Output Code", null, outputCode_Click) 
+            {
+                ToolTipText = "Output a string representation of the robot targets.",
+            };
+            extRotAxisCheck = new ToolStripMenuItem("Use Rotary Axis", null, rotAxis_Click)
+            {
+                ToolTipText = "Add an input for external rotary axis position values.",
+            };
+            extLinAxisCheck = new ToolStripMenuItem("Use Linear Axis", null, linAxis_Click)
+            {
+                ToolTipText = "Add an input for external linear axis position values.",
+            };
+            showZoneCheck = new ToolStripMenuItem("Display Zone", null, showZone)
+            {
+                ToolTipText = "Display the Zone for each target."
+            };
+            interpolation = new ToolStripMenuItem("Specify Interpolation Types", null, interpolation_Click) 
+            {
+                ToolTipText = "Specify the interpolation type per target. [0 = Linear, 1 = Joint]"
+            };
+
+            RegularToolStripItems = new ToolStripItem[]
+            {
+                outputCode,
+                extRotAxisCheck,
+                extLinAxisCheck,
+                showZoneCheck,
+                interpolation,
+            };
         }
+        protected override void BeforeSolveInstance()
+        {
+            // Subscribe to all event handelers
+            this.Params.ParameterSourcesChanged += OnParameterSourcesChanged;
+        }
+        protected override void SolveInstance(IGH_DataAccess DA)
+        {
+            this.Message = string.Empty;
+
+            List<string> code = new List<string>();
+
+            List<Plane> planes = new List<Plane>();
+            List<List<double>> angles = new List<List<double>>();
+
+            List<Speed> speeds = new List<Speed>();
+            List<Zone> zones = new List<Zone>();
+            List<Tool> tools = new List<Tool>();
+            List<CSystem> wobjs = new List<CSystem>();
+            List<int> methods = new List<int>() { 0 };
+
+            // Store the input lists of external axis values to synchronise with the targets.
+            List<double> eRotVals = new List<double>();
+            List<double> eLinVals = new List<double>();
+
+            DA.GetDataList(0, planes);
+            if (!DA.GetDataList(1, speeds)) speeds.Add(Speed.Default);
+            if (!DA.GetDataList(2, zones)) zones.Add(Zone.Default);
+            if (!DA.GetDataList(3, tools)) tools.Add(ABBTool.Default);
+            if (!DA.GetDataList(4, wobjs)) wobjs.Add(CSystem.Default);
+            if (interpolation.Checked) if (DA.GetDataList("*Method", methods)) return;
+
+            // If the inputs are present, get the external axis values.
+            if (extRotAxisCheck.Checked) { if (!DA.GetDataList("Rotary", eRotVals)) return; }
+            if (extLinAxisCheck.Checked) { if (!DA.GetDataList("Linear", eLinVals)) return; }
+
+            System.Collections.Concurrent.ConcurrentBag<TargetOrderPair> bag = new System.Collections.Concurrent.ConcurrentBag<TargetOrderPair>();
+
+            // Compute results on given data
+            Parallel.For(0, planes.Count, index => ComputeTargets(bag, index, planes, speeds, zones, tools, wobjs, eRotVals, eLinVals, methods));
+
+            //Compute bounding box for visualisation
+            c_bBox = new BoundingBox(c_targets.Select(t => t.Plane.Origin).ToList()); //<--- Since Joint Targets so far don't have a spacial refference
+
+            c_targets = bag.OrderBy(b => b.Order).Select(b => b.Value).ToList();
+
+            // Set output data
+            if (c_targets != null)
+            {
+                DA.SetDataList("Targets", c_targets);
+            }
+            if (outputCode.Checked)
+            {
+                this.Message = Manufacturer.ToString();
+                code = c_targets.Select(t => t.RobStr(Manufacturer)).ToList();
+                DA.SetDataList("Code", code);
+            }
+        }
+
+
+        private static void ComputeTargets(System.Collections.Concurrent.ConcurrentBag<TargetOrderPair> bag, int i,
+            List<Plane> planes, List<Speed> speeds, List<Zone> zones, List<Tool> tools, List<CSystem> wobjs,
+            List<double> eRotVals, List<double> eLinVals, List<int> methods)
+        {
+            TargetOrderPair result = new TargetOrderPair();
+
+            // Create the robot target.
+            result.Value = new ABBTarget(planes[i], (MotionType)methods.InfinitElementAt(i), speeds.InfinitElementAt(i), zones.InfinitElementAt(i),
+                tools.InfinitElementAt(i), wobjs.InfinitElementAt(i), eRotVals.InfinitElementAt(i), eLinVals.InfinitElementAt(i));
+            result.Order = i;
+
+            bag.Add(result);
+        }
+        private struct TargetOrderPair
+        {
+            public Target Value { get; set; }
+            public int Order { get; set; }
+        } 
 
         #region IO
 
@@ -64,83 +158,20 @@ namespace Axis.GH_Components
 
         #endregion IO
 
-        protected override void BeforeSolveInstance()
-        {
-            // Subscribe to all event handelers
-            this.Params.ParameterSourcesChanged += OnParameterSourcesChanged;
-        }
+        #region Variables
+        private List<Target> c_targets = new List<Target>();
+        private BoundingBox c_bBox = new BoundingBox();
+        private MotionType c_motionType = MotionType.Linear;
 
-        protected override void SolveInstance(IGH_DataAccess DA)
-        {
-            this.Message = m_Manufacturer.ToString();
 
-            List<string> code = new List<string>();
 
-            List<Plane> planes = new List<Plane>();
-            List<List<double>> angles = new List<List<double>>();
-
-            List<Speed> speeds = new List<Speed>();
-            List<Zone> zones = new List<Zone>();
-            List<Tool> tools = new List<Tool>();
-            List<CSystem> wobjs = new List<CSystem>();
-            List<int> methods = new List<int>() { 0 };
-
-            // Store the input lists of external axis values to synchronise with the targets.
-            List<double> eRotVals = new List<double>();
-            List<double> eLinVals = new List<double>();
-
-            DA.GetDataList(0, planes);
-            if (!DA.GetDataList(1, speeds)) speeds.Add(Speed.Default);
-            if (!DA.GetDataList(2, zones)) zones.Add(Zone.Default);
-            if (!DA.GetDataList(3, tools)) tools.Add(Tool.Default);
-            if (!DA.GetDataList(4, wobjs)) wobjs.Add(CSystem.Default);
-            if (m_interpolationTypes) if (DA.GetDataList("*Method", methods)) return;
-
-            // If the inputs are present, get the external axis values.
-            if (extRotary) { if (!DA.GetDataList("Rotary", eRotVals)) return; }
-            if (extLinear) { if (!DA.GetDataList("Linear", eLinVals)) return; }
-
-            System.Collections.Concurrent.ConcurrentBag<TargetOrderPair> bag = new System.Collections.Concurrent.ConcurrentBag<TargetOrderPair>();
-
-            // Compute results on given data
-            Parallel.For(0, planes.Count, index => ComputeTargets(bag, index, planes, speeds, zones, tools, wobjs, eRotVals, eLinVals, methods, m_Manufacturer));
-
-            //Compute bounding box for visualisation
-            c_bBox = new BoundingBox(c_targets.Select(t => t.Plane.Origin).ToList()); //<--- Since Joint Targets so far don't have a spacial refference
-
-            c_targets = bag.OrderBy(b => b.Order).Select(b => b.Value).ToList();
-
-            // Set output data
-            if (c_targets != null)
-            {
-                DA.SetDataList("Targets", c_targets);
-            }
-            if (m_outputCode)
-            {
-                code = c_targets.Select(t => t.StrRob).ToList();
-                DA.SetDataList("Code", code);
-            }
-        }
-
-        private struct TargetOrderPair
-        {
-            public Target Value { get; set; }
-            public int Order { get; set; }
-        }
-
-        private static void ComputeTargets(System.Collections.Concurrent.ConcurrentBag<TargetOrderPair> bag, int i,
-            List<Plane> planes, List<Speed> speeds, List<Zone> zones, List<Tool> tools, List<CSystem> wobjs,
-            List<double> eRotVals, List<double> eLinVals, List<int> methods, Manufacturer m_Manufacturer)
-        {
-            TargetOrderPair result = new TargetOrderPair();
-
-            // Create the robot target.
-            result.Value = new Target(planes[i], (MotionType)methods.InfinitElementAt(i), speeds.InfinitElementAt(i), zones.InfinitElementAt(i),
-                tools.InfinitElementAt(i), wobjs.InfinitElementAt(i), eRotVals.InfinitElementAt(i), eLinVals.InfinitElementAt(i), m_Manufacturer);
-            result.Order = i;
-
-            bag.Add(result);
-        }
+        // Boolean toggle for context menu items.
+        ToolStripMenuItem outputCode;
+        ToolStripMenuItem extRotAxisCheck;
+        ToolStripMenuItem extLinAxisCheck;
+        ToolStripMenuItem showZoneCheck;
+        ToolStripMenuItem interpolation;
+        #endregion Variables
 
         #region UI
 
@@ -211,52 +242,15 @@ namespace Axis.GH_Components
         new Param_String() { Name = "Code", NickName = "Code", Description = "Robot targets formatted as strings." }
         };
 
-        // The following functions append menu items and then handle the item clicked event.
-        protected override void AppendAdditionalComponentMenuItems(System.Windows.Forms.ToolStripDropDown menu)
-        {
-            ToolStripMenuItem outputCode = Menu_AppendItem(menu, "Output Code", outputCode_Click, true, m_outputCode);
-            outputCode.ToolTipText = "Output a string representation of the robot targets.";
-
-            ToolStripSeparator seperator = Menu_AppendSeparator(menu);
-
-            ToolStripMenuItem robotManufacturers = Menu_AppendItem(menu, "Manufacturer");
-            robotManufacturers.ToolTipText = "Select the robot manufacturer";
-            foreach (string name in typeof(Manufacturer).GetEnumNames())
-            {
-                ToolStripMenuItem item = new ToolStripMenuItem(name, null, manufacturer_Click);
-
-                if (name == this.m_Manufacturer.ToString()) item.Checked = true;
-                robotManufacturers.DropDownItems.Add(item);
-            }
-
-            ToolStripSeparator seperator2 = Menu_AppendSeparator(menu);
-
-            ToolStripMenuItem extRotAxisCheck = Menu_AppendItem(menu, "Use Rotary Axis", rotAxis_Click, true, extRotary);
-            extRotAxisCheck.ToolTipText = "Add an input for external rotary axis position values.";
-            ToolStripMenuItem extLinAxisCheck = Menu_AppendItem(menu, "Use Linear Axis", linAxis_Click, true, extLinear);
-            extLinAxisCheck.ToolTipText = "Add an input for external linear axis position values.";
-
-            ToolStripSeparator seperator3 = Menu_AppendSeparator(menu);
-
-            ToolStripMenuItem interpolation = Menu_AppendItem(menu, "Specify Interpolation Types", interpolation_Click, true, m_interpolationTypes);
-            interpolation.ToolTipText = "Specify the interpolation type per target. [0 = Linear, 1 = Joint]";
-        }
-
-        private void manufacturer_Click(object sender, EventArgs e)
-        {
-            RecordUndoEvent("Manufacturer");
-            ToolStripMenuItem currentItem = (ToolStripMenuItem)sender;
-            Canvas.Menu.UncheckOtherMenuItems(currentItem);
-            this.m_Manufacturer = (Manufacturer)currentItem.Owner.Items.IndexOf(currentItem);
-            ExpireSolution(true);
-        }
 
         private void outputCode_Click(object sender, EventArgs e)
         {
-            RecordUndoEvent("OutputCode");
-            m_outputCode = !m_outputCode;
+            var button = (ToolStripMenuItem)sender;
 
-            if (m_outputCode)
+            RecordUndoEvent("OutputCode");
+            button.Checked = !button.Checked;
+
+            if (button.Checked)
             {
                 this.AddOutput(0, outputParams);
             }
@@ -269,10 +263,12 @@ namespace Axis.GH_Components
 
         private void interpolation_Click(object sender, EventArgs e)
         {
-            RecordUndoEvent("InterpolationTypes");
-            m_interpolationTypes = !m_interpolationTypes;
+            var button = (ToolStripMenuItem)sender;
 
-            if (m_interpolationTypes)
+            RecordUndoEvent("InterpolationTypes");
+            button.Checked = !button.Checked;
+
+            if (button.Checked)
             {
                 this.AddInput(0, inputParams);
             }
@@ -285,10 +281,12 @@ namespace Axis.GH_Components
 
         private void rotAxis_Click(object sender, EventArgs e)
         {
-            RecordUndoEvent("LinAxisClick");
-            extRotary = !extRotary;
+            var button = (ToolStripMenuItem)sender;
 
-            if (extRotary)
+            RecordUndoEvent("LinAxisClick");
+            button.Checked = !button.Checked;
+
+            if (button.Checked)
             {
                 this.AddInput(1, inputParams);
             }
@@ -299,12 +297,22 @@ namespace Axis.GH_Components
             ExpireSolution(true);
         }
 
+        private void showZone(object sender, EventArgs e)
+        {
+            var button = (ToolStripMenuItem)sender;
+
+            RecordUndoEvent("ShowZoneClick");
+            button.Checked = !button.Checked;
+            ExpirePreview(true);
+        }
+
         private void linAxis_Click(object sender, EventArgs e)
         {
+            var button = (ToolStripMenuItem)sender;
             RecordUndoEvent("RotAxisClick");
-            extLinear = !extLinear;
+            button.Checked = !button.Checked;
 
-            if (extLinear)
+            if (button.Checked)
             {
                 this.AddInput(2, inputParams);
             }
@@ -321,16 +329,16 @@ namespace Axis.GH_Components
 
         public override BoundingBox ClippingBox => base.ClippingBox;
 
-        public override void DrawViewportMeshes(IGH_PreviewArgs args)
-        {
-            base.DrawViewportMeshes(args);
-            foreach (Target target in c_targets) Canvas.Component.DisplayPlane(target.Plane, args);
-        }
-
         public override void DrawViewportWires(IGH_PreviewArgs args)
         {
             base.DrawViewportWires(args);
-            foreach (Target target in c_targets) Canvas.Component.DisplayPlane(target.Plane, args);
+            foreach (Target target in c_targets) target.DrawViewportWires(args);
+            if (showZoneCheck.Checked) foreach (Target target in c_targets) target.DrawZone(args);
+        }
+
+        public override void DrawViewportMeshes(IGH_PreviewArgs args)
+        {
+            base.DrawViewportMeshes(args);
         }
 
         public override void ClearData()
@@ -347,24 +355,26 @@ namespace Axis.GH_Components
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
-            writer.SetBoolean("OutputCode", this.m_outputCode);
-            writer.SetInt32("Manufacturer", (int)this.m_Manufacturer);
+            writer.SetBoolean("OutputCode", this.outputCode.Checked);
+            writer.SetInt32("Manufacturer", (int)this.Manufacturer);
             writer.SetInt32("MotionType", (int)this.c_motionType);
-            writer.SetBoolean("RotAxis", this.extRotary);
-            writer.SetBoolean("LinAxis", this.extLinear);
-            writer.SetBoolean("Method", this.m_interpolationTypes);
+            writer.SetBoolean("RotAxis", this.extRotAxisCheck.Checked);
+            writer.SetBoolean("LinAxis", this.extLinAxisCheck.Checked);
+            writer.SetBoolean("ShowZone", this.showZoneCheck.Checked);
+            writer.SetBoolean("Method", this.interpolation.Checked);
             return base.Write(writer);
         }
 
         // Deserialize this instance from a Grasshopper reader object.
         public override bool Read(GH_IO.Serialization.GH_IReader reader)
         {
-            this.m_outputCode = reader.GetBoolean("OutputCode");
-            this.m_Manufacturer = (Manufacturer)reader.GetInt32("Manufacturer");
-            this.c_motionType = (MotionType)reader.GetInt32("MotionType");
-            this.extRotary = reader.GetBoolean("RotAxis");
-            this.extLinear = reader.GetBoolean("LinAxis");
-            this.m_interpolationTypes = reader.GetBoolean("Method");
+            if (reader.ItemExists("OutputCode"))this.outputCode.Checked = reader.GetBoolean("OutputCode");
+            if (reader.ItemExists("Manufacturer"))this.Manufacturer = (Manufacturer)reader.GetInt32("Manufacturer");
+            if (reader.ItemExists("MotionType"))this.c_motionType = (MotionType)reader.GetInt32("MotionType");
+            if (reader.ItemExists("RotAxis"))this.extRotAxisCheck.Checked = reader.GetBoolean("RotAxis");
+            if (reader.ItemExists("LinAxis"))this.extLinAxisCheck.Checked = reader.GetBoolean("LinAxis");
+            if (reader.ItemExists("ShowZone")) this.showZoneCheck.Checked = reader.GetBoolean("ShowZone");
+            if (reader.ItemExists("Method"))this.interpolation.Checked = reader.GetBoolean("Method");
             return base.Read(reader);
         }
 
@@ -408,28 +418,135 @@ namespace Axis.GH_Components
     /// <summary>
     /// Define robot end effector plane target positions.
     /// </summary>
-    public class GH_CreateJointTarget_Multithreaded : GH_Component, IGH_VariableParameterComponent
+    public class GH_CreateJointTarget_Multithreaded : Axis_Component, IGH_VariableParameterComponent
     {
-        // Boolean toggle for context menu items.
-        private bool m_outputCode = false;
+        public GH_CreateJointTarget_Multithreaded() : base("Joint Target", "Joint Target", "Create custom robot targets from joint angles.", AxisInfo.Plugin, AxisInfo.TabConfiguration)
+        {
+            this.IsMutiManufacture = true;
 
-        private Manufacturer m_Manufacturer = Manufacturer.ABB;
+            outputCode = new ToolStripMenuItem("Output Code", null, outputCode_Click)
+            {
+                ToolTipText = "Output a string representation of the robot targets."
+            };
+            extRotAxisCheck = new ToolStripMenuItem("Use Rotary Axis", null, rotAxis_Click)
+            {
+                ToolTipText = "Add an input for external rotary axis position values."
+            };
+            extLinAxisCheck = new ToolStripMenuItem("Use Linear Axis", null, linAxis_Click)
+            {
+                ToolTipText = "Add an input for external linear axis position values."
+            };
+            this.RegularToolStripItems = new ToolStripItem[]
+            {
+                outputCode,
+                extRotAxisCheck,
+                extLinAxisCheck,
+            };
+        }
+        protected override void SolveInstance(IGH_DataAccess DA)
+        {
+            this.Message = string.Empty;
+            List<string> code = new List<string>();
+
+            Grasshopper.Kernel.Data.GH_Structure<GH_Number> data;
+            List<Plane> planes = new List<Plane>();
+            List<List<double>> angles = new List<List<double>>();
+
+            List<Speed> speeds = new List<Speed>();
+            List<Zone> zones = new List<Zone>();
+            List<Tool> tools = new List<Tool>();
+            List<CSystem> wobjs = new List<CSystem>();
+
+            // Store the input lists of external axis values to synchronise with the targets.
+            List<double> eRotVals = new List<double>();
+            List<double> eLinVals = new List<double>();
+
+            DA.GetDataTree(0, out data);
+            if (!DA.GetDataList(1, speeds)) speeds.Add(Speed.Default);
+            if (!DA.GetDataList(2, zones)) zones.Add(Zone.Default);
+            if (!DA.GetDataList(3, tools)) tools.Add(ABBTool.Default);
+
+            //Convert GH_Structure<GH_Number> to List<List<double>>
+            foreach (List<GH_Number> list in data.Branches)
+            {
+                var tempList = new List<double>();
+                foreach (var number in list)
+                {
+                    double num;
+                    Grasshopper.Kernel.GH_Convert.ToDouble(number, out num, GH_Conversion.Both);
+                    tempList.Add(num);
+                }
+                angles.Add(tempList);
+            }
+
+            // If the inputs are present, get the external axis values.
+            if (extRotAxisCheck.Checked) { if (!DA.GetDataList("Rotary", eRotVals)) return; }
+            if (extLinAxisCheck.Checked) { if (!DA.GetDataList("Linear", eLinVals)) return; }
+
+            //Compute targets
+            System.Collections.Concurrent.ConcurrentBag<TargetOrderPair> bag = new System.Collections.Concurrent.ConcurrentBag<TargetOrderPair>();
+            Parallel.For(0, angles.Count, index => ComputeJointTargets(bag, index, angles, speeds, zones, tools, eRotVals, eLinVals));
+            c_targets = bag.OrderBy(b => b.Order).Select(b => b.Value).ToList();
+
+            // Set output data
+            if (c_targets != null)
+            {
+                DA.SetDataList("Targets", c_targets);
+            }
+            if (outputCode.Checked)
+            {
+                this.Message = Manufacturer.ToString();
+                code = c_targets.Select(t => t.RobStr(Manufacturer)).ToList();
+                DA.SetDataList("Code", code);
+            }
+        }
+
+        protected override void BeforeSolveInstance()
+        {
+            // Subscribe to all event handelers
+            this.Params.ParameterSourcesChanged += OnParameterSourcesChanged;
+        }
+
+        private struct TargetOrderPair
+        {
+            public Target Value { get; set; }
+            public int Order { get; set; }
+        }
+
+        private static void ComputeJointTargets(System.Collections.Concurrent.ConcurrentBag<TargetOrderPair> bag, int i,
+            List<List<double>> angles, List<Speed> speeds, List<Zone> zones, List<Tool> tools,
+            List<double> eRotVals, List<double> eLinVals)
+        {
+            TargetOrderPair result = new TargetOrderPair();
+
+            // Create the robot target.
+            result.Value = new ABBTarget(angles[i], speeds.InfinitElementAt(i), zones.InfinitElementAt(i),
+                tools.InfinitElementAt(i), eRotVals.InfinitElementAt(i), eLinVals.InfinitElementAt(i));
+            result.Order = i;
+
+            bag.Add(result);
+        }
+
+
+        #region Variables
+
         private List<Target> c_targets = new List<Target>();
         private BoundingBox c_bBox = new BoundingBox();
         private MotionType c_motionType = MotionType.Linear;
 
-        // External axis presence.
-        private bool extRotary = false;
 
-        private bool extLinear = false;
+        ToolStripMenuItem outputCode;
+        ToolStripMenuItem extRotAxisCheck;
+        ToolStripMenuItem extLinAxisCheck;
 
-        public GH_CreateJointTarget_Multithreaded() : base("Joint Target", "Joint Target", "Create custom robot targets from joint angles.", AxisInfo.Plugin, AxisInfo.TabConfiguration)
-        {
-        }
+
+
+
+    #endregion Variables
 
         #region IO
 
-        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
+    protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddNumberParameter("Angles", "Angles", "Joint angles as list/tree", GH_ParamAccess.tree, new List<double>() { 0, 0, 0, 0, 0, 0 });
             IGH_Param speed = new Axis.GH_Params.SpeedParam();
@@ -450,90 +567,6 @@ namespace Axis.GH_Components
         }
 
         #endregion IO
-
-        protected override void BeforeSolveInstance()
-        {
-            // Subscribe to all event handelers
-            this.Params.ParameterSourcesChanged += OnParameterSourcesChanged;
-        }
-
-        protected override void SolveInstance(IGH_DataAccess DA)
-        {
-            this.Message = m_Manufacturer.ToString();
-
-            List<string> code = new List<string>();
-
-            Grasshopper.Kernel.Data.GH_Structure<GH_Number> data;
-            List<Plane> planes = new List<Plane>();
-            List<List<double>> angles = new List<List<double>>();
-
-            List<Speed> speeds = new List<Speed>();
-            List<Zone> zones = new List<Zone>();
-            List<Tool> tools = new List<Tool>();
-            List<CSystem> wobjs = new List<CSystem>();
-
-            // Store the input lists of external axis values to synchronise with the targets.
-            List<double> eRotVals = new List<double>();
-            List<double> eLinVals = new List<double>();
-
-            DA.GetDataTree(0, out data);
-            if (!DA.GetDataList(1, speeds)) speeds.Add(Speed.Default);
-            if (!DA.GetDataList(2, zones)) zones.Add(Zone.Default);
-            if (!DA.GetDataList(3, tools)) tools.Add(Tool.Default);
-
-            //Convert GH_Structure<GH_Number> to List<List<double>>
-            foreach (List<GH_Number> list in data.Branches)
-            {
-                var tempList = new List<double>();
-                foreach (var number in list)
-                {
-                    double num;
-                    Grasshopper.Kernel.GH_Convert.ToDouble(number, out num, GH_Conversion.Both);
-                    tempList.Add(num);
-                }
-                angles.Add(tempList);
-            }
-
-            // If the inputs are present, get the external axis values.
-            if (extRotary) { if (!DA.GetDataList("Rotary", eRotVals)) return; }
-            if (extLinear) { if (!DA.GetDataList("Linear", eLinVals)) return; }
-
-            //Compute targets
-            System.Collections.Concurrent.ConcurrentBag<TargetOrderPair> bag = new System.Collections.Concurrent.ConcurrentBag<TargetOrderPair>();
-            Parallel.For(0, angles.Count, index => ComputeJointTargets(bag, index, angles, speeds, zones, tools, eRotVals, eLinVals, m_Manufacturer));
-            c_targets = bag.OrderBy(b => b.Order).Select(b => b.Value).ToList();
-
-            // Set output data
-            if (c_targets != null)
-            {
-                DA.SetDataList("Targets", c_targets);
-            }
-            if (m_outputCode)
-            {
-                code = c_targets.Select(t => t.StrRob).ToList();
-                DA.SetDataList("Code", code);
-            }
-        }
-
-        private struct TargetOrderPair
-        {
-            public Target Value { get; set; }
-            public int Order { get; set; }
-        }
-
-        private static void ComputeJointTargets(System.Collections.Concurrent.ConcurrentBag<TargetOrderPair> bag, int i,
-            List<List<double>> angles, List<Speed> speeds, List<Zone> zones, List<Tool> tools,
-            List<double> eRotVals, List<double> eLinVals, Manufacturer m_Manufacturer)
-        {
-            TargetOrderPair result = new TargetOrderPair();
-
-            // Create the robot target.
-            result.Value = new Target(angles[i], speeds.InfinitElementAt(i), zones.InfinitElementAt(i),
-                tools.InfinitElementAt(i), eRotVals.InfinitElementAt(i), eLinVals.InfinitElementAt(i), m_Manufacturer);
-            result.Order = i;
-
-            bag.Add(result);
-        }
 
         #region UI
 
@@ -603,52 +636,14 @@ namespace Axis.GH_Components
         new Param_String() { Name = "Code", NickName = "Code", Description = "Robot targets formatted as strings." }
         };
 
-        // The following functions append menu items and then handle the item clicked event.
-        protected override void AppendAdditionalComponentMenuItems(System.Windows.Forms.ToolStripDropDown menu)
+        private  void outputCode_Click(object sender, EventArgs e)
         {
-            ToolStripMenuItem outputCode = Menu_AppendItem(menu, "Output Code", outputCode_Click, true, m_outputCode);
-            outputCode.ToolTipText = "Output a string representation of the robot targets.";
+            var button = (ToolStripMenuItem)sender;
 
-            ToolStripSeparator seperator = Menu_AppendSeparator(menu);
-
-            ToolStripMenuItem robotManufacturers = Menu_AppendItem(menu, "Manufacturer");
-            robotManufacturers.ToolTipText = "Select the robot manufacturer";
-            foreach (string name in typeof(Manufacturer).GetEnumNames())
-            {
-                ToolStripMenuItem item = new ToolStripMenuItem(name, null, manufacturer_Click);
-
-                if (name == this.m_Manufacturer.ToString()) item.Checked = true;
-                robotManufacturers.DropDownItems.Add(item);
-            }
-
-            ToolStripSeparator seperator2 = Menu_AppendSeparator(menu);
-
-            ToolStripMenuItem extRotAxisCheck = Menu_AppendItem(menu, "Use Rotary Axis", rotAxis_Click, true, extRotary);
-            extRotAxisCheck.ToolTipText = "Add an input for external rotary axis position values.";
-            ToolStripMenuItem extLinAxisCheck = Menu_AppendItem(menu, "Use Linear Axis", linAxis_Click, true, extLinear);
-            extLinAxisCheck.ToolTipText = "Add an input for external linear axis position values.";
-
-            ToolStripSeparator seperator3 = Menu_AppendSeparator(menu);
-
-            //ToolStripMenuItem interpolation = Menu_AppendItem(menu, "Specify Interpolation Types", interpolation_Click, true, m_interpolationTypes);
-            //interpolation.ToolTipText = "Specify the interpolation type per target. [0 = Linear, 1 = Joint]";
-        }
-
-        private void manufacturer_Click(object sender, EventArgs e)
-        {
-            RecordUndoEvent("Manufacturer");
-            ToolStripMenuItem currentItem = (ToolStripMenuItem)sender;
-            Canvas.Menu.UncheckOtherMenuItems(currentItem);
-            this.m_Manufacturer = (Manufacturer)currentItem.Owner.Items.IndexOf(currentItem);
-            ExpireSolution(true);
-        }
-
-        private void outputCode_Click(object sender, EventArgs e)
-        {
             RecordUndoEvent("OutputCode");
-            m_outputCode = !m_outputCode;
+            button.Checked = !button.Checked;
 
-            if (m_outputCode)
+            if (button.Checked)
             {
                 this.AddOutput(0, outputParams);
             }
@@ -659,14 +654,16 @@ namespace Axis.GH_Components
             ExpireSolution(true);
         }
 
-        private void rotAxis_Click(object sender, EventArgs e)
+        private  void rotAxis_Click(object sender, EventArgs e)
         {
-            RecordUndoEvent("LinAxisClick");
-            extRotary = !extRotary;
+            var button = (ToolStripMenuItem)sender;
 
-            if (extRotary)
+            RecordUndoEvent("LinAxisClick");
+            button.Checked = !button.Checked;
+
+            if (button.Checked)
             {
-                this.AddInput(1, inputParams);
+                this.AddInput(0, inputParams);
             }
             else
             {
@@ -675,14 +672,16 @@ namespace Axis.GH_Components
             ExpireSolution(true);
         }
 
-        private void linAxis_Click(object sender, EventArgs e)
+        private  void linAxis_Click(object sender, EventArgs e)
         {
-            RecordUndoEvent("RotAxisClick");
-            extLinear = !extLinear;
+            var button = (ToolStripMenuItem)sender;
 
-            if (extLinear)
+            RecordUndoEvent("RotAxisClick");
+            button.Checked = !button.Checked;
+
+            if (button.Checked)
             {
-                this.AddInput(2, inputParams);
+                this.AddInput(1, inputParams);
             }
             else
             {
@@ -700,13 +699,12 @@ namespace Axis.GH_Components
         public override void DrawViewportMeshes(IGH_PreviewArgs args)
         {
             base.DrawViewportMeshes(args);
-            foreach (Target target in c_targets) Canvas.Component.DisplayPlane(target.Plane, args);
         }
 
         public override void DrawViewportWires(IGH_PreviewArgs args)
         {
             base.DrawViewportWires(args);
-            foreach (Target target in c_targets) Canvas.Component.DisplayPlane(target.Plane, args);
+            foreach (Target target in c_targets) target.DrawViewportWires(args);
         }
 
         public override void ClearData()
@@ -723,22 +721,22 @@ namespace Axis.GH_Components
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
-            writer.SetBoolean("OutputCode", this.m_outputCode);
-            writer.SetInt32("Manufacturer", (int)this.m_Manufacturer);
+            writer.SetBoolean("OutputCode", this.outputCode.Checked);
+            writer.SetInt32("Manufacturer", (int)this.Manufacturer);
             writer.SetInt32("MotionType", (int)this.c_motionType);
-            writer.SetBoolean("RotAxis", this.extRotary);
-            writer.SetBoolean("LinAxis", this.extLinear);
+            writer.SetBoolean("RotAxis", this.extRotAxisCheck.Checked);
+            writer.SetBoolean("LinAxis", this.extLinAxisCheck.Checked);
             return base.Write(writer);
         }
 
         // Deserialize this instance from a Grasshopper reader object.
         public override bool Read(GH_IO.Serialization.GH_IReader reader)
         {
-            this.m_outputCode = reader.GetBoolean("OutputCode");
-            this.m_Manufacturer = (Manufacturer)reader.GetInt32("Manufacturer");
-            this.c_motionType = (MotionType)reader.GetInt32("MotionType");
-            this.extRotary = reader.GetBoolean("RotAxis");
-            this.extLinear = reader.GetBoolean("LinAxis");
+            if (reader.ItemExists("OutputCode")) this.outputCode.Checked = reader.GetBoolean("OutputCode");
+            if (reader.ItemExists("Manufacturer")) this.Manufacturer = (Manufacturer)reader.GetInt32("Manufacturer");
+            if (reader.ItemExists("MotionType")) this.c_motionType = (MotionType)reader.GetInt32("MotionType");
+            if (reader.ItemExists("RotAxis")) this.extRotAxisCheck.Checked = reader.GetBoolean("RotAxis");
+            if (reader.ItemExists("LinAxis")) this.extLinAxisCheck.Checked = reader.GetBoolean("LinAxis");
             return base.Read(reader);
         }
 

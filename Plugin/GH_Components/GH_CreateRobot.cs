@@ -1,5 +1,5 @@
-﻿using Axis.Types;
-using Axis.Kernal;
+﻿using Axis.Kernal;
+using Axis.Types;
 using Canvas;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
@@ -14,16 +14,55 @@ namespace Axis.GH_Components
     /// <summary>
     /// Define a custom robot object.
     /// </summary>
-    public class CreateRobot : GH_Component, IGH_VariableParameterComponent
+    public class CreateRobot : Axis_Component, IGH_VariableParameterComponent
     {
-        // Sticky context menu toggles
-        private Manufacturer m_Manufacturer = Manufacturer.ABB;
-
-        private bool m_Pose = false;
-
         public CreateRobot() : base("Robot", "Robot", "Create a kinematic model of a custom robot.", AxisInfo.Plugin, AxisInfo.TabConfiguration)
         {
+            IsMutiManufacture = true;
+
+            PoseOut = new ToolStripMenuItem("Output Start Pose", null, pose_Click) 
+            {
+                ToolTipText = "Output the starting pose meshes of the robot as defined in the robot object."
+            };
+
+            RegularToolStripItems = new ToolStripMenuItem[]
+            {
+                PoseOut,
+            };
         }
+        protected override void SolveInstance(IGH_DataAccess DA)
+        {
+            List<Plane> inPlanes = new List<Plane>();
+            List<double> inMin = new List<double>();
+            List<double> inMax = new List<double>();
+            List<int> indices = new List<int>();
+            List<Mesh> inMeshes = new List<Mesh>();
+            Plane inBase = Plane.WorldXY;
+
+            if (!DA.GetDataList(0, inPlanes)) return;
+            if (!DA.GetDataList(1, inMin)) return;
+            if (!DA.GetDataList(2, inMax)) return;
+            if (!DA.GetDataList(3, indices)) return;
+            if (!DA.GetDataList(4, inMeshes)) return;
+            if (!DA.GetData(5, ref inBase)) return;
+
+            this.Message = this.Manufacturer.ToString();
+
+
+            Robot robot = new Abb6DOFRobot(inPlanes.ToArray(), inMin, inMax, inMeshes, inBase, indices);
+            //robot.SetPose();
+
+            DA.SetData(0, robot);
+
+            if (PoseOut.Checked)
+            {
+                DA.SetDataList("Pose", robot.GetPose().Geometries);
+            }
+        }
+
+        #region Variables
+        ToolStripMenuItem PoseOut;
+        #endregion Variables
 
         #region IO
 
@@ -47,39 +86,6 @@ namespace Axis.GH_Components
 
         #endregion IO
 
-        protected override void SolveInstance(IGH_DataAccess DA)
-        {
-            List<Plane> inPlanes = new List<Plane>();
-            List<double> inMin = new List<double>();
-            List<double> inMax = new List<double>();
-            List<int> indices = new List<int>();
-            List<Mesh> inMeshes = new List<Mesh>();
-            Plane inBase = Plane.WorldXY;
-
-            if (!DA.GetDataList(0, inPlanes)) return;
-            if (!DA.GetDataList(1, inMin)) return;
-            if (!DA.GetDataList(2, inMax)) return;
-            if (!DA.GetDataList(3, indices)) return;
-            if (!DA.GetDataList(4, inMeshes)) return;
-            if (!DA.GetData(5, ref inBase)) return;
-
-            this.Message = this.m_Manufacturer.ToString();
-
-            // Create axis planes in relation to robot joint points.
-            //List<Plane> axisPlanes = new List<Plane>();
-            //List<Plane> tAxisPlanes = new List<Plane>();
-
-            Robot robot = new Abb6DOFRobot(m_Manufacturer, inPlanes.ToArray(), inMin, inMax, inMeshes, inBase, indices);
-            //robot.SetPose();
-
-            DA.SetData(0, robot);
-
-            //if (m_Pose)
-            //{
-            //    DA.SetDataList("Pose", startPose);
-            //}
-        }
-
         #region UI
 
         // Build a list of optional input and output parameters
@@ -88,41 +94,14 @@ namespace Axis.GH_Components
         new Param_Mesh() { Name = "Pose", NickName = "Pose", Description = "A list of robot mesh geometry, as defined in the robot object.", Access = GH_ParamAccess.list },
         };
 
-        // The following functions append menu items and then handle the item clicked event.
-        protected override void AppendAdditionalComponentMenuItems(System.Windows.Forms.ToolStripDropDown menu)
-        {
-            ToolStripMenuItem robotManufacturers = Menu_AppendItem(menu, "Manufacturer");
-            robotManufacturers.ToolTipText = "Select the robot manufacturer";
-
-            foreach (string name in typeof(Manufacturer).GetEnumNames())
-            {
-                ToolStripMenuItem item = new ToolStripMenuItem(name, null, manufacturer_Click);
-
-                if (name == this.m_Manufacturer.ToString()) item.Checked = true;
-                robotManufacturers.DropDownItems.Add(item);
-            }
-
-            ToolStripSeparator seperator = Menu_AppendSeparator(menu);
-
-            ToolStripMenuItem PoseOut = Menu_AppendItem(menu, "Output Start Pose", pose_Click, true, m_Pose);
-            PoseOut.ToolTipText = "Output the starting pose meshes of the robot as defined in the robot object.";
-        }
-
-        private void manufacturer_Click(object sender, EventArgs e)
-        {
-            RecordUndoEvent("Manufacturer");
-            ToolStripMenuItem currentItem = (ToolStripMenuItem)sender;
-            Canvas.Menu.UncheckOtherMenuItems(currentItem);
-            this.m_Manufacturer = (Manufacturer)currentItem.Owner.Items.IndexOf(currentItem);
-            ExpireSolution(true);
-        }
 
         private void pose_Click(object sender, EventArgs e)
         {
+            var button = (ToolStripMenuItem)sender;
             RecordUndoEvent("Pose");
-            m_Pose = !m_Pose;
+            button.Checked = !button.Checked;
 
-            if (m_Pose)
+            if (button.Checked)
             {
                 this.AddOutput(0, outputParams);
             }
@@ -140,16 +119,16 @@ namespace Axis.GH_Components
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
-            writer.SetInt32("Manufacturer", (int)this.m_Manufacturer);
-            writer.SetBoolean("StartPose", this.m_Pose);
+            writer.SetInt32("Manufacturer", (int)this.Manufacturer);
+            writer.SetBoolean("Pose", this.PoseOut.Checked);
             return base.Write(writer);
         }
 
         // Deserialize this instance from a Grasshopper reader object.
         public override bool Read(GH_IO.Serialization.GH_IReader reader)
         {
-            this.m_Manufacturer = (Manufacturer)reader.GetInt32("Manufacturer");
-            this.m_Pose = reader.GetBoolean("StartPose");
+            if(reader.ItemExists("Manufacturer")) this.Manufacturer = (Manufacturer)reader.GetInt32("Manufacturer");
+            if(reader.ItemExists("StartPose")) this.PoseOut.Checked = reader.GetBoolean("Pose");
             return base.Read(reader);
         }
 

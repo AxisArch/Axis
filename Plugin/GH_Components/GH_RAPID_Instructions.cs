@@ -1,18 +1,17 @@
-﻿using Canvas;
+﻿using Axis.Kernal;
+using Canvas;
 using GH_IO.Serialization;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace Axis.GH_Components
 {
-    public class GH_RAPID_Instructions : GH_Component, IGH_VariableParameterComponent
+    public class GH_RAPID_Instructions : Axis_Component, IGH_VariableParameterComponent
     {
-        private Opperation currentState = Opperation.Comment;
-        private Opperation previouseState = Opperation.Acceleration;
-
         /// <summary>
         /// Initializes a new instance of the MyComponent1 class.
         /// </summary>
@@ -21,7 +20,107 @@ namespace Axis.GH_Components
               "Creates different Rapid instructions",
               AxisInfo.Plugin, AxisInfo.TabMain)
         {
+
+            ToolStripMenuItem selectState = new ToolStripMenuItem("Select the function") 
+            {
+                ToolTipText = "Select the function to component should perform",
+            };
+            foreach (string name in typeof(Opperation).GetEnumNames())
+            {
+                ToolStripMenuItem item = new ToolStripMenuItem(name, null, state_Click);
+
+                if (name == this.currentState.ToString()) item.Checked = true;
+                selectState.DropDownItems.Add(item);
+            }
+
+            RegularToolStripItems = new ToolStripMenuItem[] { selectState };
         }
+        protected override void SolveInstance(IGH_DataAccess DA)
+        {
+            List<object> instructions = new List<object>();
+
+            if (UpdateIO()) return;
+
+            switch (currentState)
+            {
+                case Opperation.Acceleration:
+                    double accVal = 35; if (!DA.GetData(0, ref accVal)) return;
+                    double decVal = 60; if (!DA.GetData(1, ref decVal)) return;
+                    instructions.Add(new Axis.Types.Command($"AccSet {accVal.ToString()}, {decVal.ToString()};", Kernal.Manufacturer.ABB));
+                    break;
+
+                case Opperation.CallProcedure:
+                    string strName = null; if (!DA.GetData(0, ref strName)) return;
+                    bool args = true;
+                    List<string> arg = new List<string>(); if (!DA.GetDataList(1, arg)) args = false;
+
+                    if (args) foreach (string a in arg) instructions.Add(new Axis.Types.Command($"{strName}({a});", Kernal.Manufacturer.ABB));
+                    else instructions.Add(new Axis.Types.Command($"{strName};", Kernal.Manufacturer.ABB));
+                    break;
+
+                case Opperation.Comment:
+                    string strComm = null;
+                    if (!DA.GetData(0, ref strComm)) return;
+
+                    instructions.Add(new Axis.Types.Command($"! {strComm}", Kernal.Manufacturer.ABB));
+                    break;
+
+                case Opperation.DefineProcedure:
+                    string procName = null; if (!DA.GetData(0, ref procName)) return;
+                    string procVariable = null; DA.GetData(1, ref procVariable);
+                    List<string> strCommands = new List<string>(); if (!DA.GetDataList(2, strCommands)) return;
+
+                    // Open procedure and build up list of commands.
+                    //strProc.Add("!");
+                    //strProc.Add("PROC" + " " + procName + "(" + procVariable + ")\n");
+
+                    //strProc.AddRange(strCommands);
+
+                    // Close procedure.
+                    //strProc.Add("ENDPROC");
+                    //strProc.Add("!");
+
+                    List<Axis.Kernal.Instruction> instr = strCommands.Select(ins => new Axis.Types.Command(ins, Kernal.Manufacturer.ABB) as Kernal.Instruction).ToList();
+
+                    /*
+                     * @todo Add procVariable once implemented
+                     * @body Pass the procVariable to the procedure once this implements the support therefore
+                     */
+                    instructions.Add(new Types.Module.Procedure(code: instr, progName: procName));
+                    break;
+
+                case Opperation.SetDO:
+                    string name = "DO10_1";
+                    int status = 0;
+                    bool sync = false;
+
+                    if (!DA.GetData(0, ref name)) return;
+                    if (!DA.GetData(1, ref status)) return;
+                    DA.GetData(2, ref sync);
+
+                    if (sync) instructions.Add(new Axis.Types.Command($"SetDO \\Sync, {name}, {status.ToString()};", Kernal.Manufacturer.ABB));
+                    else instructions.Add(new Axis.Types.Command($"SetDO {name}, {status.ToString()};", Kernal.Manufacturer.ABB));
+                    break;
+
+                case Opperation.SetVelocity:
+                    double velPct = 100; if (!DA.GetData(0, ref velPct)) return;
+                    double maxSpeed = 900; if (!DA.GetData(1, ref maxSpeed)) return;
+
+                    instructions.Add(new Axis.Types.Command($"VelSet {velPct.ToString()}, {maxSpeed.ToString()};", Kernal.Manufacturer.ABB));
+                    break;
+
+                    //case Opperation.SoftMove:
+                    //    // string cssPlane = inPlane
+                    //    // string cssAct = "CSSAct ";
+                    //    break;
+            }
+            DA.SetDataList(0, instructions);
+        }
+
+        #region Variables
+        private Opperation currentState = Opperation.Comment;
+        private Opperation previouseState = Opperation.Acceleration;
+        #endregion Variables
 
         #region IO
 
@@ -37,96 +136,9 @@ namespace Axis.GH_Components
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddTextParameter("Code", "Code", "RAPID-formatted robot acceleration override settings.", GH_ParamAccess.list);
         }
 
         #endregion IO
-
-
-
-        /// <summary>
-        /// This is the method that actually does the work.
-        /// </summary>
-        /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
-        protected override void SolveInstance(IGH_DataAccess DA)
-        {
-            List<string> instructions = new List<string>();
-
-            if (UpdateIO()) return;
-
-            switch (currentState)
-            {
-                case Opperation.Acceleration:
-                    double accVal = 35; if (!DA.GetData(0, ref accVal)) return;
-                    double decVal = 60; if (!DA.GetData(1, ref decVal)) return;
-                    instructions.Add($"AccSet {accVal.ToString()}, {decVal.ToString()};");
-                    break;
-
-                case Opperation.CallProcedure:
-                    string strName = null; if (!DA.GetData(0, ref strName)) return;
-                    bool args = true;
-                    List<string> arg = new List<string>(); if (!DA.GetDataList(1, arg)) args = false;
-
-                    if (args) foreach (string a in arg) instructions.Add($"{strName}({a});");
-                    else instructions.Add($"{strName};");
-                    break;
-
-                case Opperation.Comment:
-                    string strComm = null;
-                    if (!DA.GetData(0, ref strComm)) return;
-
-                    instructions.Add($"! {strComm}");
-                    break;
-
-                case Opperation.DefineProcedure:
-                    string procName = null; if (!DA.GetData(0, ref procName)) return;
-                    string procVariable = null; DA.GetData(1, ref procVariable);
-                    List<string> strCommands = new List<string>(); if (!DA.GetDataList(2, strCommands)) return;
-
-                    List<string> strProc = new List<string>();
-
-                    // Open procedure and build up list of commands.
-                    strProc.Add("!");
-                    strProc.Add("PROC" + " " + procName + "(" + procVariable + ")\n");
-
-                    strProc.AddRange(strCommands);
-
-                    // Close procedure.
-                    strProc.Add("ENDPROC");
-                    strProc.Add("!");
-
-                    instructions.AddRange(strProc);
-                    break;
-
-                case Opperation.SetDO:
-                    string name = "DO10_1";
-                    int status = 0;
-                    bool sync = false;
-
-                    if (!DA.GetData(0, ref name)) return;
-                    if (!DA.GetData(1, ref status)) return;
-                    DA.GetData(2, ref sync);
-
-                    if (sync) instructions.Add($"SetDO \\Sync, {name}, {status.ToString()};");
-                    else instructions.Add($"SetDO {name}, {status.ToString()};");
-                    break;
-
-                case Opperation.SetVelocity:
-                    double velPct = 100; if (!DA.GetData(0, ref velPct)) return;
-                    double maxSpeed = 900; if (!DA.GetData(1, ref maxSpeed)) return;
-
-                    instructions.Add($"VelSet {velPct.ToString()}, {maxSpeed.ToString()};");
-                    break;
-
-                    //case Opperation.SoftMove:
-                    //    // string cssPlane = inPlane
-                    //    // string cssAct = "CSSAct ";
-                    //    break;
-            }
-            DA.SetDataList(0, instructions);
-        }
-
-
 
         #region UI
 
@@ -150,22 +162,12 @@ namespace Axis.GH_Components
             new Param_Integer(){ Name = "Stiffness", NickName = "ConStiffnesstrol", Description = "Turn the Cartesian Soft Servo option on or off." , Access = GH_ParamAccess.item},
         };
 
-        // The following functions append menu items and then handle the item clicked event.
-        protected override void AppendAdditionalComponentMenuItems(System.Windows.Forms.ToolStripDropDown menu)
+        private IGH_Param[] outputParams = new IGH_Param[]
         {
-            ToolStripMenuItem selectState = Menu_AppendItem(menu, "Select the function");
-            selectState.ToolTipText = "Select the function to component should perform";
+            new GH_Params.InstructionParam(){ Name = "Instruction", NickName = "Instructionc", Description = "RAPID-formatted robot Instruction." , Access = GH_ParamAccess.list},
+            new GH_Params.ProcedureParam(){ Name = "Procedure", NickName = "Procedure", Description = "ABB RAPID procedure" , Access = GH_ParamAccess.list},
+        };
 
-            foreach (string name in typeof(Opperation).GetEnumNames())
-            {
-                ToolStripMenuItem item = new ToolStripMenuItem(name, null, state_Click);
-
-                if (name == this.currentState.ToString()) item.Checked = true;
-                selectState.DropDownItems.Add(item);
-            }
-
-            ToolStripSeparator seperator = Menu_AppendSeparator(menu);
-        }
 
         private void state_Click(object sender, EventArgs e)
         {
@@ -187,33 +189,42 @@ namespace Axis.GH_Components
             switch (currentState)
             {
                 case Opperation.Acceleration:
-                    int pInput = Params.Input.Count;
                     Params.RemoveAllInputs();
+                    Params.RemoveAllOutputs();
                     this.AddInputs(new[] { 0, 1 }, inputParams);
+                    this.AddOutput(0, outputParams);
                     Params.Input[0].Optional = true;
                     Params.Input[1].Optional = true;
                     break;
 
                 case Opperation.CallProcedure:
                     Params.RemoveAllInputs();
+                    Params.RemoveAllOutputs();
                     this.AddInputs(new[] { 2, 3 }, inputParams);
+                    this.AddOutput(0, outputParams);
                     Params.Input[1].Optional = true;
                     break;
 
                 case Opperation.Comment:
                     Params.RemoveAllInputs();
+                    Params.RemoveAllOutputs();
                     this.AddInput(4, inputParams);
+                    this.AddOutput(0, outputParams);
                     break;
 
                 case Opperation.DefineProcedure:
                     Params.RemoveAllInputs();
+                    Params.RemoveAllOutputs();
                     this.AddInputs(new[] { 5, 6, 7 }, inputParams);
+                    this.AddOutput(1, outputParams);
                     Params.Input[1].Optional = true;
                     break;
 
                 case Opperation.SetDO:
                     Params.RemoveAllInputs();
+                    Params.RemoveAllOutputs();
                     this.AddInputs(new[] { 8, 9, 10 }, inputParams);
+                    this.AddOutput(0, outputParams);
                     Params.Input[0].Optional = true;
                     Params.Input[1].Optional = true;
                     Params.Input[2].Optional = true;
@@ -221,7 +232,9 @@ namespace Axis.GH_Components
 
                 case Opperation.SetVelocity:
                     Params.RemoveAllInputs();
+                    Params.RemoveAllOutputs();
                     this.AddInputs(new[] { 11, 12 }, inputParams);
+                    this.AddOutput(0, outputParams);
                     Params.Input[0].Optional = true;
                     Params.Input[1].Optional = true;
                     break;

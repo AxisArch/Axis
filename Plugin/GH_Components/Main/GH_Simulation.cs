@@ -1,10 +1,9 @@
-﻿using Axis;
+﻿using Axis.Kernal;
 using Axis.Types;
 using Canvas;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
 using Rhino;
-using Rhino.Display;
 using Rhino.DocObjects;
 using Rhino.Geometry;
 using System;
@@ -17,105 +16,122 @@ namespace Axis.GH_Components
     /// <summary>
     /// Stepwise simulation of a robotic program.
     /// </summary>
-    public class GH_Simulation : GH_Component, IGH_VariableParameterComponent
+    public class GH_Simulation : Axis_Component, IGH_VariableParameterComponent
     {
-        // Global variables.
-        private Abb6DOFRobot c_Robot = null;
-
-        //Target c_Target = null;
-        private Tool c_Tool = null;
-
-        private Abb6DOFRobot.ManipulatorPose c_Pose = null;
-
-        private DateTime strat = new DateTime();
-        private Toolpath toolpath;
-
-        //Manipulator.ManipulatorPose cPose;
-        private bool run = false;
-
-        private bool m_PoseOut = false;
-        private bool m_FullErrorLog = false;
-        private bool timeline = false;
-        private bool showSpeed = false;
-        private bool showAngles = false;
-        private bool showMotion = false;
-        private bool showExternal = false;
 
         public GH_Simulation() : base("Simulation", "Program", "Simulate a robotic toolpath.", AxisInfo.Plugin, AxisInfo.TabMain)
         {
+            var attr = this.Attributes as AxisComponentAttributes;
+
+            this.UI_Elements = new IComponentUiElement[]
+            {
+                new Kernal.UIElements.ComponentToggle("Start"){ LeftClickAction = StartStop , Toggle = new Tuple<string, string>("Start","Stop")},
+            };
+
+            attr.Update(UI_Elements);
+
+            timelineOption = new ToolStripMenuItem("Use Timeline", null, timeline_Click)
+            {
+                ToolTipText = "Use a timeline slider to specify the program position for simulation."
+            };
+            flangeCheck = new ToolStripMenuItem("Show Flange", null, flange_Click) 
+            {
+                ToolTipText = "Preview the current flange of the robot at each point in the simulation.",
+            };
+            speedCheck = new ToolStripMenuItem("Show Speed", null, speed_Click) 
+            {
+                ToolTipText = "Preview the current speed of the robot at each point in the simulation.",
+            };
+            anglesCheck = new ToolStripMenuItem("Show Angles", null, angles_Click)
+            {
+                ToolTipText = "Preview the current angle values of the robot at each point in the simulation.",
+            };
+            motionCheck = new ToolStripMenuItem("Show Motion", null, motion_Click) 
+            {
+                ToolTipText = "Preview the current motion type of the robot at each point in the simulation.",
+            };
+            externalCheck = new ToolStripMenuItem("Show External", null, external_Click) 
+            {
+                ToolTipText = "Preview the current position of each external axis as a list.",
+            };
+            fullprogramCheck = new ToolStripMenuItem( "Show full error log", null, fullCheck_Click) 
+            {
+                ToolTipText = "Out put a list of all the targets that are unreachable and a cresponding log.",
+            };
+
+            RegularToolStripItems = new ToolStripMenuItem[]
+            {
+                timelineOption,
+                flangeCheck,
+                speedCheck,
+                anglesCheck,
+                motionCheck,
+                externalCheck,
+                fullprogramCheck,
+            };
         }
-
-        #region IO
-
-        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
-        {
-            IGH_Param robot = new Axis.GH_Params.RobotParam();
-            pManager.AddParameter(robot, "Robot", "Robot", "Robot object to use for inverse kinematics. You can define this using the robot creator tool.", GH_ParamAccess.item);
-            IGH_Param target = new Axis.GH_Params.TargetParam();
-            pManager.AddParameter(target, "Targets", "Targets", "T", GH_ParamAccess.list);
-            pManager.AddBooleanParameter("Run", "Run", "", GH_ParamAccess.item);
-            pManager.AddBooleanParameter("Reset", "Reset", "", GH_ParamAccess.item);
-        }
-
-        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
-        {
-            //IGH_Param target = new Axis.Params.TargetParam();
-            //pManager.AddParameter(target, "Target", "Target", "", GH_ParamAccess.item);
-            pManager.AddPlaneParameter("Flange", "Flange", "Robot flange position.", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Angles", "Angles", "Axis angles for forward kinematics.", GH_ParamAccess.list);
-            pManager.AddTextParameter("Log", "Log", "Message log.", GH_ParamAccess.list);
-        }
-
-        #endregion IO
-
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             // Set up solution variables
-            bool rest = false;
-            List<Target> targets = new List<Target>();
+            List<Kernal.Instruction> instructions = new List<Kernal.Instruction>();
             DateTime now = DateTime.Now;
+            Robot c_Robot = null;
 
             // Load Inputs
             if (!DA.GetData(0, ref c_Robot)) return;
-            c_Robot = (Abb6DOFRobot)c_Robot.Duplicate(); //Duplicate Robot
-            if (!DA.GetDataList("Targets", targets)) return;
-            if (!DA.GetData("Run", ref run)) return;
-            if (!DA.GetData("Reset", ref rest)) return;
+            if (!DA.GetDataList("Instructions", instructions)) return;
 
-            //Set Up Tool path
-            if (rest | toolpath == null)
+            if (!run | newData)
             {
-                var poses = targets.Select(t => new Abb6DOFRobot.ManipulatorPose(c_Robot, (Target)t.Duplicate())).ToList(); //Duplate targets
-                toolpath = new Toolpath(poses);
+                //Set Up Tool path
+                toolpath = new Toolpath(instructions, c_Robot);
                 this.Message = (toolpath.IsValid) ? "No Errors detected" : "Errors";
                 strat = DateTime.Now;
+
+                if (!toolpath.IsValid)
+                {
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Invalid Toolpath");
+                    return;
+                }
+
+                c_Pose = toolpath.StartPose;
+                newData = false;
             }
 
             // Out put a full error log
-            if (toolpath != null && m_FullErrorLog && !run)
+            if (toolpath != null && fullprogramCheck.Checked && !run)
             {
                 if (!DA.SetDataList("Full Error Log", toolpath.ErrorLog)) return;
                 if (!DA.SetDataList("Error Positions", toolpath.ErrorPositions)) return;
             }
 
-            if (run)
+            if (toolpath != null && run)
             {
-                c_Pose = toolpath.GetPose(DateTime.Now - strat);
+                if (c_Pose == null) c_Pose = toolpath.GetPose(DateTime.Now - TimeSpan.FromSeconds(0.1) - strat);
+
+                var pose = toolpath.GetPose(DateTime.Now - strat);
+
+                if (!pose.IsValid) c_Pose.Colors = pose.Colors;
+                else c_Pose = pose;
+
+                if ((DateTime.Now - strat - TimeSpan.FromSeconds(1)) > toolpath.duration)
+                {
+                    run = false;
+                    ExpireSolution(true);
+                }
             }
-            else if (timeline && !run)
+            else if (timelineOption.Checked && !run)
             {
                 double tValue = 0;
                 if (!DA.GetData("*Timeline", ref tValue)) return;
                 c_Pose = toolpath.GetPose(tValue);
             }
-            else c_Pose = toolpath.StartPose; // DA.SetData("Target", targets[0]);
+            // DA.SetData("Target", targets[0]);
 
             if (c_Pose != null)
             {
-                if (c_Pose.Tool != null) c_Tool = c_Pose.Tool; // Get the tool from the target.
-
                 // Handle errors
-                void SetLogMessages(Abb6DOFRobot.ManipulatorPose Poses, List<string> Log)
+                void SetLogMessages(Robot.Pose Poses, List<string> Log)
                 {
                     if (Poses.OverHeadSig) Log.Add("Close to overhead singularity.");
                     if (Poses.WristSing) Log.Add("Close to wrist singularity.");
@@ -125,25 +141,66 @@ namespace Axis.GH_Components
                 List<string> log = new List<string>();
                 SetLogMessages(c_Pose, log);
 
-                if (c_Pose != null) c_Robot.SetPose(c_Pose, checkValidity: true);
-                if (c_Robot.CurrentPose.IsValid) c_Pose = c_Robot.CurrentPose;
-
                 // Set output
-                DA.SetData("Flange", c_Robot.CurrentPose.Flange);
-                DA.SetDataList("Angles", c_Robot.CurrentPose.Angles);
+                if (flangeCheck.Checked) DA.SetData("Flange", c_Pose.Flange);
+                if (anglesCheck.Checked) DA.SetDataList("Angles", c_Pose.Angles);
+                if (speedCheck.Checked) DA.SetData("Speed", c_Pose.Speed.TranslationSpeed);
+                if (motionCheck.Checked) DA.SetData("Motion", c_Pose.Target.Method.ToString());
+                if (externalCheck.Checked) DA.SetData("External", (double)c_Pose.Target.ExtRot);
+                //if (showExternal) DA.SetData("External", (double)c_Pose.Target.ExtLin);
+
                 DA.SetDataList("Log", log);
-                if (m_PoseOut) DA.SetData("Robot Pose", c_Robot.CurrentPose);
 
                 // Update and display data
-                c_Robot.UpdatePose();
-                c_Robot.GetBoundingBox(Transform.Identity);
-
-                c_Tool.UpdatePose(c_Robot);
-                c_Tool.GetBoundingBox(Transform.Identity);
+                c_Pose.GetBoundingBox(Transform.Identity);
 
                 if (run) ExpireSolution(true);
             }
         }
+
+        #region Variables
+        public override bool IsPreviewCapable => true;
+
+        // Global variables.
+        private DateTime strat = new DateTime();
+
+        private Robot.Pose c_Pose = null;
+        private Toolpath toolpath;
+
+        private bool run = false;
+        private bool newData = false;
+
+
+        ToolStripMenuItem timelineOption;
+        ToolStripMenuItem flangeCheck;
+        ToolStripMenuItem speedCheck;
+        ToolStripMenuItem anglesCheck;
+        ToolStripMenuItem motionCheck;
+        ToolStripMenuItem externalCheck;
+        ToolStripMenuItem fullprogramCheck;
+
+        //private string startStopButton = "Start";
+
+        #endregion Variables
+
+        #region IO
+
+        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
+        {
+            IGH_Param robot = new Axis.GH_Params.RobotParam();
+            pManager.AddParameter(robot, "Robot", "Robot", "Robot object to use for inverse kinematics. You can define this using the robot creator tool.", GH_ParamAccess.item);
+            IGH_Param instruction = new Axis.GH_Params.InstructionParam();
+            pManager.AddParameter(instruction, "Instructions", "Instructions", "Robot program instructions", GH_ParamAccess.list);
+        }
+
+        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
+        {
+            //IGH_Param target = new Axis.Params.TargetParam();
+            pManager.AddTextParameter("Log", "Log", "Message log.", GH_ParamAccess.list);
+        }
+
+        #endregion IO
+
 
         #region Display Pipeline
 
@@ -151,53 +208,44 @@ namespace Axis.GH_Components
         public override void DrawViewportWires(IGH_PreviewArgs args)
         {
             base.DrawViewportWires(args);
+            if (toolpath != null) if( toolpath.IsValid) toolpath.DrawViewportWires(args);
 
-            if (c_Robot == null) return;
-            if (c_Robot.CurrentPose == null) return;
-            if (c_Robot.CurrentPose.Colors == null) return;
-
-            var meshColorPair = c_Robot.RobMeshes.Zip(c_Robot.CurrentPose.Colors, (mesh, color) => new { Mesh = mesh, Color = color });
-            foreach (var pair in meshColorPair) args.Display.DrawMeshShaded(pair.Mesh, new DisplayMaterial(pair.Color));
+            // Only display line if Mesh is hidden
+            if (args.Document.PreviewMode != GH_PreviewMode.Shaded)
+            {
+                if (c_Pose != null) c_Pose.DrawViewportWires(args);
+            }
         }
 
         public override void DrawViewportMeshes(IGH_PreviewArgs args)
         {
             base.DrawViewportMeshes(args);
 
-            if (c_Robot == null) return;
-            if (c_Robot.CurrentPose == null) return;
-            if (c_Robot.CurrentPose.Colors == null) return;
-
-            var meshColorPairRobot = c_Robot.Geometries.Zip(c_Robot.Colors, (mesh, color) => new { Mesh = mesh, Color = color });
-            foreach (var pair in meshColorPairRobot) args.Display.DrawMeshShaded(pair.Mesh, new DisplayMaterial(pair.Color));
-
-            if (c_Tool == null) return;
-            var meshColorPairTool = c_Tool.Geometries.Zip(c_Tool.Colors, (mesh, color) => new { Mesh = mesh, Color = color });
-            foreach (var pair in meshColorPairTool) args.Display.DrawMeshShaded(pair.Mesh, new DisplayMaterial(pair.Color));
+            if (c_Pose != null) c_Pose.DrawViewportMeshes(args);
         }
 
         public override void BakeGeometry(RhinoDoc doc, List<Guid> obj_ids)
         {
             base.BakeGeometry(doc, obj_ids);
-            for (int i = 0; i < c_Robot.CurrentPose.Geometries.Count(); i++)
+            for (int i = 0; i < c_Pose.Geometries.Count(); i++)
             {
                 var attributes = doc.CreateDefaultAttributes();
                 attributes.ColorSource = Rhino.DocObjects.ObjectColorSource.ColorFromObject;
-                attributes.ObjectColor = c_Robot.CurrentPose.Colors[i];
-                obj_ids.Add(doc.Objects.AddMesh(c_Robot.CurrentPose.Geometries[i], attributes));
+                attributes.ObjectColor = c_Pose.Colors[i];
+                obj_ids.Add(doc.Objects.AddMesh(c_Pose.Geometries[i], attributes));
             }
         }
 
         public override void BakeGeometry(RhinoDoc doc, ObjectAttributes att, List<Guid> obj_ids)
         {
             base.BakeGeometry(doc, att, obj_ids);
-            for (int i = 0; i < c_Robot.CurrentPose.Geometries.Count(); i++)
+            for (int i = 0; i < c_Pose.Geometries.Count(); i++)
             {
                 var attributes = doc.CreateDefaultAttributes();
                 if (att != null) attributes = att;
                 attributes.ColorSource = Rhino.DocObjects.ObjectColorSource.ColorFromObject;
-                attributes.ObjectColor = c_Robot.CurrentPose.Colors[i];
-                obj_ids.Add(doc.Objects.AddMesh(c_Robot.CurrentPose.Geometries[i], attributes));
+                attributes.ObjectColor = c_Pose.Colors[i];
+                obj_ids.Add(doc.Objects.AddMesh(c_Pose.Geometries[i], attributes));
             }
         }
 
@@ -207,7 +255,7 @@ namespace Axis.GH_Components
             {
                 BoundingBox box = BoundingBox.Empty;
 
-                if (c_Robot != null) box.Union(c_Robot.Boundingbox);
+                if (c_Pose != null) box.Union(c_Pose.Boundingbox);
                 //if (c_Tool != null) box.Union(c_Tool.Boundingbox);
                 //if (c_Target != null) box.Union(c_Target.Boundingbox);
                 return box;
@@ -223,7 +271,7 @@ namespace Axis.GH_Components
             base.BeforeSolveInstance();
 
             //Subscribe to all event handelers
-            this.Params.ParameterSourcesChanged += OnParameterSourcesChanged; ;
+            this.Params.ParameterSourcesChanged += OnParameterSourcesChanged;
         }
 
         /// <summary>
@@ -235,6 +283,9 @@ namespace Axis.GH_Components
         {
             int index = e.ParameterIndex;
             IGH_Param param = e.Parameter;
+
+            //Trigger data collection
+            if (param.Name == "Robot" | param.Name == "Instructions") newData = true;
 
             //Only add value list to the first input
             if (param.Name != "*Timeline") return;
@@ -249,6 +300,20 @@ namespace Axis.GH_Components
             Canvas.Component.ChangeObjects(extractedItems, gH_NumberSlider);
         }
 
+        private void StartStop(object sender, object e)
+        {
+            var toggle = (IToggle)sender;
+            toggle.State = !toggle.State;
+            if (toggle.State)
+            {
+                run = false;            }
+            else
+            {
+                run = true;
+                strat = DateTime.Now;
+            }
+        }
+
         // Build a list of optional input parameters
         private IGH_Param[] inputParams = new IGH_Param[1]
         {
@@ -256,42 +321,25 @@ namespace Axis.GH_Components
         };
 
         // Build a list of optional output parameters
-        private IGH_Param[] outputParams = new IGH_Param[6]
+        private IGH_Param[] outputParams = new IGH_Param[]
         {
         new Param_Number() { Name = "Speed", NickName = "Speed", Description = "The current speed of the robot in mm/s." },
         new Param_Number() { Name = "Angles", NickName = "Angles", Description = "The current angle values of the robot." },
-        new Param_Number() { Name = "Motion", NickName = "Motion", Description = "The current motion type of the robot." },
+        new Param_String() { Name = "Motion", NickName = "Motion", Description = "The current motion type of the robot." },
         new Param_Number() { Name = "External", NickName = "External", Description = "The current external axis values as a list." },
         new Param_String() { Name = "Full Error Log", NickName = "Full Error Log", Description = "The full log of all erroro positions" },
         new Param_Point(){ Name = "Error Positions", NickName = "Error Positions", Description = "A list of all the positions where errors are couring" },
+        new Param_Plane(){ Name = "Flange", NickName = "Flange", Description = "Output the robot flange" },
         };
 
-        // The following functions append menu items and then handle the item clicked event.
-        protected override void AppendAdditionalComponentMenuItems(System.Windows.Forms.ToolStripDropDown menu)
-        {
-            ToolStripMenuItem timelineOption = Menu_AppendItem(menu, "Use Timeline", timeline_Click, true, timeline);
-            timelineOption.ToolTipText = "Use a timeline slider to specify the program position for simulation.";
-
-            ToolStripSeparator seperator = Menu_AppendSeparator(menu);
-
-            ToolStripMenuItem speedCheck = Menu_AppendItem(menu, "Show Speed", speed_Click, true, showSpeed);
-            speedCheck.ToolTipText = "Preview the current speed of the robot at each point in the simulation.";
-            ToolStripMenuItem anglesCheck = Menu_AppendItem(menu, "Show Angles", angles_Click, true, showAngles);
-            anglesCheck.ToolTipText = "Preview the current angle values of the robot at each point in the simulation.";
-            ToolStripMenuItem motionCheck = Menu_AppendItem(menu, "Show Motion", motion_Click, true, showMotion);
-            motionCheck.ToolTipText = "Preview the current motion type of the robot at each point in the simulation.";
-            ToolStripMenuItem externalCheck = Menu_AppendItem(menu, "Show External", external_Click, true, showExternal);
-            externalCheck.ToolTipText = "Preview the current position of each external axis as a list.";
-            ToolStripMenuItem fullprogramCheck = Menu_AppendItem(menu, "Show full error log", fullCheck_Click, true, m_FullErrorLog);
-            externalCheck.ToolTipText = "Out put a list of all the targets that are unreachable and a cresponding log.";
-        }
 
         private void timeline_Click(object sender, EventArgs e)
         {
+            var button = (ToolStripMenuItem)sender;
             RecordUndoEvent("TimelineClick");
-            timeline = !timeline;
+            button.Checked = !button.Checked;
 
-            if (timeline) { this.AddInput(0, inputParams); }
+            if (button.Checked) { this.AddInput(0, inputParams); }
             else
             {
                 Params.UnregisterInputParameter(Params.Input.FirstOrDefault(x => x.Name == "*Timeline"), true);
@@ -301,10 +349,11 @@ namespace Axis.GH_Components
 
         private void speed_Click(object sender, EventArgs e)
         {
+            var button = (ToolStripMenuItem)sender;
             RecordUndoEvent("SpeedClick");
-            showSpeed = !showSpeed;
+            button.Checked = !button.Checked;
 
-            if (showSpeed) { this.AddOutput(0, outputParams); }
+            if (button.Checked) { this.AddOutput(0, outputParams); }
             else
             {
                 Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Speed"), true);
@@ -314,10 +363,11 @@ namespace Axis.GH_Components
 
         private void angles_Click(object sender, EventArgs e)
         {
+            var button = (ToolStripMenuItem)sender;
             RecordUndoEvent("AnglesClick");
-            showAngles = !showAngles;
+            button.Checked = !button.Checked;
 
-            if (showAngles) { this.AddOutput(1, outputParams); }
+            if (button.Checked) { this.AddOutput(1, outputParams); }
             else
             {
                 Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Angles"), true);
@@ -327,10 +377,11 @@ namespace Axis.GH_Components
 
         private void motion_Click(object sender, EventArgs e)
         {
+            var button = (ToolStripMenuItem)sender;
             RecordUndoEvent("MotionClick");
-            showMotion = !showMotion;
+            button.Checked = !button.Checked;
 
-            if (showMotion) { this.AddOutput(2, outputParams); }
+            if (button.Checked) { this.AddOutput(2, outputParams); }
             else
             {
                 Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Motion"), true);
@@ -340,10 +391,11 @@ namespace Axis.GH_Components
 
         private void external_Click(object sender, EventArgs e)
         {
+            var button = (ToolStripMenuItem)sender;
             RecordUndoEvent("ExternalClick");
-            showExternal = !showExternal;
+            button.Checked = !button.Checked;
 
-            if (showExternal) { this.AddOutput(3, outputParams); }
+            if (button.Checked) { this.AddOutput(3, outputParams); }
             else
             {
                 Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "External"), true);
@@ -351,12 +403,27 @@ namespace Axis.GH_Components
             ExpireSolution(true);
         }
 
+        private void flange_Click(object sender, EventArgs e)
+        {
+            var button = (ToolStripMenuItem)sender;
+            RecordUndoEvent("FlangeClick");
+            button.Checked = !button.Checked;
+
+            if (button.Checked) { this.AddOutput(6, outputParams); }
+            else
+            {
+                Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Flange"), true);
+            }
+            ExpireSolution(true);
+        }
+
         private void fullCheck_Click(object sender, EventArgs e)
         {
+            var button = (ToolStripMenuItem)sender;
             RecordUndoEvent("FullCheckClick");
-            m_FullErrorLog = !m_FullErrorLog;
+            button.Checked = !button.Checked;
 
-            if (m_FullErrorLog) { this.AddOutputs(new[] { 4, 5 }, outputParams); }
+            if (button.Checked) { this.AddOutputs(new[] { 4, 5 }, outputParams); }
             else
             {
                 Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Full Error Log"), true);
@@ -372,24 +439,29 @@ namespace Axis.GH_Components
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
-            writer.SetBoolean("UseTimeline", this.timeline);
-            writer.SetBoolean("ShowSpeed", this.showSpeed);
-            writer.SetBoolean("ShowAngles", this.showAngles);
-            writer.SetBoolean("ShowMotion", this.showMotion);
-            writer.SetBoolean("ShowExternal", this.showExternal);
-            writer.SetBoolean("PoseOut", this.m_PoseOut);
+            writer.SetBoolean("UseTimeline", this.timelineOption.Checked);
+            writer.SetBoolean("ShowSpeed", this.speedCheck.Checked);
+            writer.SetBoolean("ShowAngles", this.anglesCheck.Checked);
+            writer.SetBoolean("ShowMotion", this.motionCheck.Checked);
+            writer.SetBoolean("ShowExternal", this.externalCheck.Checked);
+            writer.SetBoolean("ShowFlange", this.flangeCheck.Checked);
+            writer.SetBoolean("FullProgramCheck", this.fullprogramCheck.Checked);
+
+
             return base.Write(writer);
         }
 
         // Deserialize this instance from a Grasshopper reader object.
         public override bool Read(GH_IO.Serialization.GH_IReader reader)
         {
-            this.timeline = reader.GetBoolean("UseTimeline");
-            this.showSpeed = reader.GetBoolean("ShowSpeed");
-            this.showAngles = reader.GetBoolean("ShowAngles");
-            this.showMotion = reader.GetBoolean("ShowMotion");
-            this.showExternal = reader.GetBoolean("ShowExternal");
-            this.m_PoseOut = reader.GetBoolean("PoseOut");
+            if(reader.ItemExists("UseTimeline")) this.timelineOption.Checked = reader.GetBoolean("UseTimeline");
+            if(reader.ItemExists("ShowSpeed")) this.speedCheck.Checked = reader.GetBoolean("ShowSpeed");
+            if(reader.ItemExists("ShowAngles")) this.anglesCheck.Checked = reader.GetBoolean("ShowAngles");
+            if(reader.ItemExists("ShowMotion")) this.motionCheck.Checked = reader.GetBoolean("ShowMotion");
+            if(reader.ItemExists("ShowExternal")) this.externalCheck.Checked = reader.GetBoolean("ShowExternal");
+            if(reader.ItemExists("ShowFlange")) this.flangeCheck.Checked = reader.GetBoolean("ShowFlange");
+            if(reader.ItemExists("FullProgramCheck")) this.fullprogramCheck.Checked = reader.GetBoolean("FullProgramCheck");
+
             return base.Read(reader);
         }
 

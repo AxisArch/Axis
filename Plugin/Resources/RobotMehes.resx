@@ -121,7 +121,76 @@
   <data name="IRB120mesh" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>RobotBinaries\IRB120mesh.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <data name="IRB140_6kg_081mmesh" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>RobotBinaries\IRB140_6kg_081mmesh.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="IRB1520ID_4kg_150mmesh" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>RobotBinaries\IRB1520ID_4kg_150mmesh.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="IRB1600_6kg_120mmesh" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>RobotBinaries\IRB1600_6kg_120mmesh.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="IRB1660ID_4kg_155mmesh" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>RobotBinaries\IRB1660ID_4kg_155mmesh.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="IRB2600ID_15kg_185mmesh" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>RobotBinaries\IRB2600ID_15kg_185mmesh.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="IRB2600ID_8kg_200mmesh" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>RobotBinaries\IRB2600ID_8kg_200mmesh.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="IRB2600_12kg_185mmesh" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>RobotBinaries\IRB2600_12kg_185mmesh.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="IRB2600_12kg_20kg_165mmesh" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>RobotBinaries\IRB2600_12kg_20kg_165mmesh.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="IRB4600_20kg_250mmesh" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>RobotBinaries\IRB4600_20kg_250mmesh.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="IRB4600_40kg_255mmesh" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>RobotBinaries\IRB4600_40kg_255mmesh.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="IRB4600_45kg_60kg_205mmesh" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>RobotBinaries\IRB4600_45kg_60kg_205mmesh.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
   <data name="IRB6620mesh" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>RobotBinaries\IRB6620mesh.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="IRB6650S_100kg_350mmesh" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>RobotBinaries\IRB6650S_100kg_350mmesh.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="IRB6650S_125kg_350mmesh" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>RobotBinaries\IRB6650S_125kg_350mmesh.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="IRB6650S_190kg_300mmesh" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>RobotBinaries\IRB6650S_190kg_300mmesh.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="IRB6650S_200kg_300mmesh" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>RobotBinaries\IRB6650S_200kg_300mmesh.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="IRB6650S_90kg_390mmesh" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>RobotBinaries\IRB6650S_90kg_390mmesh.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="IRB6700_150kg_320mmesh" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>RobotBinaries\IRB6700_150kg_320mmesh.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="IRB6700_155kg_285mmesh" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>RobotBinaries\IRB6700_155kg_285mmesh.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="IRB6700_175kg_305mmesh" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>RobotBinaries\IRB6700_175kg_305mmesh.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="IRB6700_200kg_260mmesh" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>RobotBinaries\IRB6700_200kg_260mmesh.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="IRB6700_205kg_280mmesh" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>RobotBinaries\IRB6700_205kg_280mmesh.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="IRB6790_205kg_280mmesh" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>RobotBinaries\IRB6790_205kg_280mmeshmesh.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="IRB6790_235kg_265mmesh" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>RobotBinaries\IRB6790_235kg_265mmesh.bin;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
 </root>

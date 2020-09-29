@@ -18,120 +18,53 @@ namespace Axis.GH_Components
     /// </summary>
     public class GH_Connect : Kernal.AxisLogin_Component, IGH_VariableParameterComponent
     {
-        public List<string> Status { get; set; }
-        public List<Controller> controllers = new List<Controller>();
-
-        public bool updateVL = false;
-
-        private bool logOption;
-        private bool logOptionOut;
-
-
-
-        // Create a list of string to store a log of the connection status.
-        private List<string> log = new List<string>();
-
-
         public GH_Connect()
           : base("Controller", "Controller",
               "Connect to an ABB controller",
               AxisInfo.Plugin, AxisInfo.TabLive)
         {
-        }
+            var attr = this.Attributes as AxisComponentAttributes;
 
-        #region IO
+            IsMutiManufacture = false;
 
-        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
-        {
-            pManager.AddBooleanParameter("Scan", "Scan", "Scan the network for available controllers.", GH_ParamAccess.item, false);
-            pManager.AddTextParameter("IP", "IP", "IP adress of the controller to connect to.", GH_ParamAccess.list);
-            pManager.AddIntegerParameter("Index", "Index", "Index of the controller to connect to (if multiple connections are possible).", GH_ParamAccess.list);
-            pManager.AddBooleanParameter("Connect", "Connect", "Connect to the network controller.", GH_ParamAccess.item, false);
-            pManager.AddBooleanParameter("Kill", "Kill", "Kill the process; logoff and dispose of network controllers.", GH_ParamAccess.item, false);
-
-            for (int i = 0; i < 5; i++)
+            this.UI_Elements = new Kernal.IComponentUiElement[]
             {
-                pManager[i].Optional = true;
-            }
-        }
+                new Kernal.UIElements.ComponentButton("Scan"){ LeftClickAction = Scan },
+                new Kernal.UIElements.ComponentButton("Connect"){ LeftClickAction = Connet },
+                new Kernal.UIElements.ComponentButton("Kill"){ LeftClickAction = Kill },
+            };
 
-        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
-        {
-            IGH_Param controllerParam = new ContollerParam();
-            pManager.AddParameter(controllerParam, "Controller", "Controller", "Connection to Robot contoller", GH_ParamAccess.list);
-        }
+            attr.Update(UI_Elements);
 
-        #endregion IO
+            logOption = new ToolStripMenuItem("Log",null, log_Click) 
+            {
+                ToolTipText = "Activate the log output"
+            };
+            RegularToolStripItems = new ToolStripMenuItem[]
+            {
+                logOption,
+            };
+        }
 
         protected override void SolveInternal(IGH_DataAccess DA)
         {
-            bool scan = false;
-            bool kill = false;
+            indecies.Clear();
+
             bool clear = false;
-            List<string> ipAddresses = new List<string>();
-            List<int> indecies = new List<int>();
-            bool connect = false;
 
-            DA.GetData("Scan", ref scan);
-            if (!DA.GetDataList("IP", ipAddresses)) { return; }
+            DA.GetDataList("IP", ipAddresses);
             DA.GetDataList("Index", indecies);
-            DA.GetData("Connect", ref connect);
-            DA.GetData("Kill", ref kill);
 
-            if (logOption)
+            if (logOption.Checked)
             {
                 DA.GetData("Clear", ref clear);
-            }
-
-
-            if (scan)
-            {
-                //Reset Controllers
-                if (controllers != null)
-                {
-                    foreach (var controller in controllers) controller.LogOff();
-                    controllers = new List<Controller>();
-                }
-
-                // Find ABB robots on the network
-                NetworkScanner scanner = new NetworkScanner();
-                scanner.Scan();
-
-                if (ipAddresses != null)
-                {
-                    // Scan the network for controllers and add them to our controller array.
-                    foreach (string ip in ipAddresses) { NetworkScanner.AddRemoteController(ip); }
-                }
-                ControllerInfo[] controllersID = scanner.GetControllers();
-                foreach (ControllerInfo id in controllersID) controllers.Add(new AbbIRC5Contoller(id));
-
-
-                // Possibility to scan for other robots
-
-
-                // Allow value list to be updated
-                updateVL = true;
-
-
-                if (controllers != null) { 
-                    if (controllers.Count > 0)
-                    {
-                        log.Add("Controllers found:");
-
-                        // List the controller names that were found on the network.
-                        for (int i = 0; i < controllers.Count; i++)
-                        {
-                            log.Add(controllers[i].Name);
-                        }
-                    }
-                    else { log.Add("Scan timed out. No controllers were found."); }
-                }
             }
 
             // Populate value list
             if (updateVL)
             {
-                if (controllers != null) { 
+                if (controllers != null)
+                {
                     updateVL = false;
 
                     GH_Document doc = OnPingDocument();
@@ -143,7 +76,7 @@ namespace Axis.GH_Components
                         values.Add(new KeyValuePair<string, string>(controllers[i].Name, i.ToString()));
                     }
 
-                    Canvas.Component.SetValueList(doc, this, 2, values, "Controller");
+                    Canvas.Component.SetValueList(doc, this, 1, values, "Controller");
                 }
             }
 
@@ -153,25 +86,108 @@ namespace Axis.GH_Components
                 log.Add("Log cleared.");
             }
 
-            foreach (var idx in indecies)
+            if (logOption.Checked)
             {
-                if (kill && controllers[idx] != null) if (controllers[idx].LogOff()) log.Add("Process killed! Abandon ship!");
-
-                // Make the actual connection.
-                if (connect && controllers[idx] != null) controllers[idx].Connect();
-
-            }
-
-            if (logOptionOut)
-            {
-                Status = log;
                 DA.SetDataList("Log", log);
             }
 
-            if (controllers != null) DA.SetDataList(0, controllers.FindAll(c => indecies.Contains(controllers.IndexOf(c))).ToList() );
+            if (controllers != null) DA.SetDataList(0, controllers.FindAll(c => indecies.Contains(controllers.IndexOf(c))).ToList());
 
+            //ExpireSolution(true);
         }
-        
+
+        #region Methods
+
+        private void Scan(object sender, object e)
+        {
+            //Reset Controllers
+            if (controllers != null)
+            {
+                foreach (var controller in controllers) controller.LogOff();
+                controllers = new List<Controller>();
+            }
+
+            // Find ABB robots on the network
+            NetworkScanner scanner = new NetworkScanner();
+            scanner.Scan();
+
+            if (ipAddresses != null)
+            {
+                // Scan the network for controllers and add them to our controller array.
+                foreach (string ip in ipAddresses) { NetworkScanner.AddRemoteController(ip); }
+            }
+            ControllerInfo[] controllersID = scanner.GetControllers();
+            foreach (ControllerInfo id in controllersID) controllers.Add(new AbbIRC5Contoller(id));
+
+            // Possibility to scan for other robots
+
+            // Allow value list to be updated
+            updateVL = true;
+
+            if (controllers != null)
+            {
+                if (controllers.Count > 0)
+                {
+                    log.Add("Controllers found:");
+
+                    // List the controller names that were found on the network.
+                    for (int i = 0; i < controllers.Count; i++)
+                    {
+                        log.Add(controllers[i].Name);
+                    }
+                }
+                else { log.Add("Scan timed out. No controllers were found."); }
+            }
+            ExpireSolution(true);
+        }
+
+        private void Connet(object sender, object e)
+        {
+            // Make the actual connection.
+            foreach (var idx in indecies) if (controllers[idx] != null) controllers[idx].Connect();
+            ExpireSolution(true);
+        }
+
+        private void Kill(object sender, object e)
+        {
+            foreach (var idx in indecies) if (controllers[idx] != null) if (controllers[idx].LogOff()) log.Add("Process killed! Abandon ship!");
+            ExpireSolution(true);
+        }
+
+        #endregion Methods
+
+        #region Variables
+
+        private List<string> ipAddresses = new List<string>();
+        private List<int> indecies = new List<int>();
+        private List<Controller> controllers = new List<Controller>();
+
+        private bool updateVL = false;
+        ToolStripMenuItem logOption;
+
+        // Create a list of string to store a log of the connection status.
+        private List<string> log = new List<string>();
+
+        #endregion Variables
+
+        #region IO
+
+        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
+        {
+            pManager.AddTextParameter("IP", "IP", "IP adress of the controller to connect to.", GH_ParamAccess.list);
+            pManager.AddIntegerParameter("Index", "Index", "Index of the controller to connect to (if multiple connections are possible).", GH_ParamAccess.list);
+
+            pManager[0].Optional = true;
+            pManager[1].Optional = true;
+        }
+
+        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
+        {
+            IGH_Param controllerParam = new ContollerParam();
+            pManager.AddParameter(controllerParam, "Controller", "Controller", "Connection to Robot contoller", GH_ParamAccess.list);
+        }
+
+        #endregion IO
 
         #region UI
 
@@ -187,31 +203,21 @@ namespace Axis.GH_Components
             new Param_String() { Name = "Log", NickName = "Log", Description = "Log checking the connection status"},
         };
 
-        // The following functions append menu items and then handle the item clicked event.
-        protected override void AppendAdditionalComponentMenuItems(System.Windows.Forms.ToolStripDropDown menu)
-        {
-            ToolStripMenuItem log = Menu_AppendItem(menu, "Log", log_Click, true, logOption);
-            log.ToolTipText = "Activate the log output";
-
-            //ToolStripSeparator seperator = Menu_AppendSeparator(menu);
-        }
-
         private void log_Click(object sender, EventArgs e)
         {
+            var button = (ToolStripMenuItem)sender;
             RecordUndoEvent("Log");
-            logOption = !logOption;
+            button.Checked = !button.Checked;
 
-            if (logOption)
+            if (button.Checked)
             {
                 this.AddInput(0, inputParams);
                 this.AddOutput(0, outputParams);
-                logOptionOut = true;
             }
             else
             {
                 Params.UnregisterInputParameter(Params.Input.FirstOrDefault(x => x.Name == "Clear"), true);
                 Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Log"), true);
-                logOptionOut = false;
             }
 
             ExpireSolution(true);
@@ -224,16 +230,14 @@ namespace Axis.GH_Components
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
-            writer.SetBoolean("LogOptionConnect", this.logOption);
-            writer.SetBoolean("LogOptionOutConnect", this.logOptionOut);
+            writer.SetBoolean("LogOption", this.logOption.Checked);
             return base.Write(writer);
         }
 
         // Deserialize this instance from a Grasshopper reader object.
         public override bool Read(GH_IO.Serialization.GH_IReader reader)
         {
-            this.logOption = reader.GetBoolean("LogOptionConnect");
-            this.logOptionOut = reader.GetBoolean("LogOptionOutConnect");
+            if(reader.ItemExists("LogOption"))this.logOption.Checked = reader.GetBoolean("LogOption");
             return base.Read(reader);
         }
 
@@ -249,7 +253,9 @@ namespace Axis.GH_Components
 
         bool IGH_VariableParameterComponent.DestroyParameter(GH_ParameterSide side, int index) => false;
 
-        void IGH_VariableParameterComponent.VariableParameterMaintenance(){}
+        void IGH_VariableParameterComponent.VariableParameterMaintenance()
+        {
+        }
 
         public override GH_Exposure Exposure => GH_Exposure.primary;
 

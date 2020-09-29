@@ -14,65 +14,45 @@ namespace Axis.GH_Components
     /// <summary>
     /// Start and stop robot tasks on a controller.
     /// </summary>
-    public class GH_StartStop : GH_Component, IGH_VariableParameterComponent
+    public class GH_StartStop : Axis_Component, IGH_VariableParameterComponent
     {
-        // Optionable Log
-        private bool logOption = false;
-
-        private bool logOptionOut = false;
-        private List<string> log = new List<string>();
-        public List<string> Status { get; set; }
-
-        public Controller controllers = null;
-
-        private Axis.Kernal.ControllerState motorState = Axis.Kernal.ControllerState.Init;
-
         public GH_StartStop()
           : base("Start/Stop", "Start/Stop",
               "Controll a programm running on a robot controller",
               AxisInfo.Plugin, AxisInfo.TabLive)
         {
+            var attr = this.Attributes as AxisComponentAttributes;
+
+            // Set up the UI buttons for the component
+            this.UI_Elements = new IComponentUiElement[]
+            {
+                new Kernal.UIElements.ComponentToggle("Start"){ LeftClickAction = StartStop, Toggle = new Tuple<string, string>("Start", "Stop") },
+                new Kernal.UIElements.ComponentButton("Reset PP"){ LeftClickAction = ResetPP },
+            };
+            attr.Update(UI_Elements);
+
+            // Add option to the context menu
+            logOption = new ToolStripMenuItem("Show Log", null, log_Click) { ToolTipText = "Activate the log output." };
+            this.RegularToolStripItems = new ToolStripItem[]
+            {
+                logOption,
+            };
         }
-
-        #region IO
-
-        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
-        {
-            IGH_Param controllerParam = new GH_Params.ContollerParam();
-            pManager.AddParameter(controllerParam, "Controller", "Controller", "Recives the output from a controller module", GH_ParamAccess.list);
-            pManager.AddBooleanParameter("Reset PP", "Reset PP", "Set the program pointed back to the main entry point for the current task.", GH_ParamAccess.item, false);
-            pManager.AddBooleanParameter("Begin", "Begin", "Start the default task on the controller.", GH_ParamAccess.item, false);
-            pManager.AddBooleanParameter("Stop", "Stop", "Stop the default task on the controller.", GH_ParamAccess.item, false);
-        }
-
-        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
-        {
-        }
-
-        #endregion IO
-
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            List<Axis.Kernal.Controller> controllers = new List<Axis.Kernal.Controller>();
-            bool resetPP = false;
-            bool begin = false;
-            bool stop = false;
             bool clear = false;
+
+            controllers.Clear();
             DA.GetDataList("Controller", controllers);
-            DA.GetData("Reset PP", ref resetPP);
-            DA.GetData("Begin", ref begin);
-            DA.GetData("Stop", ref stop);
-            if (logOption) DA.GetData("Clear", ref clear);
+            if (logOption.Checked) DA.GetData("Clear", ref clear);
 
             // Check for input
-            if (controllers.Count == 0) { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No active contoller connected."); }
+            if (controllers.Count == 0) { AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "No active controller connected."); }
 
             // Body of the code
             for (int i = 0; i < controllers.Count; i++)
             {
-                if(!controllers[i].IsValid) { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No active controller connected."); return; }
-
-
+                if(!controllers[i].IsValid) { AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, $"{controllers[i].Name} is not active."); }
 
                 // Check motor state and set icon.
                 if (motorState != controllers[i].State)
@@ -80,12 +60,6 @@ namespace Axis.GH_Components
                     motorState = controllers[i].State;
                     DestroyIconCache();
                 }
-
-                if (resetPP && controllers[i] != null) controllers[i].Reset();
-
-                if (begin) controllers[i].Start();
-
-                if (stop) controllers[i].Stop();
             }
 
             // Clear log
@@ -96,15 +70,68 @@ namespace Axis.GH_Components
             }
 
             // Output log
-            if (logOptionOut)
+            if (logOption.Checked)
             {
-                Status = log;
                 DA.SetDataList("Log", log);
             }
         }
 
-        #region UI
+        # region Methods
 
+        void StartStop(object sender, object e) 
+        {
+            var toggel = sender as IToggle;
+
+            switch (toggel.State) 
+            {
+                case true:
+                    for (int i = 0; i < controllers.Count; i++) toggel.State = !controllers[i].Stop();
+
+                    break;
+                case false:
+                    for (int i = 0; i < controllers.Count; i++) toggel.State = controllers[i].Start();
+                    break;
+            }
+            
+            ExpireSolution(true);
+        }
+
+        void ResetPP(object sender, object e) 
+        {
+            for (int i = 0; i < controllers.Count; i++) if (controllers[i] != null) controllers[i].Reset();
+            ExpireSolution(true);
+        }
+
+        # endregion Methods
+
+        #region Variables
+
+        // Optionable Log
+        ToolStripMenuItem logOption;
+
+
+        private List<string> log = new List<string>();
+
+        List<Controller> controllers = new List<Controller>();
+        private ControllerState motorState = ControllerState.Init;
+
+        #endregion Variables
+
+        #region IO
+
+        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
+        {
+            IGH_Param controllerParam = new GH_Params.ContollerParam();
+            pManager.AddParameter(controllerParam, "Controller", "Controller", "Recives the output from a controller module", GH_ParamAccess.list);
+        }
+
+        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
+        {
+        }
+
+        #endregion IO
+
+        #region UI
         // Build a list of optional input parameters
         private IGH_Param[] inputParams = new IGH_Param[1]
         {
@@ -117,32 +144,25 @@ namespace Axis.GH_Components
         new Param_String() { Name = "Log", NickName = "Log", Description = "Connection status log."},
         };
 
-        // The following functions append menu items and then handle the item clicked event.
-        protected override void AppendAdditionalComponentMenuItems(System.Windows.Forms.ToolStripDropDown menu)
-        {
-            ToolStripMenuItem log = Menu_AppendItem(menu, "Show Log", log_Click, true, logOption);
-            log.ToolTipText = "Activate the log output.";
-
-            //ToolStripSeparator seperator = Menu_AppendSeparator(menu);
-        }
 
         private void log_Click(object sender, EventArgs e)
         {
+            var item = sender as ToolStripMenuItem;
             RecordUndoEvent("Log");
-            logOption = !logOption;
+            item.Checked = !item.Checked;
 
-            if (logOption)
+            if (item.Checked)
             {
                 this.AddInput(0, inputParams);
                 this.AddOutput(0, outputParams);
-                logOptionOut = true;
             }
             else
             {
                 Params.UnregisterInputParameter(Params.Input.FirstOrDefault(x => x.Name == "Clear"), true);
                 Params.UnregisterOutputParameter(Params.Output.FirstOrDefault(x => x.Name == "Log"), true);
-                logOptionOut = false;
             }
+
+            ExpireSolution(true);
         }
 
         #endregion UI
@@ -152,16 +172,14 @@ namespace Axis.GH_Components
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
-            writer.SetBoolean("LogOptionSetModule", this.logOption);
-            writer.SetBoolean("LogOptionSetOutModule", this.logOptionOut);
+            writer.SetBoolean("LogOption", this.logOption.Checked);
             return base.Write(writer);
         }
 
         // Deserialize this instance from a Grasshopper reader object.
         public override bool Read(GH_IO.Serialization.GH_IReader reader)
         {
-            this.logOption = reader.GetBoolean("LogOptionSetModule");
-            this.logOptionOut = reader.GetBoolean("LogOptionSetOutModule");
+            if (reader.ItemExists("LogOption")) this.logOption.Checked = reader.GetBoolean("LogOption");
             return base.Read(reader);
         }
 

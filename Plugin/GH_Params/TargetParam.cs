@@ -1,13 +1,15 @@
-﻿using Axis.Types;
+﻿using Axis.Kernal;
+using Axis.Types;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Data;
+using Grasshopper.Kernel.Types;
 using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
 
 namespace Axis.GH_Params
 {
-    public class TargetParam : GH_PersistentParam<Target>
+    public class TargetParam : GH_PersistentParam<IGH_Goo>
     {
         public override GH_Exposure Exposure => GH_Exposure.hidden; // <--- Make it hidden when it is working.
 
@@ -17,12 +19,12 @@ namespace Axis.GH_Params
 
         public override Guid ComponentGuid => new Guid("03DE08A2-D283-4E6D-98D4-07BF9606F34A");
 
-        protected override Target InstantiateT()
+        protected override IGH_Goo InstantiateT()
         {
-            return Target.Default;
+            return ABBTarget.Default;
         }
 
-        protected override GH_GetterResult Prompt_Singular(ref Target value)
+        protected override GH_GetterResult Prompt_Singular(ref IGH_Goo value)
         {
             Rhino.Input.Custom.GetPoint gpC = new Rhino.Input.Custom.GetPoint();
             gpC.SetCommandPrompt("Set default target center point.");
@@ -36,7 +38,7 @@ namespace Axis.GH_Params
             switch (go.Get())
             {
                 case Rhino.Input.GetResult.Option:
-                    if (go.Option().EnglishName == "True") { value = Target.Default; }
+                    if (go.Option().EnglishName == "True") { value = ABBTarget.Default; }
                     return GH_GetterResult.success;
 
                 case Rhino.Input.GetResult.Nothing:
@@ -47,7 +49,7 @@ namespace Axis.GH_Params
             }
         }
 
-        protected override GH_GetterResult Prompt_Plural(ref List<Target> values)
+        protected override GH_GetterResult Prompt_Plural(ref List<IGH_Goo> values)
         {
             return GH_GetterResult.cancel;
         }
@@ -61,8 +63,36 @@ namespace Axis.GH_Params
         private void SetDefaultHandler(object sender, EventArgs e)
         {
             PersistentData.Clear();
-            PersistentData.Append(Target.Default, new GH_Path(0));
+            PersistentData.Append(ABBTarget.Default, new GH_Path(0));
             ExpireSolution(true);
+        }
+
+        protected override void OnVolatileDataCollected()
+        {
+            for (int p = 0; p < m_data.PathCount; p++)
+            {
+                List<IGH_Goo> branch = m_data.Branches[p];
+                for (int i = 0; i < branch.Count; i++)
+                {
+                    IGH_Goo goo = branch[i];
+
+                    //We accept existing nulls.
+                    if (goo == null) continue;
+
+                    //We accept colours.
+                    if (goo is Target) continue;
+
+
+                    //Tough luck, the data is beyond repair. We'll set a runtime error and insert a null.
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error,
+                      string.Format("Data of type {0} could not be converted into a Robot", goo.TypeName));
+                    branch[i] = null;
+
+                    //As a side-note, we are not using the CastTo methods here on goo. If goo is of some unknown 3rd party type
+                    //which knows how to convert itself into a curve then this parameter will not work with that. 
+                    //If you want to know how to do this, ask.
+                }
+            }
         }
 
         protected override System.Drawing.Bitmap Icon => Properties.Icons.TargetParam;

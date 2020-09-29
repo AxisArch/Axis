@@ -39,5 +39,13 @@ namespace Axis.Kernal
         EmergencyStop = 9,
         UnknownMotorState = 99,
     }
-
+    public enum Display
+    {
+        Lines = 0,
+        Mesh = 1,
+    }
+    public enum UIElementType 
+    {
+        ComponentButton = 0,
+    }
 }

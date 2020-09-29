@@ -1,4 +1,5 @@
 ﻿using Axis;
+using Axis.Kernal;
 using Axis.Types;
 using Canvas;
 using Grasshopper.Kernel;
@@ -13,37 +14,51 @@ namespace Axis.GH_Components
     /// <summary>
     /// Define a custom zone object.
     /// </summary>
-    public class GH_DefineZone : GH_Component, IGH_VariableParameterComponent
+    public class GH_DefineZone : Axis_Component, IGH_VariableParameterComponent
     {
-        // Sticky context menu item values.
-        private bool m_Stop = false;
-
-        private bool m_Reorient = false;
-        private bool m_ToolReorient = false;
-        private bool m_ExtAxis = false;
-        private bool m_Declaration = false;
-        private bool m_LinExt = false;
-        private bool m_RotExt = false;
 
         public GH_DefineZone() : base("Zone", "Z", "Define a list of robot interpolation zones.", AxisInfo.Plugin, AxisInfo.TabConfiguration)
         {
+            stopPoint = new ToolStripMenuItem("Specify a Stop Point", null, stop_Click)
+            {
+                ToolTipText = "Specify the tool reorientation zone in mm.",
+            };
+            orientOpt = new ToolStripMenuItem("Specify Reorientation Zone", null, rot_Click) 
+            {
+                ToolTipText = "Specify the tool reorientation zone in mm.",
+            };
+            extAxOpt = new ToolStripMenuItem("Specify External Linear Speed", null, extAxis_Click) 
+            {
+                ToolTipText = "Specify the external rotary axis zone in mm.",
+            };
+            toolOriOpt = new ToolStripMenuItem("Specify Reorientation Degrees", null, toolDeg_Click) 
+            {
+                ToolTipText = "Specify the tool reorientation zone in degrees.",
+            };
+            linExtOpt = new ToolStripMenuItem("Specify Linear External Axis Zone", null, linExt_Click) 
+            {
+                ToolTipText = "Specify the linear external axis zone in mm.",
+            };
+            rotExtOpt = new ToolStripMenuItem("Specify Rotary External Axis Zone", null, rotExt_Click) 
+            {
+                ToolTipText = "Specify the rotary external axis zone in degrees.",
+            };
+            declarationCheck = new ToolStripMenuItem("Output Declarations", null, declaration_Click) 
+            {
+                ToolTipText = "Output the formatted zone declaration.",
+            };
+
+            RegularToolStripItems = new ToolStripMenuItem[]
+            {
+                stopPoint,
+                orientOpt,
+                extAxOpt,
+                toolOriOpt,
+                linExtOpt,
+                rotExtOpt,
+                declarationCheck,
+            };
         }
-
-        #region IO
-
-        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
-        {
-            pManager.AddNumberParameter("*TCP", "TCP", "TCP path radius of the zone.", GH_ParamAccess.list, 5);
-        }
-
-        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
-        {
-            IGH_Param zone = new Axis.GH_Params.ZoneParam();
-            pManager.AddParameter(zone, "Zone", "Zone", "List of zone objects.", GH_ParamAccess.list);
-        }
-
-        #endregion IO
-
         protected override void BeforeSolveInstance()
         {
             base.BeforeSolveInstance();
@@ -51,7 +66,6 @@ namespace Axis.GH_Components
             //Subscribe to all event handelers
             this.Params.ParameterSourcesChanged += OnParameterSourcesChanged;
         }
-
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             List<double> pathTCP = new List<double>();
@@ -67,27 +81,27 @@ namespace Axis.GH_Components
             bool snapDefault = true;
 
             // Get the optional inputs, if present.
-            if (m_Reorient)
+            if (orientOpt.Checked)
             {
                 snapDefault = false;
                 if (!DA.GetDataList("Reorientation", orientTCP)) return;
             }
-            if (m_ExtAxis)
+            if (extAxOpt.Checked)
             {
                 snapDefault = false;
                 if (!DA.GetDataList("External", extTCP)) return;
             }
-            if (m_ToolReorient)
+            if (toolOriOpt.Checked)
             {
                 snapDefault = false;
                 if (!DA.GetDataList("Degrees", orientation)) return;
             }
-            if (m_LinExt)
+            if (linExtOpt.Checked)
             {
                 snapDefault = false;
                 if (!DA.GetDataList("Linear", linExt)) return;
             }
-            if (m_RotExt)
+            if (rotExtOpt.Checked)
             {
                 snapDefault = false;
                 if (!DA.GetDataList("Rotary", rotExt)) return;
@@ -105,7 +119,7 @@ namespace Axis.GH_Components
                 Zone zone = new Zone(false, 5, 7.5, 7.5, 0.5, 7.5, 0.5, "EmptyZone");
 
                 // If we want to program stop points, do so and skip the rest.
-                if (m_Stop)
+                if (stopPoint.Checked)
                 {
                     zone = defaultZones[-1];
                     zones.Add(zone);
@@ -131,7 +145,7 @@ namespace Axis.GH_Components
                             zone.PathRadius = pathTCP[i];
 
                             // Path zone reorientation
-                            if (m_Reorient)
+                            if (orientOpt.Checked)
                             {
                                 if (i < orientTCP.Count)
                                 {
@@ -146,7 +160,7 @@ namespace Axis.GH_Components
                             }
 
                             // External zone
-                            if (m_ExtAxis)
+                            if (extAxOpt.Checked)
                             {
                                 if (i < extTCP.Count)
                                 {
@@ -161,7 +175,7 @@ namespace Axis.GH_Components
                             }
 
                             // Tool reorientation degrees
-                            if (m_ToolReorient)
+                            if (toolOriOpt.Checked)
                             {
                                 if (i < orientation.Count)
                                 {
@@ -176,7 +190,7 @@ namespace Axis.GH_Components
                             }
 
                             // Linear external axis zone
-                            if (m_LinExt)
+                            if (linExtOpt.Checked)
                             {
                                 if (i < linExt.Count)
                                 {
@@ -191,7 +205,7 @@ namespace Axis.GH_Components
                             }
 
                             // Linear external axis zone
-                            if (m_RotExt)
+                            if (rotExtOpt.Checked)
                             {
                                 if (i < rotExt.Count)
                                 {
@@ -231,11 +245,38 @@ namespace Axis.GH_Components
                 declarations.Add(dec);
             }
 
-            if (m_Declaration)
+            if (declarationCheck.Checked)
             {
                 DA.SetDataList("Declaration", declarations);
             }
         }
+
+        #region Variables
+        ToolStripMenuItem stopPoint;
+        ToolStripMenuItem orientOpt;
+        ToolStripMenuItem extAxOpt; 
+        ToolStripMenuItem toolOriOpt;
+        ToolStripMenuItem linExtOpt;
+        ToolStripMenuItem rotExtOpt;
+        ToolStripMenuItem declarationCheck;
+
+        #endregion Variables
+
+        #region IO
+
+        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
+        {
+            pManager.AddNumberParameter("*TCP", "TCP", "TCP path radius of the zone.", GH_ParamAccess.list, 5);
+        }
+
+        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
+        {
+            IGH_Param zone = new Axis.GH_Params.ZoneParam();
+            pManager.AddParameter(zone, "Zone", "Zone", "List of zone objects.", GH_ParamAccess.list);
+        }
+
+        #endregion IO
+
 
         #region UI
 
@@ -283,47 +324,24 @@ namespace Axis.GH_Components
         new Param_String() { Name = "Declaration", NickName = "Declaration", Description = "Formatted zone declarations as strings.", Access = GH_ParamAccess.list },
         };
 
-        // The following functions append menu items and then handle the item clicked event.
-        protected override void AppendAdditionalComponentMenuItems(System.Windows.Forms.ToolStripDropDown menu)
-        {
-            ToolStripMenuItem stopPoint = Menu_AppendItem(menu, "Specify a Stop Point", stop_Click, true, m_Stop);
-            stopPoint.ToolTipText = "Specify the tool reorientation zone in mm.";
-
-            ToolStripSeparator seperator = Menu_AppendSeparator(menu);
-
-            ToolStripMenuItem orientOpt = Menu_AppendItem(menu, "Specify Reorientation Zone", rot_Click, true, m_Reorient);
-            orientOpt.ToolTipText = "Specify the tool reorientation zone in mm.";
-            ToolStripMenuItem extAxOpt = Menu_AppendItem(menu, "Specify External Linear Speed", extAxis_Click, true, m_ExtAxis);
-            extAxOpt.ToolTipText = "Specify the external rotary axis zone in mm.";
-
-            ToolStripSeparator seperator2 = Menu_AppendSeparator(menu);
-
-            ToolStripMenuItem toolOriOpt = Menu_AppendItem(menu, "Specify Reorientation Degrees", toolDeg_Click, true, m_ToolReorient);
-            toolOriOpt.ToolTipText = "Specify the tool reorientation zone in degrees.";
-            ToolStripMenuItem linExtOpt = Menu_AppendItem(menu, "Specify Linear External Axis Zone", linExt_Click, true, m_LinExt);
-            linExtOpt.ToolTipText = "Specify the linear external axis zone in mm.";
-            ToolStripMenuItem rotExtOpt = Menu_AppendItem(menu, "Specify Rotary External Axis Zone", rotExt_Click, true, m_RotExt);
-            rotExtOpt.ToolTipText = "Specify the rotary external axis zone in degrees.";
-
-            ToolStripSeparator seperator3 = Menu_AppendSeparator(menu);
-
-            ToolStripMenuItem declarationCheck = Menu_AppendItem(menu, "Output Declarations", declaration_Click, true, m_Declaration);
-            declarationCheck.ToolTipText = "Output the formatted zone declaration.";
-        }
 
         private void stop_Click(object sender, EventArgs e)
         {
+            var button = (ToolStripMenuItem)sender;
+
             RecordUndoEvent("StopPoint");
-            m_Stop = !m_Stop;
+            button.Checked = !button.Checked;
             ExpireSolution(true);
         }
 
         private void rot_Click(object sender, EventArgs e)
         {
-            RecordUndoEvent("Reorientation");
-            m_Reorient = !m_Reorient;
+            var button = (ToolStripMenuItem)sender;
 
-            if (m_Reorient)
+            RecordUndoEvent("Reorientation");
+            button.Checked = !button.Checked;
+
+            if (button.Checked)
             {
                 this.AddInput(0, inputParams);
             }
@@ -336,10 +354,12 @@ namespace Axis.GH_Components
 
         private void extAxis_Click(object sender, EventArgs e)
         {
-            RecordUndoEvent("External");
-            m_ExtAxis = !m_ExtAxis;
+            var button = (ToolStripMenuItem)sender;
 
-            if (m_ExtAxis)
+            RecordUndoEvent("External");
+            button.Checked = !button.Checked;
+
+            if (button.Checked)
             {
                 this.AddInput(1, inputParams);
             }
@@ -352,10 +372,12 @@ namespace Axis.GH_Components
 
         private void toolDeg_Click(object sender, EventArgs e)
         {
-            RecordUndoEvent("ToolReorientation");
-            m_ToolReorient = !m_ToolReorient;
+            var button = (ToolStripMenuItem)sender;
 
-            if (m_ToolReorient)
+            RecordUndoEvent("ToolReorientation");
+            button.Checked = !button.Checked;
+
+            if (button.Checked)
             {
                 this.AddInput(2, inputParams);
             }
@@ -368,10 +390,12 @@ namespace Axis.GH_Components
 
         private void linExt_Click(object sender, EventArgs e)
         {
-            RecordUndoEvent("LinExtZone");
-            m_LinExt = !m_LinExt;
+            var button = (ToolStripMenuItem)sender;
 
-            if (m_LinExt)
+            RecordUndoEvent("LinExtZone");
+            button.Checked = !button.Checked;
+
+            if (button.Checked)
             {
                 this.AddInput(3, inputParams);
             }
@@ -384,10 +408,12 @@ namespace Axis.GH_Components
 
         private void rotExt_Click(object sender, EventArgs e)
         {
-            RecordUndoEvent("RotExtZone");
-            m_RotExt = !m_RotExt;
+            var button = (ToolStripMenuItem)sender;
 
-            if (m_RotExt)
+            RecordUndoEvent("RotExtZone");
+            button.Checked = !button.Checked;
+
+            if (button.Checked)
             {
                 this.AddInput(4, inputParams);
             }
@@ -400,10 +426,12 @@ namespace Axis.GH_Components
 
         private void declaration_Click(object sender, EventArgs e)
         {
-            RecordUndoEvent("Declarations");
-            m_Declaration = !m_Declaration;
+            var button = (ToolStripMenuItem)sender;
 
-            if (m_Declaration)
+            RecordUndoEvent("Declarations");
+            button.Checked = !button.Checked;
+
+            if (button.Checked)
             {
                 this.AddOutput(0, outputParams);
             }
@@ -421,24 +449,26 @@ namespace Axis.GH_Components
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
-            writer.SetBoolean("UseReorientation", this.m_Reorient);
-            writer.SetBoolean("UseExternal", this.m_ExtAxis);
-            writer.SetBoolean("UseDegrees", this.m_ToolReorient);
-            writer.SetBoolean("UseLinear", this.m_LinExt);
-            writer.SetBoolean("UseRotary", this.m_RotExt);
-            writer.SetBoolean("OutputDec", this.m_Declaration);
+            writer.SetBoolean("StopPoint", this.stopPoint.Checked);
+            writer.SetBoolean("UseReorientation", this.orientOpt.Checked);
+            writer.SetBoolean("UseExternal", this.extAxOpt.Checked);
+            writer.SetBoolean("UseDegrees", this.toolOriOpt.Checked);
+            writer.SetBoolean("UseLinear", this.linExtOpt.Checked);
+            writer.SetBoolean("UseRotary", this.rotExtOpt.Checked);
+            writer.SetBoolean("OutputDec", this.declarationCheck.Checked);
             return base.Write(writer);
         }
 
         // Deserialize this instance from a Grasshopper reader object.
         public override bool Read(GH_IO.Serialization.GH_IReader reader)
         {
-            this.m_Reorient = reader.GetBoolean("UseReorientation");
-            this.m_ExtAxis = reader.GetBoolean("UseExternal");
-            this.m_ToolReorient = reader.GetBoolean("UseDegrees");
-            this.m_LinExt = reader.GetBoolean("UseLinear");
-            this.m_RotExt = reader.GetBoolean("UseRotary");
-            this.m_Declaration = reader.GetBoolean("OutputDec");
+            if(reader.ItemExists("StopPoint")) this.stopPoint.Checked = reader.GetBoolean("StopPoint");
+            if(reader.ItemExists("UseReorientation")) this.orientOpt.Checked = reader.GetBoolean("UseReorientation");
+            if(reader.ItemExists("UseExternal")) this.extAxOpt.Checked = reader.GetBoolean("UseExternal");
+            if(reader.ItemExists("UseDegrees")) this.toolOriOpt.Checked = reader.GetBoolean("UseDegrees");
+            if(reader.ItemExists("UseLinear")) this.linExtOpt.Checked = reader.GetBoolean("UseLinear");
+            if(reader.ItemExists("UseRotary")) this.rotExtOpt.Checked = reader.GetBoolean("UseRotary");
+            if(reader.ItemExists("OutputDec")) this.declarationCheck.Checked = reader.GetBoolean("OutputDec");
             return base.Read(reader);
         }
 

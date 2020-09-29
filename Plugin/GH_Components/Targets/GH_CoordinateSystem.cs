@@ -1,4 +1,5 @@
-﻿using Axis.Types;
+﻿using Axis.Kernal;
+using Axis.Types;
 using Canvas;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Parameters;
@@ -13,42 +14,26 @@ namespace Axis.GH_Components
     /// <summary>
     /// Define a coordinate system / work object.
     /// </summary>
-    public class GH_CoordinateSystem : GH_Component, IGH_VariableParameterComponent
+    public class GH_CoordinateSystem : Axis_Component, IGH_VariableParameterComponent
     {
-        // Optional context menu toggles
-        private bool m_dynamicCS = false;
-
-        private Plane eAxis = Plane.WorldXY;
-        private bool m_outputDeclarations = false;
-        private List<CSystem> m_cSystems = new List<CSystem>();
-        private BoundingBox m_bBox = new BoundingBox();
 
         public GH_CoordinateSystem() : base("Work Object", "WObj", "Create a new work object or robot base from geometry or controller calibration values.", AxisInfo.Plugin, AxisInfo.TabConfiguration)
         {
+            dynamicCS = new ToolStripMenuItem("Dynamic Coordinate System", null, dynamic_Click) 
+            {
+                ToolTipText = "Specify a dynamic coordinate system (rotary or linear axis holds the work object).",
+            };
+            outputDec = new ToolStripMenuItem("Output Declarations", null, output_Click) 
+            {
+                ToolTipText = "Output the declarations in RAPID format.",
+            };
+
+            RegularToolStripItems = new ToolStripMenuItem[]
+            {
+                dynamicCS,
+                outputDec,
+            };
         }
-
-        #region IO
-
-        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
-        {
-            pManager.AddTextParameter("Name", "Name", "Name of the coordinate system.", GH_ParamAccess.list);
-            pManager.AddPlaneParameter("Plane", "Plane", "Plane to prescribe coordinate system.", GH_ParamAccess.list);
-            pManager[0].Optional = true;
-            pManager[1].Optional = true;
-        }
-
-        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
-        {
-            IGH_Param csystem = new Axis.GH_Params.CSystemParam();
-            pManager.AddParameter(csystem, "Wobj", "Wobj", "Work object coordinate system.", GH_ParamAccess.list);
-        }
-
-        #endregion IO
-
-        /// <summary>
-        /// Create custom coordinate system objects.
-        /// </summary>
-        /// <param name="DA"></param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             List<string> names = new List<string>();
@@ -58,7 +43,7 @@ namespace Axis.GH_Components
             if (!DA.GetDataList(1, planes)) planes.Add(Plane.WorldXY);
 
             // Dynamic coordinate systems move dependent on external axis values.
-            if (m_dynamicCS) { if (!DA.GetData("External Axis", ref eAxis)) return; }
+            if (dynamicCS.Checked) { if (!DA.GetData("External Axis", ref eAxis)) return; }
 
             // Declare an empty string to hold our outputs.
             List<string> declarations = new List<string>();
@@ -85,7 +70,7 @@ namespace Axis.GH_Components
                 string dec = "PERS wobjdata " + name + @" := [FALSE, TRUE, "", [[" + posX.ToString() + ", " + posY.ToString() + ", " + posZ.ToString() + "],[" + Math.Round(quat.A, 6).ToString() + ", " + Math.Round(quat.B, 6).ToString() + ", " + Math.Round(quat.C, 6).ToString() + ", " + Math.Round(quat.D, 6).ToString() + "]],[0, 0, 0],[1, 0, 0, 0]]];";
                 declarations.Add(dec);
 
-                CSystem cSys = new CSystem(name, planes[i], m_dynamicCS, eAxis);
+                CSystem cSys = new CSystem(name, planes[i], dynamicCS.Checked, eAxis);
                 cSystems.Add(cSys);
             }
 
@@ -96,12 +81,11 @@ namespace Axis.GH_Components
             foreach (CSystem c in m_cSystems) points.Add(c.CSPlane.Origin);
             m_bBox = new BoundingBox(points);
 
-            if (m_outputDeclarations)
+            if (outputDec.Checked)
             {
                 DA.SetDataList("Dec", declarations);
             }
         }
-
         public override void ClearData()
         {
             base.ClearData();
@@ -109,19 +93,47 @@ namespace Axis.GH_Components
             m_bBox = BoundingBox.Unset;
         }
 
+        #region Variables
+        private Plane eAxis = Plane.WorldXY;
+        private List<CSystem> m_cSystems = new List<CSystem>();
+        private BoundingBox m_bBox = new BoundingBox();
+
+        // Optional context menu toggles
+        ToolStripMenuItem dynamicCS;
+        ToolStripMenuItem outputDec;
+
+        #endregion Variables
+
+        #region IO
+
+        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
+        {
+            pManager.AddTextParameter("Name", "Name", "Name of the coordinate system.", GH_ParamAccess.list);
+            pManager.AddPlaneParameter("Plane", "Plane", "Plane to prescribe coordinate system.", GH_ParamAccess.list);
+            pManager[0].Optional = true;
+            pManager[1].Optional = true;
+        }
+
+        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
+        {
+            IGH_Param csystem = new Axis.GH_Params.CSystemParam();
+            pManager.AddParameter(csystem, "Wobj", "Wobj", "Work object coordinate system.", GH_ParamAccess.list);
+        }
+
+        #endregion IO
+
         #region Display
 
         // Custom preview options for the component.
         public override void DrawViewportWires(IGH_PreviewArgs args)
         {
             base.DrawViewportWires(args);
-            foreach (CSystem c in m_cSystems) Canvas.Component.DisplayPlane(c.CSPlane, args);
+            foreach (CSystem c in m_cSystems) c.DrawViewportWires(args);
         }
 
         public override void DrawViewportMeshes(IGH_PreviewArgs args)
         {
             base.DrawViewportMeshes(args);
-            foreach (CSystem c in m_cSystems) Canvas.Component.DisplayPlane(c.CSPlane, args);
         }
 
         #endregion Display
@@ -140,21 +152,14 @@ namespace Axis.GH_Components
         new Param_String() { Name = "Dec", NickName = "Dec", Description = "A list of declarations in RAPID." }
         };
 
-        // The following functions append menu items and then handle the item clicked event.
-        protected override void AppendAdditionalComponentMenuItems(ToolStripDropDown menu)
-        {
-            ToolStripMenuItem dynamicCS = Menu_AppendItem(menu, "Dynamic Coordinate System", dynamic_Click, true, m_dynamicCS);
-            dynamicCS.ToolTipText = "Specify a dynamic coordinate system (rotary or linear axis holds the work object).";
-            ToolStripMenuItem outputDec = Menu_AppendItem(menu, "Output Declarations", output_Click, true, m_outputDeclarations);
-            outputDec.ToolTipText = "Output the declarations in RAPID format.";
-        }
 
         private void dynamic_Click(object sender, EventArgs e)
         {
+            var button = (ToolStripMenuItem)sender;
             RecordUndoEvent("CSDynClick");
-            m_dynamicCS = !m_dynamicCS;
+            button.Checked = !button.Checked;
 
-            if (m_dynamicCS)
+            if (button.Checked)
             {
                 this.AddInput(0, inputParams);
             }
@@ -167,10 +172,11 @@ namespace Axis.GH_Components
 
         private void output_Click(object sender, EventArgs e)
         {
+            var button = (ToolStripMenuItem)sender;
             RecordUndoEvent("CSDecClick");
-            m_outputDeclarations = !m_outputDeclarations;
+            button.Checked = !button.Checked;
 
-            if (m_outputDeclarations)
+            if (button.Checked)
             {
                 this.AddOutput(0, outputParams);
             }
@@ -188,16 +194,16 @@ namespace Axis.GH_Components
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
-            writer.SetBoolean("CSDyn", this.m_dynamicCS);
-            writer.SetBoolean("CSDec", this.m_outputDeclarations);
+            writer.SetBoolean("CSDyn", this.dynamicCS.Checked);
+            writer.SetBoolean("CSDec", this.outputDec.Checked);
             return base.Write(writer);
         }
 
         // Deserialize this instance from a Grasshopper reader object.
         public override bool Read(GH_IO.Serialization.GH_IReader reader)
         {
-            this.m_dynamicCS = reader.GetBoolean("CSDyn");
-            this.m_outputDeclarations = reader.GetBoolean("CSDec");
+            if (reader.ItemExists("CSDyn")) this.dynamicCS.Checked = reader.GetBoolean("CSDyn");
+            if (reader.ItemExists("CSDec")) this.outputDec.Checked = reader.GetBoolean("CSDec");
             return base.Read(reader);
         }
 

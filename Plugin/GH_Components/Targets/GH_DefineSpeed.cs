@@ -1,4 +1,5 @@
 ﻿using Axis;
+using Axis.Kernal;
 using Axis.Types;
 using Canvas;
 using Grasshopper.Kernel;
@@ -13,37 +14,46 @@ namespace Axis.GH_Components
     /// <summary>
     /// Define a custom speed object.
     /// </summary>
-    public class GH_DefineSpeed : GH_Component, IGH_VariableParameterComponent
+    public class GH_DefineSpeed : Axis_Component, IGH_VariableParameterComponent
     {
-        // Sticky context menu item values.
-        private bool m_Rotation = false;
-
-        private bool m_Time = false;
-        private bool m_Name = false;
-        private bool m_Declaration = false;
-        private bool m_ExtLin = false;
-        private bool m_ExtRot = false;
 
         public GH_DefineSpeed() : base("Speed", "S", "Define a list of robot movement speeds.", AxisInfo.Plugin, AxisInfo.TabConfiguration)
         {
+            rotOption = new ToolStripMenuItem("Specify Rotation Speed", null, rot_Click) 
+            {
+                ToolTipText = "Specify the joint rotation limit in degrees / second.",
+            };
+            extLinOpt = new ToolStripMenuItem("Specify External Linear Speed", null, extLin_Click) 
+            {
+                ToolTipText = "Specify the external linear axis speed in mm / second.",
+            };
+            extRotOpt = new ToolStripMenuItem("Specify External Rotary Speed", null, extRot_Click) 
+            {
+                ToolTipText = "Specify the external rotary axis speed in degrees / second.",
+            };
+            timeOption = new ToolStripMenuItem("Define Movement Time", null, time_Click) 
+            {
+                ToolTipText = "Specify the movement time in seconds and override the other values.",
+            };
+            nameOption = new ToolStripMenuItem("Add Custom Name", null, name_Click) 
+            {
+                ToolTipText = "Define a custom name for each target for declaration purposes.",
+            };
+            declarationCheck = new ToolStripMenuItem("Output Declarations", null, declaration_Click) 
+            {
+                ToolTipText = "Output the formatted speed declaration.",
+            };
+
+            RegularToolStripItems = new ToolStripMenuItem[]
+            {
+                rotOption,
+                extLinOpt,
+                extRotOpt,
+                timeOption,
+                nameOption,
+                declarationCheck,
+            };
         }
-
-        #region IO
-
-        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
-        {
-            pManager.AddNumberParameter("*Linear", "Linear", "Translational TCP speed in mm/s.", GH_ParamAccess.list, 50);
-            Param_Integer param = pManager[0] as Param_Integer;
-        }
-
-        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
-        {
-            IGH_Param speed = new Axis.GH_Params.SpeedParam();
-            pManager.AddParameter(speed, "Speed", "Speed", "List of speed objects.", GH_ParamAccess.list);
-        }
-
-        #endregion IO
-
         protected override void BeforeSolveInstance()
         {
             base.BeforeSolveInstance();
@@ -62,15 +72,15 @@ namespace Axis.GH_Components
             if (!DA.GetDataList(0, linVals)) return;
 
             // Get the optional inputs, if present.
-            if (m_Rotation)
+            if (rotOption.Checked)
             {
                 if (!DA.GetDataList("Rotation", rotVals)) return;
             }
-            if (m_Time)
+            if (timeOption.Checked)
             {
                 if (!DA.GetDataList("Time", timeVals)) return;
             }
-            if (m_Name)
+            if (nameOption.Checked)
             {
                 if (!DA.GetDataList("Name", names)) return;
             }
@@ -85,7 +95,7 @@ namespace Axis.GH_Components
             Dictionary<double, Speed> defaultSpeeds = Util.ABBSpeeds();
             Dictionary<double, Speed> presentSpeeds = new Dictionary<double, Speed>();
 
-            if (m_Time)
+            if (timeOption.Checked)
             {
                 for (int i = 0; i < timeVals.Count; i++)
                 {
@@ -116,7 +126,7 @@ namespace Axis.GH_Components
                     }
                     else
                     {
-                        if (m_Rotation)
+                        if (rotOption.Checked)
                         {
                             if (i < rotVals.Count)
                             {
@@ -162,11 +172,38 @@ namespace Axis.GH_Components
 
             DA.SetDataList(0, speeds);
 
-            if (m_Declaration)
+            if (declarationCheck.Checked)
             {
                 DA.SetDataList("Declaration", declarations);
             }
         }
+
+        #region Variables
+        // Sticky context menu item values.
+        ToolStripMenuItem rotOption;
+        ToolStripMenuItem extLinOpt;
+        ToolStripMenuItem extRotOpt;
+        ToolStripMenuItem timeOption;
+        ToolStripMenuItem nameOption;
+        ToolStripMenuItem declarationCheck;
+        #endregion Variables
+
+        #region IO
+
+        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
+        {
+            pManager.AddNumberParameter("*Linear", "Linear", "Translational TCP speed in mm/s.", GH_ParamAccess.list, 50);
+            Param_Integer param = pManager[0] as Param_Integer;
+        }
+
+        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
+        {
+            IGH_Param speed = new Axis.GH_Params.SpeedParam();
+            pManager.AddParameter(speed, "Speed", "Speed", "List of speed objects.", GH_ParamAccess.list);
+        }
+
+        #endregion IO
+
 
         #region UI
 
@@ -214,35 +251,14 @@ namespace Axis.GH_Components
         new Param_String() { Name = "Declaration", NickName = "Declaration", Description = "Formatted speed declarations as strings.", Access = GH_ParamAccess.list },
         };
 
-        // The following functions append menu items and then handle the item clicked event.
-        protected override void AppendAdditionalComponentMenuItems(System.Windows.Forms.ToolStripDropDown menu)
-        {
-            ToolStripMenuItem rotOption = Menu_AppendItem(menu, "Specify Rotation Speed", rot_Click, true, m_Rotation);
-            rotOption.ToolTipText = "Specify the joint rotation limit in degrees / second.";
-            ToolStripMenuItem extLinOpt = Menu_AppendItem(menu, "Specify External Linear Speed", extLin_Click, true, m_ExtLin);
-            extLinOpt.ToolTipText = "Specify the external linear axis speed in mm / second.";
-            ToolStripMenuItem extRotOpt = Menu_AppendItem(menu, "Specify External Rotary Speed", extRot_Click, true, m_ExtRot);
-            extRotOpt.ToolTipText = "Specify the external rotary axis speed in degrees / second.";
-
-            ToolStripSeparator seperator = new ToolStripSeparator();
-
-            ToolStripMenuItem timeOption = Menu_AppendItem(menu, "Define Movement Time", time_Click, true, m_Time);
-            timeOption.ToolTipText = "Specify the movement time in seconds and override the other values.";
-            ToolStripMenuItem nameOption = Menu_AppendItem(menu, "Add Custom Name", name_Click, true, m_Name);
-            nameOption.ToolTipText = "Define a custom name for each target for declaration purposes.";
-
-            ToolStripSeparator seperator2 = new ToolStripSeparator();
-
-            ToolStripMenuItem declarationCheck = Menu_AppendItem(menu, "Output Declarations", declaration_Click, true, m_Declaration);
-            declarationCheck.ToolTipText = "Output the formatted speed declaration.";
-        }
 
         private void rot_Click(object sender, EventArgs e)
         {
+            var button = (ToolStripMenuItem)sender;
             RecordUndoEvent("RotationOption");
-            m_Rotation = !m_Rotation;
+            button.Checked = !button.Checked;
 
-            if (m_Rotation)
+            if (button.Checked)
             {
                 this.AddInput(0, inputParams);
             }
@@ -255,10 +271,11 @@ namespace Axis.GH_Components
 
         private void extLin_Click(object sender, EventArgs e)
         {
+            var button = (ToolStripMenuItem)sender;
             RecordUndoEvent("ExtLinOption");
-            m_ExtLin = !m_ExtLin;
+            button.Checked = !button.Checked;
 
-            if (m_ExtLin)
+            if (button.Checked)
             {
                 this.AddInput(1, inputParams);
             }
@@ -271,10 +288,11 @@ namespace Axis.GH_Components
 
         private void extRot_Click(object sender, EventArgs e)
         {
+            var button = (ToolStripMenuItem)sender;
             RecordUndoEvent("ExtRotOption");
-            m_ExtRot = !m_ExtRot;
+            button.Checked = !button.Checked;
 
-            if (m_ExtRot)
+            if (button.Checked)
             {
                 this.AddInput(2, inputParams);
             }
@@ -287,10 +305,11 @@ namespace Axis.GH_Components
 
         private void time_Click(object sender, EventArgs e)
         {
+            var button = (ToolStripMenuItem)sender;
             RecordUndoEvent("TimeOption");
-            m_Time = !m_Time;
+            button.Checked = !button.Checked;
 
-            if (m_Time)
+            if (button.Checked)
             {
                 this.AddInput(3, inputParams);
             }
@@ -303,10 +322,11 @@ namespace Axis.GH_Components
 
         private void name_Click(object sender, EventArgs e)
         {
+            var button = (ToolStripMenuItem)sender;
             RecordUndoEvent("NameOption");
-            m_Name = !m_Name;
+            button.Checked = !button.Checked;
 
-            if (m_Name)
+            if (button.Checked)
             {
                 this.AddInput(4, inputParams);
             }
@@ -319,10 +339,11 @@ namespace Axis.GH_Components
 
         private void declaration_Click(object sender, EventArgs e)
         {
+            var button = (ToolStripMenuItem)sender;
             RecordUndoEvent("DeclOption");
-            m_Declaration = !m_Declaration;
+            button.Checked = !button.Checked;
 
-            if (m_Declaration)
+            if (button.Checked)
             {
                 this.AddOutput(0, outputParams);
             }
@@ -340,24 +361,24 @@ namespace Axis.GH_Components
         // Serialize this instance to a Grasshopper writer object.
         public override bool Write(GH_IO.Serialization.GH_IWriter writer)
         {
-            writer.SetBoolean("UseRotation", this.m_Rotation);
-            writer.SetBoolean("UseExtLin", this.m_ExtLin);
-            writer.SetBoolean("UseExtRot", this.m_ExtRot);
-            writer.SetBoolean("UseTime", this.m_Time);
-            writer.SetBoolean("UseName", this.m_Name);
-            writer.SetBoolean("OutputDec", this.m_Declaration);
+            writer.SetBoolean("UseRotation", this.rotOption.Checked);
+            writer.SetBoolean("UseExtLin", this.extLinOpt.Checked);
+            writer.SetBoolean("UseExtRot", this.extRotOpt.Checked);
+            writer.SetBoolean("UseTime", this.timeOption.Checked);
+            writer.SetBoolean("UseName", this.nameOption.Checked);
+            writer.SetBoolean("OutputDec", this.declarationCheck.Checked);
             return base.Write(writer);
         }
 
         // Deserialize this instance from a Grasshopper reader object.
         public override bool Read(GH_IO.Serialization.GH_IReader reader)
         {
-            this.m_Rotation = reader.GetBoolean("UseRotation");
-            this.m_ExtLin = reader.GetBoolean("UseExtLin");
-            this.m_ExtRot = reader.GetBoolean("UseExtRot");
-            this.m_Time = reader.GetBoolean("UseTime");
-            this.m_Name = reader.GetBoolean("UseName");
-            this.m_Declaration = reader.GetBoolean("OutputDec");
+            if(reader.ItemExists("UseRotation")) this.rotOption.Checked = reader.GetBoolean("UseRotation");
+            if(reader.ItemExists("UseExtLin")) this.extLinOpt.Checked = reader.GetBoolean("UseExtLin");
+            if(reader.ItemExists("UseExtRot")) this.extRotOpt.Checked = reader.GetBoolean("UseExtRot");
+            if(reader.ItemExists("UseTime")) this.timeOption.Checked = reader.GetBoolean("UseTime");
+            if(reader.ItemExists("UseName")) this.nameOption.Checked = reader.GetBoolean("UseName");
+            if(reader.ItemExists("OutputDec")) this.declarationCheck.Checked = reader.GetBoolean("OutputDec");
             return base.Read(reader);
         }
 
