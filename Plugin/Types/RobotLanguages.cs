@@ -92,14 +92,14 @@ namespace Axis.Types
 
 
             /*
-             *@ todo Rewrite to be switch statement
-             *@ body Rewrite the following if else statemets to be a switch statement. This is dependednt on an upgrade of c# though.
+             *@todo Rewrite to be switch statement
+             *@body Rewrite the following if else statemets to be a switch statement. This is dependednt on an upgrade of c# though.
              */
             if (Enumerable.Range(bottomLim, topLim).Contains(progLen) && !ignoreLen)  // Medium length program. Will be cut into submodules...
             {
                 /*
-                 *@ todo Set Runtime Message
-                 *@ body Check if compnent can be accessed from within a class
+                 *@todo Set Runtime Message
+                 *@body Check if compnent can be accessed from within a class
                  */
                 //AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Procedure length exceeds recommended maximum. Program will be split into multiple procedures.");
                 //this.Message = "Large Program";
@@ -126,8 +126,8 @@ namespace Axis.Types
 
 
                 /*
-                 *@ todo Set Runtime Message
-                 *@ body Check if compnent can be accessed from within a class
+                 *@todo Set Runtime Message
+                 *@body Check if compnent can be accessed from within a class
                  */
                 //AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Procedure length exceeds recommended maximum. Program will be split into multiple procedures.");
                 //this.Message = "Extra Large Program";
@@ -171,8 +171,8 @@ namespace Axis.Types
             if (ignoreLen) 
             {
                 /*
-                 *@ todo Set Runtime Message
-                 *@ body Check if compnent can be accessed from within a class
+                 *@todo Set Runtime Message
+                 *@body Check if compnent can be accessed from within a class
                  */
                 //AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Program length is being ignored"); 
             }

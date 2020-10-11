@@ -11,8 +11,8 @@ namespace Axis.Kernal.UIElements
     {
         public string Name { get; set ; }
 
-        /* @ todo Make EventHandler init after .Net version upgrade
-         * @ body Actions should only be specifies at initialisation and not change
+        /* @todo Make EventHandler init after .Net version upgrade
+         * @body Actions should only be specifies at initialisation and not change
          */
         public EventHandler LeftClickAction { get; set; } = null;
         public RectangleF Bounds { get; set; }
@@ -27,8 +27,8 @@ namespace Axis.Kernal.UIElements
     {
         public string Name { get; set; }
 
-        /* @ todo Make EventHandler init after .Net version upgrade
-         * @ body Actions should only be specifies at initialisation and not change
+        /* @todo Make EventHandler init after .Net version upgrade
+         * @body Actions should only be specifies at initialisation and not change
          */
         public EventHandler LeftClickAction { get; set; } = null;
         public Tuple<string, string> Toggle { get; set; } = null;

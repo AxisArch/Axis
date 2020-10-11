@@ -757,8 +757,8 @@ namespace Axis.Kernal
             }
 
             /*
-             * @ todo Transform the tool
-             * @ body Ensure the tool is moved the the propper location
+             * @todo Transform the tool
+             * @body Ensure the tool is moved the the propper location
              */
             public Tool Tool => this.target.Tool;
             public Speed Speed => this.target.Speed;
@@ -1705,8 +1705,8 @@ namespace Axis.Kernal
         public abstract string Declaration { get; }
         
 
-        /* @ todo Change Geometries to ToolMesh
-         * @ body Geometries will be reserved for the robot class where it discribes a copy of both rob and tool mesh.
+        /* @todo Change Geometries to ToolMesh
+         * @body Geometries will be reserved for the robot class where it discribes a copy of both rob and tool mesh.
          */
         public Mesh[] Geometries { get; set; }
         public class SimpleGeo { public Line Line; }

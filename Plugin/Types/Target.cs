@@ -1198,8 +1198,8 @@ namespace Axis.Types
             foreach (Instruction inst in instructions) 
             {
                 /*
-                 * @ todo Make switch statement
-                 * @ body With the upgrade of C# new type based switch statements will be possible.
+                 * @todo Make switch statement
+                 * @body With the upgrade of C# new type based switch statements will be possible.
                 switch (inst) 
                 {
                     case Target:
