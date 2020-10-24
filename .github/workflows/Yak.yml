@@ -26,5 +26,33 @@ jobs:
       run: dotnet restore .\Axis.sln -v d
     - name: Build
       run: dotnet build --configuration Yak --no-restore -v d
-#     - name: Test
-#      run: dotnet test --no-restore --verbosity normal
+    - name: Test
+      run: dotnet test --no-restore --verbosity normal
+
+  publish:
+    name: Publish to Yak
+    needs: [build-package]
+    runs-on: windows-latest
+    env:
+      YAK_TOKEN: ${{ secrets.YAK_TOKEN }}
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '3.1.x'
+    - name: Install dependencies
+      run: dotnet restore .\Braille.csproj --verbosity normal
+    - name: Build
+      run: dotnet build --configuration Yak --no-restore --verbosity normal
+      # Then use the version string
+    - uses: dotnet/nbgv@master
+      with:
+        setAllVars: true
+    - name: Push to Yak
+      uses: pfmephisto/rhino-yak@v1
+      with:
+        build-directory: ./dist
+        version: "$Env:NBGV_SemVer2"
