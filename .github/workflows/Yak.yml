@@ -1,8 +1,15 @@
 name: Yak
 
 on:
+  pull_request:
   push:
-    branches: [ master, development]
+    branches: 
+    - main
+    - master
+    - development
+    paths-ignore:
+    - '**.md'
+    - '**.yml'
 
 jobs:
   build-package:
