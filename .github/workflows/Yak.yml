@@ -13,6 +13,7 @@ jobs:
     runs-on: windows-latest
     env:
       YAK_TOKEN: ${{ secrets.YAK_TOKEN }}
+      AUTHID:  ${{ secrets.AUTHID }}
       
     
     steps:
