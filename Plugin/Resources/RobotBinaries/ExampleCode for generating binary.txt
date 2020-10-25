@@ -1,0 +1,8 @@
+﻿// Used for generationg the binary
+
+var list = mesh;
+using (System.IO.Stream fileStream = System.IO.File.Open(path, System.IO.FileMode.Create))
+{
+    System.Runtime.Serialization.Formatters.Binary.BinaryFormatter serializer = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
+    serializer.Serialize(fileStream, list);
+}

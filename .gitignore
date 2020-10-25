@@ -240,3 +240,10 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
+
+
+# Yak
+dist/
+dist/*
+!dist/manifest.yml
+!dist/misc/*

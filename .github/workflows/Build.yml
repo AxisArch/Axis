@@ -1,0 +1,32 @@
+name: Build and Test
+
+on:
+  pull_request:
+  push:
+    branches: 
+    - main
+    - master
+    - development
+    paths-ignore:
+    - '**.md'
+    - '**.yml'
+
+jobs:
+  build-package:
+    name: Build the Grasshopper package
+    runs-on: windows-latest
+    env:
+      AUTHID:  ${{ secrets.AUTHID }}
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '3.1.x'
+    - name: Install dependencies
+      run: dotnet restore .\Axis.sln -v d
+    - name: Build
+      run: dotnet build --configuration Yak --no-restore -v d
+    - name: Test
+      run: dotnet test --no-restore --verbosity normal

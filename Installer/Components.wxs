@@ -1,0 +1,67 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Fragment>
+        <DirectoryRef Id="UOBJSFOLDER">
+            <Component Id="cmpAE48C8D982017A1038BA2489111B22FA" Guid="*">
+                <File Id="fil4AFC91FF7EBE7381FFF4DACA4BF630FB" KeyPath="yes" Source="$(var.SourceDir)\ABB IRB 120.ghuser" />
+            </Component>
+            <Component Id="cmp3ABA13DC5796E3E281D04078340C12D0" Guid="*">
+                <File Id="filA78C4F261B3858337A93143C5FE5A4BF" KeyPath="yes" Source="$(var.SourceDir)\Align Origin.ghuser" />
+            </Component>
+            <Component Id="cmp899F99FCBA3EABCFF07DC0247F7E6AEC" Guid="*">
+                <File Id="fil3594832E3E3942110259B827D941D14C" KeyPath="yes" Source="$(var.SourceDir)\Eulers To Plane.ghuser" />
+            </Component>
+            <Component Id="cmpF852A16A01E3802EF4DBD913185C4CDA" Guid="*">
+                <File Id="fil5944F768CA1B29C2DCDFC5B34106B132" KeyPath="yes" Source="$(var.SourceDir)\Isolate Branch.ghuser" />
+            </Component>
+            <Component Id="cmp2DA9085B6966A67AB7B3762BFB6BC0E0" Guid="*">
+                <File Id="filF653237DC4EC32FAD129135CF71F2ACF" KeyPath="yes" Source="$(var.SourceDir)\Load Tools.ghuser" />
+            </Component>
+            <Component Id="cmpEA26C3F02B531AE2241AB23707F1C1A3" Guid="*">
+                <File Id="fil952C9728E59905E6FFB7C42BCA5AE59F" KeyPath="yes" Source="$(var.SourceDir)\Method Control.ghuser" />
+            </Component>
+            <Component Id="cmp698056C1A5559FD67F64D4A2AF645720" Guid="*">
+                <File Id="fil12EC264755F4786CD2F827AC046982F4" KeyPath="yes" Source="$(var.SourceDir)\Plane Vector.ghuser" />
+            </Component>
+            <Component Id="cmp3BD04B7317623D4EC4357E19339E2455" Guid="*">
+                <File Id="filE7A6C6FC734BEDDDA5BAB0A6BF6BB5CD" KeyPath="yes" Source="$(var.SourceDir)\Show Target.ghuser" />
+            </Component>
+            <Component Id="cmp3BD215D95D69BBA32EC1FF456FB6A754" Guid="*">
+                <File Id="filC4B188827E182382AA366F1C54F11389" KeyPath="yes" Source="$(var.SourceDir)\Show Toolpath.ghuser" />
+            </Component>
+            <Component Id="cmp15175514B03E79B11D25484DB33DC9D1" Guid="*">
+                <File Id="fil06B9F32A6EFDD5A0AED618BAC91DA422" KeyPath="yes" Source="$(var.SourceDir)\Show Zone.ghuser" />
+            </Component>
+            <Component Id="cmpCCD56FCB1FF8A62B10C24B374291E5D6" Guid="*">
+                <File Id="fil81D6F35B917905E923AA83404EB8F2BD" KeyPath="yes" Source="$(var.SourceDir)\Simulation Value.ghuser" />
+            </Component>
+            <Component Id="cmp72F2CE82549E3B2058F68AB85854E5CC" Guid="*">
+                <File Id="filA676A0C86FD0DB387BF2EE03C25A63BF" KeyPath="yes" Source="$(var.SourceDir)\Speed Control.ghuser" />
+            </Component>
+            <Component Id="cmp855AE68C6D02AC8C19CCDFFE915D9C7C" Guid="*">
+                <File Id="filD72B8A6D948D14DA05909732287C9DCD" KeyPath="yes" Source="$(var.SourceDir)\Vector List.ghuser" />
+            </Component>
+            <Component Id="cmpA7740885AE5DF64BC75C05CD798FF2B6" Guid="*">
+                <File Id="filA3B9F1B67E2037A896CE5B70D57F8588" KeyPath="yes" Source="$(var.SourceDir)\Zone Control.ghuser" />
+            </Component>
+        </DirectoryRef>
+    </Fragment>
+    <Fragment>
+        <ComponentGroup Id="HarvestedUserObjects">
+            <ComponentRef Id="cmpAE48C8D982017A1038BA2489111B22FA" />
+            <ComponentRef Id="cmp3ABA13DC5796E3E281D04078340C12D0" />
+            <ComponentRef Id="cmp899F99FCBA3EABCFF07DC0247F7E6AEC" />
+            <ComponentRef Id="cmpF852A16A01E3802EF4DBD913185C4CDA" />
+            <ComponentRef Id="cmp2DA9085B6966A67AB7B3762BFB6BC0E0" />
+            <ComponentRef Id="cmpEA26C3F02B531AE2241AB23707F1C1A3" />
+            <ComponentRef Id="cmp698056C1A5559FD67F64D4A2AF645720" />
+            <ComponentRef Id="cmp3BD04B7317623D4EC4357E19339E2455" />
+            <ComponentRef Id="cmp3BD215D95D69BBA32EC1FF456FB6A754" />
+            <ComponentRef Id="cmp15175514B03E79B11D25484DB33DC9D1" />
+            <ComponentRef Id="cmpCCD56FCB1FF8A62B10C24B374291E5D6" />
+            <ComponentRef Id="cmp72F2CE82549E3B2058F68AB85854E5CC" />
+            <ComponentRef Id="cmp855AE68C6D02AC8C19CCDFFE915D9C7C" />
+            <ComponentRef Id="cmpA7740885AE5DF64BC75C05CD798FF2B6" />
+        </ComponentGroup>
+    </Fragment>
+</Wix>
