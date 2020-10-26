@@ -2,10 +2,12 @@ name: Yak
 
 on:
   release:
+  push:
+    types: 
+      - created
     branches: 
     - main
     - master
-    - development
 
 jobs:
   publish:
@@ -41,16 +43,8 @@ jobs:
         setAllVars: true
 
     - name: Push main version to Yak
-      if: github.ref == 'refs/heads/master'
       uses: pfmephisto/rhino-yak@v1
       with:
         build-directory: ./dist
         version: "$Env:SimpleVersion"
-        
-
-    - name: Push development version to Yak
-      if: github.ref == 'refs/heads/development'
-      uses: pfmephisto/rhino-yak@v1
-      with:
-        build-directory: ./dist
-        version: "$Env:NBGV_SemVer2"
+      
