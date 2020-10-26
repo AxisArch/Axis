@@ -11,8 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
+      - uses: actions/checkout@master
+        
+      - name: Merge master -> developmnt
         uses: devmasx/merge-branch@v1.3.0
         with:
           type: now
-          target_branch: development
+          target_branch: developmnt
           github_token: ${{ github.token }}
