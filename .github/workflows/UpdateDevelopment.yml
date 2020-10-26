@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@master
         
-      - name: Merge master -> developmnt
+      - name: Merge master -> development
         uses: devmasx/merge-branch@v1.3.0
         with:
           type: now
