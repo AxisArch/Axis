@@ -6,6 +6,7 @@
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 	<GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
+	<Configurations>Debug;Release;Yak</Configurations>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -57,33 +58,25 @@
     <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'UnitTest|AnyCPU'">
-    <OutputPath>bin\UnitTest\</OutputPath>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'UnitTest|x64'">
-    <OutputPath>bin\x64\UnitTest\</OutputPath>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'UnitTest|x86'">
-    <OutputPath>bin\x86\UnitTest\</OutputPath>
-  </PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Yak|AnyCPU'">
+		<OutputPath>..\dist\</OutputPath>
+		<Optimize>true</Optimize>
+		<CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Yak|x64'">
+		<OutputPath>bin\x64\Yak\</OutputPath>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<Optimize>true</Optimize>
+		<CodeAnalysisRuleSet>MinimumrecommendededRules.ruleset</CodeAnalysisRuleSet>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Yak|x86'">
+		<OutputPath>bin\x86\Yak\</OutputPath>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<Optimize>true</Optimize>
+		<CodeAnalysisRuleSet>MinimumrecommendededRules.ruleset</CodeAnalysisRuleSet>
+	</PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Yak|AnyCPU'">
-    <OutputPath>..\dist\</OutputPath>
-    <Optimize>true</Optimize>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Yak|x64'">
-    <OutputPath>bin\x64\Yak\</OutputPath>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Optimize>true</Optimize>
-    <CodeAnalysisRuleSet>MinimumrecommendededRules.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Yak|x86'">
-    <OutputPath>bin\x86\Yak\</OutputPath>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Optimize>true</Optimize>
-    <CodeAnalysisRuleSet>MinimumrecommendededRules.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
+	
   <ItemGroup>
     <Compile Remove="packages\**" />
     <EmbeddedResource Remove="packages\**" />
