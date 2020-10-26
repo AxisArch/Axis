@@ -38,8 +38,18 @@ jobs:
       with:
         setAllVars: true 
       
-      
-    - name: Extract Branch Name
-      run: echo "BRANCH=$(echo ${GITHUB_REF##*/})" >> $GITHUB_ENV
+    - name: Push development version to Yak
+      if: contains(github.ref, "beta")
+      uses: pfmephisto/rhino-yak@v1
+      with:
+        build-directory: ./dist
+        version: "$Env:NBGV_SemVer2"
+          
+    - name: Push main version to Yak
+      if: contains(github.ref, "release")
+      uses: pfmephisto/rhino-yak@v1
+      with:
+        build-directory: ./dist
+        version: "$Env:SimpleVersion"
 
 
