@@ -14,9 +14,9 @@ jobs:
       - uses: actions/checkout@master
         
       - name: Merge master -> development
-        uses: devmasx/merge-branch@v1.3.0
+        uses: everlytic/branch-merge@1.1.0
         with:
-          type: now
-          head_to_merge: ${{ github.ref }}
-          target_branch: development
           github_token: ${{ github.token }}
+          source_ref: ${{ github.ref }}
+          target_branch: 'development'
+          commit_message_template: '[Automated] Merged {source_ref} into target {target_branch}'
