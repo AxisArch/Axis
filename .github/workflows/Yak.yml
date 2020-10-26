@@ -41,7 +41,7 @@ jobs:
         setAllVars: true
 
     - name: Push main version to Yak
-      if: contains(github.ref, "master")
+      if: github.ref == 'refs/heads/master'
       uses: pfmephisto/rhino-yak@v1
       with:
         build-directory: ./dist
@@ -49,7 +49,7 @@ jobs:
         
 
     - name: Push development version to Yak
-      if: contains(github.ref, "development")
+      if: github.ref == 'refs/heads/development'
       uses: pfmephisto/rhino-yak@v1
       with:
         build-directory: ./dist
