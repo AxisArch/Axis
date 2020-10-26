@@ -17,5 +17,5 @@ jobs:
         uses: devmasx/merge-branch@v1.3.0
         with:
           type: now
-          target_branch: developmnt
+          target_branch: development
           github_token: ${{ github.token }}
