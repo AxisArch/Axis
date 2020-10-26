@@ -3,7 +3,7 @@ name: Yak
 on:
   release:
     types: 
-      - created
+      - released
     branches: 
       - main
       - master
