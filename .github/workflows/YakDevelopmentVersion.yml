@@ -2,11 +2,10 @@ name: Yak
 
 on:
   release:
-  push:
     types: 
       - created
     branches: 
-    - development
+      - development
 
 jobs:
   publish:
