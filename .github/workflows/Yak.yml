@@ -2,10 +2,8 @@ name: Yak
 
 on:
   release:
-    branches: 
-    - main
-    - master
-    - development
+    types: 
+      - published
 
 jobs:
   publish:
@@ -38,19 +36,22 @@ jobs:
       # Get the assembly version
     - uses: dotnet/nbgv@master
       with:
-        setAllVars: true
-
-    - name: Push main version to Yak
-      if: contains(github.ref, "master")
-      uses: pfmephisto/rhino-yak@v1
-      with:
-        build-directory: ./dist
-        version: "$Env:SimpleVersion"
-        
+        setAllVars: true 
+      
+      
+    - name: Extract Branch Name
+      run: echo "BRANCH=$(echo ${GITHUB_REF##*/})" >> $GITHUB_ENV
 
     - name: Push development version to Yak
-      if: contains(github.ref, "development")
+      if: contains($GITHUB_ENV, "development")
       uses: pfmephisto/rhino-yak@v1
       with:
         build-directory: ./dist
         version: "$Env:NBGV_SemVer2"
+          
+    - name: Push main version to Yak
+      if: contains($GITHUB_ENV, "master")
+      uses: pfmephisto/rhino-yak@v1
+      with:
+        build-directory: ./dist
+        version: "$Env:SimpleVersion"
