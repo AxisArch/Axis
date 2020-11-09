@@ -12,8 +12,8 @@ jobs:
     env:
       YAK_TOKEN: ${{ secrets.YAK_TOKEN }}
       AUTHID:  ${{ secrets.AUTHID }}
-      
-    
+
+
     steps:
     - uses: actions/checkout@v2
       with:
@@ -26,16 +26,17 @@ jobs:
 
     - name: Install dependencies
       run: dotnet restore .\Axis.sln --verbosity normal
-      
+
     - name: Build
       run: dotnet build --configuration Yak --no-restore --verbosity normal
-      
+
     - name: Test
       run: dotnet test --no-restore --verbosity normal
-      
+
       # Get the assembly version
     - uses: dotnet/nbgv@master
       with:
+        path: .\Plugin
         setAllVars: true 
       
     - name: Push development version to Yak
@@ -51,5 +52,3 @@ jobs:
       with:
         build-directory: ./dist
         version: "$Env:SimpleVersion"
-
-
