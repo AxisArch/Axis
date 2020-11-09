@@ -36,6 +36,7 @@ namespace Axis.GH_Params
             go.AddOption("Default");
             go.AddOption("IRB_120");
             go.AddOption("IRB_6620");
+            go.AddOption("IRB_6700_150");
             go.AddOption("SetBasePlane", $"O({bPlane.OriginX.ToString("0.00")},{bPlane.OriginY.ToString("0.00")},{bPlane.OriginZ.ToString("0.00")}) " +
                 $"Z({bPlane.ZAxis.X.ToString("0.00")},{bPlane.ZAxis.Y.ToString("0.00")}, {bPlane.ZAxis.Z.ToString("0.00")})");
 
@@ -45,6 +46,7 @@ namespace Axis.GH_Params
                     if (go.Option().EnglishName == "Default") { var rob = Abb6DOFRobot.Default; rob.ChangeBasePlane(bPlane); value = rob; }
                     if (go.Option().EnglishName == "IRB_120") { var rob = Abb6DOFRobot.IRB120; rob.ChangeBasePlane(bPlane); value = rob; }
                     if (go.Option().EnglishName == "IRB_6620") { var rob = Abb6DOFRobot.IRB6620; rob.ChangeBasePlane(bPlane); value = rob; }
+                    if (go.Option().EnglishName == "IRB_6700_150") { var rob = Abb6DOFRobot.IRB6700_150kg_320m; rob.ChangeBasePlane(bPlane); value = rob; }
                     if (go.Option().EnglishName == "SetBasePlane") { GetBPlane(out bPlane); goto MainMenu; }
                     return GH_GetterResult.success;
 
