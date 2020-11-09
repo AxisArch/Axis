@@ -37,17 +37,17 @@ jobs:
     - uses: dotnet/nbgv@master
       with:
         path: .\Plugin
-        setAllVars: true    
-
+        setAllVars: true 
+      
     - name: Push development version to Yak
-      if: contains(github.ref, "development")
+      if: contains(github.ref, 'beta')
       uses: pfmephisto/rhino-yak@v1
       with:
         build-directory: ./dist
         version: "$Env:NBGV_SemVer2"
           
     - name: Push main version to Yak
-      if: contains(github.ref, "master")
+      if: contains(github.ref, 'release')
       uses: pfmephisto/rhino-yak@v1
       with:
         build-directory: ./dist
