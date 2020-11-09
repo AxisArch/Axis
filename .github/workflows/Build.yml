@@ -32,3 +32,9 @@ jobs:
       run: dotnet build --configuration Yak --no-restore -v d
     - name: Test
       run: dotnet test --no-restore --verbosity normal
+      
+    # Get the assembly version
+    - uses: dotnet/nbgv@master
+      with:
+        path: .\Plugin
+        setAllVars: true 
