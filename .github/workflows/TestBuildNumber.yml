@@ -33,5 +33,5 @@ jobs:
       # Get the assembly version
     - uses: dotnet/nbgv@master
       with:
-        path: .\Plugin\version.json
+        path: .\Plugin
         setAllVars: true
