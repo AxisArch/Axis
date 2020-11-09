@@ -1,0 +1,36 @@
+name: Test Build Number
+
+on:
+  push:
+    branches:
+    - test_build_number
+
+jobs:
+  publish:
+    name: Test Build Number
+    runs-on: windows-latest
+    env:
+      YAK_TOKEN: ${{ secrets.YAK_TOKEN }}
+      AUTHID:  ${{ secrets.AUTHID }}
+
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '3.1.x'
+
+    - name: Install dependencies
+      run: dotnet restore .\Axis.sln --verbosity normal
+
+    - name: Build
+      run: dotnet build --configuration Yak --no-restore --verbosity normal
+
+      # Get the assembly version
+    - uses: dotnet/nbgv@master
+      with:
+        setAllVars: true
