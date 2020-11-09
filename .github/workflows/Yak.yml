@@ -2,10 +2,8 @@ name: Yak
 
 on:
   release:
-    branches:
-    - main
-    - master
-    - development
+    types: 
+      - published
 
 jobs:
   publish:
@@ -39,15 +37,7 @@ jobs:
     - uses: dotnet/nbgv@master
       with:
         path: .\Plugin
-        setAllVars: true
-
-    - name: Push main version to Yak
-      if: contains(github.ref, "master")
-      uses: pfmephisto/rhino-yak@v1
-      with:
-        build-directory: ./dist
-        version: "$Env:SimpleVersion"
-
+        setAllVars: true    
 
     - name: Push development version to Yak
       if: contains(github.ref, "development")
@@ -55,3 +45,10 @@ jobs:
       with:
         build-directory: ./dist
         version: "$Env:NBGV_SemVer2"
+          
+    - name: Push main version to Yak
+      if: contains(github.ref, "master")
+      uses: pfmephisto/rhino-yak@v1
+      with:
+        build-directory: ./dist
+        version: "$Env:SimpleVersion"
