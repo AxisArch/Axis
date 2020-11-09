@@ -20,6 +20,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
       with:
@@ -30,3 +32,9 @@ jobs:
       run: dotnet build --configuration Yak --no-restore -v d
     - name: Test
       run: dotnet test --no-restore --verbosity normal
+      
+    # Get the assembly version
+    - uses: dotnet/nbgv@master
+      with:
+        path: .\Plugin
+        setAllVars: true 

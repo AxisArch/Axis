@@ -12,8 +12,8 @@ jobs:
     env:
       YAK_TOKEN: ${{ secrets.YAK_TOKEN }}
       AUTHID:  ${{ secrets.AUTHID }}
-      
-    
+
+
     steps:
     - uses: actions/checkout@v2
       with:
@@ -26,31 +26,28 @@ jobs:
 
     - name: Install dependencies
       run: dotnet restore .\Axis.sln --verbosity normal
-      
+
     - name: Build
       run: dotnet build --configuration Yak --no-restore --verbosity normal
-      
+
     - name: Test
       run: dotnet test --no-restore --verbosity normal
-      
+
       # Get the assembly version
     - uses: dotnet/nbgv@master
       with:
+        path: .\Plugin
         setAllVars: true 
       
-      
-    - name: Extract Branch Name
-      run: echo "BRANCH=$(echo ${GITHUB_REF##*/})" >> $GITHUB_ENV
-
     - name: Push development version to Yak
-      if: contains($GITHUB_ENV, "development")
+      if: contains(github.ref, 'beta')
       uses: pfmephisto/rhino-yak@v1
       with:
         build-directory: ./dist
         version: "$Env:NBGV_SemVer2"
           
     - name: Push main version to Yak
-      if: contains($GITHUB_ENV, "master")
+      if: contains(github.ref, 'release')
       uses: pfmephisto/rhino-yak@v1
       with:
         build-directory: ./dist

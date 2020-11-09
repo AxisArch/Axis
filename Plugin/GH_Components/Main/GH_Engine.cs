@@ -17,12 +17,11 @@ namespace Axis.GH_Components
     /// </summary>
     public class GH_Engine : Axis_Component
     {
-
         // Set up our client to handle the login.
         private Auth0ClientOptions clientOptions = new Auth0ClientOptions
         {
             Domain = "axisarch.eu.auth0.com",
-            ClientId = System.Environment.GetEnvironmentVariable("AUTHID"),
+            ClientId = "bDiJKd5tM8eqHsTX01ovqyFvOSBnC4mE", //System.Environment.GetEnvironmentVariable("AUTHID"),
             Browser = new WebBrowserBrowser("Authenticating...", 400, 640)
         };
 
